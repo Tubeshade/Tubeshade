@@ -1,0 +1,17 @@
+﻿@model AddLibraryModel
+
+<form method="post">
+    <div>
+        <label asp-for="Name">Name</label>
+        <input class="form-control" asp-for="Name" type="text" autofocus/>
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="StoragePath">Storage path</label>
+        <input class="form-control" asp-for="StoragePath" type="text" autofocus/>
+        <span asp-validation-for="StoragePath" class="text-danger"></span>
+    </div>
+
+    <button class="btn btn-primary" type="submit">Create library</button>
+</form>

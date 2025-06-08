@@ -1,0 +1,22 @@
+﻿@model Tubeshade.Data.Media.LibraryEntity
+
+<li class="nav-item">
+    <a class="nav-link" asp-page="/Libraries/Library" asp-route-libraryId="@Model.Id">
+        Videos
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" asp-page="/Libraries/Channels" asp-route-libraryId="@Model.Id">
+        Channels
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" asp-page="/Libraries/Downloads/Index" asp-route-libraryId="@Model.Id">
+        Downloads
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" asp-page="/Libraries/Tasks/Index" asp-route-libraryId="@Model.Id">
+        Tasks
+    </a>
+</li>

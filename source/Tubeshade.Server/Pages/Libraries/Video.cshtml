@@ -1,0 +1,81 @@
+﻿@page "~/Libraries/{libraryId:guid}/Videos/{videoId:guid}/{handler?}"
+@model Video
+@{
+    ViewData["Title"] = Model.Entity.Name;
+}
+
+@section Navigation
+{
+    @await Html.PartialAsync("_LibraryNavigation", Model.Library)
+}
+
+<video id="main-video" controls playsinline preload="metadata" width="100%"
+       poster="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })">
+
+    <source
+        src="@Url.Action("Get", "Videos", new { version = "1.0", id = Model.VideoId })"
+        type="video/@System.IO.Path.GetExtension(Model.Entity.StoragePath).TrimStart('.')"/>
+
+    <track
+        src="@Url.Action("GetSubtitles", "Videos", new { version = "1.0", id = Model.VideoId })"
+        label="English" kind="subtitles" srclang="en" default/>
+    <track
+        src="@Url.Action("GetChapters", "Videos", new { version = "1.0", id = Model.VideoId })"
+        kind="chapters" srclang="en" default/>
+
+    <p>
+        Your browser does not support HTML video.
+        Here is the <a href="@Url.Action("Get", "Videos", new { version = "1.0", id = Model.VideoId })">link to the
+            video</a>.
+    </p>
+</video>
+
+<h2>@Model.Entity.Name</h2>
+<h4><a asp-page="/Channels/Channel" asp-route-channelId="@Model.Channel.Id">@Model.Channel.Name</a></h4>
+
+<a href="@Model.Entity.ExternalUrl">Original</a>
+
+<section id="chapter-markers">
+
+</section>
+
+<section id="video-description">
+    @foreach (var paragraph in Model.Entity.Description.Split(["\r\n", ], StringSplitOptions.None))
+    {
+        @paragraph
+        <br/>
+    }
+</section>
+
+@section Scripts
+{
+    <script>
+        const video = document.querySelector("#main-video");
+        video.playbackRate = @Model.PlaybackSpeed;
+
+        const chapterTrack = video.querySelector('track[kind="chapters"]');
+        const chapters = document.querySelector("#chapter-markers");
+
+        chapterTrack.addEventListener("load", onTrackLoad, false);
+        chapterTrack.addEventListener("loaded", onTrackLoad, false);
+
+        function onTrackLoad() {
+            for (const cue of chapterTrack.track.cues) {
+                createMarker(cue);
+            }
+        }
+
+        function createMarker(cue) {
+            const element = document.createElement("span");
+            element.innerHTML = cue.text;
+            element.setAttribute("data-start-time", cue.startTime);
+            element.addEventListener("click", onClickMarker);
+
+            chapters.appendChild(element);
+        }
+
+        function onClickMarker(event) {
+            video.currentTime = event.target.getAttribute("data-start-time");
+        }
+    </script>
+}

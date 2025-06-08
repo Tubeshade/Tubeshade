@@ -1,0 +1,27 @@
+﻿@model Tubeshade.Server.Pages.Shared.PaginatedData<VideoModel>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))">
+    @foreach (var video in Model.Data)
+    {
+        <div class="card m-1">
+            <a asp-page="/Libraries/Video" asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@video.Video.Id">
+                <img src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Video.Id })" alt="@video.Video.Name"
+                     class="card-img-top" style="aspect-ratio: calc(16 / 9);" title="@video.Video.Name"/>
+            </a>
+
+            <div class="card-body p-2">
+                <a asp-page="/Libraries/Video" asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@video.Video.Id">
+                    <h5 class="card-title text-truncate" title="@video.Video.Name">@video.Video.Name</h5>
+                </a>
+
+                <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@video.Video.ChannelId">
+                    <h6 class="text-truncate" title="@video.Channel.Name">@video.Channel.Name</h6>
+                </a>
+
+                <span>@(DateOnly.FromDateTime(video.Video.PublishedAt.ToDateTimeUtc()))</span>
+                <span> - </span>
+                <span>@(new HumanReadablePeriodPattern().Format(video.Video.Duration))</span>
+            </div>
+        </div>
+    }
+</div>

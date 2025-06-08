@@ -1,0 +1,22 @@
+﻿@page "~/Libraries/{libraryId:guid}/Tasks/{handler?}"
+@model Index
+@{
+    ViewData["Title"] = $"Tasks - {Model.Library.Name}";
+}
+
+@section Head
+{
+    <link rel="prefetch" as="script" href="~/lib/htmx.org/dist/js/htmx.min.js"/>
+}
+
+@section Navigation
+{
+    @await Html.PartialAsync("_LibraryNavigation", Model.Library)
+}
+
+@await Html.PartialAsync("_RunningTasks", Model.Tasks)
+
+@section Scripts
+{
+    <script src="~/lib/htmx.org/dist/js/htmx.min.js"></script>
+}

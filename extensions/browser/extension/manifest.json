@@ -1,0 +1,25 @@
+﻿{
+  "manifest_version": 2,
+  "name": "Tubeshade",
+  "description": "Interact with your Tubeshade server",
+  "version": "0.1.0",
+  "permissions": [
+    "storage",
+    "cookies",
+    "identity",
+    "https://*.youtube.com/*"
+  ],
+  "options_ui": {
+    "page": "options.html"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "tubeshade-browser-extension@tubeshade.org"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+﻿{
+  "name": "tubeshade-browser-extension",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Browser extension for Tubeshade",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VMelnalksnis/Tubeshade.git"
+  }
+}

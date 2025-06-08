@@ -1,0 +1,55 @@
+<Project>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+<!--		<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
+		<EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+		<InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.Extensions.Configuration.Binder.SourceGeneration</InterceptorsNamespaces>
+
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+		<RepositoryUrl>https://github.com/VMelnalksnis/Tubeshade</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+
+		<Copyright>Valters Melnalksnis</Copyright>
+		<Product>Tubeshade</Product>
+
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+		<EnablePackageVersionOverride>false</EnablePackageVersionOverride>
+		<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<PublishSingleFile>true</PublishSingleFile>
+		<EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+		<EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+		<MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<NoWarn>$(NoWarn); NETSDK1206</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup Condition="$(MSBuildProjectFile.EndsWith('csproj'))">
+		<PackageReference Include="DotNet.ReproducibleBuilds">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="DotNet.ReproducibleBuilds.Isolated">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="JetBrains.Annotations">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+<!--		<PackageReference Include="StyleCop.Analyzers">-->
+<!--			<PrivateAssets>all</PrivateAssets>-->
+<!--			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>-->
+<!--		</PackageReference>-->
+	</ItemGroup>
+
+<!--	<ItemGroup>-->
+<!--		<AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json">-->
+<!--			<Link>stylecop.json</Link>-->
+<!--		</AdditionalFiles>-->
+<!--	</ItemGroup>-->
+</Project>

@@ -1,0 +1,53 @@
+﻿@page "~/Libraries/{libraryId:guid}/Channels/{channelId:guid}/{handler?}"
+@model Channel
+@{
+    ViewData["Title"] = Model.Entity.Name;
+}
+
+@section Navigation
+{
+    @await Html.PartialAsync("_LibraryNavigation", Model.Library)
+}
+
+<h2>@Model.Entity.Name</h2>
+
+<section id="channel-preferences">
+    @await Html.PartialAsync("_UpdatePreferences", new UpdatePreferencesModel())
+</section>
+
+@await Html.PartialAsync("_Videos", Model.PageData)
+
+<nav class="text-center">
+    <span>
+        Showing @Model.PageData.StartIndex - @Model.PageData.EndIndex from @Model.PageData.TotalCount
+    </span>
+
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
+            <a asp-page="/Channels/Channel" asp-route-channelId="@Model.ChannelId"
+               asp-route-pageIndex="0" asp-route-pageSize="@Model.PageData.PageSize"
+               class="page-link">
+                First
+            </a>
+        </li>
+
+        @foreach (var index in Model.PageData.DisplayedPages)
+        {
+            <li class="page-item @(index - 1 == Model.PageData.Page ? "active" : string.Empty)">
+                <a asp-page="/Channels/Channel" asp-route-channelId="@Model.ChannelId"
+                   asp-route-pageIndex="@(index - 1)" asp-route-pageSize="@Model.PageData.PageSize"
+                   class="page-link" aria-current="page">
+                    @index
+                </a>
+            </li>
+        }
+
+        <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
+            <a asp-page="/Channels/Channel" asp-route-channelId="@Model.ChannelId"
+               asp-route-pageIndex="@(Model.PageData.PageCount - 1)" asp-route-pageSize="@Model.PageData.PageSize"
+               class="page-link">
+                Last
+            </a>
+        </li>
+    </ul>
+</nav>

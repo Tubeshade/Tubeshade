@@ -1,0 +1,11 @@
+﻿@model DownloadVideoModel
+
+<form method="post">
+    <div class="input-group">
+        <label class="input-group-text" asp-for="Url">URL</label>
+        <input class="form-control" asp-for="Url" type="url" autofocus/>
+        <button class="btn btn-primary" type="submit">Download video</button>
+    </div>
+
+    <span asp-validation-for="Url" class="text-danger"></span>
+</form>

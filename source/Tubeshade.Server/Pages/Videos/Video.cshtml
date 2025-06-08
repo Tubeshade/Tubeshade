@@ -1,0 +1,38 @@
+﻿@page "~/Videos/{videoId:guid}/{handler?}"
+@model Video
+@{
+    ViewData["Title"] = Model.Entity.Name;
+}
+
+<video id="main-video" controls playsinline preload="metadata" width="100%"
+       poster="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })">
+
+    <source
+        src="@Url.Action("Get", "Videos", new { version = "1.0", id = Model.VideoId })"
+        type="video/@System.IO.Path.GetExtension(Model.Entity.StoragePath).TrimStart('.')"/>
+
+    <p>
+        Your browser does not support HTML video.
+        Here is the <a href="@Url.Action("Get", "Videos", new { version = "1.0", id = Model.VideoId })">link to the video</a>.
+    </p>
+</video>
+
+<h2>@Model.Entity.Name</h2>
+<h4><a asp-page="/Channels/Channel" asp-route-channelId="@Model.Channel.Id">@Model.Channel.Name</a></h4>
+
+<a href="@Model.Entity.ExternalUrl">Original</a>
+
+<section id="video-description">
+    @foreach (var paragraph in Model.Entity.Description.Split(["\n", "\r\n"], StringSplitOptions.None))
+    {
+        @paragraph
+        <br/>
+    }
+</section>
+
+@section Scripts
+{
+    <script>
+        document.querySelector('#main-video').playbackRate = 1.5;
+    </script>
+}

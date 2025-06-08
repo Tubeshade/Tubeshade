@@ -1,0 +1,68 @@
+using System;
+using NodaTime;
+using Tubeshade.Data.AccessControl;
+
+namespace Tubeshade.Data.Abstractions;
+
+internal class DeleteParameters(Guid id, Guid userId) : GetSingleParameters(id, userId, Access.Delete);
+
+internal class GetFromLibraryParameters : GetParameters
+{
+    public GetFromLibraryParameters(Guid userId, Guid libraryId, Access access)
+        : base(userId, access)
+    {
+        LibraryId = libraryId;
+    }
+
+    public Guid LibraryId { get; }
+}
+
+internal class GetFromChannelParameters : GetParameters
+{
+    public GetFromChannelParameters(Guid userId, Guid channelId, Access access)
+        : base(userId, access)
+    {
+        ChannelId = channelId;
+    }
+
+    public Guid ChannelId { get; }
+}
+
+internal class GetParameters
+{
+    public GetParameters(Guid userId, Access access)
+    {
+        UserId = userId;
+        Access = access;
+    }
+
+    public Guid UserId { get; }
+    public Access Access { get; }
+
+    public int? Limit { get; init; }
+    public int? Offset { get; init; }
+}
+
+internal class GetSingleParameters : GetParameters
+{
+    public GetSingleParameters(Guid id, Guid userId, Access access)
+        : base(userId, access)
+    {
+        Id = id;
+    }
+
+    public Guid Id { get; }
+}
+
+internal class GetDateRange : GetParameters
+{
+    public GetDateRange(Guid userId, Access access, LocalDate from, LocalDate to)
+        : base(userId, access)
+    {
+        From = from;
+        To = to;
+    }
+
+    public LocalDate From { get; }
+    public LocalDate To { get; }
+}

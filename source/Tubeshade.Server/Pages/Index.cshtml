@@ -1,0 +1,19 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+@section Navigation
+{
+    <li class="nav-item">
+        <a class="nav-link" asp-page="/Libraries/Index">
+            Libraries
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" asp-page="/Channels/Index">
+            Channels
+        </a>
+    </li>
+}

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <UserSecretsId>53bc9b9d-9d6a-45d4-8429-2a2761773502</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Tubeshade.Data\Tubeshade.Data.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer"/>
+        <PackageReference Include="Htmx"/>
+        <PackageReference Include="Htmx.TagHelpers"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect"/>
+        <PackageReference Include="NodaTime.Serialization.SystemTextJson"/>
+        <PackageReference Include="YoutubeDLSharp"/>
+    </ItemGroup>
+
+    <Target Name="JavascriptLibraries" BeforeTargets="Build;Publish">
+        <Exec WorkingDirectory="./" Command="npm install" Condition="'$(ContinuousIntegrationBuild)' != 'true'"/>
+        <Exec WorkingDirectory="./" Command="npm ci" Condition="'$(ContinuousIntegrationBuild)' == 'true'"/>
+
+        <ItemGroup>
+            <LibDirectory Include="wwwroot/lib"/>
+
+            <BootstrapJs Include="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"/>
+            <BootstrapCss Include="node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+
+            <HtmxJs Include="./node_modules/htmx.org/dist/htmx.min.js"/>
+        </ItemGroup>
+
+        <RemoveDir Directories="@(LibDirectory)"/>
+
+        <!--<Copy SourceFiles="@(BootstrapJs)" DestinationFolder="wwwroot/lib/bootstrap/dist/js"/>-->
+        <Copy SourceFiles="@(BootstrapCss)" DestinationFolder="wwwroot/lib/bootstrap/dist/css"/>
+
+        <Copy SourceFiles="@(HtmxJs)" DestinationFolder="wwwroot/lib/htmx.org/dist/js"/>
+    </Target>
+
+</Project>

@@ -1,0 +1,59 @@
+﻿@using System.Globalization
+
+<!DOCTYPE html>
+<html lang="@CultureInfo.CurrentCulture.TwoLetterISOLanguageName" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="htmx-config"
+          historyCacheSize="20"
+          indicatorClass="htmx-indicator"
+          includeAspNetAntiforgeryToken="true"/>
+
+    <title>@ViewData["Title"] - Tubeshade</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+    @await RenderSectionAsync("Head", false)
+</head>
+
+<body>
+<header>
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="navbar-nav me-3">
+                    <a class="navbar-brand me-0" asp-area="" asp-page="/Index">Tubeshade</a>
+                </div>
+            </div>
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <ul class="navbar-nav flex-grow-1">
+                    @await RenderSectionAsync("Navigation", required: false)
+                </ul>
+
+                <partial name="_LoginPartial"/>
+            </div>
+        </div>
+    </nav>
+</header>
+<div class="container-fluid">
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+</div>
+
+<footer class="border-top footer text-muted">
+    <div class="container">
+        &copy; 2025 - Tubeshade
+    </div>
+</footer>
+
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,30 @@
+﻿@page "~/Libraries/{libraryId:guid}/Channels/{handler?}"
+@model Channels
+@{
+    ViewData["Title"] = "Channels";
+}
+
+@section Navigation
+{
+    @await Html.PartialAsync("_LibraryNavigation", Model.Library)
+}
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Name</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var channel in Model.Entities)
+    {
+        <tr>
+            <td>
+                <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@channel.Id">
+                    @channel.Name
+                </a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

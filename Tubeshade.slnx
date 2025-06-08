@@ -1,0 +1,24 @@
+﻿<Solution>
+    <Folder Name="/Solution Items/">
+        <File Path=".gitattributes"/>
+        <File Path=".gitignore"/>
+        <File Path="LICENSE"/>
+        <File Path="global.json"/>
+        <File Path="nuget.config"/>
+        <File Path="Directory.Build.props"/>
+        <File Path="Directory.Packages.props"/>
+    </Folder>
+
+    <Folder Name="/Tests/">
+        <File Path="tests\.editorconfig"/>
+
+        <Project Path="tests\Tubeshade.Server.Tests.Integration\Tubeshade.Server.Tests.Integration.csproj"
+                 Type="Classic C#"/>
+    </Folder>
+
+    <Project Path="source\Tubeshade.Data\Tubeshade.Data.csproj"
+             Type="Classic C#"/>
+
+    <Project Path="source\Tubeshade.Server\Tubeshade.Server.csproj"
+             Type="Classic C#"/>
+</Solution>

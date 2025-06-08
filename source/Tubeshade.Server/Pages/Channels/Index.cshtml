@@ -1,0 +1,39 @@
+﻿@page "~/Channels/{handler?}"
+@model Index
+@{
+    ViewData["Title"] = "Channels";
+}
+
+@section Navigation
+{
+    <li class="nav-item">
+        <a class="nav-link" asp-page="/Libraries/Index">
+            Libraries
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" asp-page="/Channels/Index">
+            Channels
+        </a>
+    </li>
+}
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Name</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var channel in Model.Channels)
+    {
+        <tr>
+            <td>
+                <a asp-page="/Channels/Channel" asp-route-channelId="@channel.Id">
+                    @channel.Name
+                </a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

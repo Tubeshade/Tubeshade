@@ -1,0 +1,40 @@
+﻿@model List<TaskModel>
+
+<table hx-get="" hx-page="/Libraries/Tasks/Index" hx-page-handler="Running" hx-trigger="every 2s" hx-swap="outerHTML"
+       class="table">
+    <thead>
+    <tr>
+        <th >Type</th>
+        <th>Video</th>
+        <th>Progress</th>
+        <th>Status</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    @foreach (var task in Model)
+    {
+        <tr aria-busy="@task.HasProgress" aria-describedby="@task.ProgressBarId">
+            <td>@task.TypeDisplay</td>
+            <td>@task.Name</td>
+            <td>
+                @if (task.HasProgress)
+                {
+                    <progress id="@task.ProgressBarId"
+                              max="@task.Target"
+                              value="@(task.Value is null or 0 ? null : task.Value)">
+                        @task.Progress%
+                    </progress>
+                }
+            </td>
+            <td>
+                @task.Status.Name
+                @if (task.Message is not null)
+                {
+                    <span> - @task.Message</span>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

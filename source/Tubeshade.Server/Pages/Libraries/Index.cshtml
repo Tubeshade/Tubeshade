@@ -1,0 +1,45 @@
+﻿@page "~/Libraries/{handler?}"
+@model Index
+@{
+    ViewData["Title"] = "Libraries";
+}
+
+@section Navigation
+{
+    <li class="nav-item">
+        <a class="nav-link" asp-page="/Libraries/Index">
+            Libraries
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" asp-page="/Channels/Index">
+            Channels
+        </a>
+    </li>
+}
+
+@await Html.PartialAsync("_AddLibrary", new AddLibraryModel())
+
+@if (Model.Entities.Count is not 0)
+{
+    <table>
+        <thead>
+        <tr>
+            <td>
+                Library
+            </td>
+        </tr>
+        </thead>
+        <tbody>
+
+        @foreach (var library in Model.Entities)
+        {
+            <tr>
+                <td>
+                    <a asp-page="Library" asp-route-libraryId="@library.Id"> @library.Name</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
