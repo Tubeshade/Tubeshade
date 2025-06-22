@@ -1,0 +1,109 @@
+﻿name: Release
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ v*.*.* ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  server-linux-build:
+    name: Build server for Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-dotnet@v4.3.1
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'source/Tubeshade.Server/package-lock.json'
+
+      - run: echo "BUILD_TAG=-nightly"
+        if: ${{ !(startsWith(github.ref, 'refs/tags/')) }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4.2.3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+
+      - name: Publish project
+        id: publish
+        run: >
+          ./build/publish.sh
+          "Tubeshade.Server"
+          "linux-x64"
+          "${{ github.run_number }}"
+          "-nightly"
+
+      - uses: actions/upload-artifact@v4.6.2
+        with:
+          name: ${{ steps.publish.outputs.artifact-name }}
+          path: ${{ steps.publish.outputs.artifact }}
+
+  create-release:
+    name: Create release
+    needs:
+      - server-linux-build
+    runs-on: ubuntu-24.04
+    concurrency: release-create-release
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4.3.0
+        id: download
+        with:
+          path: artifacts
+
+      - name: Upload artifact to nightly release
+        if: ${{ !(startsWith(github.ref, 'refs/tags/')) }}
+        uses: pyTooling/Actions/releaser/composite@v4.3.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: nightly
+          rm: true
+          files: |
+            ${{ steps.download.outputs.download-path }}/**/*.zip
+            ${{ steps.download.outputs.download-path }}/**/*.deb
+            ${{ steps.download.outputs.download-path }}/**/*.msi
+
+      - name: Create release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: softprops/action-gh-release@v2.3.2
+        with:
+          draft: true
+          prerelease: false
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            ${{ steps.download.outputs.download-path }}/**/*.zip
+            ${{ steps.download.outputs.download-path }}/**/*.deb
+            ${{ steps.download.outputs.download-path }}/**/*.msi
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-24.04
+    concurrency: release-docker
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: docker/login-action@v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: ./build/docker/push.sh "${{ github.run_number }}" "nightly"
+        if: ${{ !(startsWith(github.ref, 'refs/tags/')) }}
+
+      - run: ./build/docker/push.sh "${{ github.run_number }}"
+        if: ${{ (startsWith(github.ref, 'refs/tags/')) }}

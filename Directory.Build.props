@@ -8,7 +8,7 @@
 
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
-		<RepositoryUrl>https://github.com/VMelnalksnis/Tubeshade</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Tubeshade/Tubeshade</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 
 		<Copyright>Valters Melnalksnis</Copyright>

@@ -1,0 +1,12 @@
+# IDE specific folders
+**/.vs/*
+**/.idea/*
+
+# Build results
+**/bin/*
+**/obj/*
+**/node_modules/*
+
+**/*.zip
+
+**/.github/*
