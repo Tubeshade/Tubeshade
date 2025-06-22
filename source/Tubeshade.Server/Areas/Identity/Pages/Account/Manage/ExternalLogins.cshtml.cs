@@ -26,9 +26,9 @@ public class ExternalLoginsModel : PageModel
         _userStore = userStore;
     }
 
-    public IList<UserLoginInfo> CurrentLogins { get; set; }
+    public IList<UserLoginInfo>? CurrentLogins { get; set; }
 
-    public IList<AuthenticationScheme> OtherLogins { get; set; }
+    public IList<AuthenticationScheme>? OtherLogins { get; set; }
 
     public bool ShowRemoveButton { get; set; }
 
@@ -48,7 +48,7 @@ public class ExternalLoginsModel : PageModel
             .Where(auth => CurrentLogins.All(ul => auth.Name != ul.LoginProvider))
             .ToList();
 
-        string passwordHash = null;
+        string? passwordHash = null;
         if (_userStore is IUserPasswordStore<UserEntity> userPasswordStore)
         {
             passwordHash = await userPasswordStore.GetPasswordHashAsync(user, HttpContext.RequestAborted);

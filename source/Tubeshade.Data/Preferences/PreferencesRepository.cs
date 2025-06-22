@@ -10,13 +10,27 @@ namespace Tubeshade.Data.Preferences;
 public sealed class PreferencesRepository(NpgsqlConnection connection) : RepositoryBase<PreferencesEntity>(connection)
 {
     /// <inheritdoc />
-    protected override string TableName { get; }
+    protected override string TableName => "media.preferences";
 
     /// <inheritdoc />
-    protected override string InsertSql { get; }
+    protected override string InsertSql =>
+        $"""
+         INSERT INTO media.preferences (id, created_at, created_by_user_id, modified_at, modified_by_user_id, playback_speed) 
+         VALUES (@Id, @CreatedAt, @CreatedByUserId, @ModifiedAt, @ModifiedByUserId, @PlaybackSpeed)
+         RETURNING id;
+         """;
 
     /// <inheritdoc />
-    protected override string SelectSql { get; }
+    protected override string SelectSql =>
+        $"""
+         SELECT id AS Id,
+                created_at AS CreatedAt,
+                created_by_user_id AS CreatedByUserId,
+                modified_at AS ModifiedAt,
+                modified_by_user_id AS ModifiedByUserId,
+                playback_speed AS PlaybackSpeed
+         FROM media.preferences
+         """;
 
     public async ValueTask<PreferencesEntity?> GetEffectiveForVideo(
         Guid libraryId,

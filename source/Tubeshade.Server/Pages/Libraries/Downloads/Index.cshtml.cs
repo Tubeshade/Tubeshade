@@ -77,10 +77,6 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
         };
     }
 
-    public async Task OnPostCancel(Guid taskRunId)
-    {
-    }
-
     public async Task<IActionResult> OnPostStartDownload(Guid videoId)
     {
         var userId = User.GetUserId();

@@ -23,6 +23,8 @@ internal sealed class NullableStructArrayTypeHandler<TValue> : SqlMapper.TypeHan
 
         if (parameter is NpgsqlParameter npgsqlParameter)
         {
+            // Correct according to documentation
+            // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
             npgsqlParameter.NpgsqlDbType = NpgsqlDbType.Array | _npgsqlDbType;
         }
         else

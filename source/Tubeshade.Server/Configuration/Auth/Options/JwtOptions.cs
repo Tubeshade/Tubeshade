@@ -23,11 +23,10 @@ public sealed record JwtOptions
     [Required]
     public string ValidIssuer { get; set; } = null!;
 
-    /// <summary>Gets the string value of <see cref="SecurityKey"/>.</summary>
+    /// <summary>Gets the string value of <see cref="GetSecurityKey"/>.</summary>
     [Required]
     public string Secret { get; set; } = null!;
 
-    /// <inheritdoc cref="TokenValidationParameters.IssuerSigningKey"/>
     /// <seealso cref="TokenValidationParameters.IssuerSigningKey"/>
-    public SymmetricSecurityKey SecurityKey => new(Encoding.UTF8.GetBytes(Secret));
+    public SymmetricSecurityKey GetSecurityKey() => new(Encoding.UTF8.GetBytes(Secret));
 }

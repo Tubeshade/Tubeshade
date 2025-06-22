@@ -12,7 +12,7 @@
     var consentFeature = HttpContext.Features.Get<ITrackingConsentFeature>();
     @if (consentFeature?.CanTrack ?? true)
     {
-        @if (Model.Is2faEnabled)
+        @if (Model.Is2FaEnabled)
         {
             if (Model.RecoveryCodesLeft == 0)
             {
@@ -64,8 +64,4 @@
             <p>You must accept the policy before you can enable two factor authentication.</p>
         </div>
     }
-}
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
 }

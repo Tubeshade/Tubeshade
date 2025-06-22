@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 using Tubeshade.Data.Identity;
 
 namespace Tubeshade.Server.Areas.Identity.Pages.Account.Manage;
@@ -13,14 +12,10 @@ namespace Tubeshade.Server.Areas.Identity.Pages.Account.Manage;
 public class PersonalDataModel : PageModel
 {
     private readonly UserManager<UserEntity> _userManager;
-    private readonly ILogger<PersonalDataModel> _logger;
 
-    public PersonalDataModel(
-        UserManager<UserEntity> userManager,
-        ILogger<PersonalDataModel> logger)
+    public PersonalDataModel(UserManager<UserEntity> userManager)
     {
         _userManager = userManager;
-        _logger = logger;
     }
 
     public async Task<IActionResult> OnGet()

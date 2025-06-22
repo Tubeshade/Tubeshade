@@ -28,13 +28,14 @@ public class RegisterConfirmationModel : PageModel
 
     public string EmailConfirmationUrl { get; set; }
 
-    public async Task<IActionResult> OnGetAsync(string email, string returnUrl = null)
+    public async Task<IActionResult> OnGetAsync(string? email, string? returnUrl = null)
     {
         if (email is null)
         {
             return RedirectToPage("/Index");
         }
-        returnUrl = returnUrl ?? Url.Content("~/");
+
+        returnUrl ??= Url.Content("~/");
 
         var user = await _userManager.FindByEmailAsync(email);
         if (user is null)
@@ -53,7 +54,7 @@ public class RegisterConfirmationModel : PageModel
             EmailConfirmationUrl = Url.Page(
                 "/Account/ConfirmEmail",
                 pageHandler: null,
-                values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+                values: new { area = "Identity", userId, code, returnUrl },
                 protocol: Request.Scheme);
         }
 

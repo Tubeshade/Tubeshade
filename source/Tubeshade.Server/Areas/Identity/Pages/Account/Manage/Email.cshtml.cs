@@ -11,7 +11,7 @@ using Tubeshade.Data.Identity;
 
 namespace Tubeshade.Server.Areas.Identity.Pages.Account.Manage;
 
-public class EmailModel : PageModel
+public sealed class EmailModel : PageModel
 {
     private readonly UserManager<UserEntity> _userManager;
     private readonly SignInManager<UserEntity> _signInManager;
@@ -39,10 +39,6 @@ public class EmailModel : PageModel
 
     public class InputModel
     {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [Required]
         [EmailAddress]
         [Display(Name = "New email")]
@@ -97,7 +93,7 @@ public class EmailModel : PageModel
             var callbackUrl = Url.Page(
                 "/Account/ConfirmEmailChange",
                 pageHandler: null,
-                values: new { area = "Identity", userId = userId, email = Input.NewEmail, code = code },
+                values: new { area = "Identity", userId, email = Input.NewEmail, code },
                 protocol: Request.Scheme);
             await _emailSender.SendEmailAsync(
                 Input.NewEmail,
@@ -133,7 +129,7 @@ public class EmailModel : PageModel
         var callbackUrl = Url.Page(
             "/Account/ConfirmEmail",
             pageHandler: null,
-            values: new { area = "Identity", userId = userId, code = code },
+            values: new { area = "Identity", userId, code },
             protocol: Request.Scheme);
         await _emailSender.SendEmailAsync(
             email,

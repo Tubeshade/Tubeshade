@@ -127,7 +127,7 @@ internal static class ServicesCollectionExtensions
                     ValidateIssuerSigningKey = true,
                     ValidAudience = jwtOptions.ValidAudience,
                     ValidIssuer = jwtOptions.ValidIssuer,
-                    IssuerSigningKey = jwtOptions.SecurityKey,
+                    IssuerSigningKey = jwtOptions.GetSecurityKey(),
                     ClockSkew = TimeSpan.Zero,
                 };
             });

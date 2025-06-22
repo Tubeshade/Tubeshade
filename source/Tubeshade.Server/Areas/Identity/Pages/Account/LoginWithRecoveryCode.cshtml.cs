@@ -32,10 +32,6 @@ public class LoginWithRecoveryCodeModel : PageModel
 
     public class InputModel
     {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
         [Required]
         [DataType(DataType.Text)]
@@ -43,7 +39,7 @@ public class LoginWithRecoveryCodeModel : PageModel
         public string RecoveryCode { get; set; }
     }
 
-    public async Task<IActionResult> OnGetAsync(string returnUrl = null)
+    public async Task<IActionResult> OnGetAsync(string? returnUrl = null)
     {
         // Ensure the user has gone through the username & password screen first
         var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
@@ -57,7 +53,7 @@ public class LoginWithRecoveryCodeModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+    public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
     {
         if (!ModelState.IsValid)
         {
@@ -74,7 +70,7 @@ public class LoginWithRecoveryCodeModel : PageModel
 
         var result = await _signInManager.TwoFactorRecoveryCodeSignInAsync(recoveryCode);
 
-        var userId = await _userManager.GetUserIdAsync(user);
+        _ = await _userManager.GetUserIdAsync(user);
 
         if (result.Succeeded)
         {

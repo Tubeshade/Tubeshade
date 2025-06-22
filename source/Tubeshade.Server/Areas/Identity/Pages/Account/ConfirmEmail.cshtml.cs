@@ -18,8 +18,9 @@ public class ConfirmEmailModel : PageModel
     }
 
     [TempData]
-    public string StatusMessage { get; set; }
-    public async Task<IActionResult> OnGetAsync(string userId, string code)
+    public string? StatusMessage { get; set; }
+
+    public async Task<IActionResult> OnGetAsync(string? userId, string? code)
     {
         if (userId is null || code is null)
         {

@@ -29,10 +29,6 @@ public sealed class ResendEmailConfirmationModel : PageModel
 
     public class InputModel
     {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [Required]
         [EmailAddress]
         public string Email { get; set; }
@@ -62,7 +58,7 @@ public sealed class ResendEmailConfirmationModel : PageModel
         var callbackUrl = Url.Page(
             "/Account/ConfirmEmail",
             pageHandler: null,
-            values: new { userId = userId, code = code },
+            values: new { userId, code },
             protocol: Request.Scheme);
         await _emailSender.SendEmailAsync(
             Input.Email,

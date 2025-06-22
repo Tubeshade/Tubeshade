@@ -2,7 +2,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 using Tubeshade.Data.Identity;
 
 namespace Tubeshade.Server.Areas.Identity.Pages.Account.Manage;
@@ -11,14 +10,11 @@ public class TwoFactorAuthenticationModel : PageModel
 {
     private readonly UserManager<UserEntity> _userManager;
     private readonly SignInManager<UserEntity> _signInManager;
-    private readonly ILogger<TwoFactorAuthenticationModel> _logger;
 
-    public TwoFactorAuthenticationModel(
-        UserManager<UserEntity> userManager, SignInManager<UserEntity> signInManager, ILogger<TwoFactorAuthenticationModel> logger)
+    public TwoFactorAuthenticationModel(UserManager<UserEntity> userManager, SignInManager<UserEntity> signInManager)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _logger = logger;
     }
 
     public bool HasAuthenticator { get; set; }
@@ -26,12 +22,12 @@ public class TwoFactorAuthenticationModel : PageModel
     public int RecoveryCodesLeft { get; set; }
 
     [BindProperty]
-    public bool Is2faEnabled { get; set; }
+    public bool Is2FaEnabled { get; set; }
 
     public bool IsMachineRemembered { get; set; }
 
     [TempData]
-    public string StatusMessage { get; set; }
+    public string? StatusMessage { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -42,7 +38,7 @@ public class TwoFactorAuthenticationModel : PageModel
         }
 
         HasAuthenticator = await _userManager.GetAuthenticatorKeyAsync(user) is not null;
-        Is2faEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
+        Is2FaEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
         IsMachineRemembered = await _signInManager.IsTwoFactorClientRememberedAsync(user);
         RecoveryCodesLeft = await _userManager.CountRecoveryCodesAsync(user);
 

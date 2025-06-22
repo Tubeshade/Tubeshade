@@ -9,16 +9,16 @@ using Tubeshade.Data.Identity;
 
 namespace Tubeshade.Server.Areas.Identity.Pages.Account;
 
-public class LoginWith2faModel : PageModel
+public sealed class LoginWith2FaModel : PageModel
 {
     private readonly SignInManager<UserEntity> _signInManager;
     private readonly UserManager<UserEntity> _userManager;
-    private readonly ILogger<LoginWith2faModel> _logger;
+    private readonly ILogger<LoginWith2FaModel> _logger;
 
-    public LoginWith2faModel(
+    public LoginWith2FaModel(
         SignInManager<UserEntity> signInManager,
         UserManager<UserEntity> userManager,
-        ILogger<LoginWith2faModel> logger)
+        ILogger<LoginWith2FaModel> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;
@@ -30,29 +30,21 @@ public class LoginWith2faModel : PageModel
 
     public bool RememberMe { get; set; }
 
-    public string ReturnUrl { get; set; }
+    public string? ReturnUrl { get; set; }
 
     public class InputModel
     {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [Required]
         [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
         [DataType(DataType.Text)]
         [Display(Name = "Authenticator code")]
         public string TwoFactorCode { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [Display(Name = "Remember this machine")]
         public bool RememberMachine { get; set; }
     }
 
-    public async Task<IActionResult> OnGetAsync(bool rememberMe, string returnUrl = null)
+    public async Task<IActionResult> OnGetAsync(bool rememberMe, string? returnUrl = null)
     {
         // Ensure the user has gone through the username & password screen first
         var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
@@ -68,14 +60,14 @@ public class LoginWith2faModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync(bool rememberMe, string returnUrl = null)
+    public async Task<IActionResult> OnPostAsync(bool rememberMe, string? returnUrl = null)
     {
         if (!ModelState.IsValid)
         {
             return Page();
         }
 
-        returnUrl = returnUrl ?? Url.Content("~/");
+        returnUrl ??= Url.Content("~/");
 
         var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
         if (user is null)
@@ -87,7 +79,7 @@ public class LoginWith2faModel : PageModel
 
         var result = await _signInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, rememberMe, Input.RememberMachine);
 
-        var userId = await _userManager.GetUserIdAsync(user);
+        _ = await _userManager.GetUserIdAsync(user);
 
         if (result.Succeeded)
         {

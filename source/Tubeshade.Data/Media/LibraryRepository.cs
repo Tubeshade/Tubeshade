@@ -31,5 +31,9 @@ public sealed class LibraryRepository(NpgsqlConnection connection) : ModifiableR
          """;
 
     /// <inheritdoc />
-    protected override string UpdateSet { get; }
+    protected override string UpdateSet =>
+        $"""
+           name = @Name,
+           storage_path = @StoragePath
+         """;
 }

@@ -22,7 +22,6 @@ public sealed record UserEntity : Entity, IModifiableEntity, INamedEntity
     [ProtectedPersonalData]
     public required string Name { get; set; }
 
-    /// <inheritdoc />
     [ProtectedPersonalData]
     public required string NormalizedName { get; set; }
 
