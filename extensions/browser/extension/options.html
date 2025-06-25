@@ -1,19 +1,46 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <title>Tubeshade extension options</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="stylesheet" href="dependencies/bootstrap.min.css"/>
 </head>
-<body>
+<body class="container-fluid">
 <form>
-    <div>
-        <label for="server_url">Server URL</label>
-        <input type="text" name="server_url" id="server_url">
+    <div class="mb-3">
+        <label class="form-label" for="server_url">Server URL</label>
+        <input class="form-control" type="url" name="server_url" id="server_url" required
+               placeholder="http://localhost:5201">
     </div>
 
-    <button type="submit">Save</button>
+    <div class="mb-3">
+        <label class="form-label" for="library">Library</label>
+        <select class="form-select" name="library" id="library" required>
+            <option selected disabled value="">Choose...</option>
+            <option value="d3a3270a-90dd-4f14-b366-4808eacfbf6a">Example</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="oidc_authority">OIDC Authority</label>
+        <input class="form-control" type="url" name="oidc_authority" id="oidc_authority"
+               placeholder="https://keycloak.local/realms/Example">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="oidc_client_id">Client Id</label>
+        <input class="form-control" type="text" name="oidc_client_id" id="oidc_client_id"
+               placeholder="tubeshade-browser-extension">
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-primary" id="verify_config">Verify</button>
+        <button class="btn btn-success" type="submit">Save</button>
+    </div>
 </form>
 
-<script src="options.js"></script>
+<script src="options.js" type="module"></script>
 </body>
 </html>

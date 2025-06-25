@@ -13,13 +13,12 @@
     "page": "options.html"
   },
   "background": {
-    "scripts": [
-      "background.js"
-    ]
+    "page": "background.html"
   },
   "browser_specific_settings": {
     "gecko": {
       "id": "tubeshade-browser-extension@tubeshade.org"
-    }
+    },
+    "gecko_android": {}
   }
 }
