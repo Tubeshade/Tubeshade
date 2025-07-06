@@ -1,0 +1,20 @@
+#!/bin/bash
+set -e
+
+TUBESHADE_USER=tubeshade
+
+if [[ -z "$(getent group ${TUBESHADE_USER})" ]]; then
+	addgroup --system ${TUBESHADE_USER}
+fi
+
+if [[ -z "$(getent passwd ${TUBESHADE_USER})" ]]; then
+	adduser \
+		--system --ingroup ${TUBESHADE_USER} ${TUBESHADE_USER} \
+		--no-create-home --home /nonexistent \
+		--gecos "Tubeshade default user"
+fi
+
+chown tubeshade /etc/opt/tubeshade --recursive
+chown tubeshade /opt/tubeshade --recursive
+
+deb-systemd-invoke enable tubeshade.service

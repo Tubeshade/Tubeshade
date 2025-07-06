@@ -76,3 +76,36 @@ jobs:
           npm ci
           npx playwright install --with-deps
           npm test
+
+  build-debian-package:
+    name: Build debian package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-dotnet@v4.3.1
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'source/Tubeshade.Server/package-lock.json'
+
+      - run: echo "BUILD_TAG=-test"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4.2.3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+
+      - name: Publish project
+        id: publish
+        run: build/publish.sh "Tubeshade.Server" "linux-x64" "${{ github.run_number }}" "-test"
+
+      - name: Build debian package
+        run: build/debian/debian.sh "${{ steps.publish.outputs.artifact }}" "${{ github.run_number }}"
+
+      - uses: actions/upload-artifact@v4.6.2
+        with:
+          name: Tubeshade.Server_linux-x64.deb
+          path: "**/*.deb"

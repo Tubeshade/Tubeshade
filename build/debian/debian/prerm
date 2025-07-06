@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+
+deb-systemd-invoke stop tubeshade.service

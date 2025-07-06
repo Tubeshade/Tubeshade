@@ -50,10 +50,35 @@ jobs:
           name: ${{ steps.publish.outputs.artifact-name }}
           path: ${{ steps.publish.outputs.artifact }}
 
+  build-debian-package:
+    name: Build debian package
+    needs: server-linux-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/download-artifact@v4.3.0
+        id: download
+        with:
+          name: Tubeshade.Server_linux-x64.zip
+
+      - name: Build debian package
+        run: >
+          build/debian/debian.sh
+          "${{ steps.download.outputs.download-path }}/Tubeshade.Server_linux-x64.zip"
+          "${{ github.run_number }}"
+
+      - uses: actions/upload-artifact@v4.6.2
+        with:
+          name: Tubeshade.Server_linux-x64.deb
+          path: "**/*.deb"
+
   create-release:
     name: Create release
     needs:
       - server-linux-build
+      - build-debian-package
     runs-on: ubuntu-24.04
     concurrency: release-create-release
     timeout-minutes: 5
