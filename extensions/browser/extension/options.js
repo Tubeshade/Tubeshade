@@ -33,7 +33,7 @@ async function saveOptions() {
 
 async function verifyOptions() {
     await saveOptions();
-    await oidcAuthenticate();
+    const access_token = await oidcAuthenticate();
 
     let server_url = document.querySelector("#server_url").value;
     const response = await fetch(
@@ -43,7 +43,7 @@ async function verifyOptions() {
             headers: {
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${(await browser.storage.session.get("access_token")).access_token}`,
+                "Authorization": `Bearer ${access_token}`,
                 mode: "cors",
             },
         });

@@ -1,5 +1,7 @@
 ﻿"use strict";
 
+import {getAccessToken} from "./modules/auth.js";
+
 console.log("Starting background.js")
 
 browser.runtime.onInstalled.addListener(async function (_details) {
@@ -41,10 +43,11 @@ function onCookieChange(changeInfo) {
 }
 
 async function syncCookies() {
+    const config = await browser.storage.sync.get();
     const path = "api/v1.0/cookies";
     const cookieLines = await getCookieLines();
     const requestData = {
-        libraryId: "f63dfbec-5536-44af-af62-6ad8d1734f46",
+        libraryId: config.library_id,
         domain: "youtube.com",
         cookie: cookieLines.join('\n'),
     }
@@ -95,16 +98,11 @@ function buildCookieLine(cookie) {
 
 async function sendData(path, payload, method) {
     const baseUrl = await browser.storage.sync.get("server_url");
-    const accessToken = await browser.storage.session.get("access_token");
+    const accessToken = await getAccessToken();
     console.log(baseUrl);
 
     if (baseUrl.server_url === undefined) {
         console.log("Tubeshade server URL not configured");
-        return null;
-    }
-
-    if (accessToken.access_token === undefined) {
-        console.log("Access token not configured");
         return null;
     }
 
@@ -117,7 +115,7 @@ async function sendData(path, payload, method) {
             headers: {
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken.access_token}`,
+                "Authorization": `Bearer ${accessToken}`,
                 mode: "cors",
             },
             body: JSON.stringify(payload),

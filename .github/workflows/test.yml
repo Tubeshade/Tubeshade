@@ -57,3 +57,22 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+
+  test-extension:
+    name: Test browser extension
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'extensions/browser/package-lock.json'
+
+      - name: Run tests
+        working-directory: './extensions/browser'
+        run: |
+          npm ci
+          npx playwright install --with-deps
+          npm test

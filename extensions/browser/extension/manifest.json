@@ -13,7 +13,10 @@
     "page": "options.html"
   },
   "background": {
-    "page": "background.html"
+    "scripts": [
+      "background.js"
+    ],
+    "type": "module"
   },
   "browser_specific_settings": {
     "gecko": {

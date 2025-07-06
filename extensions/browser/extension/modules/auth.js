@@ -1,10 +1,35 @@
 ﻿"use strict";
 
-export {oidcAuthenticate};
+export {getAccessToken, oidcAuthenticate};
+
+async function getAccessToken() {
+    let {
+        access_token,
+        access_token_expires_at
+    } = await browser.storage.session.get(["access_token", "access_token_expires_at"]);
+
+    if (access_token === undefined || access_token_expires_at === undefined) {
+        console.debug("Access token not found, starting authentication flow");
+        access_token = await oidcAuthenticate();
+    } else if (access_token_expires_at >= Date.now()) {
+        console.debug("Access token expired");
+        const {refresh_token} = await browser.storage.local.get("refresh_token");
+
+        if (refresh_token === undefined) {
+            console.debug("Refresh token not found, starting authentication flow");
+            access_token = await oidcAuthenticate();
+        } else {
+            console.debug("Refreshing access token");
+            access_token = await refreshAccessToken(refresh_token);
+        }
+    }
+
+    return access_token;
+}
 
 async function oidcAuthenticate() {
     const url = await beginCodeFlow();
-    await completeCodeFlow(url);
+    return await completeCodeFlow(url);
 }
 
 async function beginCodeFlow() {
@@ -75,5 +100,38 @@ async function completeCodeFlow(redirectUrl) {
     await browser.storage.session.set({
         "access_token": responseBody.access_token,
         "access_token_expires_in": responseBody.expires_in,
+        "access_token_expires_at": Date.now() + (responseBody.expires_in * 1000),
     });
+
+    return responseBody.access_token;
+}
+
+async function refreshAccessToken(refresh_token) {
+    const config = await browser.storage.sync.get();
+
+    let tokenRequest = new Request(
+        `${config.oidc_authority}/protocol/openid-connect/token`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+                "grant_type": "refresh_token",
+                "client_id": config.oidc_client_id,
+                "refresh_token": refresh_token,
+            }),
+            mode: "cors",
+        })
+
+    let tokenResponse = await fetch(tokenRequest);
+    console.log(tokenResponse);
+    let responseBody = await tokenResponse.json();
+
+    await browser.storage.session.set({
+        "access_token": responseBody.access_token,
+        "access_token_expires_in": responseBody.expires_in,
+        "access_token_expires_at": Date.now() + (responseBody.expires_in * 1000),
+    });
+
+    return responseBody.access_token;
 }
