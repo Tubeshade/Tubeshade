@@ -47,19 +47,8 @@ async function verifyOptions() {
                 mode: "cors",
             },
         });
-    const json = await response.json();
 
-    const librarySelect = document.querySelector("select");
-    for (let option = librarySelect.options.length - 1; option >= 1; option--) {
-        librarySelect.remove(option);
-    }
-
-    for (var library of json) {
-        const option = document.createElement("option");
-        option.value = library.id;
-        option.text = library.name;
-        librarySelect.add(option, null);
-    }
+    await response.json();
 }
 
 document.addEventListener("DOMContentLoaded", restoreOptions);
