@@ -20,3 +20,7 @@ html {
 img:-moz-loading {
     visibility: hidden;
 }
+
+video {
+    max-height: 90vh;
+}
