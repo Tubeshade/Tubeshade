@@ -226,7 +226,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     video_files.type AS Type,
                     video_files.width AS Width,
                     video_files.height AS Height,
-                    video_files.framerate AS Framerate
+                    video_files.framerate AS Framerate,
+             downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
+             downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
              FROM media.video_files
                 INNER JOIN media.videos ON video_files.video_id = videos.id
              WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
@@ -258,7 +260,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     video_files.type AS Type,
                     video_files.width AS Width,
                     video_files.height AS Height,
-                    video_files.framerate AS Framerate
+                    video_files.framerate AS Framerate,
+             downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
+             downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
              FROM media.video_files
                 INNER JOIN media.videos ON video_files.video_id = videos.id
              WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)};
@@ -289,7 +293,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     video_files.type AS Type,
                     video_files.width AS Width,
                     video_files.height AS Height,
-                    video_files.framerate AS Framerate
+                    video_files.framerate AS Framerate,
+             downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
+             downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
              FROM media.video_files
                 INNER JOIN media.videos ON video_files.video_id = videos.id
              WHERE {AccessFilter} AND video_files.id = @{nameof(GetSingleParameters.Id)};
