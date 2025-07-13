@@ -96,7 +96,7 @@ internal static class Program
 
         builder.Services.AddRequestLocalization(options =>
         {
-            var cultures = new CultureInfo[] { new("en-US"), new("en"), new("lv"), };
+            var cultures = new CultureInfo[] { new("en-US"), new("en") };
 
             options.SupportedCultures = cultures;
             options.SupportedUICultures = cultures;
