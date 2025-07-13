@@ -2,6 +2,7 @@ using System.Globalization;
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -15,6 +16,7 @@ using Tubeshade.Data.Identity.Stores;
 using Tubeshade.Server.Areas.Identity;
 using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Configuration.Auth;
+using Tubeshade.Server.Configuration.Startup;
 using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server;
@@ -109,6 +111,8 @@ internal static class Program
             .AddHostedService<TaskBackgroundService>()
             .AddHostedService<IndexBackgroundService>()
             .AddHostedService<DownloadBackgroundService>();
+
+        builder.Services.AddTransient<IStartupFilter, DatabaseMigrationStartupFilter>();
 
         builder.Services.AddCors(options => options.AddDefaultPolicy(cors =>
             cors.AllowAnyMethod()
