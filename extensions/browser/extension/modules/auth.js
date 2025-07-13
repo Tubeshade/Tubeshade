@@ -11,7 +11,7 @@ async function getAccessToken() {
     if (access_token === undefined || access_token_expires_at === undefined) {
         console.debug("Access token not found, starting authentication flow");
         access_token = await oidcAuthenticate();
-    } else if (access_token_expires_at >= Date.now()) {
+    } else if (access_token_expires_at <= Date.now()) {
         console.debug("Access token expired");
         const {refresh_token} = await browser.storage.local.get("refresh_token");
 
