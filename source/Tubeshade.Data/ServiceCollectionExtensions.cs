@@ -71,6 +71,9 @@ public static class ServiceCollectionExtensions
             var options = provider.GetRequiredService<IOptionsMonitor<DatabaseOptions>>().CurrentValue;
             var builder = new NpgsqlSlimDataSourceBuilder(options.ConnectionString);
 
+            builder.EnableTransportSecurity();
+            builder.EnableIntegratedSecurity();
+
             builder.EnableArrays();
             builder.UseLoggerFactory(provider.GetRequiredService<ILoggerFactory>());
             builder.UseNodaTime();
