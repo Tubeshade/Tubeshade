@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,19 +52,20 @@ public sealed class VideosController : ControllerBase
     public async Task<IActionResult> GetFile(Guid id, Guid fileId, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var file = await _repository.FindFileAsync(fileId, userId, cancellationToken);
-        if (file?.DownloadedAt is null)
+        var videoFile = await _repository.FindFileAsync(fileId, userId, cancellationToken);
+        if (videoFile?.DownloadedAt is null)
         {
             return NotFound();
         }
 
-        var video = await _repository.GetAsync(file.VideoId, userId, cancellationToken);
-        var stream = System.IO.File.OpenRead(Path.Combine(video.StoragePath, file.StoragePath));
+        var video = await _repository.GetAsync(videoFile.VideoId, userId, cancellationToken);
+        var file = new FileInfo(Path.Combine(video.StoragePath, videoFile.StoragePath));
+        var stream = file.OpenRead();
         return File(
             stream,
-            $"video/{file.Type.Name}",
-            file.CreatedAt.ToDateTimeOffset(),
-            new EntityTagHeaderValue(new StringSegment($"\"{id}\"")),
+            $"video/{videoFile.Type.Name}",
+            videoFile.CreatedAt.ToDateTimeOffset(),
+            new EntityTagHeaderValue(new StringSegment($"\"video_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")),
             true);
     }
 
@@ -87,9 +89,8 @@ public sealed class VideosController : ControllerBase
         return File(
             stream,
             "image/jpeg",
-            "thumbnail.jpg",
             file.LastWriteTimeUtc,
-            new EntityTagHeaderValue(new StringSegment($"\"thumbnail_{id}_{file.LastWriteTimeUtc}\"")));
+            new EntityTagHeaderValue(new StringSegment($"\"thumbnail_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")));
     }
 
     [HttpGet("Subtitles")]
@@ -113,7 +114,7 @@ public sealed class VideosController : ControllerBase
             stream,
             "text/vtt",
             file.LastWriteTimeUtc,
-            new EntityTagHeaderValue(new StringSegment($"\"subtitles_en_{id}_{file.LastWriteTimeUtc}\"")));
+            new EntityTagHeaderValue(new StringSegment($"\"subtitles_en_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")));
     }
 
     [HttpGet("Chapters")]
@@ -137,6 +138,6 @@ public sealed class VideosController : ControllerBase
             stream,
             "text/vtt",
             file.LastWriteTimeUtc,
-            new EntityTagHeaderValue(new StringSegment($"\"chapters_{id}_{file.LastWriteTimeUtc}\"")));
+            new EntityTagHeaderValue(new StringSegment($"\"chapters_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")));
     }
 }
