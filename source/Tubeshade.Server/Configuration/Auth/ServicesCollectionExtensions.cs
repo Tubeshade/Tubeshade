@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -85,6 +87,7 @@ internal static class ServicesCollectionExtensions
                     options.Events = new()
                     {
                         OnValidatePrincipal = SecurityStampValidator.ValidatePrincipalAsync,
+                        OnRedirectToLogin = OnCookieRedirectToLogin,
                     };
                 })
                 .AddCookie(Schemes.External, options =>
@@ -194,5 +197,21 @@ internal static class ServicesCollectionExtensions
         });
 
         return services;
+    }
+
+    /// <seealso cref="CookieAuthenticationEvents.OnRedirectToLogin"/>
+    private static Task OnCookieRedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
+    {
+        if (context.Request.IsApiRequest())
+        {
+            context.Response.Headers.Location = context.RedirectUri;
+            context.Response.StatusCode = 401;
+        }
+        else
+        {
+            context.Response.Redirect(context.RedirectUri);
+        }
+
+        return Task.CompletedTask;
     }
 }
