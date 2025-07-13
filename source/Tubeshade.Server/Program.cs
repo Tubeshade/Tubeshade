@@ -133,7 +133,7 @@ internal static class Program
 
         app.UseHttpsRedirection();
 
-        app.MapStaticAssets();
+        app.UseStaticFiles();
 
         app.UseRouting();
         app.UseCors();
