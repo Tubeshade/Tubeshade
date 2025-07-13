@@ -87,6 +87,7 @@ public sealed class VideosController : ControllerBase
         return File(
             stream,
             "image/jpeg",
+            "thumbnail.jpg",
             file.LastWriteTimeUtc,
             new EntityTagHeaderValue(new StringSegment($"\"thumbnail_{id}_{file.LastWriteTimeUtc}\"")));
     }
