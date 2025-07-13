@@ -41,7 +41,9 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
         $"""
          WITH system AS (SELECT id FROM identity.users WHERE normalized_name = 'SYSTEM')
          INSERT
-         INTO identity.users (created_by_user_id,
+         INTO identity.users (
+                     id,
+                     created_by_user_id,
                      modified_by_user_id,
                      name,
                      normalized_name,
@@ -56,7 +58,8 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
                      lockout_end,
                      lockout_enabled,
                      access_failed_count)
-         SELECT system.id,
+         SELECT @Id,
+                system.id,
                 system.id,
                 @{nameof(UserEntity.Name)},
                 @{nameof(UserEntity.NormalizedName)},
