@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Tubeshade.Data;
@@ -28,8 +29,10 @@ internal static class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services
+            .AddTransient<IConfigureOptions<YtdlpOptions>, ExecutableDetector>()
             .AddOptions<YtdlpOptions>()
             .BindConfiguration(YtdlpOptions.SectionName)
+            .ValidateDataAnnotations()
             .ValidateOnStart();
 
         builder.Services.AddRazorPages();
