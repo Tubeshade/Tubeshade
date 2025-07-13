@@ -312,8 +312,7 @@ public sealed class YoutubeService
                 },
                 transaction);
 
-            var imageFile = await _imageFileRepository.GetAsync(imageFileId!.Value, userId, transaction);
-            await _imageFileRepository.LinkToVideoAsync(imageFile.Id, video.Id, userId, transaction);
+            await _imageFileRepository.LinkToVideoAsync(imageFileId!.Value, video.Id, userId, transaction);
         }
         else if (thumbnails is not [])
         {
