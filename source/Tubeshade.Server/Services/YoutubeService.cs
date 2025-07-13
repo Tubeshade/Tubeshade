@@ -24,21 +24,30 @@ namespace Tubeshade.Server.Services;
 
 public sealed class YoutubeService
 {
-    private const string VideoFormat = "wv+(ba[format_note*=original]/ba)/worst";
+    private static readonly string[] VideoFormats =
+    [
+        "bv+(ba[format_note*=original]/ba)/best",
+        "bv*[height<=720]+(ba[format_note*=original]/ba)"
+    ];
 
     private readonly ILogger<YoutubeService> _logger;
     private readonly YtdlpOptions _options;
     private readonly LibraryRepository _libraryRepository;
     private readonly ChannelRepository _channelRepository;
     private readonly VideoRepository _videoRepository;
+    private readonly VideoFileRepository _videoFileRepository;
+    private readonly ImageFileRepository _imageFileRepository;
     private readonly IClock _clock;
     private readonly NpgsqlConnection _connection;
 
-    public YoutubeService(
-        ILogger<YoutubeService> logger,
+    private static string VideoFormat { get; } = string.Join(',', VideoFormats);
+
+    public YoutubeService(ILogger<YoutubeService> logger,
         IOptionsMonitor<YtdlpOptions> optionsMonitor,
         ChannelRepository channelRepository,
         VideoRepository videoRepository,
+        VideoFileRepository videoFileRepository,
+        ImageFileRepository imageFileRepository,
         IClock clock,
         LibraryRepository libraryRepository,
         NpgsqlConnection connection)
@@ -50,6 +59,8 @@ public sealed class YoutubeService
         _clock = clock;
         _libraryRepository = libraryRepository;
         _connection = connection;
+        _imageFileRepository = imageFileRepository;
+        _videoFileRepository = videoFileRepository;
     }
 
     public async ValueTask IndexVideo(
@@ -80,7 +91,8 @@ public sealed class YoutubeService
             {
                 Cookies = cookieFilepath,
                 Format = VideoFormat,
-                CustomOptions = [new Option<string>("-t") { Value = "mp4" }]
+                NoPart = true,
+                EmbedChapters = true,
             });
 
         if (!videoData.Success)
@@ -127,7 +139,41 @@ public sealed class YoutubeService
                 transaction);
 
             Directory.CreateDirectory(channel.StoragePath);
-            // todo: download avatar/banner
+
+            // var result = await youtube.RunWithOptions(
+            //     videoData.Data.ChannelUrl,
+            //     new OptionSet
+            //     {
+            //         Output = "thumbnail:thumbnail.%(ext)s",
+            //         Paths = $"{channel.StoragePath}",
+            //         SkipDownload = true,
+            //         LimitRate = 1024 * 1024 * 10,
+            //         Cookies = cookieFilepath,
+            //         WriteAllThumbnails = true,
+            //         PlaylistItems = "0",
+            //     },
+            //     cancellationToken);
+            //
+            // var thumbnails = Directory.EnumerateFiles(channel.StoragePath);
+            // foreach (var thumbnail in thumbnails)
+            // {
+            //     var type = Path.GetFileNameWithoutExtension(thumbnail) switch
+            //     {
+            //         var fileName when fileName.EndsWith("avatar_uncropped") => ImageType.Thumbnail,
+            //         var fileName when fileName.EndsWith("banner_uncropped") => ImageType.Banner,
+            //         _ => null,
+            //     };
+            //
+            //     if (type is null)
+            //     {
+            //         File.Delete(thumbnail);
+            //         continue;
+            //     }
+            //
+            //     File.Move(
+            //         thumbnail,
+            //         Path.Combine(channel.StoragePath, $"{type.Name}{Path.GetExtension(thumbnail)}"));
+            // }
         }
 
         var videos = await _videoRepository.GetAsync(userId, transaction);
@@ -178,20 +224,103 @@ public sealed class YoutubeService
             Directory.CreateDirectory(video.StoragePath);
         }
 
-        await youtube.RunWithOptions(
-            url,
+        var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction);
+        foreach (var format in VideoFormats)
+        {
+            var result = await youtube.RunVideoDataFetch(
+                url,
+                cancellationToken,
+                true,
+                false,
+                new OptionSet
+                {
+                    Cookies = cookieFilepath,
+                    Format = format,
+                    NoPart = true,
+                    EmbedChapters = true,
+                });
+
+            if (!result.Success || result.Data is not { ResultType: MetadataType.Video } data)
+            {
+                throw new Exception("Unexpected result");
+            }
+
+            var formatIds = data.FormatID.Split('+');
+            var formats = formatIds
+                .Select(formatId => data.Formats.Single(formatData => formatData.FormatId == formatId))
+                .ToArray();
+
+            var videoFormat = formats.Single(formatData => formatData.Resolution is not "audio only");
+            var containerType = VideoContainerType.FromName(videoFormat.Extension);
+
+            var file = files.SingleOrDefault(file =>
+                file.Type == containerType &&
+                file.Width == videoFormat.Width &&
+                Math.Round(file.Framerate) == (decimal)Math.Round(videoFormat.FrameRate!.Value));
+
+            if (file is null)
+            {
+                var fileId = await _videoFileRepository.AddAsync(
+                    new VideoFileEntity
+                    {
+                        CreatedByUserId = userId,
+                        ModifiedByUserId = userId,
+                        OwnerId = userId,
+                        VideoId = video.Id,
+                        StoragePath = $"video_{videoFormat.Height}.{containerType.Name}",
+                        Type = containerType,
+                        Width = videoFormat.Width!.Value,
+                        Height = videoFormat.Height!.Value,
+                        Framerate = (decimal)videoFormat.FrameRate!.Value,
+                    },
+                    transaction);
+
+                file = await _videoFileRepository.GetAsync(fileId!.Value, userId, transaction);
+            }
+
+            _logger.LogDebug("Video file {VideoFile}", file);
+        }
+
+        var thumbnail = videoData
+            .Data
+            .Thumbnails
+            .Where(data => new UriBuilder(data.Url).Query.StartsWith("?sqp") && data.Width.HasValue)
+            .OrderByDescending(data => data.Width)
+            .First();
+
+        _ = await youtube.RunWithOptions(
+            thumbnail.Url,
             new OptionSet
             {
-                Output = "thumbnail:thumbnail.%(ext)s",
+                Output = "thumbnail.%(ext)s",
                 Paths = $"{video.StoragePath}",
-                SkipDownload = true,
-                LimitRate = 1024 * 1024,
                 Cookies = cookieFilepath,
-                WriteThumbnail = true,
             },
             cancellationToken);
 
-        await transaction.CommitAsync(cancellationToken);
+        var thumbnails = Directory.EnumerateFiles(video.StoragePath, "thumbnail.*").ToArray();
+        if (thumbnails is [var thumbnailPath])
+        {
+            var imageFileId = await _imageFileRepository.AddAsync(
+                new()
+                {
+                    CreatedByUserId = userId,
+                    StoragePath = Path.GetFileName(thumbnailPath),
+                    Type = ImageType.Thumbnail,
+                    Width = thumbnail.Width!.Value,
+                    Height = thumbnail.Height!.Value
+                },
+                transaction);
+
+            var imageFile = await _imageFileRepository.GetAsync(imageFileId!.Value, userId, transaction);
+            await _imageFileRepository.LinkToVideoAsync(imageFile.Id, video.Id, userId, transaction);
+        }
+        else if (thumbnails is not [])
+        {
+            throw new Exception("Multiple thumbnails");
+        }
+
+        await transaction.CommitWithRetries(_logger, cancellationToken);
     }
 
     public async ValueTask DownloadVideo(
@@ -215,6 +344,7 @@ public sealed class YoutubeService
         };
 
         _logger.LogInformation("Getting video metadata for {VideoUrl}", video.ExternalUrl);
+
         var videoData = await youtube.RunVideoDataFetch(
             video.ExternalUrl,
             cancellationToken,
@@ -238,130 +368,6 @@ public sealed class YoutubeService
                 $"Unexpected metadata type when downloading video: {videoData.Data.ResultType}");
         }
 
-        var formatIds = videoData.Data.FormatID.Split('+');
-        var formats = formatIds
-            .Select(formatId => videoData.Data.Formats.Single(format => format.FormatId == formatId))
-            .ToArray();
-
-        foreach (var formatData in formats)
-        {
-            _logger.LogDebug("Selected format {FormatData}", formatData);
-        }
-
-        var size = formats.Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
-
-        _logger.LogInformation(
-            "Selected format with size {VideoSize} MB",
-            size.HasValue ? Math.Round(size.Value / 1024 / 1024, 2) : null);
-
-        if (size.HasValue)
-        {
-            await taskRepository.InitializeTaskProgress(taskRunId, size.Value);
-        }
-
-        var attributes = File.GetAttributes(video.StoragePath);
-        var targetDirectory = (attributes & FileAttributes.Directory) is FileAttributes.Directory
-            ? video.StoragePath
-            : Path.GetDirectoryName(video.StoragePath)!;
-
-        Directory.CreateDirectory(targetDirectory);
-
-        if (video.DownloadedAt is not null &&
-            Directory.EnumerateFiles(targetDirectory, $"{video.Id}.*").Any(file => !file.EndsWith("webp")))
-        {
-            _logger.LogInformation("Video already exists {VideoUrl}", video.ExternalUrl);
-            await transaction.CommitAsync(cancellationToken);
-            return;
-        }
-
-        youtube.OutputFolder = tempDirectory.FullName;
-        youtube.OutputFileTemplate = "video.%(ext)s";
-
-        var outputProgress = new Progress<string>(s => _logger.LogDebug("yt-dlp output: {Output}", s));
-
-        _logger.LogInformation("Downloading video {VideoUrl} to {Directory}", video.ExternalUrl,
-            tempDirectory.FullName);
-        var downloadTask = youtube.RunVideoDownload(
-            video.ExternalUrl,
-            format: VideoFormat,
-            DownloadMergeFormat.Unspecified,
-            VideoRecodeFormat.None,
-            cancellationToken,
-            null,
-            outputProgress,
-            new OptionSet
-            {
-                LimitRate = 1024 * 1024,
-                Cookies = cookieFilepath,
-                WriteSubs = true,
-                NoWriteAutoSubs = true,
-                SubFormat = "vtt",
-                SubLangs = "all,-live_chat",
-                CustomOptions =
-                [
-                    new Option<string>("-t") { Value = "mp4" },
-                    new Option<string>("-o") { Value = $"subtitle:{Path.Combine(tempDirectory.FullName, "subtitles.%(ext)s")}" },
-                ]
-            });
-
-        string? storagePath = null;
-
-        var timestamp = Stopwatch.GetTimestamp();
-        var fileSize = 0L;
-        var pollingDelay = TimeSpan.FromSeconds(2);
-
-        while (!downloadTask.IsCompleted || storagePath is null)
-        {
-            var startTimestamp = Stopwatch.GetTimestamp();
-
-            storagePath = tempDirectory.EnumerateFiles("video*.*").ToArray() switch
-            {
-                [var file] => file.FullName,
-                _ => null,
-            };
-
-            if (storagePath is null)
-            {
-                var remaining = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
-                if (remaining < TimeSpan.Zero)
-                {
-                    continue;
-                }
-
-                await Task.Delay(remaining, cancellationToken);
-                continue;
-            }
-
-            var newTimestamp = Stopwatch.GetTimestamp();
-            var newFileSize = new FileInfo(storagePath).Length;
-
-            var elapsedSeconds = Stopwatch.GetElapsedTime(timestamp, newTimestamp).TotalSeconds;
-            var sizeDelta = newFileSize - fileSize;
-
-            _logger.LogInformation(
-                "Downloading video at {DownloadSpeed} kb/s {FilePath}",
-                Math.Round(sizeDelta / elapsedSeconds / 1024, 0),
-                storagePath);
-
-            timestamp = newTimestamp;
-            fileSize = newFileSize;
-
-            if (size.HasValue)
-            {
-                await taskRepository.UpdateProgress(taskRunId, fileSize);
-            }
-
-            var remaining2 = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
-            if (remaining2 < TimeSpan.Zero)
-            {
-                continue;
-            }
-
-            await Task.Delay(remaining2, cancellationToken);
-        }
-
-        var downloadResult = await downloadTask;
-
         if (videoData.Data.Chapters is { Length: > 0 })
         {
             await using var chapterFile = File.CreateText(Path.Combine(tempDirectory.FullName, "chapters.vtt"));
@@ -375,7 +381,7 @@ public sealed class YoutubeService
 
                 await chapterFile.WriteLineAsync(
                     $"""
-                     
+
                      {index + 1}
                      {pattern.Format(startTime)} --> {pattern.Format(endTime)}
                      {chapter.Title}
@@ -383,32 +389,207 @@ public sealed class YoutubeService
             }
         }
 
-        if (downloadResult.Success)
-        {
-            _logger.LogInformation("Downloaded video {VideoUrl}", video.ExternalUrl);
+        var files = await _videoRepository.GetFilesAsync(videoId, userId, transaction);
 
-            if (cookieFilepath is not null && File.Exists(cookieFilepath))
+        var tasks = VideoFormats.Select(async format =>
+        {
+            var result = await youtube.RunVideoDataFetch(
+                video.ExternalUrl,
+                cancellationToken,
+                true,
+                false,
+                new OptionSet
+                {
+                    Cookies = cookieFilepath,
+                    Format = format,
+                    NoPart = true,
+                    EmbedChapters = true,
+                });
+
+            return (result, format);
+        });
+
+        var results = await Task.WhenAll(tasks);
+        if (results.Any(tuple => !tuple.result.Success))
+        {
+            var failedResults = results.Where(tuple => !tuple.result.Success).Select(tuple => tuple.result.ErrorOutput);
+            throw new Exception(string.Join(Environment.NewLine, failedResults.SelectMany(lines => lines)));
+        }
+
+        if (results.Any(tuple => tuple.result.Data.ResultType is not MetadataType.Video))
+        {
+            throw new InvalidOperationException("Unexpected metadata type when downloading video");
+        }
+
+        var attributes = File.GetAttributes(video.StoragePath);
+        var targetDirectory = (attributes & FileAttributes.Directory) is FileAttributes.Directory
+            ? video.StoragePath
+            : Path.GetDirectoryName(video.StoragePath)!;
+
+        Directory.CreateDirectory(targetDirectory);
+
+        foreach (var (data, selectedFormat) in results
+                     .Where(tuple => tuple.result.Success && tuple.result.Data.ResultType is MetadataType.Video)
+                     .Select(tuple => (tuple.result.Data, tuple.format)))
+        {
+            var formatIds = data.FormatID.Split('+');
+            var formats = formatIds
+                .Select(formatId => data.Formats.Single(format => format.FormatId == formatId))
+                .ToArray();
+
+            var videoFormat = formats.Single(format => format.Resolution is not "audio only");
+            var containerType = VideoContainerType.FromName(videoFormat.Extension);
+            var videoFile = files.Single(file => file.Type == containerType && file.Height == videoFormat.Height!.Value);
+
+            foreach (var formatData in formats)
             {
-                File.Delete(cookieFilepath);
+                _logger.LogDebug("Selected format {FormatData}", formatData);
             }
 
-            foreach (var file in tempDirectory.EnumerateFiles())
+            var size = formats.Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
+
+            _logger.LogInformation(
+                "Selected format with size {VideoSize} MB",
+                size.HasValue ? Math.Round(size.Value / 1024 / 1024, 2) : null);
+
+            if (size.HasValue)
             {
-                var targetFilePath = Path.Combine(targetDirectory, file.Name);
-                _logger.LogDebug("Moving file from {SourcePath} to {TargetPath}", file.FullName, targetFilePath);
-                file.MoveTo(targetFilePath);
+                // await taskRepository.InitializeTaskProgress(taskRunId, size.Value);
             }
 
-            video.StoragePath = Path.Combine(targetDirectory, "video.mp4");
-            video.DownloadedAt = _clock.GetCurrentInstant();
-            await _videoRepository.UpdateAsync(video, transaction);
-        }
-        else
-        {
-            _logger.LogWarning("Failed to download video {VideoUrl}", video.ExternalUrl);
+            var fileName = videoFile.StoragePath;
+            if (Directory.EnumerateFiles(targetDirectory, $"{video.Id}.*").Any(file => file.EndsWith(fileName)))
+            {
+                _logger.LogInformation("Video already exists {VideoUrl}", video.ExternalUrl);
+                await transaction.CommitAsync(cancellationToken);
+                return;
+            }
+
+            youtube.OutputFolder = tempDirectory.FullName;
+            youtube.OutputFileTemplate = $"{Path.GetFileNameWithoutExtension(fileName)}.%(ext)s";
+
+            var outputProgress = new Progress<string>(s => _logger.LogDebug("yt-dlp output: {Output}", s));
+            var mergeFormat = videoFile.Type.Name switch
+            {
+                VideoContainerType.Names.Mp4 => DownloadMergeFormat.Mp4,
+                VideoContainerType.Names.WebM => DownloadMergeFormat.Webm,
+                _ => DownloadMergeFormat.Unspecified,
+            };
+
+            _logger.LogInformation("Downloading video {VideoUrl} to {Directory}", video.ExternalUrl, tempDirectory.FullName);
+            var downloadTask = youtube.RunVideoDownload(
+                video.ExternalUrl,
+                format: selectedFormat,
+                mergeFormat,
+                VideoRecodeFormat.None,
+                cancellationToken,
+                null,
+                outputProgress,
+                new OptionSet
+                {
+                    LimitRate = 1024 * 1024 * 10,
+                    Cookies = cookieFilepath,
+                    WriteSubs = true,
+                    NoWriteAutoSubs = true,
+                    SubFormat = "vtt",
+                    SubLangs = "all,-live_chat",
+                    NoPart = true,
+                    EmbedChapters = true,
+                    CustomOptions =
+                    [
+                        new Option<string>("-o") { Value = $"subtitle:{Path.Combine(tempDirectory.FullName, "subtitles.%(ext)s")}" },
+                    ]
+                });
+
+            string? storagePath = null;
+
+            var timestamp = Stopwatch.GetTimestamp();
+            var fileSize = 0L;
+            var pollingDelay = TimeSpan.FromSeconds(2);
+
+            while (!downloadTask.IsCompleted || storagePath is null)
+            {
+                var startTimestamp = Stopwatch.GetTimestamp();
+
+                storagePath =
+                    tempDirectory.EnumerateFiles($"{Path.GetFileNameWithoutExtension(fileName)}*.*").ToArray() switch
+                    {
+                        [var tempFile] => tempFile.FullName,
+                        _ => null,
+                    };
+
+                if (storagePath is null)
+                {
+                    var remaining = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
+                    if (remaining < TimeSpan.Zero)
+                    {
+                        continue;
+                    }
+
+                    await Task.Delay(remaining, cancellationToken);
+                    continue;
+                }
+
+                var newTimestamp = Stopwatch.GetTimestamp();
+                var newFileSize = new FileInfo(storagePath).Length;
+
+                var elapsedSeconds = Stopwatch.GetElapsedTime(timestamp, newTimestamp).TotalSeconds;
+                var sizeDelta = newFileSize - fileSize;
+
+                _logger.LogInformation(
+                    "Downloading video at {DownloadSpeed} kb/s {FilePath}",
+                    Math.Round(sizeDelta / elapsedSeconds / 1024, 0),
+                    storagePath);
+
+                timestamp = newTimestamp;
+                fileSize = newFileSize;
+
+                if (size.HasValue)
+                {
+                    // await taskRepository.UpdateProgress(taskRunId, fileSize);
+                }
+
+                var remaining2 = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
+                if (remaining2 < TimeSpan.Zero)
+                {
+                    continue;
+                }
+
+                await Task.Delay(remaining2, cancellationToken);
+            }
+
+            var downloadResult = await downloadTask;
+
+            if (downloadResult.Success)
+            {
+                _logger.LogInformation("Downloaded video {VideoUrl}", video.ExternalUrl);
+
+                videoFile.ModifiedAt = _clock.GetCurrentInstant();
+                videoFile.ModifiedByUserId = userId;
+                videoFile.DownloadedAt = _clock.GetCurrentInstant();
+                videoFile.DownloadedByUserId = userId;
+                await _videoFileRepository.UpdateAsync(videoFile, transaction);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to download video {VideoUrl}", video.ExternalUrl);
+                throw new Exception(string.Join(Environment.NewLine, downloadResult.ErrorOutput));
+            }
         }
 
-        await transaction.CommitAsync(cancellationToken);
+        if (cookieFilepath is not null && File.Exists(cookieFilepath))
+        {
+            File.Delete(cookieFilepath);
+        }
+
+        foreach (var tempFile in tempDirectory.EnumerateFiles())
+        {
+            var targetFilePath = Path.Combine(targetDirectory, tempFile.Name);
+            _logger.LogDebug("Moving file from {SourcePath} to {TargetPath}", tempFile.FullName, targetFilePath);
+            tempFile.MoveTo(targetFilePath);
+        }
+
+        await transaction.CommitWithRetries(_logger, cancellationToken);
     }
 
     private async ValueTask<string?> CreateCookieFile(

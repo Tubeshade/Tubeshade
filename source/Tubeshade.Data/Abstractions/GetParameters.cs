@@ -6,6 +6,29 @@ namespace Tubeshade.Data.Abstractions;
 
 internal class DeleteParameters(Guid id, Guid userId) : GetSingleParameters(id, userId, Access.Delete);
 
+internal class GetSingleVideoParameters : GetVideoParameters
+{
+    public GetSingleVideoParameters(Guid id, Guid videoId, Guid userId, Access access)
+        : base(videoId, userId, access)
+    {
+        Id = id;
+    }
+
+    public Guid Id { get; }
+}
+
+
+internal class GetVideoParameters : GetParameters
+{
+    public GetVideoParameters(Guid videoId, Guid userId, Access access)
+        : base(userId, access)
+    {
+        VideoId = videoId;
+    }
+
+    public Guid VideoId { get; }
+}
+
 internal class GetFromLibraryParameters : GetParameters
 {
     public GetFromLibraryParameters(Guid userId, Guid libraryId, Access access)

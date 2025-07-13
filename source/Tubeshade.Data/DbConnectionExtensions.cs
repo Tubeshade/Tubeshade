@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 
 namespace Tubeshade.Data;
@@ -10,19 +11,39 @@ public static class DbConnectionExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Task OpenConnection(
-        this NpgsqlConnection dbConnection,
+        this NpgsqlConnection connection,
         CancellationToken cancellationToken = default)
     {
-        return (dbConnection.State & ConnectionState.Open) is not ConnectionState.Open
-            ? dbConnection.OpenAsync(cancellationToken)
+        return (connection.State & ConnectionState.Open) is not ConnectionState.Open
+            ? connection.OpenAsync(cancellationToken)
             : Task.CompletedTask;
     }
 
     public static async ValueTask<NpgsqlTransaction> OpenAndBeginTransaction(
-        this NpgsqlConnection dbConnection,
+        this NpgsqlConnection connection,
         CancellationToken cancellationToken = default)
     {
-        await dbConnection.OpenConnection(cancellationToken);
-        return await dbConnection.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        await connection.OpenConnection(cancellationToken);
+        return await connection.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+    }
+
+    public static async ValueTask CommitWithRetries(
+        this NpgsqlTransaction transaction,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        while (true)
+        {
+            try
+            {
+                await transaction.CommitAsync(cancellationToken);
+                return;
+            }
+            catch (PostgresException exception) when (exception.IsTransient)
+            {
+                logger.LogWarning(exception, "Failed to commit transaction, retrying");
+                await Task.Delay(100, cancellationToken);
+            }
+        }
     }
 }

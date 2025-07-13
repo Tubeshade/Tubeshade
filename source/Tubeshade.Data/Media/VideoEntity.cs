@@ -38,10 +38,6 @@ public sealed record VideoEntity : ModifiableEntity, IOwnableEntity, INamedEntit
 
     public required Period Duration { get; set; }
 
-    public Instant? DownloadedAt { get; set; }
-
-    public Guid? DownloadedByUserId { get; set; }
-
     public Instant? IgnoredAt { get; set; }
 
     public Guid? IgnoredByUserId { get; set; }

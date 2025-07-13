@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +33,8 @@ public sealed class Video : LibraryPageBase
 
     public VideoEntity Entity { get; set; } = null!;
 
+    public List<VideoFileEntity> Files { get; set; } = [];
+
     public ChannelEntity Channel { get; set; } = null!;
 
     public LibraryEntity Library { get; set; } = null!;
@@ -43,6 +46,8 @@ public sealed class Video : LibraryPageBase
         var userId = User.GetUserId();
 
         Entity = await _videoRepository.GetAsync(VideoId, userId, cancellationToken);
+        Files = await _videoRepository.GetFilesAsync(VideoId, userId, cancellationToken);
+
         Channel = await _channelRepository.GetAsync(Entity.ChannelId, userId, cancellationToken);
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
 

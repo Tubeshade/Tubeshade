@@ -55,34 +55,86 @@ CREATE TYPE media.external_availability AS ENUM ('public', 'private', 'not_avail
 
 CREATE TABLE media.videos
 (
+    id                  uuid        DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    created_at          timestamptz DEFAULT CURRENT_TIMESTAMP  NOT NULL,
+    created_by_user_id  uuid                                   NOT NULL REFERENCES identity.users (id) NOT DEFERRABLE,
+    modified_at         timestamptz DEFAULT CURRENT_TIMESTAMP  NOT NULL,
+    modified_by_user_id uuid                                   NOT NULL REFERENCES identity.users (id) NOT DEFERRABLE,
+
+    owner_id            uuid                                   NOT NULL REFERENCES identity.owners (id) NOT DEFERRABLE,
+    channel_id          uuid                                   NOT NULL REFERENCES media.channels (id) NOT DEFERRABLE,
+    storage_path        text                                   NOT NULL,
+
+    external_id         text                                   NOT NULL,
+    external_url        text                                   NOT NULL,
+    name                text                                   NOT NULL,
+    description         text                                   NOT NULL,
+    categories          text[]                                 NOT NULL,
+    tags                text[]                                 NOT NULL,
+    published_at        timestamptz                            NOT NULL,
+    refreshed_at        timestamptz                            NOT NULL,
+    availability        media.external_availability            NOT NULL,
+    duration            interval                               NOT NULL,
+    view_count          bigint                                 NULL,
+    like_count          bigint                                 NULL,
+
+    ignored_at          timestamptz                            NULL,
+    ignored_by_user_id  uuid                                   NULL REFERENCES identity.users (id) NOT DEFERRABLE
+);
+
+CREATE TYPE media.video_container_type AS ENUM ('mp4', 'webm');
+
+CREATE TABLE media.video_files
+(
     id                    uuid        DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
     created_at            timestamptz DEFAULT CURRENT_TIMESTAMP  NOT NULL,
     created_by_user_id    uuid                                   NOT NULL REFERENCES identity.users (id) NOT DEFERRABLE,
-    modified_at           timestamptz DEFAULT CURRENT_TIMESTAMP  NOT NULL,
-    modified_by_user_id   uuid                                   NOT NULL REFERENCES identity.users (id) NOT DEFERRABLE,
+    modified_at         timestamptz DEFAULT CURRENT_TIMESTAMP  NOT NULL,
+    modified_by_user_id uuid                                   NOT NULL REFERENCES identity.users (id) NOT DEFERRABLE,
 
-    owner_id              uuid                                   NOT NULL REFERENCES identity.owners (id) NOT DEFERRABLE,
-    channel_id            uuid                                   NOT NULL REFERENCES media.channels (id) NOT DEFERRABLE,
+    owner_id            uuid                                   NOT NULL REFERENCES identity.owners (id) NOT DEFERRABLE,
+
+    video_id              uuid                                   NOT NULL REFERENCES media.videos (id) NOT DEFERRABLE,
     storage_path          text                                   NOT NULL,
-
-    external_id           text                                   NOT NULL,
-    external_url          text                                   NOT NULL,
-    name                  text                                   NOT NULL,
-    description           text                                   NOT NULL,
-    categories            text[]                                 NOT NULL,
-    tags                  text[]                                 NOT NULL,
-    published_at          timestamptz                            NOT NULL,
-    refreshed_at          timestamptz                            NOT NULL,
-    availability          media.external_availability            NOT NULL,
-    duration              interval                               NOT NULL,
-    view_count            bigint                                 NULL,
-    like_count            bigint                                 NULL,
+    type                  media.video_container_type             NOT NULL,
+    width                 int                                    NOT NULL,
+    height                int                                    NOT NULL,
+    framerate             decimal                                NOT NULL,
 
     downloaded_at         timestamptz                            NULL,
-    downloaded_by_user_id uuid                                   NULL REFERENCES identity.users (id) NOT DEFERRABLE,
-    ignored_at            timestamptz                            NULL,
-    ignored_by_user_id    uuid                                   NULL REFERENCES identity.users (id) NOT DEFERRABLE
+    downloaded_by_user_id uuid                                   NULL REFERENCES identity.users (id) NOT DEFERRABLE
 );
+
+CREATE TYPE media.image_type AS ENUM ('thumbnail', 'banner');
+
+CREATE TABLE media.image_files
+(
+    id                 uuid        DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    created_at         timestamptz DEFAULT CURRENT_TIMESTAMP  NOT NULL,
+    created_by_user_id uuid                                   NOT NULL REFERENCES identity.users (id) NOT DEFERRABLE,
+
+    storage_path       text                                   NOT NULL,
+    type               media.image_type                       NOT NULL,
+    width              int                                    NOT NULL,
+    height             int                                    NOT NULL
+);
+
+CREATE TABLE media.video_images
+(
+    video_id uuid NOT NULL REFERENCES media.videos (id) NOT DEFERRABLE,
+    image_id uuid NOT NULL REFERENCES media.image_files (id) NOT DEFERRABLE,
+
+    PRIMARY KEY (video_id, image_id)
+);
+
+CREATE TABLE media.channel_images
+(
+    channel_id uuid NOT NULL REFERENCES media.channels (id) NOT DEFERRABLE,
+    image_id   uuid NOT NULL REFERENCES media.image_files (id) NOT DEFERRABLE,
+
+    PRIMARY KEY (channel_id, image_id)
+);
+
 
 CREATE TABLE media.preferences
 (

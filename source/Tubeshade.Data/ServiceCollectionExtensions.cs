@@ -25,6 +25,8 @@ public static class ServiceCollectionExtensions
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskType, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskResult, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ExternalAvailability, int>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ImageType, int>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<VideoContainerType, int>());
 
         SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
         SqlMapper.AddTypeHandler(new PeriodTypeHandler());
@@ -56,6 +58,8 @@ public static class ServiceCollectionExtensions
             .AddScoped<LibraryRepository>()
             .AddScoped<ChannelRepository>()
             .AddScoped<VideoRepository>()
+            .AddScoped<VideoFileRepository>()
+            .AddScoped<ImageFileRepository>()
             .AddScoped<PreferencesRepository>()
             .AddNpgsql();
     }

@@ -18,8 +18,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO media.videos (created_by_user_id, modified_by_user_id, owner_id, name, description, categories, tags, view_count, like_count, channel_id, storage_path, external_id, external_url, published_at, refreshed_at, availability, duration, downloaded_at, downloaded_by_user_id, ignored_at, ignored_by_user_id) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @Description, @Categories, @Tags, @ViewCount, @LikeCount, @ChannelId, @StoragePath, @ExternalId, @ExternalUrl, @PublishedAt, @RefreshedAt, @Availability, @Duration, @DownloadedAt, @DownloadedByUserId, @IgnoredAt, @IgnoredByUserId)
+         INSERT INTO media.videos (created_by_user_id, modified_by_user_id, owner_id, name, description, categories, tags, view_count, like_count, channel_id, storage_path, external_id, external_url, published_at, refreshed_at, availability, duration, ignored_at, ignored_by_user_id) 
+         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @Description, @Categories, @Tags, @ViewCount, @LikeCount, @ChannelId, @StoragePath, @ExternalId, @ExternalUrl, @PublishedAt, @RefreshedAt, @Availability, @Duration, @IgnoredAt, @IgnoredByUserId)
          RETURNING id;
          """;
 
@@ -46,8 +46,6 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 refreshed_at AS RefreshedAt,
                 availability AS Availability,
                 duration AS Duration,
-                downloaded_at AS {nameof(VideoEntity.DownloadedAt)},
-                downloaded_by_user_id AS DownloadedByUserId,
                 ignored_at AS IgnoredAt,
                 ignored_by_user_id AS IgnoredByUserId
          FROM media.videos
@@ -64,58 +62,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              refreshed_at = @RefreshedAt,
              availability = @Availability,
              duration = @Duration,
-             downloaded_at = @{nameof(VideoEntity.DownloadedAt)},
-             downloaded_by_user_id = @DownloadedByUserId,
              ignored_at = @IgnoredAt,
              ignored_by_user_id = @IgnoredByUserId
          """;
-
-    public async ValueTask<List<VideoEntity>> GetVideosAsync(
-        Guid userId,
-        int limit,
-        int offset,
-        CancellationToken cancellationToken = default)
-    {
-        var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             {AccessCte}
-
-             SELECT videos.id AS {nameof(VideoEntity.Id)},
-                    videos.created_at AS {nameof(VideoEntity.CreatedAt)},
-                    videos.created_by_user_id AS {nameof(VideoEntity.CreatedByUserId)},
-                    videos.modified_at AS {nameof(VideoEntity.ModifiedAt)},
-                    videos.modified_by_user_id AS {nameof(VideoEntity.ModifiedByUserId)},
-                    videos.owner_id AS {nameof(VideoEntity.OwnerId)},
-                    videos.name AS {nameof(VideoEntity.Name)},
-                    videos.channel_id AS {nameof(VideoEntity.ChannelId)},
-                    videos.storage_path AS {nameof(VideoEntity.StoragePath)},
-                    videos.external_id AS {nameof(VideoEntity.ExternalId)},
-                    videos.external_url AS {nameof(VideoEntity.ExternalUrl)},
-                    published_at AS PublishedAt,
-                    refreshed_at AS RefreshedAt,
-                    availability AS Availability,
-                    duration AS Duration,
-                    downloaded_at AS {nameof(VideoEntity.DownloadedAt)},
-                    count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
-             FROM media.videos
-                INNER JOIN media.channels ON videos.channel_id = channels.id
-                INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
-             WHERE {AccessFilter}
-             ORDER BY videos.published_at DESC
-             LIMIT @Limit
-             OFFSET @Offset;
-             """,
-            new GetParameters(userId, Access.Read)
-            {
-                Limit = limit,
-                Offset = offset,
-            },
-            cancellationToken: cancellationToken);
-
-        var enumerable = await Connection.QueryAsync<VideoEntity>(command);
-        return enumerable as List<VideoEntity> ?? enumerable.ToList();
-    }
 
     public async ValueTask<List<VideoEntity>> GetDownloadableVideosAsync(
         Guid userId,
@@ -143,12 +92,13 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     refreshed_at AS RefreshedAt,
                     availability AS Availability,
                     duration AS Duration,
-                    downloaded_at AS {nameof(VideoEntity.DownloadedAt)},
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
                 INNER JOIN media.channels ON videos.channel_id = channels.id
                 INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
-             WHERE {AccessFilter} AND videos.downloaded_at IS NULL AND videos.ignored_at IS NULL
+             WHERE {AccessFilter}
+               AND videos.ignored_at IS NULL
+               AND EXISTS(SELECT video_files.id FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NULL)
              ORDER BY videos.published_at DESC
              LIMIT @Limit
              OFFSET @Offset;
@@ -191,7 +141,6 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     refreshed_at AS RefreshedAt,
                     availability AS Availability,
                     duration AS Duration,
-                    downloaded_at AS {nameof(VideoEntity.DownloadedAt)},
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
                 INNER JOIN media.channels ON videos.channel_id = channels.id
@@ -239,7 +188,6 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     refreshed_at AS RefreshedAt,
                     availability AS Availability,
                     duration AS Duration,
-                    downloaded_at AS {nameof(VideoEntity.DownloadedAt)},
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
                 INNER JOIN media.channels ON videos.channel_id = channels.id
@@ -257,5 +205,98 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
 
         var enumerable = await Connection.QueryAsync<VideoEntity>(command);
         return enumerable as List<VideoEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<List<VideoFileEntity>> GetFilesAsync(
+        Guid videoId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             {AccessCte}
+
+             SELECT video_files.id AS Id,
+                    video_files.created_at AS CreatedAt,
+                    video_files.created_by_user_id AS CreatedByUserId,
+                    video_files.owner_id AS OwnerId,
+                    video_files.video_id AS VideoId,
+                    video_files.storage_path AS StoragePath,
+                    video_files.type AS Type,
+                    video_files.width AS Width,
+                    video_files.height AS Height,
+                    video_files.framerate AS Framerate
+             FROM media.video_files
+                INNER JOIN media.videos ON video_files.video_id = videos.id
+             WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
+             ORDER BY video_files.width DESC, video_files.framerate DESC;
+             """,
+            new GetVideoParameters(videoId, userId, Access.Read),
+            cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<VideoFileEntity>(command);
+        return enumerable as List<VideoFileEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<List<VideoFileEntity>> GetFilesAsync(
+        Guid videoId,
+        Guid userId,
+        NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             {AccessCte}
+
+             SELECT video_files.id AS Id,
+                    video_files.created_at AS CreatedAt,
+                    video_files.created_by_user_id AS CreatedByUserId,
+                    video_files.owner_id AS OwnerId,
+                    video_files.video_id AS VideoId,
+                    video_files.storage_path AS StoragePath,
+                    video_files.type AS Type,
+                    video_files.width AS Width,
+                    video_files.height AS Height,
+                    video_files.framerate AS Framerate
+             FROM media.video_files
+                INNER JOIN media.videos ON video_files.video_id = videos.id
+             WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)};
+             """,
+            new GetVideoParameters(videoId, userId, Access.Read),
+            transaction);
+
+        var enumerable = await Connection.QueryAsync<VideoFileEntity>(command);
+        return enumerable as List<VideoFileEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<VideoFileEntity?> FindFileAsync(
+        Guid id,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             {AccessCte}
+
+             SELECT video_files.id AS Id,
+                    video_files.created_at AS CreatedAt,
+                    video_files.created_by_user_id AS CreatedByUserId,
+                    video_files.owner_id AS OwnerId,
+                    video_files.video_id AS VideoId,
+                    video_files.storage_path AS StoragePath,
+                    video_files.type AS Type,
+                    video_files.width AS Width,
+                    video_files.height AS Height,
+                    video_files.framerate AS Framerate
+             FROM media.video_files
+                INNER JOIN media.videos ON video_files.video_id = videos.id
+             WHERE {AccessFilter} AND video_files.id = @{nameof(GetSingleParameters.Id)};
+             """,
+            new GetSingleParameters(id, userId, Access.Read),
+            cancellationToken: cancellationToken);
+
+        return await Connection.QuerySingleOrDefaultAsync<VideoFileEntity>(command);
     }
 }
