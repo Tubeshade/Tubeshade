@@ -1,35 +1,52 @@
 ﻿"use strict";
 
+import {Semaphore} from "./semaphore.js";
+
 export {getAccessToken, oidcAuthenticate};
 
+const accessTokenSemaphore = new Semaphore(1);
+const oidcSemaphore = new Semaphore(1);
+
 async function getAccessToken() {
-    let {
-        access_token,
-        access_token_expires_at
-    } = await browser.storage.session.get(["access_token", "access_token_expires_at"]);
+    await accessTokenSemaphore.wait();
 
-    if (access_token === undefined || access_token_expires_at === undefined) {
-        console.debug("Access token not found, starting authentication flow");
-        access_token = await oidcAuthenticate();
-    } else if (access_token_expires_at <= Date.now()) {
-        console.debug("Access token expired");
-        const {refresh_token} = await browser.storage.local.get("refresh_token");
+    try {
+        let {
+            access_token,
+            access_token_expires_at
+        } = await browser.storage.session.get(["access_token", "access_token_expires_at"]);
 
-        if (refresh_token === undefined) {
-            console.debug("Refresh token not found, starting authentication flow");
+        if (access_token === undefined || access_token_expires_at === undefined) {
+            console.debug("Access token not found, starting authentication flow");
             access_token = await oidcAuthenticate();
-        } else {
-            console.debug("Refreshing access token");
-            access_token = await refreshAccessToken(refresh_token);
-        }
-    }
+        } else if (access_token_expires_at <= Date.now()) {
+            console.debug("Access token expired");
+            const {refresh_token} = await browser.storage.local.get("refresh_token");
 
-    return access_token;
+            if (refresh_token === undefined) {
+                console.debug("Refresh token not found, starting authentication flow");
+                access_token = await oidcAuthenticate();
+            } else {
+                console.debug("Refreshing access token");
+                access_token = await refreshAccessToken(refresh_token);
+            }
+        }
+
+        return access_token;
+    } finally {
+        accessTokenSemaphore.release();
+    }
 }
 
 async function oidcAuthenticate() {
-    const url = await beginCodeFlow();
-    return await completeCodeFlow(url);
+    await oidcSemaphore.wait();
+
+    try {
+        const url = await beginCodeFlow();
+        return await completeCodeFlow(url);
+    } finally {
+        oidcSemaphore.release();
+    }
 }
 
 async function beginCodeFlow() {
