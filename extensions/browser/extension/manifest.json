@@ -20,8 +20,11 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "tubeshade-browser-extension@tubeshade.org"
+      "id": "tubeshade-browser-extension@tubeshade.org",
+      "strict-min-version": "53.0"
     },
-    "gecko_android": {}
+    "gecko_android": {
+      "strict-min-version": "57.0"
+    }
   }
 }
