@@ -25,18 +25,6 @@ public sealed record UserEntity : Entity, IModifiableEntity, INamedEntity
     [ProtectedPersonalData]
     public required string NormalizedName { get; set; }
 
-    [ProtectedPersonalData]
-    public string? FullName { get; set; }
-
-    [ProtectedPersonalData]
-    public required string Email { get; set; }
-
-    [ProtectedPersonalData]
-    public required string NormalizedEmail { get; set; }
-
-    [PersonalData]
-    public bool EmailConfirmed { get; set; }
-
     public byte[]? PasswordHash { get; set; }
 
     public Guid? SecurityStamp { get; set; }
@@ -52,12 +40,9 @@ public sealed record UserEntity : Entity, IModifiableEntity, INamedEntity
 
     public int AccessFailedCount { get; set; }
 
-    public required string TimeZoneId { get; set; }
-
     public void NormalizeInvariant()
     {
         // todo: Identity framework already does case normalization
         NormalizedName = Name.NormalizeInvariant(false);
-        NormalizedEmail = Email.NormalizeInvariant(false);
     }
 }

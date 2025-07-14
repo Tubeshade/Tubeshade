@@ -17,13 +17,11 @@ public sealed class UserOnlyStore :
     IUserClaimStore<UserEntity>,
     IUserPasswordStore<UserEntity>,
     IUserSecurityStampStore<UserEntity>,
-    IUserEmailStore<UserEntity>,
     IUserLockoutStore<UserEntity>,
     IUserTwoFactorStore<UserEntity>,
     IUserAuthenticationTokenStore<UserEntity>,
     IUserAuthenticatorKeyStore<UserEntity>,
     IUserTwoFactorRecoveryCodeStore<UserEntity>
-// IProtectedUserStore<UserEntity>
 {
     private readonly NpgsqlConnection _connection;
     private readonly UserRepository _userRepository;
@@ -261,53 +259,6 @@ public sealed class UserOnlyStore :
     public Task<string?> GetSecurityStampAsync(UserEntity user, CancellationToken cancellationToken)
     {
         return Task.FromResult(user.SecurityStamp?.ToString());
-    }
-
-    /// <inheritdoc />
-    public Task SetEmailAsync(UserEntity user, string? email, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(email);
-        user.Email = email;
-        return Task.CompletedTask;
-    }
-
-    /// <inheritdoc />
-    public Task<string?> GetEmailAsync(UserEntity user, CancellationToken cancellationToken)
-    {
-        return Task.FromResult<string?>(user.Email);
-    }
-
-    /// <inheritdoc />
-    public Task<bool> GetEmailConfirmedAsync(UserEntity user, CancellationToken cancellationToken)
-    {
-        return Task.FromResult(user.EmailConfirmed);
-    }
-
-    /// <inheritdoc />
-    public Task SetEmailConfirmedAsync(UserEntity user, bool confirmed, CancellationToken cancellationToken)
-    {
-        user.EmailConfirmed = confirmed;
-        return Task.CompletedTask;
-    }
-
-    /// <inheritdoc />
-    public async Task<UserEntity?> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
-    {
-        return await _userRepository.FindByEmailAsync(normalizedEmail, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public Task<string?> GetNormalizedEmailAsync(UserEntity user, CancellationToken cancellationToken)
-    {
-        return Task.FromResult<string?>(user.NormalizedEmail);
-    }
-
-    /// <inheritdoc />
-    public Task SetNormalizedEmailAsync(UserEntity user, string? normalizedEmail, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(normalizedEmail);
-        user.NormalizedEmail = normalizedEmail;
-        return Task.CompletedTask;
     }
 
     /// <inheritdoc />

@@ -4,7 +4,6 @@ using Asp.Versioning.Conventions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -42,22 +41,23 @@ internal static class Program
         builder.Services
             .AddIdentityCore<UserEntity>(options =>
             {
-                options.Stores.MaxLengthForKeys = 128;
-                options.SignIn.RequireConfirmedAccount = true;
+                options.Password.RequiredLength = 16;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireDigit = false;
+
+                options.Tokens.AuthenticatorIssuer = "Tubeshade";
             })
-            .AddSignInManager()
+            .AddSignInManager<SignInManager>()
             .AddDefaultTokenProviders();
 
         builder.Services
-            .AddTransient<IEmailSender, NoOpEmailSender>()
+            .AddHttpContextAccessor()
             .AddScoped<UserOnlyStore>()
             .AddScoped<IUserStore<UserEntity>, UserOnlyStore>()
-            .AddScoped<IUserEmailStore<UserEntity>, UserOnlyStore>()
-            .AddHttpContextAccessor()
             .AddScoped<ISecurityStampValidator, SecurityStampValidator<UserEntity>>()
-            .AddScoped<ITwoFactorSecurityStampValidator, TwoFactorSecurityStampValidator<UserEntity>>()
-            .AddScoped<SignInManager<UserEntity>, SignInManager>()
-            .AddScoped<SignInManager>();
+            .AddScoped<ITwoFactorSecurityStampValidator, TwoFactorSecurityStampValidator<UserEntity>>();
 
         builder.Services
             .AddDatabase()

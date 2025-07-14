@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -13,21 +14,21 @@ using Tubeshade.Data.Identity;
 
 namespace Tubeshade.Server.Areas.Identity.Pages.Account.Manage;
 
-public class EnableAuthenticatorModel : PageModel
+public sealed class EnableAuthenticatorModel : PageModel
 {
-    private readonly UserManager<UserEntity> _userManager;
     private readonly ILogger<EnableAuthenticatorModel> _logger;
+    private readonly UserManager<UserEntity> _userManager;
     private readonly UrlEncoder _urlEncoder;
 
     private const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
 
     public EnableAuthenticatorModel(
-        UserManager<UserEntity> userManager,
         ILogger<EnableAuthenticatorModel> logger,
+        UserManager<UserEntity> userManager,
         UrlEncoder urlEncoder)
     {
-        _userManager = userManager;
         _logger = logger;
+        _userManager = userManager;
         _urlEncoder = urlEncoder;
     }
 
@@ -43,15 +44,6 @@ public class EnableAuthenticatorModel : PageModel
 
     [BindProperty]
     public InputModel Input { get; set; }
-
-    public class InputModel
-    {
-        [Required]
-        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Text)]
-        [Display(Name = "Verification Code")]
-        public string Code { get; set; }
-    }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -84,7 +76,9 @@ public class EnableAuthenticatorModel : PageModel
         var verificationCode = Input.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
 
         var is2FaTokenValid = await _userManager.VerifyTwoFactorTokenAsync(
-            user, _userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
+            user,
+            _userManager.Options.Tokens.AuthenticatorTokenProvider,
+            verificationCode);
 
         if (!is2FaTokenValid)
         {
@@ -94,12 +88,11 @@ public class EnableAuthenticatorModel : PageModel
         }
 
         await _userManager.SetTwoFactorEnabledAsync(user, true);
-        var userId = await _userManager.GetUserIdAsync(user);
-        _logger.LogInformation("User with ID '{UserId}' has enabled 2FA with an authenticator app", userId);
+        _logger.UserEnabled2Fa(user.Id);
 
         StatusMessage = "Your authenticator app has been verified.";
 
-        if (await _userManager.CountRecoveryCodesAsync(user) == 0)
+        if (await _userManager.CountRecoveryCodesAsync(user) is 0)
         {
             var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
             RecoveryCodes = recoveryCodes.ToArray();
@@ -120,20 +113,19 @@ public class EnableAuthenticatorModel : PageModel
         }
 
         SharedKey = FormatKey(unformattedKey);
-
-        var email = await _userManager.GetEmailAsync(user);
-        AuthenticatorUri = GenerateQrCodeUri(email, unformattedKey);
+        AuthenticatorUri = GenerateQrCodeUri(user.Name, unformattedKey);
     }
 
-    private string FormatKey(string unformattedKey)
+    private static string FormatKey(string unformattedKey)
     {
         var result = new StringBuilder();
-        int currentPosition = 0;
+        var currentPosition = 0;
         while (currentPosition + 4 < unformattedKey.Length)
         {
             result.Append(unformattedKey.AsSpan(currentPosition, 4)).Append(' ');
             currentPosition += 4;
         }
+
         if (currentPosition < unformattedKey.Length)
         {
             result.Append(unformattedKey.AsSpan(currentPosition));
@@ -150,5 +142,13 @@ public class EnableAuthenticatorModel : PageModel
             _urlEncoder.Encode("Microsoft.AspNetCore.Identity.UI"),
             _urlEncoder.Encode(email),
             unformattedKey);
+    }
+
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+    public sealed class InputModel
+    {
+        [Required]
+        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        public string Code { get; set; } = null!;
     }
 }

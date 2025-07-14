@@ -22,10 +22,6 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
                 users.modified_by_user_id AS {nameof(UserEntity.ModifiedByUserId)},
                 users.name AS {nameof(UserEntity.Name)},
                 users.normalized_name AS {nameof(UserEntity.NormalizedName)},
-                users.full_name AS {nameof(UserEntity.FullName)},
-                users.email AS {nameof(UserEntity.Email)},
-                users.normalized_email AS {nameof(UserEntity.NormalizedEmail)},
-                users.email_confirmed AS {nameof(UserEntity.EmailConfirmed)},
                 users.password_hash AS {nameof(UserEntity.PasswordHash)},
                 users.security_stamp AS {nameof(UserEntity.SecurityStamp)},
                 users.concurrency_stamp AS {nameof(UserEntity.ConcurrencyStamp)},
@@ -47,10 +43,6 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
                      modified_by_user_id,
                      name,
                      normalized_name,
-                     full_name,
-                     email,
-                     normalized_email,
-                     email_confirmed,
                      password_hash,
                      security_stamp,
                      concurrency_stamp,
@@ -63,10 +55,6 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
                 system.id,
                 @{nameof(UserEntity.Name)},
                 @{nameof(UserEntity.NormalizedName)},
-                @{nameof(UserEntity.FullName)},
-                @{nameof(UserEntity.Email)},
-                @{nameof(UserEntity.NormalizedEmail)},
-                @{nameof(UserEntity.EmailConfirmed)},
                 @{nameof(UserEntity.PasswordHash)},
                 @{nameof(UserEntity.SecurityStamp)},
                 @{nameof(UserEntity.ConcurrencyStamp)},
@@ -206,10 +194,6 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
                  modified_by_user_id = @Id,
                  name                = @Name,
                  normalized_name     = @NormalizedName,
-                 full_name = @FullName,
-                 email               = @Email,
-                 normalized_email    = @NormalizedEmail,
-                 email_confirmed     = @EmailConfirmed,
                  password_hash       = @PasswordHash,
                  security_stamp      = @SecurityStamp,
                  concurrency_stamp   = @ConcurrencyStamp,
@@ -262,20 +246,5 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     public ValueTask<UserEntity?> FindAsync(string name, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
-    }
-
-    public async ValueTask<UserEntity?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
-    {
-        email = email.NormalizeInvariant(false);
-        await _connection.OpenConnection(cancellationToken);
-        var command = new CommandDefinition(
-            $"""
-             {SelectSql}
-             WHERE users.normalized_email = @email;
-             """,
-            new { email },
-            cancellationToken: cancellationToken);
-
-        return await _connection.QuerySingleOrDefaultAsync<UserEntity>(command);
     }
 }
