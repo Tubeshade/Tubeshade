@@ -3,7 +3,7 @@
 import {oidcAuthenticate} from "./modules/auth.js";
 
 async function setDefaultOptions() {
-    let config = await browser.storage.local.get();
+    let config = await browser.storage.sync.get();
     if (config.server_url === undefined) {
         await browser.storage.sync.set({"server_url": "http://localhost:5201"})
     }
@@ -18,6 +18,7 @@ async function restoreOptions() {
 
     let config = await browser.storage.sync.get();
     document.querySelector("#server_url").value = config.server_url ?? "";
+    document.querySelector("#library").value = config.library_id ?? "";
     document.querySelector("#oidc_authority").value = config.oidc_authority ?? "";
     document.querySelector("#oidc_client_id").value = config.oidc_client_id ?? "";
 }
