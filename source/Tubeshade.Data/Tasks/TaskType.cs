@@ -5,7 +5,7 @@ namespace Tubeshade.Data.Tasks;
 
 public sealed class TaskType : SmartEnum<TaskType>
 {
-    public static readonly TaskType IndexVideo = new(Names.IndexVideo, 1);
+    public static readonly TaskType Index = new(Names.Index, 1);
     public static readonly TaskType DownloadVideo = new(Names.DownloadVideo, 2);
 
     private TaskType(string name, int value)
@@ -16,7 +16,7 @@ public sealed class TaskType : SmartEnum<TaskType>
     [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
     public static class Names
     {
-        public const string IndexVideo = "index_video";
+        public const string Index = "index";
         public const string DownloadVideo = "download_video";
     }
 }

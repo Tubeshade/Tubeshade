@@ -7,11 +7,11 @@ using Tubeshade.Data.Tasks.Payloads;
 
 namespace Tubeshade.Server.Services;
 
-public sealed class IndexBackgroundService : ChannelConsumerBackgroundService<YoutubeService, IndexVideoPayload>
+public sealed class IndexBackgroundService : ChannelConsumerBackgroundService<YoutubeService, IndexPayload>
 {
     /// <inheritdoc />
     public IndexBackgroundService(IServiceProvider serviceProvider)
-        : base(serviceProvider, TaskBackgroundService.IndexTaskChannel.Reader, TaskType.IndexVideo)
+        : base(serviceProvider, TaskBackgroundService.IndexTaskChannel.Reader, TaskType.Index)
     {
     }
 
@@ -19,20 +19,17 @@ public sealed class IndexBackgroundService : ChannelConsumerBackgroundService<Yo
     protected override int Parallelism => 4;
 
     /// <inheritdoc />
-    protected override JsonTypeInfo<IndexVideoPayload> PayloadTypeInfo =>
-        TaskPayloadContext.Default.IndexVideoPayload;
+    protected override JsonTypeInfo<IndexPayload> PayloadTypeInfo => TaskPayloadContext.Default.IndexPayload;
 
     /// <inheritdoc />
     protected override async ValueTask ProcessTaskPayload(
-        TaskContext<YoutubeService, IndexVideoPayload> context,
+        TaskContext<YoutubeService, IndexPayload> context,
         CancellationToken cancellationToken)
     {
-        await context.Service.IndexVideo(
-            context.Payload.VideoUrl,
+        await context.Service.Index(
+            context.Payload.Url,
             context.Payload.LibraryId,
             context.Payload.UserId,
-            context.TaskRepository,
-            context.TaskRunId,
             context.Directory,
             cancellationToken);
     }

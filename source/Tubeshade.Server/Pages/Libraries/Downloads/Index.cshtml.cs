@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -83,21 +81,9 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
         var cancellationToken = CancellationToken.None;
 
         var payload = new DownloadVideoPayload { LibraryId = LibraryId, VideoId = videoId, UserId = userId };
-        var payloadJson = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.DownloadVideoPayload);
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var taskId = await _taskRepository.AddAsync(
-            new TaskEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = userId,
-                Type = TaskType.DownloadVideo,
-                Payload = payloadJson,
-            },
-            transaction);
-
-        Trace.Assert(taskId is not null);
+        _ = await _taskRepository.AddDownloadTask(payload, userId, transaction);
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage();
@@ -130,27 +116,10 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
         var userId = User.GetUserId();
         cancellationToken = CancellationToken.None;
 
-        var payload = new IndexVideoPayload
-        {
-            VideoUrl = model.Url,
-            LibraryId = LibraryId,
-            UserId = userId,
-        };
-        var payloadJson = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.IndexVideoPayload);
+        var payload = new IndexPayload { Url = model.Url, LibraryId = LibraryId, UserId = userId };
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var taskId = await _taskRepository.AddAsync(
-            new TaskEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = userId,
-                Type = TaskType.IndexVideo,
-                Payload = payloadJson,
-            },
-            transaction);
-
-        Trace.Assert(taskId is not null);
+        _ = await _taskRepository.AddIndexTask(payload, userId, transaction);
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage();

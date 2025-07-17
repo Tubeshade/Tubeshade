@@ -23,15 +23,15 @@ public sealed class TaskModel
 
     public string TypeDisplay => Type.Name switch
     {
-        "index_video" => "Index video",
-        "download_video" => "Download video",
+        TaskType.Names.Index => "Index",
+        TaskType.Names.DownloadVideo => "Download video",
         _ => throw new ArgumentOutOfRangeException(),
     };
 
     public string Name => Type.Name switch
     {
-        "index_video" => JsonSerializer.Deserialize(Payload, TaskPayloadContext.Default.IndexVideoPayload)!.VideoUrl,
-        "download_video" => JsonSerializer.Deserialize(Payload, TaskPayloadContext.Default.DownloadVideoPayload)!.VideoId.ToString(),
+        TaskType.Names.Index => JsonSerializer.Deserialize(Payload, TaskPayloadContext.Default.IndexPayload)!.Url,
+        TaskType.Names.DownloadVideo => JsonSerializer.Deserialize(Payload, TaskPayloadContext.Default.DownloadVideoPayload)!.VideoId.ToString(),
         _ => throw new ArgumentOutOfRangeException(),
     };
 

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
+using Tubeshade.Data.Tasks.Payloads;
 
 namespace Tubeshade.Data.Tasks;
 
@@ -126,5 +128,35 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              """,
             new { taskRunId, result = TaskResult.Failed, message = exception.Message },
             cancellationToken: cancellationToken));
+    }
+
+    public ValueTask<Guid> AddIndexTask(IndexPayload payload, Guid userId, NpgsqlTransaction transaction)
+    {
+        var payloadJson = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.IndexPayload);
+        return AddTask(payloadJson, TaskType.Index, userId, transaction);
+    }
+
+    public ValueTask<Guid> AddDownloadTask(DownloadVideoPayload payload, Guid userId, NpgsqlTransaction transaction)
+    {
+        var payloadJson = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.DownloadVideoPayload);
+        return AddTask(payloadJson, TaskType.DownloadVideo, userId, transaction);
+    }
+
+    private async ValueTask<Guid> AddTask(string json, TaskType type, Guid userId, NpgsqlTransaction transaction)
+    {
+        var taskId = await AddAsync(
+            new TaskEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                Type = type,
+                Payload = json,
+            },
+            transaction);
+
+        Trace.Assert(taskId is not null);
+
+        return taskId.Value;
     }
 }
