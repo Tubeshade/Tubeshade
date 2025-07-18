@@ -69,7 +69,7 @@
 <a href="@Model.Entity.ExternalUrl">Original</a>
 
 <section id="video-description">
-    @foreach (var paragraph in Model.Entity.Description.Split(["\r\n","\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    @foreach (var paragraph in Model.Entity.Description.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
     {
         <p>
             @paragraph
@@ -82,6 +82,43 @@
     <script>
         const video = document.querySelector("#main-video");
         video.playbackRate = @Model.PlaybackSpeed;
+
+        if ("mediaSession" in navigator) {
+            // since thumbnail endpoint requires authentication, the artwork source cannot be simply set to the url of the thumbnail
+            // we need to fetch it within the page context, and encode it into a data url
+            fetch("@Url.ActionLink("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })")
+                .then(response => response.blob())
+                .then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: "@Html.Raw(Model.Entity.Name)",
+                        album: "@Html.Raw(Model.Library.Name)",
+                        artist: "@Html.Raw(Model.Channel.Name)",
+                        artwork: [
+                            {
+                                src: blobUrl,
+                                type: "image/jpeg",
+                                sizes: "512x512"
+                            }
+                        ],
+                    });
+                });
+
+            navigator.mediaSession.setActionHandler("play", () => video.play());
+            navigator.mediaSession.setActionHandler("pause", () => video.pause());
+            navigator.mediaSession.setActionHandler("stop", () => video.pause());
+            navigator.mediaSession.setActionHandler("seekforward", (event) => {
+                const skipTime = event.seekOffset || 10;
+                video.currentTime = Math.min(video.currentTime + skipTime, video.duration);
+            });
+            navigator.mediaSession.setActionHandler("seekbackward", (event) => {
+                const skipTime = event.seekOffset || 10;
+                video.currentTime = Math.max(video.currentTime - skipTime, 0);
+            });
+            navigator.mediaSession.setActionHandler("seekto", (event) => {
+                video.currentTime = event.seekTime;
+            });
+        }
 
         const sourcesSelector = document.querySelector("#sources");
 
@@ -96,9 +133,11 @@
 
         function onSourcesSelectorChanged() {
             const currentTime = video.currentTime;
+            const paused = video.paused;
+
             video.src = sourcesSelector.options[sourcesSelector.selectedIndex].value;
             video.currentTime = currentTime;
-            if (!video.paused && !video.ended) {
+            if (!paused) {
                 video.play();
             }
         }
@@ -139,7 +178,7 @@
         function createMarker(cue) {
             const option = document.createElement("option");
             let timestamp = new Date(cue.startTime * 1000).toISOString().slice(11, 19);
-            if (timestamp.startsWith("00:")){
+            if (timestamp.startsWith("00:")) {
                 timestamp = timestamp.slice(3);
             }
 
