@@ -113,7 +113,8 @@ internal static class Program
             .AddScoped<YoutubeService>()
             .AddHostedService<TaskBackgroundService>()
             .AddHostedService<IndexBackgroundService>()
-            .AddHostedService<DownloadBackgroundService>();
+            .AddHostedService<DownloadBackgroundService>()
+            .AddHostedService<ScanChannelBackgroundService>();
 
         builder.Services.AddTransient<IStartupFilter, DatabaseMigrationStartupFilter>();
 

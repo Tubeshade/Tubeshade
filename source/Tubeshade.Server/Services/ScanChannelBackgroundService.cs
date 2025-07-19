@@ -7,26 +7,26 @@ using Tubeshade.Data.Tasks.Payloads;
 
 namespace Tubeshade.Server.Services;
 
-public sealed class DownloadBackgroundService : ChannelConsumerBackgroundService<YoutubeService, DownloadVideoPayload>
+public sealed class ScanChannelBackgroundService : ChannelConsumerBackgroundService<YoutubeService, ScanChannelPayload>
 {
     /// <inheritdoc />
-    public DownloadBackgroundService(IServiceProvider serviceProvider)
-        : base(serviceProvider, TaskType.DownloadVideo)
+    public ScanChannelBackgroundService(IServiceProvider serviceProvider)
+        : base(serviceProvider, TaskType.ScanChannel)
     {
     }
 
     /// <inheritdoc />
-    protected override JsonTypeInfo<DownloadVideoPayload> PayloadTypeInfo =>
-        TaskPayloadContext.Default.DownloadVideoPayload;
+    protected override JsonTypeInfo<ScanChannelPayload> PayloadTypeInfo =>
+        TaskPayloadContext.Default.ScanChannelPayload;
 
     /// <inheritdoc />
     protected override async ValueTask ProcessTaskPayload(
-        TaskContext<YoutubeService, DownloadVideoPayload> context,
+        TaskContext<YoutubeService, ScanChannelPayload> context,
         CancellationToken cancellationToken)
     {
-        await context.Service.DownloadVideo(
+        await context.Service.ScanChannel(
             context.Payload.LibraryId,
-            context.Payload.VideoId,
+            context.Payload.ChannelId,
             context.Payload.UserId,
             context.TaskRepository,
             context.TaskRunId,

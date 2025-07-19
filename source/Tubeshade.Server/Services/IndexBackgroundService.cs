@@ -11,7 +11,7 @@ public sealed class IndexBackgroundService : ChannelConsumerBackgroundService<Yo
 {
     /// <inheritdoc />
     public IndexBackgroundService(IServiceProvider serviceProvider)
-        : base(serviceProvider, TaskBackgroundService.IndexTaskChannel.Reader, TaskType.Index)
+        : base(serviceProvider, TaskType.Index)
     {
     }
 

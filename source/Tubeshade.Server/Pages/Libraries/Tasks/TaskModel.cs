@@ -25,6 +25,7 @@ public sealed class TaskModel
     {
         TaskType.Names.Index => "Index",
         TaskType.Names.DownloadVideo => "Download video",
+        TaskType.Names.ScanChannel => "Scan channel",
         _ => throw new ArgumentOutOfRangeException(),
     };
 
@@ -32,6 +33,7 @@ public sealed class TaskModel
     {
         TaskType.Names.Index => JsonSerializer.Deserialize(Payload, TaskPayloadContext.Default.IndexPayload)!.Url,
         TaskType.Names.DownloadVideo => JsonSerializer.Deserialize(Payload, TaskPayloadContext.Default.DownloadVideoPayload)!.VideoId.ToString(),
+        TaskType.Names.ScanChannel => JsonSerializer.Deserialize(Payload, TaskPayloadContext.Default.ScanChannelPayload)!.ChannelId.ToString(),
         _ => throw new ArgumentOutOfRangeException(),
     };
 

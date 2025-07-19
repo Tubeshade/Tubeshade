@@ -3,11 +3,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NodaTime;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Tasks;
+using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
 
@@ -20,19 +23,22 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
     private readonly ChannelRepository _channelRepository;
     private readonly VideoRepository _videoRepository;
     private readonly IClock _clock;
+    private readonly TaskRepository _taskRepository;
 
     public Channel(
         ChannelRepository channelRepository,
         VideoRepository videoRepository,
         LibraryRepository libraryRepository,
         NpgsqlConnection connection,
-        IClock clock)
+        IClock clock,
+        TaskRepository taskRepository)
     {
         _channelRepository = channelRepository;
         _videoRepository = videoRepository;
         _libraryRepository = libraryRepository;
         _connection = connection;
         _clock = clock;
+        _taskRepository = taskRepository;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -109,6 +115,21 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
     public async Task<IActionResult> OnPostSubscribe()
     {
         return await ChangeSubscribedAt(_clock.GetCurrentInstant());
+    }
+
+    public async Task<IActionResult> OnPostScan(Guid channelId)
+    {
+        var userId = User.GetUserId();
+        var cancellationToken = CancellationToken.None;
+
+        var payload = new ScanChannelPayload { LibraryId = LibraryId, ChannelId = channelId, UserId = userId };
+
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var taskId = await _taskRepository.AddScanChannelTask(payload, userId, transaction);
+        await _taskRepository.TriggerTask(taskId, transaction);
+        await transaction.CommitAsync(cancellationToken);
+
+        return StatusCode(StatusCodes.Status204NoContent);
     }
 
     private async Task<IActionResult> ChangeSubscribedAt(Instant? subscribedAt)

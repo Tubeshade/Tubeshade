@@ -62,12 +62,21 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             transaction));
     }
 
-    public async ValueTask<Guid> StartTask(Guid taskId, NpgsqlTransaction transaction)
+    public async ValueTask<Guid> AddTaskRun(Guid taskId, NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
             $"INSERT INTO tasks.task_runs (task_id) VALUES (@{nameof(taskId)}) RETURNING id;",
             new { taskId },
             transaction));
+    }
+
+    public async ValueTask TriggerTask(Guid taskId, NpgsqlTransaction transaction)
+    {
+        await Connection.ExecuteAsync(
+            // lang=sql
+            $"SELECT pg_notify('task_created', @{nameof(taskId)}::text);",
+            new { taskId },
+            transaction);
     }
 
     public async ValueTask InitializeTaskProgress(Guid taskRunId, decimal target)
@@ -140,6 +149,12 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     {
         var payloadJson = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.DownloadVideoPayload);
         return AddTask(payloadJson, TaskType.DownloadVideo, userId, transaction);
+    }
+
+    public ValueTask<Guid> AddScanChannelTask(ScanChannelPayload payload, Guid userId, NpgsqlTransaction transaction)
+    {
+        var payloadJson = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.ScanChannelPayload);
+        return AddTask(payloadJson, TaskType.ScanChannel, userId, transaction);
     }
 
     private async ValueTask<Guid> AddTask(string json, TaskType type, Guid userId, NpgsqlTransaction transaction)

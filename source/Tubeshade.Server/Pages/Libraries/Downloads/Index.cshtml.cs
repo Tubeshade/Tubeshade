@@ -83,7 +83,8 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
         var payload = new DownloadVideoPayload { LibraryId = LibraryId, VideoId = videoId, UserId = userId };
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        _ = await _taskRepository.AddDownloadTask(payload, userId, transaction);
+        var taskId = await _taskRepository.AddDownloadTask(payload, userId, transaction);
+        await _taskRepository.TriggerTask(taskId, transaction);
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage();
@@ -119,7 +120,8 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
         var payload = new IndexPayload { Url = model.Url, LibraryId = LibraryId, UserId = userId };
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        _ = await _taskRepository.AddIndexTask(payload, userId, transaction);
+        var taskId = await _taskRepository.AddIndexTask(payload, userId, transaction);
+        await _taskRepository.TriggerTask(taskId, transaction);
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage();

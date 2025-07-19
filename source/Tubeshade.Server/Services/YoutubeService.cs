@@ -13,6 +13,7 @@ using NodaTime.Text;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
 using YoutubeDLSharp;
@@ -37,6 +38,7 @@ public sealed class YoutubeService
     private readonly VideoRepository _videoRepository;
     private readonly VideoFileRepository _videoFileRepository;
     private readonly ImageFileRepository _imageFileRepository;
+    private readonly PreferencesRepository _preferencesRepository;
     private readonly IClock _clock;
     private readonly NpgsqlConnection _connection;
 
@@ -50,7 +52,8 @@ public sealed class YoutubeService
         ImageFileRepository imageFileRepository,
         IClock clock,
         LibraryRepository libraryRepository,
-        NpgsqlConnection connection)
+        NpgsqlConnection connection,
+        PreferencesRepository preferencesRepository)
     {
         _logger = logger;
         _options = optionsMonitor.CurrentValue;
@@ -59,6 +62,7 @@ public sealed class YoutubeService
         _clock = clock;
         _libraryRepository = libraryRepository;
         _connection = connection;
+        _preferencesRepository = preferencesRepository;
         _imageFileRepository = imageFileRepository;
         _videoFileRepository = videoFileRepository;
     }
@@ -153,8 +157,8 @@ public sealed class YoutubeService
                     Name = data.Channel,
                     StoragePath = library.StoragePath,
                     ExternalId = youtubeChannelId,
-                    ExternalUrl = data.ChannelUrl, // todo: is this the display url?
-                    Availability = ExternalAvailability.Public, // todo
+                    ExternalUrl = data.ChannelUrl,
+                    Availability = ExternalAvailability.Public,
                 },
                 transaction);
 
@@ -356,25 +360,56 @@ public sealed class YoutubeService
                 PlaylistItems = "0",
             },
             cancellationToken);
+    }
 
-        // var fetchResult = await youtube.RunVideoDataFetch(
-        //     videoData.ChannelUrl,
-        //     cancellationToken,
-        //     false,
-        //     false,
-        //     new OptionSet
-        //     {
-        //         Cookies = cookieFilepath,
-        //         PlaylistItems = "20",
-        //         YesPlaylist = true,
-        //     });
-        //
-        // foreach (var entry in fetchResult.Data.Entries)
-        // {
-        //
-        //     await IndexVideoCore(entry.WebpageUrl, channel, userId, entry, transaction, youtube, cookieFilepath,
-        //         cancellationToken);
-        // }
+    public async ValueTask ScanChannel(
+        Guid libraryId,
+        Guid channelId,
+        Guid userId,
+        TaskRepository taskRepository,
+        Guid taskRunId,
+        DirectoryInfo tempDirectory,
+        CancellationToken cancellationToken)
+    {
+        var youtube = new YoutubeDL
+        {
+            YoutubeDLPath = _options.YtdlpPath,
+            FFmpegPath = _options.FfmpefgPath,
+        };
+
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, transaction, cancellationToken);
+
+        var channel = await _channelRepository.GetAsync(channelId, userId, transaction);
+        var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channelId, userId, cancellationToken);
+        var count = preferences?.VideosCount ?? 5;
+
+        var fetchResult = await youtube.RunVideoDataFetch(
+            channel.ExternalUrl,
+            cancellationToken,
+            false,
+            false,
+            new OptionSet
+            {
+                Cookies = cookieFilepath,
+                CookiesFromBrowser = _options.CookiesFromBrowser,
+                PlaylistItems = $"1:{count}",
+                YesPlaylist = true,
+            });
+
+        if (!fetchResult.Success)
+        {
+            throw new(string.Join(Environment.NewLine, fetchResult.ErrorOutput));
+        }
+
+        await taskRepository.InitializeTaskProgress(taskRunId, fetchResult.Data.Entries.Length);
+        foreach (var (index, entry) in fetchResult.Data.Entries.Index())
+        {
+            await IndexVideo(entry.WebpageUrl, channel, userId, entry, transaction, youtube, cookieFilepath, cancellationToken);
+            await taskRepository.UpdateProgress(taskRunId, index + 1);
+        }
+
+        await transaction.CommitWithRetries(_logger, cancellationToken);
     }
 
     public async ValueTask DownloadVideo(

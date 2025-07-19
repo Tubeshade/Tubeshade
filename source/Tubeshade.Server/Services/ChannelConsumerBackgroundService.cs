@@ -23,14 +23,11 @@ public abstract class ChannelConsumerBackgroundService<TService, TPayload> : Bac
     private readonly ChannelReader<Guid> _channelReader;
     private readonly TaskType _taskType;
 
-    protected ChannelConsumerBackgroundService(
-        IServiceProvider serviceProvider,
-        ChannelReader<Guid> channelReader,
-        TaskType taskType)
+    protected ChannelConsumerBackgroundService(IServiceProvider serviceProvider, TaskType taskType)
     {
         _serviceProvider = serviceProvider;
-        _channelReader = channelReader;
         _taskType = taskType;
+        _channelReader = TaskBackgroundService.GetChannelForTasks(_taskType);
     }
 
     protected virtual int Parallelism => 1;
@@ -75,7 +72,7 @@ public abstract class ChannelConsumerBackgroundService<TService, TPayload> : Bac
             return;
         }
 
-        var taskRunId = await taskRepository.StartTask(task.Id, transaction);
+        var taskRunId = await taskRepository.AddTaskRun(task.Id, transaction);
         var taskRunDirectoryPath = Path.Combine(options.TempPath, $"task-run_{taskRunId:N}");
         await transaction.CommitAsync(cancellationToken);
 
