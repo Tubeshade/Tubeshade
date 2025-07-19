@@ -88,6 +88,7 @@ public sealed class YoutubeService
             new OptionSet
             {
                 Cookies = cookieFilepath,
+                CookiesFromBrowser = _options.CookiesFromBrowser,
                 PlaylistItems = "0",
             });
 
@@ -245,6 +246,7 @@ public sealed class YoutubeService
                 new OptionSet
                 {
                     Cookies = cookieFilepath,
+                    CookiesFromBrowser = _options.CookiesFromBrowser,
                     Format = format,
                     NoPart = true,
                     EmbedChapters = true,
@@ -304,6 +306,7 @@ public sealed class YoutubeService
                 Output = "thumbnail.%(ext)s",
                 Paths = $"{video.StoragePath}",
                 Cookies = cookieFilepath,
+                CookiesFromBrowser = _options.CookiesFromBrowser,
             },
             cancellationToken);
 
@@ -348,6 +351,7 @@ public sealed class YoutubeService
                 SkipDownload = true,
                 LimitRate = 1024 * 1024 * 10,
                 Cookies = cookieFilepath,
+                CookiesFromBrowser = _options.CookiesFromBrowser,
                 WriteAllThumbnails = true,
                 PlaylistItems = "0",
             },
@@ -403,6 +407,7 @@ public sealed class YoutubeService
             new OptionSet
             {
                 Cookies = cookieFilepath,
+                CookiesFromBrowser = _options.CookiesFromBrowser,
                 Format = VideoFormat,
                 CustomOptions = [new Option<string>("-t") { Value = "mp4" }]
             });
@@ -451,6 +456,7 @@ public sealed class YoutubeService
                 new OptionSet
                 {
                     Cookies = cookieFilepath,
+                    CookiesFromBrowser = _options.CookiesFromBrowser,
                     Format = format,
                     NoPart = true,
                     EmbedChapters = true,
@@ -539,6 +545,7 @@ public sealed class YoutubeService
                 {
                     LimitRate = 1024 * 1024 * 10,
                     Cookies = cookieFilepath,
+                    CookiesFromBrowser = _options.CookiesFromBrowser,
                     WriteSubs = true,
                     NoWriteAutoSubs = true,
                     SubFormat = "vtt",

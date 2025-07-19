@@ -14,4 +14,6 @@ public sealed class YtdlpOptions
     public required string FfmpefgPath { get; set; }
 
     public required string TempPath { get; set; } = Path.GetTempPath();
+
+    public string? CookiesFromBrowser { get; set; }
 }
