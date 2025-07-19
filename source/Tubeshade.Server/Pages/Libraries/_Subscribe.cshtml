@@ -1,0 +1,20 @@
+﻿@model Tubeshade.Data.Media.ChannelEntity
+
+<div class="btn-group">
+    @if (Model.SubscribedAt.HasValue)
+    {
+        <button hx-post="" hx-page-handler="Unsubscribe" hx-target="closest div" hx-swap="outerHTML"
+                type="button" class="btn btn-primary">
+            Unsubscribe
+        </button>
+    }
+    else
+    {
+        <button hx-post="" hx-page-handler="Subscribe" hx-target="closest div" hx-swap="outerHTML"
+                type="button" class="btn btn-primary">
+            Subscribe
+        </button>
+    }
+
+    <button type="button" class="btn btn-danger">Delete</button>
+</div>

@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using NodaTime;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
@@ -17,17 +19,20 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
     private readonly LibraryRepository _libraryRepository;
     private readonly ChannelRepository _channelRepository;
     private readonly VideoRepository _videoRepository;
+    private readonly IClock _clock;
 
     public Channel(
         ChannelRepository channelRepository,
         VideoRepository videoRepository,
         LibraryRepository libraryRepository,
-        NpgsqlConnection connection)
+        NpgsqlConnection connection,
+        IClock clock)
     {
         _channelRepository = channelRepository;
         _videoRepository = videoRepository;
         _libraryRepository = libraryRepository;
         _connection = connection;
+        _clock = clock;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -94,5 +99,33 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
         return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostUnsubscribe()
+    {
+        return await ChangeSubscribedAt(null);
+    }
+
+    public async Task<IActionResult> OnPostSubscribe()
+    {
+        return await ChangeSubscribedAt(_clock.GetCurrentInstant());
+    }
+
+    private async Task<IActionResult> ChangeSubscribedAt(Instant? subscribedAt)
+    {
+        var userId = User.GetUserId();
+
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var channel = await _channelRepository.GetAsync(ChannelId, userId, transaction);
+
+        channel.SubscribedAt = subscribedAt;
+        channel.ModifiedByUserId = userId;
+        channel.ModifiedAt = subscribedAt ?? _clock.GetCurrentInstant();
+
+        var count = await _channelRepository.UpdateAsync(channel, transaction);
+        Trace.Assert(count is not 0);
+
+        await transaction.CommitAsync();
+        return Partial("_Subscribe", channel);
     }
 }

@@ -152,6 +152,8 @@ public sealed class YoutubeService
                     Name = data.Channel,
                     StoragePath = library.StoragePath,
                     ExternalId = youtubeChannelId,
+                    ExternalUrl = data.ChannelUrl, // todo: is this the display url?
+                    Availability = ExternalAvailability.Public, // todo
                 },
                 transaction);
 

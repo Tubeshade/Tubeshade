@@ -16,5 +16,11 @@ public sealed record ChannelEntity : ModifiableEntity, IOwnableEntity, INamedEnt
 
     public required string ExternalId { get; set; }
 
+    public required string ExternalUrl { get; set; }
+
+    public required ExternalAvailability Availability { get; set; }
+
     public Instant? SubscribedAt { get; set; }
+
+    public int? SubscriberCount { get; set; }
 }

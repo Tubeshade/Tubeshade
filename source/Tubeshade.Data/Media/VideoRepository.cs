@@ -26,28 +26,28 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     /// <inheritdoc />
     protected override string SelectSql =>
         $"""
-         SELECT id AS {nameof(VideoEntity.Id)},
-                created_at AS {nameof(VideoEntity.CreatedAt)},
-                created_by_user_id AS {nameof(VideoEntity.CreatedByUserId)},
-                modified_at AS {nameof(VideoEntity.ModifiedAt)},
-                modified_by_user_id AS {nameof(VideoEntity.ModifiedByUserId)},
-                owner_id AS {nameof(VideoEntity.OwnerId)},
-                name AS {nameof(VideoEntity.Name)},
-                description AS {nameof(VideoEntity.Description)},
-                categories AS {nameof(VideoEntity.Categories)},
-                tags AS {nameof(VideoEntity.Tags)},
-                view_count AS {nameof(VideoEntity.ViewCount)},
-                like_count AS {nameof(VideoEntity.LikeCount)},
-                channel_id AS {nameof(VideoEntity.ChannelId)},
-                storage_path AS {nameof(VideoEntity.StoragePath)},
-                external_id AS {nameof(VideoEntity.ExternalId)},
-                external_url AS {nameof(VideoEntity.ExternalUrl)},
-                published_at AS PublishedAt,
-                refreshed_at AS RefreshedAt,
-                availability AS Availability,
-                duration AS Duration,
-                ignored_at AS IgnoredAt,
-                ignored_by_user_id AS IgnoredByUserId
+         SELECT videos.id AS {nameof(VideoEntity.Id)},
+                videos.created_at AS {nameof(VideoEntity.CreatedAt)},
+                videos.created_by_user_id AS {nameof(VideoEntity.CreatedByUserId)},
+                videos.modified_at AS {nameof(VideoEntity.ModifiedAt)},
+                videos.modified_by_user_id AS {nameof(VideoEntity.ModifiedByUserId)},
+                videos.owner_id AS {nameof(VideoEntity.OwnerId)},
+                videos.name AS {nameof(VideoEntity.Name)},
+                videos.description AS {nameof(VideoEntity.Description)},
+                videos.categories AS {nameof(VideoEntity.Categories)},
+                videos.tags AS {nameof(VideoEntity.Tags)},
+                videos.view_count AS {nameof(VideoEntity.ViewCount)},
+                videos.like_count AS {nameof(VideoEntity.LikeCount)},
+                videos.channel_id AS {nameof(VideoEntity.ChannelId)},
+                videos.storage_path AS {nameof(VideoEntity.StoragePath)},
+                videos.external_id AS {nameof(VideoEntity.ExternalId)},
+                videos.external_url AS {nameof(VideoEntity.ExternalUrl)},
+                videos.published_at AS PublishedAt,
+                videos.refreshed_at AS RefreshedAt,
+                videos.availability AS Availability,
+                videos.duration AS Duration,
+                videos.ignored_at AS IgnoredAt,
+                videos.ignored_by_user_id AS IgnoredByUserId
          FROM media.videos
          """;
 
@@ -88,10 +88,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     videos.storage_path AS {nameof(VideoEntity.StoragePath)},
                     videos.external_id AS {nameof(VideoEntity.ExternalId)},
                     videos.external_url AS {nameof(VideoEntity.ExternalUrl)},
-                    published_at AS PublishedAt,
-                    refreshed_at AS RefreshedAt,
-                    availability AS Availability,
-                    duration AS Duration,
+                    videos.published_at AS PublishedAt,
+                    videos.refreshed_at AS RefreshedAt,
+                    videos.availability AS Availability,
+                    videos.duration AS Duration,
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
                 INNER JOIN media.channels ON videos.channel_id = channels.id
@@ -137,10 +137,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     videos.storage_path AS {nameof(VideoEntity.StoragePath)},
                     videos.external_id AS {nameof(VideoEntity.ExternalId)},
                     videos.external_url AS {nameof(VideoEntity.ExternalUrl)},
-                    published_at AS PublishedAt,
-                    refreshed_at AS RefreshedAt,
-                    availability AS Availability,
-                    duration AS Duration,
+                    videos.published_at AS PublishedAt,
+                    videos.refreshed_at AS RefreshedAt,
+                    videos.availability AS Availability,
+                    videos.duration AS Duration,
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
                 INNER JOIN media.channels ON videos.channel_id = channels.id
@@ -184,10 +184,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     videos.storage_path AS {nameof(VideoEntity.StoragePath)},
                     videos.external_id AS {nameof(VideoEntity.ExternalId)},
                     videos.external_url AS {nameof(VideoEntity.ExternalUrl)},
-                    published_at AS PublishedAt,
-                    refreshed_at AS RefreshedAt,
-                    availability AS Availability,
-                    duration AS Duration,
+                    videos.published_at AS PublishedAt,
+                    videos.refreshed_at AS RefreshedAt,
+                    videos.availability AS Availability,
+                    videos.duration AS Duration,
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
                 INNER JOIN media.channels ON videos.channel_id = channels.id
@@ -227,8 +227,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     video_files.width AS Width,
                     video_files.height AS Height,
                     video_files.framerate AS Framerate,
-             downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-             downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
+                    video_files.downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
+                    video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
              FROM media.video_files
                 INNER JOIN media.videos ON video_files.video_id = videos.id
              WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
@@ -261,8 +261,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     video_files.width AS Width,
                     video_files.height AS Height,
                     video_files.framerate AS Framerate,
-             downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-             downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
+                    video_files.downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
+                    video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
              FROM media.video_files
                 INNER JOIN media.videos ON video_files.video_id = videos.id
              WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)};
@@ -294,8 +294,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     video_files.width AS Width,
                     video_files.height AS Height,
                     video_files.framerate AS Framerate,
-             downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-             downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
+                    video_files.downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
+                    video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
              FROM media.video_files
                 INNER JOIN media.videos ON video_files.video_id = videos.id
              WHERE {AccessFilter} AND video_files.id = @{nameof(GetSingleParameters.Id)};

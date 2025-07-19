@@ -11,8 +11,8 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO media.channels (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, external_id, subscribed_at) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @ExternalId, @SubscribedAt)
+         INSERT INTO media.channels (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, external_id, subscribed_at, subscriber_count, external_url, availability) 
+         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @ExternalId, @SubscribedAt, @SubscriberCount, @ExternalUrl, @Availability)
          RETURNING id;
          """;
 
@@ -28,7 +28,10 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
                 name AS Name,
                 storage_path AS StoragePath,
                 external_id AS ExternalId,
-                subscribed_at AS SubscribedAt
+                subscribed_at AS SubscribedAt,
+                subscriber_count AS SubscriberCount,
+                external_url AS ExternalUrl,
+                availability AS Availability
          FROM media.channels
          """;
 
