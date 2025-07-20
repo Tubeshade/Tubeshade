@@ -9,8 +9,25 @@
 
     <div>
         <label asp-for="StoragePath">Storage path</label>
-        <input class="form-control" asp-for="StoragePath" type="text" autofocus/>
+        <input class="form-control" asp-for="StoragePath" type="text" placeholder="/path/to/library"/>
         <span asp-validation-for="StoragePath" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="CronExpression">Subscription schedule</label>
+        <input class="form-control" asp-for="CronExpression" type="text"/>
+        <span asp-validation-for="CronExpression" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="TimeZoneId">Subscription schedule time zone</label>
+        <select class="form-control form-select" asp-for="TimeZoneId">
+            @foreach (var id in Model.TimeZoneIds)
+            {
+                <option id="@id">@id</option>
+            }
+        </select>
+        <span asp-validation-for="TimeZoneId" class="text-danger"></span>
     </div>
 
     <button class="btn btn-primary" type="submit">Create library</button>

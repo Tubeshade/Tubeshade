@@ -18,7 +18,7 @@
     </li>
 }
 
-@await Html.PartialAsync("_AddLibrary", new AddLibraryModel())
+@await Html.PartialAsync("_AddLibrary", new AddLibraryModel { TimeZoneIds = Model.TimeZoneIds })
 
 @if (Model.Entities.Count is not 0)
 {
@@ -36,10 +36,29 @@
         {
             <tr>
                 <td>
-                    <a asp-page="Library" asp-route-libraryId="@library.Id"> @library.Name</a>
+                    <a asp-page="Library" asp-route-libraryId="@library.Id">@library.Name</a>
                 </td>
             </tr>
         }
         </tbody>
     </table>
+}
+
+@section Scripts
+{
+    <script>
+        const timeZoneSelect = document.getElementById("@nameof(AddLibraryModel.TimeZoneId)");
+        if (timeZoneSelect !== null) {
+            const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone.trim();
+            console.log(userTimeZone);
+
+            if (userTimeZone !== null) {
+                const option = timeZoneSelect.namedItem(userTimeZone);
+                console.log(option);
+                if (option !== null) {
+                    timeZoneSelect.selectedIndex = option.index;
+                }
+            }
+        }
+    </script>
 }
