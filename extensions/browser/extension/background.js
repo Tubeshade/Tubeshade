@@ -46,13 +46,17 @@ async function syncCookies() {
     const config = await browser.storage.sync.get();
     const path = "api/v1.0/cookies";
     const cookieLines = await getCookieLines();
-    const requestData = {
-        libraryId: config.library_id,
-        domain: "youtube.com",
-        cookie: cookieLines.join('\n'),
-    }
+    const cookie = cookieLines.join("\n");
 
-    await sendData(path, requestData, "POST");
+    for (const libraryId of config.library_id.split(",")) {
+        const requestData = {
+            libraryId: libraryId,
+            domain: "youtube.com",
+            cookie: cookie,
+        }
+
+        await sendData(path, requestData, "POST");
+    }
 }
 
 async function getCookieLines() {
