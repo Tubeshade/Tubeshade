@@ -11,8 +11,8 @@ public sealed class LibraryRepository(NpgsqlConnection connection) : ModifiableR
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO media.libraries (created_by_user_id, modified_by_user_id, owner_id, name, storage_path) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath)
+         INSERT INTO media.libraries (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, subscriptions_schedule_id) 
+         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @SubscriptionsScheduleId)
          RETURNING id;
          """;
 
@@ -26,7 +26,8 @@ public sealed class LibraryRepository(NpgsqlConnection connection) : ModifiableR
                 modified_by_user_id AS ModifiedByUserId,
                 owner_id AS OwnerId,
                 name AS Name,
-                storage_path AS StoragePath
+                storage_path AS StoragePath,
+                subscriptions_schedule_id AS SubscriptionsScheduleId
          FROM media.libraries
          """;
 
@@ -34,6 +35,7 @@ public sealed class LibraryRepository(NpgsqlConnection connection) : ModifiableR
     protected override string UpdateSet =>
         $"""
            name = @Name,
-           storage_path = @StoragePath
+           storage_path = @StoragePath,
+           subscriptions_schedule_id = @SubscriptionsScheduleId
          """;
 }

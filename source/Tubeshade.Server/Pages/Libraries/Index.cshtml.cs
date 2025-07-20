@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -97,18 +97,10 @@ public sealed class Index : PageModel
         cancellationToken = CancellationToken.None;
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var id = await _repository.AddAsync(new LibraryEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = userId,
-                Name = model.Name,
-                StoragePath = model.StoragePath,
-            },
-            transaction);
 
-        var payload = new ScanSubscriptionsPayload { LibraryId = id!.Value, UserId = userId };
+        var payload = new ScanSubscriptionsPayload { LibraryId = Guid.Empty, UserId = userId };
         var taskId = await _taskRepository.AddScanSubscriptionsTask(payload, userId, transaction);
+        var task = await _taskRepository.GetAsync(taskId, userId, transaction);
         var scheduleId = await _scheduleRepository.AddAsync(new ScheduleEntity
             {
                 ModifiedAt = default,
@@ -119,7 +111,20 @@ public sealed class Index : PageModel
             },
             transaction);
 
-        Trace.Assert(scheduleId is not null);
+        var id = await _repository.AddAsync(new LibraryEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                Name = model.Name,
+                StoragePath = model.StoragePath,
+                SubscriptionsScheduleId = scheduleId!.Value,
+            },
+            transaction);
+
+        payload = new ScanSubscriptionsPayload { LibraryId = id!.Value, UserId = userId };
+        task.Payload = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.ScanSubscriptionsPayload);
+        await _taskRepository.UpdateAsync(task, transaction);
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage(nameof(Library), new { libraryId = id });
