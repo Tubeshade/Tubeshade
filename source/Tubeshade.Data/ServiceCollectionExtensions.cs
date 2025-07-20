@@ -55,6 +55,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<ClaimRepository>()
             .AddScoped<IRepository<ClaimEntity>, ClaimRepository>()
             .AddScoped<TaskRepository>()
+            .AddScoped<ScheduleRepository>()
             .AddScoped<LibraryRepository>()
             .AddScoped<ChannelRepository>()
             .AddScoped<VideoRepository>()

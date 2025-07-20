@@ -14,25 +14,28 @@ using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
 
-namespace Tubeshade.Server.Services;
+namespace Tubeshade.Server.Services.Background;
 
-public abstract class ChannelConsumerBackgroundService<TService, TPayload> : BackgroundService
+public abstract class TaskBackgroundServiceBase<TService, TPayload> : BackgroundService
     where TService : notnull
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ChannelReader<Guid> _channelReader;
     private readonly TaskType _taskType;
+    private readonly JsonTypeInfo<TPayload> _payloadTypeInfo;
 
-    protected ChannelConsumerBackgroundService(IServiceProvider serviceProvider, TaskType taskType)
+    protected TaskBackgroundServiceBase(
+        IServiceProvider serviceProvider,
+        TaskType taskType,
+        JsonTypeInfo<TPayload> payloadTypeInfo)
     {
         _serviceProvider = serviceProvider;
         _taskType = taskType;
-        _channelReader = TaskBackgroundService.GetChannelForTasks(_taskType);
+        _payloadTypeInfo = payloadTypeInfo;
+        _channelReader = TaskListenerBackgroundService.GetChannelForTasks(_taskType);
     }
 
     protected virtual int Parallelism => 1;
-
-    protected abstract JsonTypeInfo<TPayload> PayloadTypeInfo { get; }
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -83,7 +86,7 @@ public abstract class ChannelConsumerBackgroundService<TService, TPayload> : Bac
             // Separate scope is needed, so that all updates to task status are not withing a transaction
             await using var internalScope = _serviceProvider.CreateAsyncScope();
 
-            var payload = JsonSerializer.Deserialize(task.Payload, PayloadTypeInfo)!;
+            var payload = JsonSerializer.Deserialize(task.Payload, _payloadTypeInfo)!;
             var service = internalScope.ServiceProvider.GetRequiredService<TService>();
 
             await ProcessTaskPayload(

@@ -13,6 +13,7 @@
 
     <ItemGroup>
         <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer"/>
+        <PackageReference Include="Cronos"/>
         <PackageReference Include="Htmx"/>
         <PackageReference Include="Htmx.TagHelpers"/>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer"/>

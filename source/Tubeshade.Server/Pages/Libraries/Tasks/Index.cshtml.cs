@@ -3,10 +3,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
+using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Tasks;
+using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Configuration.Auth;
 
 namespace Tubeshade.Server.Pages.Libraries.Tasks;
@@ -15,11 +18,13 @@ public sealed class Index : LibraryPageBase
 {
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _libraryRepository;
+    private readonly TaskRepository _taskRepository;
 
     public Index(NpgsqlConnection connection, LibraryRepository libraryRepository, TaskRepository taskRepository)
     {
         _connection = connection;
         _libraryRepository = libraryRepository;
+        _taskRepository = taskRepository;
     }
 
     public LibraryEntity Library { get; set; } = null!;
@@ -54,5 +59,20 @@ public sealed class Index : LibraryPageBase
     {
         await OnGet(cancellationToken);
         return Partial("_RunningTasks", Tasks);
+    }
+
+    public async Task<IActionResult> OnPostScanSubscriptions()
+    {
+        var userId = User.GetUserId();
+        var cancellationToken = CancellationToken.None;
+
+        var payload = new ScanSubscriptionsPayload { LibraryId = LibraryId, UserId = userId };
+
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var taskId = await _taskRepository.AddScanSubscriptionsTask(payload, userId, transaction);
+        await _taskRepository.TriggerTask(taskId, transaction);
+        await transaction.CommitAsync(cancellationToken);
+
+        return StatusCode(StatusCodes.Status204NoContent);
     }
 }

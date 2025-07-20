@@ -1,23 +1,18 @@
 ﻿using System;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Data.Tasks.Payloads;
 
-namespace Tubeshade.Server.Services;
+namespace Tubeshade.Server.Services.Background;
 
-public sealed class DownloadBackgroundService : ChannelConsumerBackgroundService<YoutubeService, DownloadVideoPayload>
+public sealed class DownloadBackgroundService : TaskBackgroundServiceBase<YoutubeService, DownloadVideoPayload>
 {
     /// <inheritdoc />
     public DownloadBackgroundService(IServiceProvider serviceProvider)
-        : base(serviceProvider, TaskType.DownloadVideo)
+        : base(serviceProvider, TaskType.DownloadVideo, TaskPayloadContext.Default.DownloadVideoPayload)
     {
     }
-
-    /// <inheritdoc />
-    protected override JsonTypeInfo<DownloadVideoPayload> PayloadTypeInfo =>
-        TaskPayloadContext.Default.DownloadVideoPayload;
 
     /// <inheritdoc />
     protected override async ValueTask ProcessTaskPayload(

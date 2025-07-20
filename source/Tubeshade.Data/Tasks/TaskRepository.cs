@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
@@ -12,6 +13,8 @@ namespace Tubeshade.Data.Tasks;
 
 public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepositoryBase<TaskEntity>(connection)
 {
+    private static readonly TaskPayloadContext Context = TaskPayloadContext.Default;
+
     /// <inheritdoc />
     protected override string TableName => "tasks.tasks";
 
@@ -141,32 +144,41 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
     public ValueTask<Guid> AddIndexTask(IndexPayload payload, Guid userId, NpgsqlTransaction transaction)
     {
-        var payloadJson = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.IndexPayload);
-        return AddTask(payloadJson, TaskType.Index, userId, transaction);
+        return AddTask(payload, Context.IndexPayload, userId, transaction);
     }
 
     public ValueTask<Guid> AddDownloadTask(DownloadVideoPayload payload, Guid userId, NpgsqlTransaction transaction)
     {
-        var payloadJson = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.DownloadVideoPayload);
-        return AddTask(payloadJson, TaskType.DownloadVideo, userId, transaction);
+        return AddTask(payload, Context.DownloadVideoPayload, userId, transaction);
     }
 
     public ValueTask<Guid> AddScanChannelTask(ScanChannelPayload payload, Guid userId, NpgsqlTransaction transaction)
     {
-        var payloadJson = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.ScanChannelPayload);
-        return AddTask(payloadJson, TaskType.ScanChannel, userId, transaction);
+        return AddTask(payload, Context.ScanChannelPayload, userId, transaction);
     }
 
-    private async ValueTask<Guid> AddTask(string json, TaskType type, Guid userId, NpgsqlTransaction transaction)
+    public ValueTask<Guid> AddScanSubscriptionsTask(ScanSubscriptionsPayload payload, Guid userId, NpgsqlTransaction transaction)
     {
-        var taskId = await AddAsync(
-            new TaskEntity
+        return AddTask(payload, Context.ScanSubscriptionsPayload, userId, transaction);
+    }
+
+    private async ValueTask<Guid> AddTask<TTaskPayload>(
+        TTaskPayload payload,
+        JsonTypeInfo<TTaskPayload> typeInfo,
+        Guid userId,
+        NpgsqlTransaction transaction)
+        where TTaskPayload : PayloadBase, ITaskPayload
+    {
+        var type = TTaskPayload.TaskType;
+        var payloadJson = JsonSerializer.Serialize(payload, typeInfo);
+
+        var taskId = await AddAsync(new TaskEntity
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
                 OwnerId = userId,
                 Type = type,
-                Payload = json,
+                Payload = payloadJson,
             },
             transaction);
 

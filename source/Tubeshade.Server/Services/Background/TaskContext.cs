@@ -2,7 +2,7 @@
 using System.IO;
 using Tubeshade.Data.Tasks;
 
-namespace Tubeshade.Server.Services;
+namespace Tubeshade.Server.Services.Background;
 
 public sealed class TaskContext<TService, TPayload>
 {

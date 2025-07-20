@@ -1,23 +1,18 @@
 ﻿using System;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Data.Tasks.Payloads;
 
-namespace Tubeshade.Server.Services;
+namespace Tubeshade.Server.Services.Background;
 
-public sealed class ScanChannelBackgroundService : ChannelConsumerBackgroundService<YoutubeService, ScanChannelPayload>
+public sealed class ScanChannelBackgroundService : TaskBackgroundServiceBase<YoutubeService, ScanChannelPayload>
 {
     /// <inheritdoc />
     public ScanChannelBackgroundService(IServiceProvider serviceProvider)
-        : base(serviceProvider, TaskType.ScanChannel)
+        : base(serviceProvider, TaskType.ScanChannel, TaskPayloadContext.Default.ScanChannelPayload)
     {
     }
-
-    /// <inheritdoc />
-    protected override JsonTypeInfo<ScanChannelPayload> PayloadTypeInfo =>
-        TaskPayloadContext.Default.ScanChannelPayload;
 
     /// <inheritdoc />
     protected override async ValueTask ProcessTaskPayload(

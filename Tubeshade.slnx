@@ -13,6 +13,7 @@
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="tests\Tubeshade.Server.Tests.Integration\Tubeshade.Server.Tests.Integration.csproj" Type="Classic C#" />
+    <Project Path="tests\Tubeshade.Server.Tests\Tubeshade.Server.Tests.csproj" Type="Classic C#" />
     <File Path="tests\.editorconfig" />
   </Folder>
   <Project Path="source\Tubeshade.Data\Tubeshade.Data.csproj" Type="Classic C#" />

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Diagnostics;
 using System.Threading;
@@ -11,10 +12,12 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 
-namespace Tubeshade.Server.Services;
+namespace Tubeshade.Server.Services.Background;
 
-public sealed class TaskBackgroundService : BackgroundService
+public sealed class TaskListenerBackgroundService : BackgroundService
 {
+    private static readonly ConcurrentDictionary<TaskType, bool> ChannelStatus = [];
+
     private static readonly FrozenDictionary<TaskType, Channel<Guid>> Channels = TaskType.List
         .ToFrozenDictionary(
             type => type,
@@ -26,16 +29,26 @@ public sealed class TaskBackgroundService : BackgroundService
                     SingleWriter = true,
                 }));
 
-    private readonly ILogger<TaskBackgroundService> _logger;
+    private readonly ILogger<TaskListenerBackgroundService> _logger;
     private readonly NpgsqlMultiHostDataSource _dataSource;
 
-    public TaskBackgroundService(ILogger<TaskBackgroundService> logger, NpgsqlMultiHostDataSource dataSource)
+    public TaskListenerBackgroundService(
+        ILogger<TaskListenerBackgroundService> logger,
+        NpgsqlMultiHostDataSource dataSource)
     {
-        _dataSource = dataSource;
         _logger = logger;
+        _dataSource = dataSource;
     }
 
-    public static ChannelReader<Guid> GetChannelForTasks(TaskType taskType) => Channels[taskType].Reader;
+    internal static ChannelReader<Guid> GetChannelForTasks(TaskType taskType)
+    {
+        if (ChannelStatus.TryAdd(taskType, true))
+        {
+            return Channels[taskType].Reader;
+        }
+
+        throw new InvalidOperationException($"Trying to access channel reader for {taskType.Name} multiple times");
+    }
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -68,6 +81,7 @@ public sealed class TaskBackgroundService : BackgroundService
         _logger.LogDebug("Received created task notification with payload {NotificationPayload}", args.Payload);
         if (!Guid.TryParse(args.Payload, out var taskId))
         {
+            _logger.LogWarning("Failed to parse task id from notification payload {NotificationPayload}", args.Payload);
             return;
         }
 

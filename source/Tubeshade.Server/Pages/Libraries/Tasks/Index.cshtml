@@ -7,6 +7,7 @@
 @section Head
 {
     <link rel="prefetch" as="script" href="~/lib/htmx.org/dist/js/htmx.min.js"/>
+    <link rel="prefetch" as="script" href="~/js/htmx.antiforgery.js"/>
 }
 
 @section Navigation
@@ -14,9 +15,14 @@
     @await Html.PartialAsync("_LibraryNavigation", Model.Library)
 }
 
+<button hx-post="" hx-page-handler="ScanSubscriptions" class="btn btn-primary" type="button">
+    Scan subscriptions
+</button>
+
 @await Html.PartialAsync("_RunningTasks", Model.Tasks)
 
 @section Scripts
 {
     <script src="~/lib/htmx.org/dist/js/htmx.min.js"></script>
+    <script src="~/js/htmx.antiforgery.js"></script>
 }

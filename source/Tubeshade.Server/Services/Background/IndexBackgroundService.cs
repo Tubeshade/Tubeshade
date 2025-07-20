@@ -1,25 +1,21 @@
 ﻿using System;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Data.Tasks.Payloads;
 
-namespace Tubeshade.Server.Services;
+namespace Tubeshade.Server.Services.Background;
 
-public sealed class IndexBackgroundService : ChannelConsumerBackgroundService<YoutubeService, IndexPayload>
+public sealed class IndexBackgroundService : TaskBackgroundServiceBase<YoutubeService, IndexPayload>
 {
     /// <inheritdoc />
     public IndexBackgroundService(IServiceProvider serviceProvider)
-        : base(serviceProvider, TaskType.Index)
+        : base(serviceProvider, TaskType.Index, TaskPayloadContext.Default.IndexPayload)
     {
     }
 
     /// <inheritdoc />
     protected override int Parallelism => 4;
-
-    /// <inheritdoc />
-    protected override JsonTypeInfo<IndexPayload> PayloadTypeInfo => TaskPayloadContext.Default.IndexPayload;
 
     /// <inheritdoc />
     protected override async ValueTask ProcessTaskPayload(

@@ -34,6 +34,12 @@ internal static class Program
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        builder.Services
+            .AddTransient<IValidateOptions<SchedulerOptions>, SchedulerOptionsValidator>()
+            .AddOptions<SchedulerOptions>()
+            .BindConfiguration(SchedulerOptions.SectionName)
+            .ValidateOnStart();
+
         builder.Services.AddRazorPages();
 
         builder.Services.AddAuthenticationAndAuthorization(builder.Configuration);
@@ -111,10 +117,7 @@ internal static class Program
 
         builder.Services
             .AddScoped<YoutubeService>()
-            .AddHostedService<TaskBackgroundService>()
-            .AddHostedService<IndexBackgroundService>()
-            .AddHostedService<DownloadBackgroundService>()
-            .AddHostedService<ScanChannelBackgroundService>();
+            .AddBackgroundServices();
 
         builder.Services.AddTransient<IStartupFilter, DatabaseMigrationStartupFilter>();
 
