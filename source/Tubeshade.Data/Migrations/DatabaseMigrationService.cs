@@ -22,6 +22,7 @@ public sealed class DatabaseMigrationService
         var upgradeEngine = DeployChanges
             .To.PostgresqlDatabase(_options.ConnectionString)
             .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
+            .WithTransactionPerScript()
             .LogTo(_loggerFactory)
             .Build();
 
