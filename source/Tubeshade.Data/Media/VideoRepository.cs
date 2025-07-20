@@ -98,7 +98,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
              WHERE {AccessFilter}
                AND videos.ignored_at IS NULL
-               AND EXISTS(SELECT video_files.id FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NULL)
+               AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NULL)
              ORDER BY videos.published_at DESC
              LIMIT @Limit
              OFFSET @Offset;
@@ -145,7 +145,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              FROM media.videos
                 INNER JOIN media.channels ON videos.channel_id = channels.id
                 INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
-             WHERE {AccessFilter} AND library_channels.library_id = @LibraryId
+             WHERE {AccessFilter} 
+               AND library_channels.library_id = @LibraryId
+               AND videos.ignored_at IS NULL
+               AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND video_files.downloaded_at IS NOT NULL)
              ORDER BY videos.published_at DESC
              LIMIT @Limit
              OFFSET @Offset;
@@ -191,7 +194,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
                 INNER JOIN media.channels ON videos.channel_id = channels.id
-             WHERE {AccessFilter} AND channels.id = @ChannelId
+             WHERE {AccessFilter}
+               AND channels.id = @ChannelId
+               AND videos.ignored_at IS NULL
+               AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND video_files.downloaded_at IS NOT NULL)
              ORDER BY videos.published_at DESC
              LIMIT @Limit
              OFFSET @Offset;
