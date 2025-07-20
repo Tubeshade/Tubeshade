@@ -103,8 +103,9 @@ public sealed class Index : PageModel
         var task = await _taskRepository.GetAsync(taskId, userId, transaction);
         var scheduleId = await _scheduleRepository.AddAsync(new ScheduleEntity
             {
-                ModifiedAt = default,
+                CreatedByUserId = userId,
                 ModifiedByUserId = userId,
+                OwnerId = userId,
                 TaskId = taskId,
                 CronExpression = model.CronExpression,
                 TimeZoneId = model.TimeZoneId,
