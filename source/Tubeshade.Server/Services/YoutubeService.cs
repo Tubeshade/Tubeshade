@@ -466,7 +466,8 @@ public sealed class YoutubeService
                 Cookies = cookieFilepath,
                 CookiesFromBrowser = _options.CookiesFromBrowser,
                 PlaylistItems = $"1:{count}",
-                YesPlaylist = true,
+                YesPlaylist = false,
+                FlatPlaylist = true,
             });
 
         if (!fetchResult.Success)
@@ -475,7 +476,7 @@ public sealed class YoutubeService
         }
 
         var entries = fetchResult.Data.Entries;
-        if (entries.Any(data => data.ResultType is not MetadataType.Video))
+        if (entries.Any(data => data.ResultType is MetadataType.Playlist))
         {
             _logger.LogDebug("Found multiple playlists when scanning channel");
             entries = entries.SelectMany(data => data.Entries).ToArray();
@@ -488,7 +489,25 @@ public sealed class YoutubeService
 
         foreach (var (index, entry) in entries.Index())
         {
-            await IndexVideo(entry.WebpageUrl, channel, userId, entry, transaction, youtube, cookieFilepath, cancellationToken);
+            fetchResult = await youtube.RunVideoDataFetch(
+                entry.Url,
+                cancellationToken,
+                true,
+                false,
+                new OptionSet
+                {
+                    Cookies = cookieFilepath,
+                    CookiesFromBrowser = _options.CookiesFromBrowser,
+                    PlaylistItems = "0",
+                });
+
+            if (!fetchResult.Success)
+            {
+                _logger.LogWarning("Skipping video during channel scan - {ErrorMessage}", string.Join(Environment.NewLine, fetchResult.ErrorOutput));
+                continue;
+            }
+
+            await IndexVideo(entry.Url, channel, userId, fetchResult.Data, transaction, youtube, cookieFilepath, cancellationToken);
 
             if (reportProgress)
             {
