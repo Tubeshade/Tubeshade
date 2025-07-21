@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -241,6 +242,8 @@ public sealed class YoutubeService
         }
 
         var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction);
+        var videoFormats = new Dictionary<string, FormatData>();
+
         foreach (var format in VideoFormats)
         {
             var result = await youtube.RunVideoDataFetch(
@@ -268,6 +271,21 @@ public sealed class YoutubeService
                 .ToArray();
 
             var videoFormat = formats.Single(formatData => formatData.Resolution is not "audio only");
+            videoFormats.Add(format, videoFormat);
+        }
+
+        var distinctFormats = videoFormats.DistinctBy(pair => pair.Value.FormatId).ToArray();
+        _logger.LogDebug("Selected {DistinctCount} distinct video formats from {Count}", distinctFormats.Length, videoFormats.Count);
+        foreach (var format in videoFormats.Keys.Except(distinctFormats.Select(pair => pair.Key)))
+        {
+            _logger.LogDebug("Skipped format filter {FormatFilter}", format);
+        }
+
+        foreach (var (format, videoFormat) in distinctFormats)
+        {
+            using var scope = _logger.BeginScope("{FormatId}", videoFormat.FormatId);
+            _logger.LogDebug("Selected format filter {FormatFilter}", format);
+
             var containerType = VideoContainerType.FromName(videoFormat.Extension);
 
             var file = files.SingleOrDefault(file =>
@@ -277,6 +295,8 @@ public sealed class YoutubeService
 
             if (file is null)
             {
+                _logger.LogDebug("Could not find existing file for filter {FormatFilter}", format);
+
                 var fileId = await _videoFileRepository.AddAsync(
                     new VideoFileEntity
                     {
@@ -293,6 +313,10 @@ public sealed class YoutubeService
                     transaction);
 
                 file = await _videoFileRepository.GetAsync(fileId!.Value, userId, transaction);
+            }
+            else
+            {
+                _logger.LogDebug("Found existing file {FileId} for filter {FormatFilter}", file.Id, format);
             }
 
             _logger.LogDebug("Video file {VideoFile}", file);
