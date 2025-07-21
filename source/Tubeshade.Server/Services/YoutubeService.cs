@@ -81,7 +81,7 @@ public sealed class YoutubeService
         var youtube = new YoutubeDL
         {
             YoutubeDLPath = _options.YtdlpPath,
-            FFmpegPath = _options.FfmpefgPath,
+            FFmpegPath = _options.FfmpegPath,
         };
 
         _logger.LogInformation("Getting metadata for {VideoUrl}", url);
@@ -375,7 +375,7 @@ public sealed class YoutubeService
         var youtube = new YoutubeDL
         {
             YoutubeDLPath = _options.YtdlpPath,
-            FFmpegPath = _options.FfmpefgPath,
+            FFmpegPath = _options.FfmpegPath,
         };
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
@@ -397,7 +397,7 @@ public sealed class YoutubeService
         var youtube = new YoutubeDL
         {
             YoutubeDLPath = _options.YtdlpPath,
-            FFmpegPath = _options.FfmpefgPath,
+            FFmpegPath = _options.FfmpegPath,
         };
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
@@ -492,7 +492,7 @@ public sealed class YoutubeService
         var youtube = new YoutubeDL
         {
             YoutubeDLPath = _options.YtdlpPath,
-            FFmpegPath = _options.FfmpefgPath,
+            FFmpegPath = _options.FfmpegPath,
         };
 
         _logger.LogInformation("Getting video metadata for {VideoUrl}", video.ExternalUrl);

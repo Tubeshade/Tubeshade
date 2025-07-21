@@ -28,7 +28,8 @@ internal static class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services
-            .AddTransient<IConfigureOptions<YtdlpOptions>, ExecutableDetector>()
+            .AddSingleton<IPostConfigureOptions<YtdlpOptions>, ExecutableDetector>()
+            .AddSingleton<IValidateOptions<YtdlpOptions>, ExecutableDetector>()
             .AddOptions<YtdlpOptions>()
             .BindConfiguration(YtdlpOptions.SectionName)
             .ValidateDataAnnotations()

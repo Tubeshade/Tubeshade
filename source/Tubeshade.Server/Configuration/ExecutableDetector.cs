@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
@@ -6,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Tubeshade.Server.Configuration;
 
-public sealed class ExecutableDetector : IConfigureOptions<YtdlpOptions>
+public sealed class ExecutableDetector : IPostConfigureOptions<YtdlpOptions>, IValidateOptions<YtdlpOptions>
 {
     private readonly ILogger<ExecutableDetector> _logger;
 
@@ -16,7 +17,27 @@ public sealed class ExecutableDetector : IConfigureOptions<YtdlpOptions>
     }
 
     /// <inheritdoc />
-    public void Configure(YtdlpOptions options)
+    public ValidateOptionsResult Validate(string? name, YtdlpOptions options)
+    {
+        var errors = new List<string>(2);
+
+        if (!File.Exists(options.FfmpegPath))
+        {
+            errors.Add($"ffmpeg does not exist at path '{options.FfmpegPath}'");
+        }
+
+        if (!File.Exists(options.YtdlpPath))
+        {
+            errors.Add($"yt-dlp does not exist at path '{options.YtdlpPath}'");
+        }
+
+        return errors is []
+            ? ValidateOptionsResult.Success
+            : ValidateOptionsResult.Fail(errors);
+    }
+
+    /// <inheritdoc />
+    public void PostConfigure(string? name, YtdlpOptions options)
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
@@ -24,17 +45,17 @@ public sealed class ExecutableDetector : IConfigureOptions<YtdlpOptions>
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(options.FfmpefgPath) || !File.Exists(options.FfmpefgPath))
+        if (string.IsNullOrWhiteSpace(options.FfmpegPath))
         {
             _logger.LogInformation("ffmpeg path is not set, trying to find it");
             if (LocateExecutable("ffmpeg") is { } path)
             {
                 _logger.LogInformation("Found ffmpeg at {FfmpegPath}", path);
-                options.FfmpefgPath = path;
+                options.FfmpegPath = path;
             }
         }
 
-        if (string.IsNullOrWhiteSpace(options.YtdlpPath) || !File.Exists(options.YtdlpPath))
+        if (string.IsNullOrWhiteSpace(options.YtdlpPath))
         {
             _logger.LogInformation("yt-dlp path is not set, trying to find it");
             if (LocateExecutable("yt-dlp") is { } path)
@@ -61,7 +82,7 @@ public sealed class ExecutableDetector : IConfigureOptions<YtdlpOptions>
             return null;
         }
 
-        var output = process.StandardOutput.ReadToEnd();
+        var output = process.StandardOutput.ReadToEnd().Trim();
         _logger.LogDebug("Received output {ProcessOutput}", output);
 
         process.WaitForExit();
@@ -70,6 +91,6 @@ public sealed class ExecutableDetector : IConfigureOptions<YtdlpOptions>
             return null;
         }
 
-        return output.Trim();
+        return output;
     }
 }
