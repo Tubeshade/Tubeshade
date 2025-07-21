@@ -58,6 +58,7 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
         var page = PageIndex ?? 0;
         var offset = pageSize * page;
         var videos = await _videoRepository.GetDownloadableVideosAsync(
+            LibraryId,
             userId,
             pageSize,
             offset,

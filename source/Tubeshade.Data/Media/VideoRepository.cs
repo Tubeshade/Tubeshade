@@ -67,6 +67,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
          """;
 
     public async ValueTask<List<VideoEntity>> GetDownloadableVideosAsync(
+        Guid libraryId,
         Guid userId,
         int limit,
         int offset,
@@ -99,11 +100,12 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              WHERE {AccessFilter}
                AND videos.ignored_at IS NULL
                AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NULL)
+               AND library_channels.library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
              ORDER BY videos.published_at DESC
              LIMIT @Limit
              OFFSET @Offset;
              """,
-            new GetParameters(userId, Access.Read)
+            new GetFromLibraryParameters(userId, libraryId, Access.Read)
             {
                 Limit = limit,
                 Offset = offset,
