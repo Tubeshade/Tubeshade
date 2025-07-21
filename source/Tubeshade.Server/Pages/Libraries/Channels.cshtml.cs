@@ -26,6 +26,6 @@ public sealed class Channels : LibraryPageBase
         var userId = User.GetUserId();
 
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
-        Entities = await _channelRepository.GetAsync(userId, cancellationToken);
+        Entities = await _channelRepository.GetForLibrary(LibraryId, userId, cancellationToken);
     }
 }
