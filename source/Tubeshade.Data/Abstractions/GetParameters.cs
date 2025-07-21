@@ -66,6 +66,17 @@ internal class GetParameters
     public int? Offset { get; init; }
 }
 
+internal class GetSingleExternalParameters : GetParameters
+{
+    public GetSingleExternalParameters(string externalId, Guid userId, Access access)
+        : base(userId, access)
+    {
+        ExternalId = externalId;
+    }
+
+    public string ExternalId { get; }
+}
+
 internal class GetSingleParameters : GetParameters
 {
     public GetSingleParameters(Guid id, Guid userId, Access access)

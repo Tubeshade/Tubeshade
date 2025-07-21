@@ -313,4 +313,17 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
 
         return await Connection.QuerySingleOrDefaultAsync<VideoFileEntity>(command);
     }
+
+    public async ValueTask<VideoEntity?> FindByExternalId(string externalId, Guid userId, Access access, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            $"""
+             {SelectAccessibleSql}
+               AND {TableName}.external_id = @{nameof(GetSingleExternalParameters.ExternalId)};
+             """,
+            new GetSingleExternalParameters(externalId, userId, access),
+            transaction);
+
+        return await Connection.QuerySingleOrDefaultAsync<VideoEntity>(command);
+    }
 }

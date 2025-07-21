@@ -13,6 +13,7 @@ using NodaTime;
 using NodaTime.Text;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
@@ -142,10 +143,9 @@ public sealed class YoutubeService
         NpgsqlTransaction transaction)
     {
         var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
-        var channels = await _channelRepository.GetAsync(userId, transaction);
-
         var youtubeChannelId = data.ChannelID;
-        var channel = channels.SingleOrDefault(channel => channel.ExternalId == youtubeChannelId);
+
+        var channel = await _channelRepository.FindByExternalId(youtubeChannelId, userId, Access.Read, transaction);
         if (channel is null)
         {
             _logger.LogDebug("Creating new channel {ChannelName} ({ChannelExternalId})", data.Channel, youtubeChannelId);
@@ -193,9 +193,7 @@ public sealed class YoutubeService
         var youtubeVideoId = videoData.ID;
         _logger.LogDebug("Indexing video {VideoExternalId}", youtubeVideoId);
 
-        var videos = await _videoRepository.GetAsync(userId, transaction);
-        var video = videos.SingleOrDefault(video => video.ExternalId == youtubeVideoId);
-
+        var video = await _videoRepository.FindByExternalId(youtubeVideoId, userId, Access.Read, transaction);
         if (video is null)
         {
             var publishedAt = videoData.ReleaseTimestamp ?? videoData.Timestamp;

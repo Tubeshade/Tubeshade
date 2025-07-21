@@ -85,4 +85,17 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
         var enumerable = await Connection.QueryAsync<ChannelEntity>(command);
         return enumerable as List<ChannelEntity> ?? enumerable.ToList();
     }
+
+    public async ValueTask<ChannelEntity?> FindByExternalId(string externalId, Guid userId, Access access, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            $"""
+             {SelectAccessibleSql}
+               AND {TableName}.external_id = @{nameof(GetSingleExternalParameters.ExternalId)};
+             """,
+            new GetSingleExternalParameters(externalId, userId, access),
+            transaction);
+
+        return await Connection.QuerySingleOrDefaultAsync<ChannelEntity>(command);
+    }
 }
