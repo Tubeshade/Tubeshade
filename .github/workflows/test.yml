@@ -106,6 +106,7 @@ jobs:
         run: build/debian/debian.sh "${{ steps.publish.outputs.artifact }}" "${{ github.run_number }}"
 
       - uses: actions/upload-artifact@v4.6.2
+        if: false
         with:
           name: Tubeshade.Server_linux-x64.deb
           path: "**/*.deb"
