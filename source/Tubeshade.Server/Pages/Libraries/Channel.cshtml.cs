@@ -117,12 +117,18 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
         return await ChangeSubscribedAt(_clock.GetCurrentInstant());
     }
 
-    public async Task<IActionResult> OnPostScan(Guid channelId)
+    public async Task<IActionResult> OnPostScan(Guid channelId, bool? all)
     {
         var userId = User.GetUserId();
         var cancellationToken = CancellationToken.None;
 
-        var payload = new ScanChannelPayload { LibraryId = LibraryId, ChannelId = channelId, UserId = userId };
+        var payload = new ScanChannelPayload
+        {
+            LibraryId = LibraryId,
+            ChannelId = channelId,
+            UserId = userId,
+            All = all ?? false,
+        };
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var taskId = await _taskRepository.AddScanChannelTask(payload, userId, transaction);

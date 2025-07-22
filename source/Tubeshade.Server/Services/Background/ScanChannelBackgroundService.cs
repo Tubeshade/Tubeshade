@@ -22,6 +22,7 @@ public sealed class ScanChannelBackgroundService : TaskBackgroundServiceBase<You
         await context.Service.ScanChannel(
             context.Payload.LibraryId,
             context.Payload.ChannelId,
+            context.Payload.All,
             context.Payload.UserId,
             context.TaskRepository,
             context.TaskRunId,

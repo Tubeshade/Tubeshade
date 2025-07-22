@@ -388,6 +388,7 @@ public sealed class YoutubeService
     public async ValueTask ScanChannel(
         Guid libraryId,
         Guid channelId,
+        bool allVideos,
         Guid userId,
         TaskRepository taskRepository,
         Guid taskRunId,
@@ -403,7 +404,7 @@ public sealed class YoutubeService
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, transaction, cancellationToken);
 
-        await ScanChannelCore(libraryId, channelId, userId, taskRepository, taskRunId, transaction, youtube, cookieFilepath, cancellationToken);
+        await ScanChannelCore(libraryId, channelId, allVideos, userId, taskRepository, taskRunId, transaction, youtube, cookieFilepath, cancellationToken);
 
         await transaction.CommitWithRetries(_logger, cancellationToken);
     }
@@ -433,7 +434,7 @@ public sealed class YoutubeService
 
         foreach (var (index, channel) in channels.Index())
         {
-            await ScanChannelCore(libraryId, channel.Id, userId, taskRepository, taskRunId, transaction, youtube, cookieFilepath, cancellationToken, false);
+            await ScanChannelCore(libraryId, channel.Id, false, userId, taskRepository, taskRunId, transaction, youtube, cookieFilepath, cancellationToken, false);
             await taskRepository.UpdateProgress(taskRunId, index + 1);
         }
 
@@ -443,6 +444,7 @@ public sealed class YoutubeService
     private async ValueTask ScanChannelCore(
         Guid libraryId,
         Guid channelId,
+        bool allVideos,
         Guid userId,
         TaskRepository taskRepository,
         Guid taskRunId,
@@ -455,9 +457,11 @@ public sealed class YoutubeService
         var channel = await _channelRepository.GetAsync(channelId, userId, transaction);
         var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channelId, userId, cancellationToken);
         var count = preferences?.VideosCount ?? 5;
+        var playlistItems = allVideos ? null : $"1:{count}";
+        var channelUrl = allVideos ? $"{channel.ExternalUrl}/videos" : channel.ExternalUrl;
 
         var fetchResult = await youtube.RunVideoDataFetch(
-            channel.ExternalUrl,
+            channelUrl,
             cancellationToken,
             false,
             false,
@@ -465,7 +469,7 @@ public sealed class YoutubeService
             {
                 Cookies = cookieFilepath,
                 CookiesFromBrowser = _options.CookiesFromBrowser,
-                PlaylistItems = $"1:{count}",
+                PlaylistItems = playlistItems,
                 YesPlaylist = false,
                 FlatPlaylist = true,
             });
