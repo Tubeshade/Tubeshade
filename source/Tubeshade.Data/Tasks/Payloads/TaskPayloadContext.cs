@@ -46,7 +46,7 @@ public sealed class ScanChannelPayload : PayloadBase, ITaskPayload
 
     public required Guid ChannelId { get; init; }
 
-    public required bool All { get; init; }
+    public bool All { get; init; }
 }
 
 public sealed class ScanSubscriptionsPayload : PayloadBase, ITaskPayload
