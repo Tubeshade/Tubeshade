@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NodaTime;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Data.Tasks.Payloads;
@@ -97,14 +99,18 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
         var cancellationToken = CancellationToken.None;
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var video = await _videoRepository.GetAsync(videoId, userId, transaction);
+        var video = await _videoRepository.FindAsync(videoId, userId, Access.Modify, transaction);
+        if (video is null)
+        {
+            return NotFound();
+        }
 
         video.IgnoredAt = _clock.GetCurrentInstant();
         video.IgnoredByUserId = userId;
         await _videoRepository.UpdateAsync(video, transaction);
 
         await transaction.CommitAsync(cancellationToken);
-        return RedirectToPage();
+        return StatusCode(StatusCodes.Status200OK);
     }
 
     public async Task<IActionResult> OnPost(DownloadVideoModel model, CancellationToken cancellationToken)
