@@ -7,14 +7,19 @@
 <video id="main-video" controls playsinline preload="metadata" width="100%"
        poster="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })">
 
-    <source
-        src="@Url.Action("Get", "Videos", new { version = "1.0", id = Model.VideoId })"
-        type="video/@System.IO.Path.GetExtension(Model.Entity.StoragePath).TrimStart('.')"/>
+    @foreach (var file in Model.Files)
+    {
+        <source
+            src="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })"
+            type="video/@file.Type.Name"/>
+    }
 
-    <p>
-        Your browser does not support HTML video.
-        Here is the <a href="@Url.Action("Get", "Videos", new { version = "1.0", id = Model.VideoId })">link to the video</a>.
-    </p>
+    <track
+        src="@Url.Action("GetSubtitles", "Videos", new { version = "1.0", id = Model.VideoId })"
+        label="English" kind="subtitles" srclang="en" default/>
+    <track
+        src="@Url.Action("GetChapters", "Videos", new { version = "1.0", id = Model.VideoId })"
+        kind="chapters" srclang="en" default/>
 </video>
 
 <h2>@Model.Entity.Name</h2>
@@ -29,10 +34,3 @@
         <br/>
     }
 </section>
-
-@section Scripts
-{
-    <script>
-        document.querySelector('#main-video').playbackRate = 1.5;
-    </script>
-}

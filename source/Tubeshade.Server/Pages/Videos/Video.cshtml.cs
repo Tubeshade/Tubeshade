@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +25,8 @@ public sealed class Video : PageModel
 
     public VideoEntity Entity { get; set; } = null!;
 
+    public List<VideoFileEntity> Files { get; set; } = [];
+
     public ChannelEntity Channel { get; set; } = null!;
 
     public async Task OnGet(CancellationToken cancellationToken)
@@ -31,6 +34,7 @@ public sealed class Video : PageModel
         var userId = User.GetUserId();
 
         Entity = await _videoRepository.GetAsync(VideoId, userId, cancellationToken);
+        Files = await _videoRepository.GetFilesAsync(VideoId, userId, cancellationToken);
         Channel = await _channelRepository.GetAsync(Entity.ChannelId, userId, cancellationToken);
     }
 }
