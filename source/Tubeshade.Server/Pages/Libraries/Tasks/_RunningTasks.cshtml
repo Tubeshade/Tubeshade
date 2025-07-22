@@ -4,7 +4,7 @@
        class="table">
     <thead>
     <tr>
-        <th >Type</th>
+        <th>Type</th>
         <th>Video</th>
         <th>Progress</th>
         <th>Status</th>
@@ -20,11 +20,13 @@
             <td>
                 @if (task.HasProgress)
                 {
-                    <progress id="@task.ProgressBarId"
-                              max="@task.Target"
-                              value="@(task.Value is null or 0 ? null : task.Value)">
-                        @task.Progress%
-                    </progress>
+                    <div class="row flex-nowrap">
+                        <label for="@task.ProgressBarId" class="col-auto">@task.Value</label>
+                        <progress id="@task.ProgressBarId" max="@task.Target" value="@task.Value" class="col-auto">
+                            @task.Progress%
+                        </progress>
+                        <label for="@task.ProgressBarId" class="col-auto">@task.Target</label>
+                    </div>
                 }
             </td>
             <td>
