@@ -41,7 +41,7 @@ else
 
     <ul class="pagination justify-content-center">
         <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
-            <a asp-page="/Channels/Channel" asp-route-channelId="@Model.ChannelId"
+            <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
                asp-route-pageIndex="0" asp-route-pageSize="@Model.PageData.PageSize"
                class="page-link">
                 First
@@ -51,7 +51,7 @@ else
         @foreach (var index in Model.PageData.DisplayedPages)
         {
             <li class="page-item @(index - 1 == Model.PageData.Page ? "active" : string.Empty)">
-                <a asp-page="/Channels/Channel" asp-route-channelId="@Model.ChannelId"
+                <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
                    asp-route-pageIndex="@(index - 1)" asp-route-pageSize="@Model.PageData.PageSize"
                    class="page-link" aria-current="page">
                     @index
@@ -60,7 +60,7 @@ else
         }
 
         <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
-            <a asp-page="/Channels/Channel" asp-route-channelId="@Model.ChannelId"
+            <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
                asp-route-pageIndex="@(Model.PageData.PageCount - 1)" asp-route-pageSize="@Model.PageData.PageSize"
                class="page-link">
                 Last
