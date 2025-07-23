@@ -1,4 +1,4 @@
-﻿@model Tubeshade.Server.Pages.Shared.PaginatedData<Tubeshade.Data.Media.VideoEntity>
+﻿@model Tubeshade.Server.Pages.Shared.PaginatedData<VideoModel>
 
 <section id="downloadable-videos">
     @foreach (var video in Model.Data)
@@ -6,24 +6,34 @@
         <div class="card">
             <div class="row g-0">
                 <div class="col-auto col-sm">
-                    <img src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Id })"
-                         alt="@video.Name" class="img-fluid card-img" width="100%"/>
+                    <img src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Video.Id })"
+                         alt="@video.Video.Name" class="img-fluid card-img" width="100%"/>
                 </div>
 
                 <div class="col-sm-8 col-lg-9">
-                    <div class="card-body">
-                        <h5 class="card-title">@video.Name</h5>
+                    <div class="card-body p-2">
+                        <h5 class="card-title">@video.Video.Name</h5>
+
+                        <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@video.Video.ChannelId">
+                            <h6 class="text-truncate" title="@video.Channel.Name">@video.Channel.Name</h6>
+                        </a>
+
+                        <div class="card-text">
+                            <span>@(DateOnly.FromDateTime(video.Video.PublishedAt.ToDateTimeUtc()))</span>
+                            <span> - </span>
+                            <span>@(new HumanReadablePeriodPattern().Format(video.Video.Duration))</span>
+                        </div>
 
                         <div class="btn-group btn-group-sm" role="group">
                             <button hx-post="" hx-page-handler="Ignore"
-                                    hx-route-libraryId="@Model.LibraryId" hx-route-videoId="@video.Id"
+                                    hx-route-libraryId="@Model.LibraryId" hx-route-videoId="@video.Video.Id"
                                     hx-swap="delete" hx-target="closest div[class=card]"
                                     class="btn btn-secondary" type="button">
                                 Ignore
                             </button>
 
                             <button hx-post="" hx-page-handler="StartDownload"
-                                    hx-route-libraryId="@Model.LibraryId" hx-route-videoId="@video.Id"
+                                    hx-route-libraryId="@Model.LibraryId" hx-route-videoId="@video.Video.Id"
                                     hx-swap="none" class="btn btn-success" type="button">
                                 Download
                             </button>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -16,7 +17,7 @@ using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Libraries.Downloads;
 
-public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
+public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
 {
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _libraryRepository;
@@ -50,7 +51,7 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
     public int? PageIndex { get; set; }
 
     /// <inheritdoc />
-    public PaginatedData<VideoEntity> PageData { get; set; } = null!;
+    public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
     public LibraryEntity Library { get; set; } = null!;
 
@@ -63,7 +64,6 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
     {
         var userId = await OnGetCore(cancellationToken);
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
-        Channels = await _channelRepository.GetForLibrary(LibraryId, userId, cancellationToken);
     }
 
     public async Task<IActionResult> OnGetDownloadable(CancellationToken cancellationToken)
@@ -132,6 +132,8 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
     {
         var userId = User.GetUserId();
 
+        Channels = await _channelRepository.GetForLibrary(LibraryId, userId, cancellationToken);
+
         var pageSize = PageSize ?? 20;
         var page = PageIndex ?? 0;
         var offset = pageSize * page;
@@ -139,12 +141,18 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
             ? await _videoRepository.GetDownloadableVideos(LibraryId, channelId, userId, pageSize, offset, cancellationToken)
             : await _videoRepository.GetDownloadableVideos(LibraryId, userId, pageSize, offset, cancellationToken);
 
+        var models = videos.Select(video => new VideoModel
+        {
+            Video = video,
+            Channel = Channels.Single(channel => video.ChannelId == channel.Id), // todo
+        }).ToList();
+
         var totalCount = videos is [] ? 0 : videos[0].TotalCount;
 
-        PageData = new PaginatedData<VideoEntity>
+        PageData = new PaginatedData<VideoModel>
         {
             LibraryId = LibraryId,
-            Data = videos,
+            Data = models,
             Page = page,
             PageSize = pageSize,
             TotalCount = totalCount,
