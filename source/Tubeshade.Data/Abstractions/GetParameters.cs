@@ -29,6 +29,19 @@ internal class GetVideoParameters : GetParameters
     public Guid VideoId { get; }
 }
 
+internal class GetFromLibraryChannelParameters : GetParameters
+{
+    public GetFromLibraryChannelParameters(Guid userId, Guid libraryId, Guid channelId, Access access)
+        : base(userId, access)
+    {
+        LibraryId = libraryId;
+        ChannelId = channelId;
+    }
+
+    public Guid LibraryId { get; }
+    public Guid ChannelId { get; }
+}
+
 internal class GetFromLibraryParameters : GetParameters
 {
     public GetFromLibraryParameters(Guid userId, Guid libraryId, Access access)

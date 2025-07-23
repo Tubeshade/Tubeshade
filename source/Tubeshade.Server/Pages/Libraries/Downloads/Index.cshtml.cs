@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -21,6 +22,7 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
     private readonly LibraryRepository _libraryRepository;
     private readonly TaskRepository _taskRepository;
     private readonly VideoRepository _videoRepository;
+    private readonly ChannelRepository _channelRepository;
     private readonly IClock _clock;
 
     public Index(
@@ -28,12 +30,14 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
         LibraryRepository libraryRepository,
         TaskRepository taskRepository,
         VideoRepository videoRepository,
+        ChannelRepository channelRepository,
         IClock clock)
     {
         _connection = connection;
         _libraryRepository = libraryRepository;
         _taskRepository = taskRepository;
         _videoRepository = videoRepository;
+        _channelRepository = channelRepository;
         _clock = clock;
     }
 
@@ -50,32 +54,22 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
 
     public LibraryEntity Library { get; set; } = null!;
 
+    [BindProperty(SupportsGet = true)]
+    public Guid? ChannelId { get; set; }
+
+    public List<ChannelEntity> Channels { get; set; } = [];
+
     public async Task OnGet(CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-
+        var userId = await OnGetCore(cancellationToken);
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
+        Channels = await _channelRepository.GetForLibrary(LibraryId, userId, cancellationToken);
+    }
 
-        var pageSize = PageSize ?? 20;
-        var page = PageIndex ?? 0;
-        var offset = pageSize * page;
-        var videos = await _videoRepository.GetDownloadableVideosAsync(
-            LibraryId,
-            userId,
-            pageSize,
-            offset,
-            cancellationToken);
-
-        var totalCount = videos is [] ? 0 : videos[0].TotalCount;
-
-        PageData = new PaginatedData<VideoEntity>
-        {
-            LibraryId = LibraryId,
-            Data = videos,
-            Page = page,
-            PageSize = pageSize,
-            TotalCount = totalCount,
-        };
+    public async Task<IActionResult> OnGetDownloadable(CancellationToken cancellationToken)
+    {
+        _ = await OnGetCore(cancellationToken);
+        return Partial("_DownloadableVideos", PageData);
     }
 
     public async Task<IActionResult> OnPostStartDownload(Guid videoId)
@@ -132,5 +126,30 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoEntity>
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage();
+    }
+
+    private async ValueTask<Guid> OnGetCore(CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+
+        var pageSize = PageSize ?? 20;
+        var page = PageIndex ?? 0;
+        var offset = pageSize * page;
+        var videos = ChannelId is { } channelId
+            ? await _videoRepository.GetDownloadableVideos(LibraryId, channelId, userId, pageSize, offset, cancellationToken)
+            : await _videoRepository.GetDownloadableVideos(LibraryId, userId, pageSize, offset, cancellationToken);
+
+        var totalCount = videos is [] ? 0 : videos[0].TotalCount;
+
+        PageData = new PaginatedData<VideoEntity>
+        {
+            LibraryId = LibraryId,
+            Data = videos,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+        };
+
+        return userId;
     }
 }

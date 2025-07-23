@@ -1,0 +1,71 @@
+﻿@model Tubeshade.Server.Pages.Shared.PaginatedData<Tubeshade.Data.Media.VideoEntity>
+
+<section id="downloadable-videos">
+    @foreach (var video in Model.Data)
+    {
+        <div class="card">
+            <div class="row g-0">
+                <div class="col-auto col-sm">
+                    <img src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Id })"
+                         alt="@video.Name" class="img-fluid card-img" width="100%"/>
+                </div>
+
+                <div class="col-sm-8 col-lg-9">
+                    <div class="card-body">
+                        <h5 class="card-title">@video.Name</h5>
+
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button hx-post="" hx-page-handler="Ignore"
+                                    hx-route-libraryId="@Model.LibraryId" hx-route-videoId="@video.Id"
+                                    hx-swap="delete" hx-target="closest div[class=card]"
+                                    class="btn btn-secondary" type="button">
+                                Ignore
+                            </button>
+
+                            <button hx-post="" hx-page-handler="StartDownload"
+                                    hx-route-libraryId="@Model.LibraryId" hx-route-videoId="@video.Id"
+                                    hx-swap="none" class="btn btn-success" type="button">
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <nav class="text-center">
+        <span>
+            Showing <span>@Model.StartIndex</span> - <span>@Model.EndIndex</span> from <span>@Model.TotalCount</span>
+        </span>
+
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.IsFirst ? "disabled" : string.Empty)">
+                <a asp-page="/Libraries/Downloads/Index" asp-route-libraryId="@Model.LibraryId"
+                   asp-route-pageIndex="0" asp-route-pageSize="@Model.PageSize"
+                   class="page-link">
+                    First
+                </a>
+            </li>
+
+            @foreach (var index in Model.DisplayedPages)
+            {
+                <li class="page-item @(index - 1 == Model.Page ? "active" : string.Empty)">
+                    <a asp-page="/Libraries/Downloads/Index" asp-route-libraryId="@Model.LibraryId"
+                       asp-route-pageIndex="@(index - 1)" asp-route-pageSize="@Model.PageSize"
+                       class="page-link" aria-current="page">
+                        @index
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(Model.IsLast ? "disabled" : string.Empty)">
+                <a asp-page="/Libraries/Downloads/Index" asp-route-libraryId="@Model.LibraryId"
+                   asp-route-pageIndex="@(Model.PageCount - 1)" asp-route-pageSize="@Model.PageSize"
+                   class="page-link">
+                    Last
+                </a>
+            </li>
+        </ul>
+    </nav>
+</section>

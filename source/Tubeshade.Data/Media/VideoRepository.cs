@@ -66,7 +66,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              ignored_by_user_id = @IgnoredByUserId
          """;
 
-    public async ValueTask<List<VideoEntity>> GetDownloadableVideosAsync(
+    public async ValueTask<List<VideoEntity>> GetDownloadableVideos(
         Guid libraryId,
         Guid userId,
         int limit,
@@ -106,6 +106,58 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              OFFSET @Offset;
              """,
             new GetFromLibraryParameters(userId, libraryId, Access.Read)
+            {
+                Limit = limit,
+                Offset = offset,
+            },
+            cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<VideoEntity>(command);
+        return enumerable as List<VideoEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<List<VideoEntity>> GetDownloadableVideos(
+        Guid libraryId,
+        Guid channelId,
+        Guid userId,
+        int limit,
+        int offset,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             {AccessCte}
+
+             SELECT videos.id AS {nameof(VideoEntity.Id)},
+                    videos.created_at AS {nameof(VideoEntity.CreatedAt)},
+                    videos.created_by_user_id AS {nameof(VideoEntity.CreatedByUserId)},
+                    videos.modified_at AS {nameof(VideoEntity.ModifiedAt)},
+                    videos.modified_by_user_id AS {nameof(VideoEntity.ModifiedByUserId)},
+                    videos.owner_id AS {nameof(VideoEntity.OwnerId)},
+                    videos.name AS {nameof(VideoEntity.Name)},
+                    videos.channel_id AS {nameof(VideoEntity.ChannelId)},
+                    videos.storage_path AS {nameof(VideoEntity.StoragePath)},
+                    videos.external_id AS {nameof(VideoEntity.ExternalId)},
+                    videos.external_url AS {nameof(VideoEntity.ExternalUrl)},
+                    videos.published_at AS PublishedAt,
+                    videos.refreshed_at AS RefreshedAt,
+                    videos.availability AS Availability,
+                    videos.duration AS Duration,
+                    count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
+             FROM media.videos
+                INNER JOIN media.channels ON videos.channel_id = channels.id
+                INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
+             WHERE {AccessFilter}
+               AND videos.ignored_at IS NULL
+               AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NULL)
+               AND library_channels.library_id = @{nameof(GetFromLibraryChannelParameters.LibraryId)}
+               AND videos.channel_id = @{nameof(GetFromLibraryChannelParameters.ChannelId)}
+             ORDER BY videos.published_at DESC
+             LIMIT @Limit
+             OFFSET @Offset;
+             """,
+            new GetFromLibraryChannelParameters(userId, libraryId, channelId, Access.Read)
             {
                 Limit = limit,
                 Offset = offset,
