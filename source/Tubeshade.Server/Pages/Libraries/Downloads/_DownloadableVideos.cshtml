@@ -1,7 +1,7 @@
-﻿@model Tubeshade.Server.Pages.Shared.PaginatedData<VideoModel>
+﻿@model Index
 
 <section id="downloadable-videos">
-    @foreach (var video in Model.Data)
+    @foreach (var video in Model.PageData.Data)
     {
         <div class="card">
             <div class="row g-0">
@@ -46,22 +46,24 @@
 
     <nav class="text-center">
         <span>
-            Showing <span>@Model.StartIndex</span> - <span>@Model.EndIndex</span> from <span>@Model.TotalCount</span>
+            Showing <span>@Model.PageData.StartIndex</span> - <span>@Model.PageData.EndIndex</span> from <span>@Model.PageData.TotalCount</span>
         </span>
 
         <ul class="pagination justify-content-center">
-            <li class="page-item @(Model.IsFirst ? "disabled" : string.Empty)">
-                <a asp-page="/Libraries/Downloads/Index" asp-route-libraryId="@Model.LibraryId"
+            <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
+                <a asp-page="/Libraries/Downloads/Index"
+                   asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
                    asp-route-pageIndex="0" asp-route-pageSize="@Model.PageSize"
                    class="page-link">
                     First
                 </a>
             </li>
 
-            @foreach (var index in Model.DisplayedPages)
+            @foreach (var index in Model.PageData.DisplayedPages)
             {
-                <li class="page-item @(index - 1 == Model.Page ? "active" : string.Empty)">
-                    <a asp-page="/Libraries/Downloads/Index" asp-route-libraryId="@Model.LibraryId"
+                <li class="page-item @(index - 1 == Model.PageData.Page ? "active" : string.Empty)">
+                    <a asp-page="/Libraries/Downloads/Index"
+                       asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
                        asp-route-pageIndex="@(index - 1)" asp-route-pageSize="@Model.PageSize"
                        class="page-link" aria-current="page">
                         @index
@@ -69,9 +71,10 @@
                 </li>
             }
 
-            <li class="page-item @(Model.IsLast ? "disabled" : string.Empty)">
-                <a asp-page="/Libraries/Downloads/Index" asp-route-libraryId="@Model.LibraryId"
-                   asp-route-pageIndex="@(Model.PageCount - 1)" asp-route-pageSize="@Model.PageSize"
+            <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
+                <a asp-page="/Libraries/Downloads/Index"
+                   asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
+                   asp-route-pageIndex="@(Model.PageData.PageCount - 1)" asp-route-pageSize="@Model.PageSize"
                    class="page-link">
                     Last
                 </a>

@@ -22,6 +22,7 @@
     <select
         asp-for="ChannelId"
         hx-get="" hx-page-handler="Downloadable" hx-trigger="input changed"
+        hx-vals='{"pageSize": @(Model.PageSize?.ToString() ?? "null"), "pageIndex": @(Model.PageIndex?.ToString() ?? "null")}'
         hx-target="#downloadable-videos" hx-swap="outerHtml"
         class="form-control form-select">
         <option selected="@(Model.ChannelId is null)">--- Select channel ---</option>
@@ -32,7 +33,7 @@
     </select>
 </div>
 
-<partial name="_DownloadableVideos" for="PageData"/>
+<partial name="_DownloadableVideos" model="Model"/>
 
 @section Scripts
 {

@@ -69,7 +69,7 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
     public async Task<IActionResult> OnGetDownloadable(CancellationToken cancellationToken)
     {
         _ = await OnGetCore(cancellationToken);
-        return Partial("_DownloadableVideos", PageData);
+        return Partial("_DownloadableVideos", this);
     }
 
     public async Task<IActionResult> OnPostStartDownload(Guid videoId)
