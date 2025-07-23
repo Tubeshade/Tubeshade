@@ -258,9 +258,15 @@ public sealed class YoutubeService
                     EmbedChapters = true,
                 });
 
-            if (!result.Success || result.Data is not { ResultType: MetadataType.Video } data)
+            if (!result.Success)
             {
-                throw new Exception("Unexpected result");
+                throw new(string.Join(Environment.NewLine, result.ErrorOutput));
+            }
+
+            if (result.Data is not { ResultType: MetadataType.Video } data)
+            {
+                _logger.LogError("Expected video, received {MetadataType} with data {VideoData}", result.Data.ResultType, result.Data);
+                throw new Exception("Unexpected result type");
             }
 
             var formatIds = data.FormatID.Split('+');
