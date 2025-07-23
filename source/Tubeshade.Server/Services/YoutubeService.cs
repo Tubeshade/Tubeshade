@@ -78,7 +78,7 @@ public sealed class YoutubeService
         CancellationToken cancellationToken)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, transaction, cancellationToken);
+        var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
 
         var youtube = new YoutubeDL
         {
@@ -111,11 +111,12 @@ public sealed class YoutubeService
             await IndexVideo(
                 url,
                 channel,
+                libraryId,
                 userId,
                 fetchResult.Data,
                 transaction,
                 youtube,
-                cookieFilepath,
+                tempDirectory,
                 cancellationToken);
         }
         else if (fetchResult.Data.ResultType is MetadataType.Playlist)
@@ -183,13 +184,16 @@ public sealed class YoutubeService
     private async ValueTask IndexVideo(
         string url,
         ChannelEntity channel,
+        Guid libraryId,
         Guid userId,
         VideoData videoData,
         NpgsqlTransaction transaction,
         YoutubeDL youtube,
-        string? cookieFilepath,
+        DirectoryInfo directory,
         CancellationToken cancellationToken)
     {
+        var cookieFilepath = await CreateCookieFile(libraryId, directory, cancellationToken);
+
         var youtubeVideoId = videoData.ID;
         _logger.LogDebug("Indexing video {VideoExternalId}", youtubeVideoId);
 
@@ -408,9 +412,8 @@ public sealed class YoutubeService
         };
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, transaction, cancellationToken);
 
-        await ScanChannelCore(libraryId, channelId, allVideos, userId, taskRepository, taskRunId, transaction, youtube, cookieFilepath, cancellationToken);
+        await ScanChannelCore(libraryId, channelId, allVideos, userId, taskRepository, taskRunId, transaction, youtube, tempDirectory, cancellationToken);
 
         await transaction.CommitWithRetries(_logger, cancellationToken);
     }
@@ -430,7 +433,6 @@ public sealed class YoutubeService
         };
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, transaction, cancellationToken);
 
         var channels = await _channelRepository.GetAsync(userId, transaction);
         channels = channels.Where(channel => channel.SubscribedAt is not null).ToList();
@@ -440,7 +442,7 @@ public sealed class YoutubeService
 
         foreach (var (index, channel) in channels.Index())
         {
-            await ScanChannelCore(libraryId, channel.Id, false, userId, taskRepository, taskRunId, transaction, youtube, cookieFilepath, cancellationToken, false);
+            await ScanChannelCore(libraryId, channel.Id, false, userId, taskRepository, taskRunId, transaction, youtube, tempDirectory, cancellationToken, false);
             await taskRepository.UpdateProgress(taskRunId, index + 1);
         }
 
@@ -456,10 +458,12 @@ public sealed class YoutubeService
         Guid taskRunId,
         NpgsqlTransaction transaction,
         YoutubeDL youtube,
-        string? cookieFilepath,
+        DirectoryInfo directory,
         CancellationToken cancellationToken,
         bool reportProgress = true)
     {
+        var cookiesFilepath = await CreateCookieFile(libraryId, directory, cancellationToken);
+
         var channel = await _channelRepository.GetAsync(channelId, userId, transaction);
         var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channelId, userId, cancellationToken);
         var count = preferences?.VideosCount ?? 5;
@@ -473,7 +477,7 @@ public sealed class YoutubeService
             false,
             new OptionSet
             {
-                Cookies = cookieFilepath,
+                Cookies = cookiesFilepath,
                 CookiesFromBrowser = _options.CookiesFromBrowser,
                 PlaylistItems = playlistItems,
                 YesPlaylist = false,
@@ -506,7 +510,7 @@ public sealed class YoutubeService
                 false,
                 new OptionSet
                 {
-                    Cookies = cookieFilepath,
+                    Cookies = cookiesFilepath,
                     CookiesFromBrowser = _options.CookiesFromBrowser,
                     PlaylistItems = "0",
                 });
@@ -517,7 +521,7 @@ public sealed class YoutubeService
                 continue;
             }
 
-            await IndexVideo(entry.Url, channel, userId, fetchResult.Data, transaction, youtube, cookieFilepath, cancellationToken);
+            await IndexVideo(entry.Url, channel, libraryId, userId, fetchResult.Data, transaction, youtube, directory, cancellationToken);
 
             if (reportProgress)
             {
@@ -536,7 +540,7 @@ public sealed class YoutubeService
         CancellationToken cancellationToken)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, transaction, cancellationToken);
+        var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
 
         var video = await _videoRepository.GetAsync(videoId, userId, transaction);
 
@@ -798,10 +802,8 @@ public sealed class YoutubeService
         await transaction.CommitWithRetries(_logger, cancellationToken);
     }
 
-    private async ValueTask<string?> CreateCookieFile(
-        Guid libraryId,
+    private async ValueTask<string?> CreateCookieFile(Guid libraryId,
         DirectoryInfo directory,
-        NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
         var cookie = await _connection.QuerySingleOrDefaultAsync<LibraryCookieEntity>(new CommandDefinition(
@@ -816,8 +818,7 @@ public sealed class YoutubeService
              FROM media.library_external_cookies
              WHERE id = @{nameof(libraryId)} AND domain LIKE '%youtube.com%';
              """,
-            new { libraryId },
-            transaction));
+            new { libraryId }));
 
         if (cookie?.Cookie is null)
         {
