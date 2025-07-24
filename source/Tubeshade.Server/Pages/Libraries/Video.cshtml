@@ -171,27 +171,22 @@
             for (const cue of chapterTrack.track.cues) {
                 createMarker(cue);
             }
+
+            chapters.addEventListener("change", function (event) {
+                video.currentTime = event.target.value;
+            });
         }
 
-        const markerStartTimeAttributeName = "data-start-time";
-
         function createMarker(cue) {
-            const option = document.createElement("option");
             let timestamp = new Date(cue.startTime * 1000).toISOString().slice(11, 19);
             if (timestamp.startsWith("00:")) {
                 timestamp = timestamp.slice(3);
             }
 
+            const option = document.createElement("option");
             option.value = cue.startTime;
             option.innerHTML = `${timestamp} - ${cue.text}`;
-            option.setAttribute(markerStartTimeAttributeName, cue.startTime);
-            option.addEventListener("click", onClickMarker);
-
             chapters.appendChild(option);
-        }
-
-        function onClickMarker(event) {
-            video.currentTime = event.target.getAttribute(markerStartTimeAttributeName);
         }
     </script>
 }
