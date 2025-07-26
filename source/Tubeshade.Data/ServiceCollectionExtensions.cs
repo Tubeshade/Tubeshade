@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using NpgsqlTypes;
+using SponsorBlock;
 using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Configuration;
@@ -27,6 +28,8 @@ public static class ServiceCollectionExtensions
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ExternalAvailability, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ImageType, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<VideoContainerType, int>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentCategory, int>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentAction, int>());
 
         SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
         SqlMapper.AddTypeHandler(new PeriodTypeHandler());
@@ -62,6 +65,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<VideoFileRepository>()
             .AddScoped<ImageFileRepository>()
             .AddScoped<PreferencesRepository>()
+            .AddScoped<SponsorBlockSegmentRepository>()
             .AddNpgsql();
     }
 

@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
+using SponsorBlock;
 using Tubeshade.Data;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Identity.Stores;
@@ -118,7 +119,8 @@ internal static class Program
 
         builder.Services
             .AddScoped<YoutubeService>()
-            .AddBackgroundServices();
+            .AddBackgroundServices()
+            .AddSponsorBlockClient();
 
         builder.Services.AddTransient<IStartupFilter, DatabaseMigrationStartupFilter>();
 

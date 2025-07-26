@@ -15,17 +15,20 @@ public sealed class Video : LibraryPageBase
     private readonly ChannelRepository _channelRepository;
     private readonly LibraryRepository _libraryRepository;
     private readonly PreferencesRepository _preferencesRepository;
+    private readonly SponsorBlockSegmentRepository _sponsorBlockSegmentRepository;
 
     public Video(
         VideoRepository videoRepository,
         ChannelRepository channelRepository,
         LibraryRepository libraryRepository,
-        PreferencesRepository preferencesRepository)
+        PreferencesRepository preferencesRepository,
+        SponsorBlockSegmentRepository sponsorBlockSegmentRepository)
     {
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
         _libraryRepository = libraryRepository;
         _preferencesRepository = preferencesRepository;
+        _sponsorBlockSegmentRepository = sponsorBlockSegmentRepository;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -40,6 +43,8 @@ public sealed class Video : LibraryPageBase
     public LibraryEntity Library { get; set; } = null!;
 
     public decimal PlaybackSpeed { get; set; } = 1.0m;
+
+    public bool HasSponsorBlockSegments { get; set; }
 
     public async Task OnGet(CancellationToken cancellationToken)
     {
@@ -56,5 +61,8 @@ public sealed class Video : LibraryPageBase
         {
             PlaybackSpeed = playbackSpeed;
         }
+
+        var segments = await _sponsorBlockSegmentRepository.GetForVideo(VideoId, userId, cancellationToken);
+        HasSponsorBlockSegments = segments is not [];
     }
 }

@@ -2,12 +2,16 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
+using NodaTime;
+using NodaTime.Text;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
 
@@ -19,10 +23,12 @@ namespace Tubeshade.Server.V1.Controllers;
 public sealed class VideosController : ControllerBase
 {
     private readonly VideoRepository _repository;
+    private readonly SponsorBlockSegmentRepository _segmentRepository;
 
-    public VideosController(VideoRepository repository)
+    public VideosController(VideoRepository repository, SponsorBlockSegmentRepository segmentRepository)
     {
         _repository = repository;
+        _segmentRepository = segmentRepository;
     }
 
     [HttpGet]
@@ -139,5 +145,46 @@ public sealed class VideosController : ControllerBase
             "text/vtt",
             file.LastWriteTimeUtc,
             new EntityTagHeaderValue(new StringSegment($"\"chapters_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")));
+    }
+
+    [HttpGet("SponsorBlock")]
+    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
+    public async Task<IActionResult> GetSponsorBlockSegments(Guid id, CancellationToken cancellationToken)
+    {
+        var segments = await _segmentRepository.GetForVideo(id, User.GetUserId(), cancellationToken);
+        if (segments is [])
+        {
+            return NoContent();
+        }
+
+        var memoryStream = new MemoryStream();
+        var writer = new StreamWriter(memoryStream, Encoding.UTF8);
+
+        await writer.WriteLineAsync("WEBVTT");
+        var pattern = DurationPattern.CreateWithInvariantCulture("HH:mm:ss.fff");
+
+        foreach (var (index, segment) in segments.Index())
+        {
+            var startTime = Duration.FromSeconds((double)segment.StartTime);
+            var endTime = Duration.FromSeconds((double)segment.EndTime);
+
+            await writer.WriteLineAsync(
+                $"""
+
+                 {index + 1}
+                 {pattern.Format(startTime)} --> {pattern.Format(endTime)}
+                 {segment.Category.Name}
+                 """);
+        }
+
+        await writer.FlushAsync(cancellationToken);
+        memoryStream.Position = 0;
+
+        var modifiedAt = segments.Select(segment => segment.CreatedAt).OrderDescending().First();
+        return File(
+            memoryStream,
+            "text/vtt",
+            modifiedAt.ToDateTimeOffset(),
+            new EntityTagHeaderValue(new StringSegment($"\"sponsorblock_{id}_{InstantPattern.ExtendedIso.Format(modifiedAt)}\"")));
     }
 }

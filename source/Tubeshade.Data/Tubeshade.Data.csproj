@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
+        <ProjectReference Include="..\SponsorBlock\SponsorBlock.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Ardalis.SmartEnum"/>
         <PackageReference Include="Dapper"/>
         <PackageReference Include="dbup-core"/>

@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using NodaTime;
 using NodaTime.Text;
 using Npgsql;
+using SponsorBlock;
 using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
@@ -43,6 +44,8 @@ public sealed class YoutubeService
     private readonly PreferencesRepository _preferencesRepository;
     private readonly IClock _clock;
     private readonly NpgsqlConnection _connection;
+    private readonly ISponsorBlockClient _sponsorBlockClient;
+    private readonly SponsorBlockSegmentRepository _segmentRepository;
 
     private static string VideoFormat { get; } = string.Join(',', VideoFormats);
 
@@ -56,7 +59,9 @@ public sealed class YoutubeService
         IClock clock,
         LibraryRepository libraryRepository,
         NpgsqlConnection connection,
-        PreferencesRepository preferencesRepository)
+        PreferencesRepository preferencesRepository,
+        ISponsorBlockClient sponsorBlockClient,
+        SponsorBlockSegmentRepository segmentRepository)
     {
         _logger = logger;
         _options = optionsMonitor.CurrentValue;
@@ -66,6 +71,8 @@ public sealed class YoutubeService
         _libraryRepository = libraryRepository;
         _connection = connection;
         _preferencesRepository = preferencesRepository;
+        _sponsorBlockClient = sponsorBlockClient;
+        _segmentRepository = segmentRepository;
         _imageFileRepository = imageFileRepository;
         _videoFileRepository = videoFileRepository;
     }
@@ -241,6 +248,31 @@ public sealed class YoutubeService
             await _videoRepository.UpdateAsync(video, transaction);
 
             Directory.CreateDirectory(video.StoragePath);
+        }
+
+        var segments = await _sponsorBlockClient.GetSegmentsPrivacy(video.ExternalId, cancellationToken);
+        var existingSegments = await _segmentRepository.GetForVideo(video.Id, userId, transaction);
+        foreach (var segment in segments)
+        {
+            var existingSegment = existingSegments.SingleOrDefault(entity => entity.ExternalId == segment.Id);
+            if (existingSegment is not null)
+            {
+                continue;
+            }
+
+            await _segmentRepository.AddAsync(
+                new SponsorBlockSegmentEntity
+                {
+                    CreatedByUserId = userId,
+                    VideoId = video.Id,
+                    ExternalId = segment.Id,
+                    StartTime = segment.StartTime,
+                    EndTime = segment.EndTime,
+                    Category = segment.Category,
+                    Action = segment.Action,
+                    Description = segment.Description
+                },
+                transaction);
         }
 
         var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction);

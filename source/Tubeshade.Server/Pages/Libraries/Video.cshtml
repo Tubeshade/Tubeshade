@@ -25,6 +25,12 @@
     <track
         src="@Url.Action("GetChapters", "Videos", new { version = "1.0", id = Model.VideoId })"
         kind="chapters" srclang="en" default/>
+    @if (Model.HasSponsorBlockSegments)
+    {
+        <track
+            src="@Url.Action("GetSponsorBlockSegments", "Videos", new { version = "1.0", id = Model.VideoId })"
+            kind="metadata" srclang="en" label="SponsorBlock" default/>
+    }
 </video>
 
 <section id="video-controls" class="row row-cols-sm-2 row-cols-xl-3">
@@ -158,17 +164,17 @@
             }
         }
 
-        const chapterTrack = video.querySelector('track[kind="chapters"]');
+        const chaptersTrack = video.querySelector('track[kind="chapters"]');
         const chapters = document.querySelector("#chapter-markers");
         const chaptersSection = document.querySelector("#chapter-marker-div");
 
-        chapterTrack.addEventListener("load", onTrackLoad, false);
-        chapterTrack.addEventListener("loaded", onTrackLoad, false);
+        chaptersTrack.addEventListener("load", onChaptersTrackLoad, false);
+        chaptersTrack.addEventListener("loaded", onChaptersTrackLoad, false);
 
-        function onTrackLoad() {
+        function onChaptersTrackLoad() {
             chaptersSection.removeAttribute("hidden");
 
-            for (const cue of chapterTrack.track.cues) {
+            for (const cue of chaptersTrack.track.cues) {
                 createMarker(cue);
             }
 
@@ -187,6 +193,28 @@
             option.value = cue.startTime;
             option.innerHTML = `${timestamp} - ${cue.text}`;
             chapters.appendChild(option);
+        }
+
+        const sponsorBlockTrack = video.querySelector('track[kind="metadata"][label="SponsorBlock"]');
+        if (sponsorBlockTrack !== null) {
+            sponsorBlockTrack.addEventListener("load", onSponsorBlockTrackLoad, false);
+            sponsorBlockTrack.addEventListener("loaded", onSponsorBlockTrackLoad, false);
+        }
+
+        function onSponsorBlockTrackLoad() {
+            sponsorBlockTrack.track.addEventListener("cuechange", function (event) {
+                const activeCues = event.target.activeCues;
+
+                if (activeCues.length === 1) {
+                    const cue = activeCues[0];
+                    console.log("Single active cue", cue);
+                    if (cue.text !== "filler") {
+                        video.currentTime = cue.endTime;
+                    }
+                } else {
+                    console.debug("Zero or multiple active cues", activeCues);
+                }
+            });
         }
     </script>
 }
