@@ -205,6 +205,8 @@ public sealed class YoutubeService
         _logger.LogDebug("Indexing video {VideoExternalId}", youtubeVideoId);
 
         var video = await _videoRepository.FindByExternalId(youtubeVideoId, userId, Access.Read, transaction);
+        var existingVideo = video is not null;
+
         if (video is null)
         {
             var publishedAt = videoData.ReleaseTimestamp ?? videoData.Timestamp;
@@ -276,90 +278,93 @@ public sealed class YoutubeService
         }
 
         var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction);
-        var videoFormats = new Dictionary<string, FormatData>();
-
-        foreach (var format in VideoFormats)
+        if (!existingVideo || files is [])
         {
-            var result = await youtube.RunVideoDataFetch(
-                url,
-                cancellationToken,
-                true,
-                false,
-                new OptionSet
-                {
-                    Cookies = cookieFilepath,
-                    CookiesFromBrowser = _options.CookiesFromBrowser,
-                    Format = format,
-                    NoPart = true,
-                    EmbedChapters = true,
-                });
+            var videoFormats = new Dictionary<string, FormatData>();
 
-            if (!result.Success)
+            foreach (var format in VideoFormats)
             {
-                throw new(string.Join(Environment.NewLine, result.ErrorOutput));
-            }
-
-            if (result.Data is not { ResultType: MetadataType.Video } data)
-            {
-                _logger.LogError("Expected video, received {MetadataType} with data {VideoData}", result.Data.ResultType, result.Data);
-                throw new Exception("Unexpected result type");
-            }
-
-            var formatIds = data.FormatID.Split('+');
-            var formats = formatIds
-                .Select(formatId => data.Formats.Single(formatData => formatData.FormatId == formatId))
-                .ToArray();
-
-            var videoFormat = formats.Single(formatData => formatData.Resolution is not "audio only");
-            videoFormats.Add(format, videoFormat);
-        }
-
-        var distinctFormats = videoFormats.DistinctBy(pair => pair.Value.FormatId).ToArray();
-        _logger.LogDebug("Selected {DistinctCount} distinct video formats from {Count}", distinctFormats.Length, videoFormats.Count);
-        foreach (var format in videoFormats.Keys.Except(distinctFormats.Select(pair => pair.Key)))
-        {
-            _logger.LogDebug("Skipped format filter {FormatFilter}", format);
-        }
-
-        foreach (var (format, videoFormat) in distinctFormats)
-        {
-            using var scope = _logger.BeginScope("{FormatId}", videoFormat.FormatId);
-            _logger.LogDebug("Selected format filter {FormatFilter}", format);
-
-            var containerType = VideoContainerType.FromName(videoFormat.Extension);
-
-            var file = files.SingleOrDefault(file =>
-                file.Type == containerType &&
-                file.Width == videoFormat.Width &&
-                Math.Round(file.Framerate) == (decimal)Math.Round(videoFormat.FrameRate!.Value));
-
-            if (file is null)
-            {
-                _logger.LogDebug("Could not find existing file for filter {FormatFilter}", format);
-
-                var fileId = await _videoFileRepository.AddAsync(
-                    new VideoFileEntity
+                var result = await youtube.RunVideoDataFetch(
+                    url,
+                    cancellationToken,
+                    true,
+                    false,
+                    new OptionSet
                     {
-                        CreatedByUserId = userId,
-                        ModifiedByUserId = userId,
-                        OwnerId = userId,
-                        VideoId = video.Id,
-                        StoragePath = $"video_{videoFormat.Height}.{containerType.Name}",
-                        Type = containerType,
-                        Width = videoFormat.Width!.Value,
-                        Height = videoFormat.Height!.Value,
-                        Framerate = (decimal)videoFormat.FrameRate!.Value,
-                    },
-                    transaction);
+                        Cookies = cookieFilepath,
+                        CookiesFromBrowser = _options.CookiesFromBrowser,
+                        Format = format,
+                        NoPart = true,
+                        EmbedChapters = true,
+                    });
 
-                file = await _videoFileRepository.GetAsync(fileId!.Value, userId, transaction);
+                if (!result.Success)
+                {
+                    throw new(string.Join(Environment.NewLine, result.ErrorOutput));
+                }
+
+                if (result.Data is not { ResultType: MetadataType.Video } data)
+                {
+                    _logger.LogError("Expected video, received {MetadataType} with data {VideoData}", result.Data.ResultType, result.Data);
+                    throw new Exception("Unexpected result type");
+                }
+
+                var formatIds = data.FormatID.Split('+');
+                var formats = formatIds
+                    .Select(formatId => data.Formats.Single(formatData => formatData.FormatId == formatId))
+                    .ToArray();
+
+                var videoFormat = formats.Single(formatData => formatData.Resolution is not "audio only");
+                videoFormats.Add(format, videoFormat);
             }
-            else
+
+            var distinctFormats = videoFormats.DistinctBy(pair => pair.Value.FormatId).ToArray();
+            _logger.LogDebug("Selected {DistinctCount} distinct video formats from {Count}", distinctFormats.Length, videoFormats.Count);
+            foreach (var format in videoFormats.Keys.Except(distinctFormats.Select(pair => pair.Key)))
             {
-                _logger.LogDebug("Found existing file {FileId} for filter {FormatFilter}", file.Id, format);
+                _logger.LogDebug("Skipped format filter {FormatFilter}", format);
             }
 
-            _logger.LogDebug("Video file {VideoFile}", file);
+            foreach (var (format, videoFormat) in distinctFormats)
+            {
+                using var scope = _logger.BeginScope("{FormatId}", videoFormat.FormatId);
+                _logger.LogDebug("Selected format filter {FormatFilter}", format);
+
+                var containerType = VideoContainerType.FromName(videoFormat.Extension);
+
+                var file = files.SingleOrDefault(file =>
+                    file.Type == containerType &&
+                    file.Width == videoFormat.Width &&
+                    Math.Round(file.Framerate) == (decimal)Math.Round(videoFormat.FrameRate!.Value));
+
+                if (file is null)
+                {
+                    _logger.LogDebug("Could not find existing file for filter {FormatFilter}", format);
+
+                    var fileId = await _videoFileRepository.AddAsync(
+                        new VideoFileEntity
+                        {
+                            CreatedByUserId = userId,
+                            ModifiedByUserId = userId,
+                            OwnerId = userId,
+                            VideoId = video.Id,
+                            StoragePath = $"video_{videoFormat.Height}.{containerType.Name}",
+                            Type = containerType,
+                            Width = videoFormat.Width!.Value,
+                            Height = videoFormat.Height!.Value,
+                            Framerate = (decimal)videoFormat.FrameRate!.Value,
+                        },
+                        transaction);
+
+                    file = await _videoFileRepository.GetAsync(fileId!.Value, userId, transaction);
+                }
+                else
+                {
+                    _logger.LogDebug("Found existing file {FileId} for filter {FormatFilter}", file.Id, format);
+                }
+
+                _logger.LogDebug("Video file {VideoFile}", file);
+            }
         }
 
         var thumbnail = videoData
