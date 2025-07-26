@@ -2,6 +2,8 @@
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Contrib.WaitAndRetry;
 
 namespace SponsorBlock;
 
@@ -28,7 +30,9 @@ public static class ServiceCollectionExtensions
             {
                 var options = provider.GetRequiredService<IOptionsMonitor<SponsorBlockOptions>>().CurrentValue;
                 client.BaseAddress = new Uri(options.BaseUrl);
-            });
+            })
+            .AddTransientHttpErrorPolicy(builder => builder
+                .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(1), 5)));
 
         return services;
     }
