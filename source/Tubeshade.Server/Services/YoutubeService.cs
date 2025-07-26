@@ -853,7 +853,7 @@ public sealed class YoutubeService
                     domain AS Domain,
                     cookie AS Cookie
              FROM media.library_external_cookies
-             WHERE id = @{nameof(libraryId)} AND domain LIKE '%youtube.com%';
+             WHERE id = @{nameof(libraryId)} AND domain = 'youtube.com';
              """,
             new { libraryId }));
 
