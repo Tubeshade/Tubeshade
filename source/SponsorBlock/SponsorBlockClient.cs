@@ -94,7 +94,7 @@ public sealed class SponsorBlockClient : ISponsorBlockClient
 
         var videoModels = JsonSerializer.Deserialize(content, SerializerContext.Default.VideoModelArray);
         return videoModels?
-            .Single(model => model.VideoId == videoId)
+            .SingleOrDefault(model => model.VideoId == videoId)?
             .Segments
             .Select(model => new VideoSegment
             {
