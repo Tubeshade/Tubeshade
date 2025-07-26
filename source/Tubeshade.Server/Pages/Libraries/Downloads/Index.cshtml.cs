@@ -134,8 +134,8 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
         Channels = await _channelRepository.GetForLibrary(LibraryId, userId, cancellationToken);
 
-        var pageSize = PageSize ?? 20;
-        var page = PageIndex ?? 0;
+        var pageSize = PageSize ?? Defaults.PageSize;
+        var page = PageIndex ?? Defaults.PageIndex;
         var offset = pageSize * page;
         var videos = ChannelId is { } channelId
             ? await _videoRepository.GetDownloadableVideos(LibraryId, channelId, userId, pageSize, offset, cancellationToken)

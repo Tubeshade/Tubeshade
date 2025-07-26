@@ -40,8 +40,8 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoEntity>
     {
         var userId = User.GetUserId();
 
-        var pageSize = PageSize ?? 20;
-        var page = PageIndex ?? 0;
+        var pageSize = PageSize ?? Defaults.PageSize;
+        var page = PageIndex ?? Defaults.PageIndex;
         var offset = pageSize * page;
 
         Entity = await _channelRepository.GetAsync(ChannelId, userId, cancellationToken);

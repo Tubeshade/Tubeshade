@@ -63,8 +63,8 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
     {
         var userId = User.GetUserId();
 
-        var pageSize = PageSize ?? 20;
-        var page = PageIndex ?? 0;
+        var pageSize = PageSize ?? Defaults.PageSize;
+        var page = PageIndex ?? Defaults.PageIndex;
         var offset = pageSize * page;
 
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
