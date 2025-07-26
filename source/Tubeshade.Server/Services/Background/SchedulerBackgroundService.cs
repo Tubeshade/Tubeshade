@@ -61,7 +61,7 @@ public sealed class SchedulerBackgroundService : BackgroundService
             await using var tickScope = _serviceProvider.CreateAsyncScope();
 
             var scheduleRepository = tickScope.ServiceProvider.GetRequiredService<ScheduleRepository>();
-            var schedules = await scheduleRepository.GetAsync(Guid.Empty, stoppingToken);
+            var schedules = await scheduleRepository.GetWithoutAccessControl(stoppingToken);
 
             var taskRepository = tickScope.ServiceProvider.GetRequiredService<TaskRepository>();
             var connection = tickScope.ServiceProvider.GetRequiredService<NpgsqlConnection>();

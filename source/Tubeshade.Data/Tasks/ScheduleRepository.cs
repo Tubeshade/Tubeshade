@@ -1,4 +1,9 @@
-﻿using Npgsql;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Dapper;
+using Npgsql;
 using Tubeshade.Data.Abstractions;
 
 namespace Tubeshade.Data.Tasks;
@@ -39,4 +44,12 @@ public sealed class ScheduleRepository(NpgsqlConnection connection)
         cron_expression = @CronExpression,
         time_zone_id = @TimeZoneId
         """;
+
+    public async ValueTask<List<ScheduleEntity>> GetWithoutAccessControl(CancellationToken cancellationToken)
+    {
+        var command = new CommandDefinition(SelectSql, cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<ScheduleEntity>(command);
+        return enumerable as List<ScheduleEntity> ?? enumerable.ToList();
+    }
 }
