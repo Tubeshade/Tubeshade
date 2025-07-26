@@ -371,7 +371,7 @@ public sealed class YoutubeService
             .Thumbnails
             .Where(data => new UriBuilder(data.Url).Query.StartsWith("?sqp") && data.Width.HasValue)
             .OrderByDescending(data => data.Width)
-            .First();
+            .FirstOrDefault() ?? videoData.Thumbnails.OrderByDescending(data => data.Width).First();
 
         _ = await youtube.RunWithOptions(
             thumbnail.Url,
