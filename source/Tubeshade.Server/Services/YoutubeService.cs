@@ -470,9 +470,7 @@ public sealed class YoutubeService
         };
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-
-        var channels = await _channelRepository.GetAsync(userId, transaction);
-        channels = channels.Where(channel => channel.SubscribedAt is not null).ToList();
+        var channels = await _channelRepository.GetSubscribedForLibrary(libraryId, userId, transaction);
 
         await taskRepository.InitializeTaskProgress(taskRunId, channels.Count);
         _logger.LogDebug("Found {Count} subscribed channels", channels.Count);
