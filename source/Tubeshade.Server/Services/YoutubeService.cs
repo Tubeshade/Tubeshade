@@ -683,14 +683,14 @@ public sealed class YoutubeService
                 .Select(formatId => data.Formats.Single(format => format.FormatId == formatId))
                 .ToArray();
 
-            var videoFormat = formats.Single(format => format.Resolution is not "audio only");
-            var containerType = VideoContainerType.FromName(videoFormat.Extension);
-            var videoFile = files.Single(file => file.Type == containerType && file.Height == videoFormat.Height!.Value);
-
             foreach (var formatData in formats)
             {
                 _logger.LogDebug("Selected format {FormatData}", formatData);
             }
+
+            var videoFormat = formats.Single(format => format.Resolution is not "audio only");
+            var containerType = VideoContainerType.FromName(videoFormat.Extension);
+            var videoFile = files.Single(file => file.Type == containerType && file.Height == videoFormat.Height!.Value);
 
             var size = formats.Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
 
