@@ -688,7 +688,7 @@ public sealed class YoutubeService
                 _logger.LogDebug("Selected format {FormatData}", formatData);
             }
 
-            var videoFormat = formats.Single(format => format.Resolution is not "audio only");
+            var videoFormat = formats.Single(format => !format.Resolution.Contains("audio only", StringComparison.OrdinalIgnoreCase));
             var containerType = VideoContainerType.FromName(videoFormat.Extension);
             var videoFile = files.Single(file => file.Type == containerType && file.Height == videoFormat.Height!.Value);
 
