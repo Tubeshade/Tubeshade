@@ -1,12 +1,12 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Channels/{handler?}"
-@model Channels
+@model Index
 @{
     ViewData["Title"] = "Channels";
 }
 
 @section Navigation
 {
-    @await Html.PartialAsync("_LibraryNavigation", Model.Library)
+    <partial name="Libraries/_LibraryNavigation" for="Library"/>
 }
 
 <table class="table">
@@ -20,7 +20,7 @@
     {
         <tr>
             <td>
-                <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@channel.Id">
+                <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@channel.Id">
                     @channel.Name
                 </a>
             </td>

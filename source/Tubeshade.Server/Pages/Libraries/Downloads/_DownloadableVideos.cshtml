@@ -14,7 +14,7 @@
                     <div class="card-body p-2">
                         <h5 class="card-title">@video.Video.Name</h5>
 
-                        <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@video.Video.ChannelId">
+                        <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@video.Video.ChannelId">
                             <h6 class="text-truncate" title="@video.Channel.Name">@video.Channel.Name</h6>
                         </a>
 

@@ -4,14 +4,14 @@ using System.Threading.Tasks;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
 
-namespace Tubeshade.Server.Pages.Libraries;
+namespace Tubeshade.Server.Pages.Libraries.Channels;
 
-public sealed class Channels : LibraryPageBase
+public sealed class Index : LibraryPageBase
 {
     private readonly ChannelRepository _channelRepository;
     private readonly LibraryRepository _libraryRepository;
 
-    public Channels(ChannelRepository channelRepository, LibraryRepository libraryRepository)
+    public Index(ChannelRepository channelRepository, LibraryRepository libraryRepository)
     {
         _channelRepository = channelRepository;
         _libraryRepository = libraryRepository;

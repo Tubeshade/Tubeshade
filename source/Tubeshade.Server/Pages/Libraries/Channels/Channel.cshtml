@@ -13,7 +13,7 @@
 
 @section Navigation
 {
-    @await Html.PartialAsync("_LibraryNavigation", Model.Library)
+    <partial name="Libraries/_LibraryNavigation" for="Library"/>
 }
 
 <h2>@Model.Entity.Name</h2>
@@ -26,13 +26,13 @@ else
     <a href="@Model.Entity.ExternalUrl">Original</a>
 }
 
-@await Html.PartialAsync("_Subscribe", Model.Entity)
+<partial name="_Subscribe" for="Entity"/>
 
 <section id="channel-preferences">
-    @await Html.PartialAsync("_UpdatePreferences", new UpdatePreferencesModel())
+    <partial name="Libraries/_UpdatePreferences" model="new UpdatePreferencesModel()"/>
 </section>
 
-@await Html.PartialAsync("_Videos", Model.PageData)
+<partial name="Libraries/_Videos" for="PageData"/>
 
 <nav class="text-center">
     <span>
@@ -41,7 +41,7 @@ else
 
     <ul class="pagination justify-content-center">
         <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
-            <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
+            <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
                asp-route-pageIndex="0" asp-route-pageSize="@Model.PageData.PageSize"
                class="page-link">
                 First
@@ -51,7 +51,7 @@ else
         @foreach (var index in Model.PageData.DisplayedPages)
         {
             <li class="page-item @(index - 1 == Model.PageData.Page ? "active" : string.Empty)">
-                <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
+                <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
                    asp-route-pageIndex="@(index - 1)" asp-route-pageSize="@Model.PageData.PageSize"
                    class="page-link" aria-current="page">
                     @index
@@ -60,7 +60,7 @@ else
         }
 
         <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
-            <a asp-page="/Libraries/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
+            <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
                asp-route-pageIndex="@(Model.PageData.PageCount - 1)" asp-route-pageSize="@Model.PageData.PageSize"
                class="page-link">
                 Last

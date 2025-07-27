@@ -14,7 +14,7 @@ using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
 
-namespace Tubeshade.Server.Pages.Libraries;
+namespace Tubeshade.Server.Pages.Libraries.Channels;
 
 public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
 {
