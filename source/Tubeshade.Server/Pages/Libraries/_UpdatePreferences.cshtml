@@ -1,10 +1,28 @@
 ﻿@model UpdatePreferencesModel
 
-<form asp-page-handler="UpdatePreferences">
-    <div class="input-group">
+<form asp-page-handler="UpdatePreferences" class="mb-3">
+    <div class="input-group mb-3">
         <label class="input-group-text" asp-for="PlaybackSpeed">Playback speed</label>
-        <input class="form-control" asp-for="PlaybackSpeed" type="number" min="0" step="0.25" autofocus/>
+        <input class="form-control" asp-for="PlaybackSpeed" type="number" min="0" step="0.25"/>
         <span asp-validation-for="PlaybackSpeed" class="text-danger"></span>
+    </div>
+
+    <div class="input-group mb-3">
+        <label class="input-group-text" asp-for="VideosCount">Video count</label>
+        <input class="form-control" asp-for="VideosCount" type="number" min="0" step="1"/>
+        <span asp-validation-for="VideosCount" class="text-danger"></span>
+    </div>
+
+    <div class="input-group mb-3">
+        <label class="input-group-text" asp-for="LiveStreamsCount">Live streams count</label>
+        <input class="form-control" asp-for="LiveStreamsCount" type="number" min="0" step="1"/>
+        <span asp-validation-for="LiveStreamsCount" class="text-danger"></span>
+    </div>
+
+    <div class="input-group mb-3">
+        <label class="input-group-text" asp-for="ShortsCount">Shorts count</label>
+        <input class="form-control" asp-for="ShortsCount" type="number" min="0" step="1"/>
+        <span asp-validation-for="ShortsCount" class="text-danger"></span>
     </div>
 
     <button class="btn btn-primary" type="submit">Update preferences</button>

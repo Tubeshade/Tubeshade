@@ -3,12 +3,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Htmx;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NodaTime;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Configuration.Auth;
@@ -24,6 +26,7 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
     private readonly VideoRepository _videoRepository;
     private readonly IClock _clock;
     private readonly TaskRepository _taskRepository;
+    private readonly PreferencesRepository _preferencesRepository;
 
     public Channel(
         ChannelRepository channelRepository,
@@ -31,7 +34,8 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
         LibraryRepository libraryRepository,
         NpgsqlConnection connection,
         IClock clock,
-        TaskRepository taskRepository)
+        TaskRepository taskRepository,
+        PreferencesRepository preferencesRepository)
     {
         _channelRepository = channelRepository;
         _videoRepository = videoRepository;
@@ -39,6 +43,7 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
         _connection = connection;
         _clock = clock;
         _taskRepository = taskRepository;
+        _preferencesRepository = preferencesRepository;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -52,6 +57,9 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
     [BindProperty(SupportsGet = true)]
     public int? PageIndex { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? Tab { get; set; }
+
     public LibraryEntity Library { get; set; } = null!;
 
     /// <inheritdoc />
@@ -59,7 +67,10 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
     public ChannelEntity Entity { get; set; } = null!;
 
-    public async Task OnGet(CancellationToken cancellationToken)
+    [BindProperty]
+    public UpdatePreferencesModel UpdatePreferencesModel { get; set; } = new();
+
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
 
@@ -93,9 +104,22 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
             PageSize = pageSize,
             TotalCount = totalCount,
         };
+
+        var preferences = await _preferencesRepository.FindForChannel(ChannelId, userId, cancellationToken);
+        UpdatePreferencesModel = new UpdatePreferencesModel
+        {
+            PlaybackSpeed = preferences?.PlaybackSpeed,
+            VideosCount = preferences?.VideosCount,
+            LiveStreamsCount = preferences?.LiveStreamsCount,
+            ShortsCount = preferences?.ShortsCount,
+        };
+
+        return Request.IsHtmx()
+            ? Partial("_ChannelTabs", this)
+            : Page();
     }
 
-    public async Task<IActionResult> OnPostUpdatePreferences(UpdatePreferencesModel model)
+    public async Task<IActionResult> OnPostUpdatePreferences()
     {
         if (!ModelState.IsValid)
         {
@@ -103,7 +127,48 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
             return Page();
         }
 
-        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var userId = User.GetUserId();
+        var cancellationToken = CancellationToken.None;
+
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var preferences = await _preferencesRepository.FindForChannel(ChannelId, userId, transaction);
+        if (preferences is null)
+        {
+            var id = await _preferencesRepository.AddAsync(
+                new PreferencesEntity
+                {
+                    CreatedByUserId = userId,
+                    ModifiedByUserId = userId,
+                    PlaybackSpeed = UpdatePreferencesModel.PlaybackSpeed,
+                    VideosCount = UpdatePreferencesModel.VideosCount,
+                    LiveStreamsCount = UpdatePreferencesModel.LiveStreamsCount,
+                    ShortsCount = UpdatePreferencesModel.ShortsCount,
+                    SubscriptionScheduleId = null
+                },
+                transaction);
+
+            Trace.Assert(id is not null);
+
+            var count = await _preferencesRepository.LinkToChannel(id.Value, ChannelId, userId, transaction);
+
+            Trace.Assert(count is 1);
+        }
+        else
+        {
+            preferences.PlaybackSpeed = UpdatePreferencesModel.PlaybackSpeed;
+            preferences.VideosCount = UpdatePreferencesModel.VideosCount;
+            preferences.LiveStreamsCount = UpdatePreferencesModel.LiveStreamsCount;
+            preferences.ShortsCount = UpdatePreferencesModel.ShortsCount;
+
+            var count = await _preferencesRepository.UpdateAsync(
+                preferences,
+                transaction);
+
+            Trace.Assert(count is 1);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+
         return RedirectToPage();
     }
 

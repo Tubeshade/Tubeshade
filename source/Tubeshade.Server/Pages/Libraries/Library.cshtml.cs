@@ -1,10 +1,13 @@
-﻿using System.Linq;
+﻿using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Htmx;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Preferences;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
 
@@ -16,13 +19,20 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
     private readonly LibraryRepository _repository;
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
+    private readonly PreferencesRepository _preferencesRepository;
 
-    public Library(LibraryRepository repository, VideoRepository videoRepository, NpgsqlConnection connection, ChannelRepository channelRepository)
+    public Library(
+        LibraryRepository repository,
+        VideoRepository videoRepository,
+        NpgsqlConnection connection,
+        ChannelRepository channelRepository,
+        PreferencesRepository preferencesRepository)
     {
         _repository = repository;
         _videoRepository = videoRepository;
         _connection = connection;
         _channelRepository = channelRepository;
+        _preferencesRepository = preferencesRepository;
     }
 
     /// <inheritdoc />
@@ -33,12 +43,18 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
     [BindProperty(SupportsGet = true)]
     public int? PageIndex { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? Tab { get; set; }
+
     /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
     public LibraryEntity Entity { get; set; } = null!;
 
-    public async Task OnGet(CancellationToken cancellationToken)
+    [BindProperty]
+    public UpdatePreferencesModel UpdatePreferencesModel { get; set; } = new();
+
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
 
@@ -71,9 +87,22 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
             PageSize = pageSize,
             TotalCount = totalCount,
         };
+
+        var preferences = await _preferencesRepository.FindForLibrary(LibraryId, userId, cancellationToken);
+        UpdatePreferencesModel = new UpdatePreferencesModel
+        {
+            PlaybackSpeed = preferences?.PlaybackSpeed,
+            VideosCount = preferences?.VideosCount,
+            LiveStreamsCount = preferences?.LiveStreamsCount,
+            ShortsCount = preferences?.ShortsCount,
+        };
+
+        return Request.IsHtmx()
+            ? Partial("_LibraryTabs", this)
+            : Page();
     }
 
-    public async Task<IActionResult> OnPostUpdatePreferences(UpdatePreferencesModel model)
+    public async Task<IActionResult> OnPostUpdatePreferences()
     {
         if (!ModelState.IsValid)
         {
@@ -81,7 +110,48 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
             return Page();
         }
 
-        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var userId = User.GetUserId();
+        var cancellationToken = CancellationToken.None;
+
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var preferences = await _preferencesRepository.FindForLibrary(LibraryId, userId, transaction);
+        if (preferences is null)
+        {
+            var id = await _preferencesRepository.AddAsync(
+                new PreferencesEntity
+                {
+                    CreatedByUserId = userId,
+                    ModifiedByUserId = userId,
+                    PlaybackSpeed = UpdatePreferencesModel.PlaybackSpeed,
+                    VideosCount = UpdatePreferencesModel.VideosCount,
+                    LiveStreamsCount = UpdatePreferencesModel.LiveStreamsCount,
+                    ShortsCount = UpdatePreferencesModel.ShortsCount,
+                    SubscriptionScheduleId = null
+                },
+                transaction);
+
+            Trace.Assert(id is not null);
+
+            var count = await _preferencesRepository.LinkToLibrary(id.Value, LibraryId, userId, transaction);
+
+            Trace.Assert(count is 1);
+        }
+        else
+        {
+            preferences.PlaybackSpeed = UpdatePreferencesModel.PlaybackSpeed;
+            preferences.VideosCount = UpdatePreferencesModel.VideosCount;
+            preferences.LiveStreamsCount = UpdatePreferencesModel.LiveStreamsCount;
+            preferences.ShortsCount = UpdatePreferencesModel.ShortsCount;
+
+            var count = await _preferencesRepository.UpdateAsync(
+                preferences,
+                transaction);
+
+            Trace.Assert(count is 1);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+
         return RedirectToPage();
     }
 }

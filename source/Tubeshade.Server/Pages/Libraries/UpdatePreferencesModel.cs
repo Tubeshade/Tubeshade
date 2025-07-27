@@ -1,9 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Tubeshade.Server.Pages.Libraries;
+﻿namespace Tubeshade.Server.Pages.Libraries;
 
 public sealed class UpdatePreferencesModel
 {
-    [Required]
     public decimal? PlaybackSpeed { get; set; }
+
+    public int? VideosCount { get; set; }
+
+    public int? LiveStreamsCount { get; set; }
+
+    public int? ShortsCount { get; set; }
 }

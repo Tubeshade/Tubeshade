@@ -1,5 +1,4 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Channels/{channelId:guid}/{handler?}"
-@using Tubeshade.Data.Media
 @model Channel
 @{
     ViewData["Title"] = Model.Entity.Name;
@@ -17,57 +16,8 @@
 }
 
 <h2>@Model.Entity.Name</h2>
-@if (Model.Entity.Availability == ExternalAvailability.NotAvailable)
-{
-    <p>Original no longer available</p>
-}
-else
-{
-    <a href="@Model.Entity.ExternalUrl">Original</a>
-}
 
-<partial name="_Subscribe" for="Entity"/>
-
-<section id="channel-preferences">
-    <partial name="Libraries/_UpdatePreferences" model="new UpdatePreferencesModel()"/>
-</section>
-
-<partial name="Libraries/_Videos" for="PageData"/>
-
-<nav class="text-center">
-    <span>
-        Showing @Model.PageData.StartIndex - @Model.PageData.EndIndex from @Model.PageData.TotalCount
-    </span>
-
-    <ul class="pagination justify-content-center">
-        <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
-            <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
-               asp-route-pageIndex="0" asp-route-pageSize="@Model.PageData.PageSize"
-               class="page-link">
-                First
-            </a>
-        </li>
-
-        @foreach (var index in Model.PageData.DisplayedPages)
-        {
-            <li class="page-item @(index - 1 == Model.PageData.Page ? "active" : string.Empty)">
-                <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
-                   asp-route-pageIndex="@(index - 1)" asp-route-pageSize="@Model.PageData.PageSize"
-                   class="page-link" aria-current="page">
-                    @index
-                </a>
-            </li>
-        }
-
-        <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
-            <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.ChannelId"
-               asp-route-pageIndex="@(Model.PageData.PageCount - 1)" asp-route-pageSize="@Model.PageData.PageSize"
-               class="page-link">
-                Last
-            </a>
-        </li>
-    </ul>
-</nav>
+<partial name="_ChannelTabs" model="@Model"/>
 
 @section Scripts
 {
