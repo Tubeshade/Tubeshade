@@ -8,6 +8,8 @@ namespace Tubeshade.Server;
 
 public sealed class HumanReadablePeriodPattern : IPattern<Period>
 {
+    public static readonly HumanReadablePeriodPattern Instance = new();
+
     /// <inheritdoc />
     public ParseResult<Period> Parse(string text)
     {

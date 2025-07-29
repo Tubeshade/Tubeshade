@@ -18,9 +18,16 @@
                     <h6 class="text-truncate" title="@video.Channel.Name">@video.Channel.Name</h6>
                 </a>
 
-                <span>@(DateOnly.FromDateTime(video.Video.PublishedAt.ToDateTimeUtc()))</span>
-                <span> - </span>
-                <span>@(new HumanReadablePeriodPattern().Format(video.Video.Duration))</span>
+                <div class="d-flex d-inline justify-content-between">
+                    <span>@(DateOnly.FromDateTime(video.Video.PublishedAt.ToDateTimeUtc()))</span>
+                    <div>
+                        <span>@(HumanReadablePeriodPattern.Instance.Format(video.Video.Duration))</span>
+                        @if (video.Video.Duration != video.ActualDuration)
+                        {
+                            <span>(@(HumanReadablePeriodPattern.Instance.Format(video.ActualDuration)))</span>
+                        }
+                    </div>
+                </div>
             </div>
         </div>
     }

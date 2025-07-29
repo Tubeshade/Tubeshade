@@ -168,7 +168,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return enumerable as List<VideoEntity> ?? enumerable.ToList();
     }
 
-    public async ValueTask<List<VideoEntity>> GetLibraryVideosAsync(
+    public async ValueTask<List<VideoEntity>> GetForLibrary(
         Guid userId,
         Guid libraryId,
         int limit,
@@ -218,8 +218,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return enumerable as List<VideoEntity> ?? enumerable.ToList();
     }
 
-    public async ValueTask<List<VideoEntity>> GetChannelVideosAsync(
-        Guid userId,
+    public async ValueTask<List<VideoEntity>> GetForChannel(Guid userId,
         Guid channelId,
         int limit,
         int offset,

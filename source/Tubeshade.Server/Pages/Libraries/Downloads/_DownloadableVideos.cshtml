@@ -21,7 +21,11 @@
                         <div class="card-text">
                             <span>@(DateOnly.FromDateTime(video.Video.PublishedAt.ToDateTimeUtc()))</span>
                             <span> - </span>
-                            <span>@(new HumanReadablePeriodPattern().Format(video.Video.Duration))</span>
+                            <span>@(HumanReadablePeriodPattern.Instance.Format(video.Video.Duration))</span>
+                            @if (video.Video.Duration != video.ActualDuration)
+                            {
+                                <span>(@(HumanReadablePeriodPattern.Instance.Format(video.ActualDuration)))</span>
+                            }
                         </div>
 
                         <div class="btn-group btn-group-sm" role="group">

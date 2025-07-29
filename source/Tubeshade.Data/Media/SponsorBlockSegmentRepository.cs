@@ -73,4 +73,21 @@ public sealed class SponsorBlockSegmentRepository(NpgsqlConnection connection)
         var enumerable = await Connection.QueryAsync<SponsorBlockSegmentEntity>(command);
         return enumerable as List<SponsorBlockSegmentEntity> ?? enumerable.ToList();
     }
+
+    public async ValueTask<List<SponsorBlockSegmentEntity>> GetForVideos(
+        Guid[] videoIds,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new CommandDefinition(
+            $"""
+             {SelectSql}
+             WHERE video_id = ANY (@{nameof(GetVideosParameters.VideoIds)});
+             """,
+            new GetVideosParameters(videoIds, userId, Access.Read),
+            cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<SponsorBlockSegmentEntity>(command);
+        return enumerable as List<SponsorBlockSegmentEntity> ?? enumerable.ToList();
+    }
 }

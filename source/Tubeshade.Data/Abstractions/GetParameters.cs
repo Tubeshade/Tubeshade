@@ -18,6 +18,17 @@ internal class GetSingleVideoParameters : GetVideoParameters
 }
 
 
+internal class GetVideosParameters : GetParameters
+{
+    public GetVideosParameters(Guid[] videoIds, Guid userId, Access access)
+        : base(userId, access)
+    {
+        VideoIds = videoIds;
+    }
+
+    public Guid[] VideoIds { get; }
+}
+
 internal class GetVideoParameters : GetParameters
 {
     public GetVideoParameters(Guid videoId, Guid userId, Access access)

@@ -45,13 +45,7 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoEntity>
         var offset = pageSize * page;
 
         Entity = await _channelRepository.GetAsync(ChannelId, userId, cancellationToken);
-        var videos = await _videoRepository.GetChannelVideosAsync(
-            ChannelId,
-            userId,
-            pageSize,
-            offset,
-            cancellationToken);
-
+        var videos = await _videoRepository.GetForChannel(ChannelId, userId, pageSize, offset, cancellationToken);
         var totalCount = videos is [] ? 0 : videos[0].TotalCount;
 
         PageData = new PaginatedData<VideoEntity>

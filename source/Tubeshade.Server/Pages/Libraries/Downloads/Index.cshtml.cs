@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NodaTime;
 using Npgsql;
+using SponsorBlock;
 using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
@@ -25,6 +26,7 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
     private readonly IClock _clock;
+    private readonly SponsorBlockSegmentRepository _segmentRepository;
 
     public Index(
         NpgsqlConnection connection,
@@ -32,7 +34,8 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
         TaskRepository taskRepository,
         VideoRepository videoRepository,
         ChannelRepository channelRepository,
-        IClock clock)
+        IClock clock,
+        SponsorBlockSegmentRepository segmentRepository)
     {
         _connection = connection;
         _libraryRepository = libraryRepository;
@@ -40,6 +43,7 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
         _clock = clock;
+        _segmentRepository = segmentRepository;
     }
 
     /// <inheritdoc />
@@ -141,10 +145,23 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
             ? await _videoRepository.GetDownloadableVideos(LibraryId, channelId, userId, pageSize, offset, cancellationToken)
             : await _videoRepository.GetDownloadableVideos(LibraryId, userId, pageSize, offset, cancellationToken);
 
-        var models = videos.Select(video => new VideoModel
+        var videoIds = videos.Select(video => video.Id).ToArray();
+        var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);
+
+        var models = videos.Select(video =>
         {
-            Video = video,
-            Channel = Channels.Single(channel => video.ChannelId == channel.Id), // todo
+            var skippedDuration = segments
+                .Where(segment => segment.VideoId == video.Id && segment.Category != SegmentCategory.Filler)
+                .GetTotalDuration();
+
+            var actualDuration = (video.Duration - skippedDuration).Normalize();
+
+            return new VideoModel
+            {
+                Video = video,
+                ActualDuration = actualDuration,
+                Channel = Channels.Single(channel => video.ChannelId == channel.Id), // todo
+            };
         }).ToList();
 
         var totalCount = videos is [] ? 0 : videos[0].TotalCount;

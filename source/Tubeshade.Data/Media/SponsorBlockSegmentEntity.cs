@@ -12,7 +12,7 @@ public sealed record SponsorBlockSegmentEntity : Entity
 
     public required decimal StartTime { get; init; }
 
-    public required decimal EndTime { get; init; }
+    public required decimal EndTime { get; set; }
 
     public required SegmentCategory Category { get; init; }
 
