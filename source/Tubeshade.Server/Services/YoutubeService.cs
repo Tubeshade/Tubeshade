@@ -450,7 +450,7 @@ public sealed class YoutubeService
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
-        await ScanChannelCore(libraryId, channelId, allVideos, userId, taskRepository, taskRunId, transaction, youtube, tempDirectory, cancellationToken);
+        await ScanChannelCore(libraryId, channelId, allVideos, false, userId, taskRepository, taskRunId, transaction, youtube, tempDirectory, cancellationToken);
 
         await transaction.CommitWithRetries(_logger, cancellationToken);
     }
@@ -477,7 +477,7 @@ public sealed class YoutubeService
 
         foreach (var (index, channel) in channels.Index())
         {
-            await ScanChannelCore(libraryId, channel.Id, false, userId, taskRepository, taskRunId, transaction, youtube, tempDirectory, cancellationToken, false);
+            await ScanChannelCore(libraryId, channel.Id, false, true, userId, taskRepository, taskRunId, transaction, youtube, tempDirectory, cancellationToken, false);
             await taskRepository.UpdateProgress(taskRunId, index + 1);
         }
 
@@ -488,6 +488,7 @@ public sealed class YoutubeService
         Guid libraryId,
         Guid channelId,
         bool allVideos,
+        bool breakOnExisting,
         Guid userId,
         TaskRepository taskRepository,
         Guid taskRunId,
@@ -538,6 +539,18 @@ public sealed class YoutubeService
 
         foreach (var (index, entry) in entries.Index())
         {
+            var existing = await _videoRepository.FindByExternalUrl(entry.Url, userId, Access.Read, transaction);
+            if (existing is not null && breakOnExisting)
+            {
+                _logger.LogDebug("Found existing video for {VideoExternalUrl}, stopping channel scan", existing.ExternalUrl);
+                if (reportProgress)
+                {
+                    await taskRepository.UpdateProgress(taskRunId, entries.Length);
+                }
+
+                break;
+            }
+
             fetchResult = await youtube.RunVideoDataFetch(
                 entry.Url,
                 cancellationToken,

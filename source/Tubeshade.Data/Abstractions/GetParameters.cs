@@ -90,6 +90,17 @@ internal class GetParameters
     public int? Offset { get; init; }
 }
 
+internal class GetSingleExternalUrlParameters : GetParameters
+{
+    public GetSingleExternalUrlParameters(string externalUrl, Guid userId, Access access)
+        : base(userId, access)
+    {
+        ExternalUrl = externalUrl;
+    }
+
+    public string ExternalUrl { get; }
+}
+
 internal class GetSingleExternalParameters : GetParameters
 {
     public GetSingleExternalParameters(string externalId, Guid userId, Access access)
