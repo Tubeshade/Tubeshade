@@ -5,7 +5,8 @@
     {
         <div class="card m-1">
             <a asp-page="/Videos/Video" asp-route-videoId="@video.Id">
-                <img src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Id })" alt="@video.Name"
+                <img src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Id })"
+                     loading="lazy" alt="@video.Name" title="@video.Name"
                      class="card-img-top" style="aspect-ratio: calc(16 / 9);"/>
             </a>
 
