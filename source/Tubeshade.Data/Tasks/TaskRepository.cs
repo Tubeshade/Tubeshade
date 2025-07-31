@@ -162,6 +162,11 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         return AddTask(payload, Context.ScanSubscriptionsPayload, userId, transaction);
     }
 
+    public ValueTask<Guid> AddScanSegmentsTask(ScanSponsorBlockSegmentsPayload payload, Guid userId, NpgsqlTransaction transaction)
+    {
+        return AddTask(payload, Context.ScanSponsorBlockSegmentsPayload, userId, transaction);
+    }
+
     private async ValueTask<Guid> AddTask<TTaskPayload>(
         TTaskPayload payload,
         JsonTypeInfo<TTaskPayload> typeInfo,

@@ -27,6 +27,7 @@ public sealed class TaskModel
         TaskType.Names.DownloadVideo => "Download video",
         TaskType.Names.ScanChannel => "Scan channel",
         TaskType.Names.ScanSubscriptions => "Scan subscriptions",
+        TaskType.Names.ScanSponsorBlockSegments => "Scan Sponsor Block segments",
         _ => throw new ArgumentOutOfRangeException(),
     };
 
@@ -36,6 +37,7 @@ public sealed class TaskModel
         TaskType.Names.DownloadVideo => JsonSerializer.Deserialize(Payload, TaskPayloadContext.Default.DownloadVideoPayload)!.VideoId.ToString(),
         TaskType.Names.ScanChannel => JsonSerializer.Deserialize(Payload, TaskPayloadContext.Default.ScanChannelPayload)!.ChannelId.ToString(),
         TaskType.Names.ScanSubscriptions => null,
+        TaskType.Names.ScanSponsorBlockSegments => null,
         _ => throw new ArgumentOutOfRangeException(),
     };
 

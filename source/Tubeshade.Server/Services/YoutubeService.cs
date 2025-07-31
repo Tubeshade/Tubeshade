@@ -484,6 +484,44 @@ public sealed class YoutubeService
         await transaction.CommitWithRetries(_logger, cancellationToken);
     }
 
+    public async ValueTask ScanSponsorBlockSegments(
+        Guid libraryId,
+        Guid userId,
+        TaskRepository taskRepository,
+        Guid taskRunId,
+        DirectoryInfo tempDirectory,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var videosWithoutSegments = await _videoRepository.GetWithoutSegments(userId, libraryId, transaction);
+        await taskRepository.InitializeTaskProgress(taskRunId, videosWithoutSegments.Count);
+
+        foreach (var (index, videoId) in videosWithoutSegments.Index())
+        {
+            var segments = await _sponsorBlockClient.GetSegmentsPrivacy(videoId.ExternalId, cancellationToken);
+            foreach (var segment in segments)
+            {
+                await _segmentRepository.AddAsync(
+                    new SponsorBlockSegmentEntity
+                    {
+                        CreatedByUserId = userId,
+                        VideoId = videoId.Id,
+                        ExternalId = segment.Id,
+                        StartTime = segment.StartTime,
+                        EndTime = segment.EndTime,
+                        Category = segment.Category,
+                        Action = segment.Action,
+                        Description = segment.Description
+                    },
+                    transaction);
+            }
+
+            await taskRepository.UpdateProgress(taskRunId, index + 1);
+        }
+
+        await transaction.CommitWithRetries(_logger, cancellationToken);
+    }
+
     private async ValueTask ScanChannelCore(
         Guid libraryId,
         Guid channelId,

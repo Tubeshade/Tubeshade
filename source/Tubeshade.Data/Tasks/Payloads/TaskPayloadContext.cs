@@ -9,6 +9,7 @@ namespace Tubeshade.Data.Tasks.Payloads;
 [JsonSerializable(typeof(DownloadVideoPayload))]
 [JsonSerializable(typeof(ScanChannelPayload))]
 [JsonSerializable(typeof(ScanSubscriptionsPayload))]
+[JsonSerializable(typeof(ScanSponsorBlockSegmentsPayload))]
 public sealed partial class TaskPayloadContext : JsonSerializerContext;
 
 public interface ITaskPayload
@@ -53,4 +54,10 @@ public sealed class ScanSubscriptionsPayload : PayloadBase, ITaskPayload
 {
     /// <inheritdoc />
     public static TaskType TaskType => TaskType.ScanSubscriptions;
+}
+
+public sealed class ScanSponsorBlockSegmentsPayload : PayloadBase, ITaskPayload
+{
+    /// <inheritdoc />
+    public static TaskType TaskType => TaskType.ScanSponsorBlockSegments;
 }

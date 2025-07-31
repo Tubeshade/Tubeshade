@@ -11,5 +11,6 @@ public static class ServiceCollectionExtensions
         .AddHostedService<DownloadBackgroundService>()
         .AddHostedService<ScanChannelBackgroundService>()
         .AddHostedService<ScanSubscriptionsBackgroundService>()
+        .AddHostedService<ScanSponsorBlockSegmentsService>()
         .AddHostedService<SchedulerBackgroundService>();
 }

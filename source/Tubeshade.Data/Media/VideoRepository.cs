@@ -390,4 +390,26 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
 
         return await Connection.QuerySingleOrDefaultAsync<VideoEntity>(command);
     }
+
+    public async ValueTask<List<EntityId>> GetWithoutSegments(
+        Guid userId,
+        Guid libraryId,
+        NpgsqlTransaction transaction)
+    {
+        var enumerable = await Connection.QueryAsync<EntityId>( // lang=sql
+            $"""
+             SELECT videos.id AS Id,
+                    videos.external_id AS ExternalId
+             FROM media.videos
+                      INNER JOIN media.channels ON videos.channel_id = channels.id
+                      INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
+                      LEFT OUTER JOIN media.sponsorblock_segments ON videos.id = sponsorblock_segments.video_id
+             WHERE library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
+               AND sponsorblock_segments.video_id IS NULL;
+             """,
+            new GetFromLibraryParameters(userId, libraryId, Access.Read),
+            transaction);
+
+        return enumerable as List<EntityId> ?? enumerable.ToList();
+    }
 }

@@ -76,4 +76,19 @@ public sealed class Index : LibraryPageBase
 
         return StatusCode(StatusCodes.Status204NoContent);
     }
+
+    public async Task<IActionResult> OnPostScanSegments()
+    {
+        var userId = User.GetUserId();
+        var cancellationToken = CancellationToken.None;
+
+        var payload = new ScanSponsorBlockSegmentsPayload { LibraryId = LibraryId, UserId = userId };
+
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var taskId = await _taskRepository.AddScanSegmentsTask(payload, userId, transaction);
+        await _taskRepository.TriggerTask(taskId, transaction);
+        await transaction.CommitAsync(cancellationToken);
+
+        return StatusCode(StatusCodes.Status204NoContent);
+    }
 }

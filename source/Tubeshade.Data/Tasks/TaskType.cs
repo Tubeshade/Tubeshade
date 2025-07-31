@@ -9,6 +9,7 @@ public sealed class TaskType : SmartEnum<TaskType>
     public static readonly TaskType DownloadVideo = new(Names.DownloadVideo, 2);
     public static readonly TaskType ScanChannel = new(Names.ScanChannel, 3);
     public static readonly TaskType ScanSubscriptions = new(Names.ScanSubscriptions, 4);
+    public static readonly TaskType ScanSponsorBlockSegments = new(Names.ScanSponsorBlockSegments, 5);
 
     private TaskType(string name, int value)
         : base(name, value)
@@ -22,5 +23,6 @@ public sealed class TaskType : SmartEnum<TaskType>
         public const string DownloadVideo = "download_video";
         public const string ScanChannel = "scan_channel";
         public const string ScanSubscriptions = "scan_subscriptions";
+        public const string ScanSponsorBlockSegments = "scan_sponsor_block_segments";
     }
 }
