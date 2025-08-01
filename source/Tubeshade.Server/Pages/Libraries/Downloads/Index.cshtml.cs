@@ -54,6 +54,9 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
     [BindProperty(SupportsGet = true)]
     public int? PageIndex { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? Query { get; set; }
+
     /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
@@ -143,7 +146,9 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
         var offset = pageSize * page;
         var videos = ChannelId is { } channelId
             ? await _videoRepository.GetDownloadableVideos(LibraryId, channelId, userId, pageSize, offset, cancellationToken)
-            : await _videoRepository.GetDownloadableVideos(LibraryId, userId, pageSize, offset, cancellationToken);
+            : Query is null
+                ?  await _videoRepository.GetDownloadableVideos(LibraryId, userId, pageSize, offset, cancellationToken)
+                :  await _videoRepository.GetDownloadableVideos(LibraryId, userId, pageSize, offset, Query, cancellationToken);
 
         var videoIds = videos.Select(video => video.Id).ToArray();
         var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);

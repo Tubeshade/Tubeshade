@@ -88,6 +88,7 @@ internal class GetParameters
 
     public int? Limit { get; init; }
     public int? Offset { get; init; }
+    public string? Query { get; init; }
 }
 
 internal class GetSingleExternalUrlParameters : GetParameters

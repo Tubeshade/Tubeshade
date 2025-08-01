@@ -64,6 +64,9 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
     [BindProperty(SupportsGet = true)]
     public string? Tab { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? Query { get; set; }
+
     public LibraryEntity Library { get; set; } = null!;
 
     /// <inheritdoc />
@@ -84,7 +87,9 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
         Entity = await _channelRepository.GetAsync(ChannelId, userId, cancellationToken);
-        var videos = await _videoRepository.GetForChannel(ChannelId, userId, pageSize, offset, cancellationToken);
+        var videos = Query is null
+            ? await _videoRepository.GetForChannel(ChannelId, userId, pageSize, offset, cancellationToken)
+            : await _videoRepository.GetForChannel(ChannelId, userId, pageSize, offset, Query, cancellationToken);
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);
 
         var videoIds = videos.Select(video => video.Id).ToArray();

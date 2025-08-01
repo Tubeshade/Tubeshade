@@ -17,6 +17,12 @@
 
 <partial name="_DownloadVideo" model="new DownloadVideoModel()"/>
 
+<input class="form-control" type="search" placeholder="Search videos" asp-for="Query"
+       hx-get="" hx-page-handler="Downloadable" hx-params="*"
+       hx-trigger="input changed delay:100ms, keyup[key='Enter']"
+       hx-target="#downloadable-videos" hx-swap="outerHtml"
+       hx-indicator=".htmx-indicator"/>
+
 <div class="input-group">
     <label class="input-group-text" asp-for="ChannelId">Channel</label>
     <select

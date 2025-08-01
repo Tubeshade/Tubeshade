@@ -50,6 +50,9 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
     [BindProperty(SupportsGet = true)]
     public string? Tab { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? Query { get; set; }
+
     /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
@@ -67,7 +70,9 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
         var offset = pageSize * page;
 
         Entity = await _repository.GetAsync(LibraryId, userId, cancellationToken);
-        var videos = await _videoRepository.GetForLibrary(LibraryId, userId, pageSize, offset, cancellationToken);
+        var videos = Query is null
+            ? await _videoRepository.GetForLibrary(LibraryId, userId, pageSize, offset, cancellationToken)
+            : await _videoRepository.GetForLibrary(LibraryId, userId, pageSize, offset, Query, cancellationToken);
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);
 
         var videoIds = videos.Select(video => video.Id).ToArray();
