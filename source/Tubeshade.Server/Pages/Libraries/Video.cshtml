@@ -177,46 +177,48 @@
         }
 
         const chaptersTrack = video.querySelector('track[kind="chapters"]');
-        const chapters = document.querySelector("#chapter-markers");
-        const chaptersSection = document.querySelector("#chapter-marker-div");
+        if (chaptersTrack !== null) {
+            const chapters = document.querySelector("#chapter-markers");
+            const chaptersSection = document.querySelector("#chapter-marker-div");
 
-        chaptersTrack.addEventListener("load", onChaptersTrackLoad, false);
-        chaptersTrack.addEventListener("loaded", onChaptersTrackLoad, false);
+            chaptersTrack.addEventListener("load", onChaptersTrackLoad, false);
+            chaptersTrack.addEventListener("loaded", onChaptersTrackLoad, false);
 
-        function onChaptersTrackLoad() {
-            chaptersSection.removeAttribute("hidden");
+            function onChaptersTrackLoad() {
+                chaptersSection.removeAttribute("hidden");
 
-            for (const cue of chaptersTrack.track.cues) {
-                createMarker(cue);
-            }
-
-            chaptersTrack.addEventListener("cuechange", function (_event) {
-                const activeCues = chaptersTrack.track.activeCues;
-                if (activeCues.length === 0) {
-                    console.warn("Chapters cue changed, but none are active");
-                    return;
+                for (const cue of chaptersTrack.track.cues) {
+                    createMarker(cue);
                 }
 
-                const cue = activeCues[activeCues.length - 1];
-                chapters.value = cue.startTime;
-            });
+                chaptersTrack.addEventListener("cuechange", function (_event) {
+                    const activeCues = chaptersTrack.track.activeCues;
+                    if (activeCues.length === 0) {
+                        console.warn("Chapters cue changed, but none are active");
+                        return;
+                    }
 
-            chapters.size = chaptersTrack.track.cues.length;
-            chapters.addEventListener("change", function (event) {
-                video.currentTime = event.target.value;
-            });
-        }
+                    const cue = activeCues[activeCues.length - 1];
+                    chapters.value = cue.startTime;
+                });
 
-        function createMarker(cue) {
-            let timestamp = new Date(cue.startTime * 1000).toISOString().slice(11, 19);
-            if (timestamp.startsWith("00:")) {
-                timestamp = timestamp.slice(3);
+                chapters.size = chaptersTrack.track.cues.length;
+                chapters.addEventListener("change", function (event) {
+                    video.currentTime = event.target.value;
+                });
             }
 
-            const option = document.createElement("option");
-            option.value = cue.startTime;
-            option.innerHTML = `${timestamp} - ${cue.text}`;
-            chapters.appendChild(option);
+            function createMarker(cue) {
+                let timestamp = new Date(cue.startTime * 1000).toISOString().slice(11, 19);
+                if (timestamp.startsWith("00:")) {
+                    timestamp = timestamp.slice(3);
+                }
+
+                const option = document.createElement("option");
+                option.value = cue.startTime;
+                option.innerHTML = `${timestamp} - ${cue.text}`;
+                chapters.appendChild(option);
+            }
         }
 
         const sponsorBlockTrack = video.querySelector('track[kind="metadata"][label="SponsorBlock"]');
