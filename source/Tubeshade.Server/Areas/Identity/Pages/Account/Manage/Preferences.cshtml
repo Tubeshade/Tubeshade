@@ -1,0 +1,35 @@
+﻿@page
+@model Preferences
+@{
+    ViewData["Title"] = "Preferences";
+    ViewData["ActivePage"] = ManageNavPages.Preferences;
+}
+
+<h3>@ViewData["Title"]</h3>
+
+<div class="row">
+    <div class="col-md-6">
+        <form>
+            <div class="form-floating mb-3">
+                <input class="form-control" id="max-resolution" name="max-resolution" type="number" min="0" step="1"/>
+                <label class="form-label" for="max-resolution">Maximum video resolution</label>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script type="module">
+        import {getMaximumResolution, setMaximumResolution} from "/js/modules/device-preferences.js";
+
+        const resolutionInput = document.querySelector("#max-resolution");
+        resolutionInput.value = getMaximumResolution() || "";
+
+        resolutionInput.addEventListener("change", function (_event) {
+            console.debug("Updating device preferences");
+
+            setMaximumResolution(resolutionInput.value || null);
+        });
+    </script>
+}

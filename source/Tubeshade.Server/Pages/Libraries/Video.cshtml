@@ -95,7 +95,9 @@
 
 @section Scripts
 {
-    <script>
+    <script type="module">
+        import {setPreferredResolution} from "/js/modules/device-preferences.js";
+
         const video = document.querySelector("#video");
         video.playbackRate = @Model.PlaybackSpeed;
 
@@ -146,6 +148,7 @@
         }
 
         sourcesSelector.addEventListener("change", onSourcesSelectorChanged, false);
+        setPreferredResolution(sourcesSelector);
 
         function onSourcesSelectorChanged() {
             const currentTime = video.currentTime;

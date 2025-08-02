@@ -11,9 +11,11 @@ public static class ManageNavPages
 
     public const string ExternalLogins = "ExternalLogins";
 
+    public const string TwoFactorAuthentication = "TwoFactorAuthentication";
+
     public const string PersonalData = "PersonalData";
 
-    public const string TwoFactorAuthentication = "TwoFactorAuthentication";
+    public const string Preferences = "Preferences";
 
     public static string? IndexNavClass(ViewContext viewContext) => PageNavClass(viewContext, Index);
 
@@ -21,9 +23,10 @@ public static class ManageNavPages
 
     public static string? ExternalLoginsNavClass(ViewContext viewContext) => PageNavClass(viewContext, ExternalLogins);
 
-    public static string? PersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, PersonalData);
-
     public static string? TwoFactorAuthenticationNavClass(ViewContext viewContext) => PageNavClass(viewContext, TwoFactorAuthentication);
+
+    public static string? PersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, PersonalData);
+    public static string? PreferencesNavClass(ViewContext viewContext) => PageNavClass(viewContext, Preferences);
 
     private static string? PageNavClass(ViewContext viewContext, string page)
     {
