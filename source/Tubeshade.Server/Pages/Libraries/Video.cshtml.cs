@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Server.Configuration.Auth;
+using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Libraries;
 
@@ -44,6 +45,10 @@ public sealed class Video : LibraryPageBase
 
     public decimal PlaybackSpeed { get; set; } = 1.0m;
 
+    public bool HasSubtitles { get; set; }
+
+    public bool HasChapters { get; set; }
+
     public bool HasSponsorBlockSegments { get; set; }
 
     public async Task OnGet(CancellationToken cancellationToken)
@@ -61,6 +66,9 @@ public sealed class Video : LibraryPageBase
         {
             PlaybackSpeed = playbackSpeed;
         }
+
+        HasSubtitles = System.IO.File.Exists(Entity.GetSubtitlesFilePath());
+        HasChapters = System.IO.File.Exists(Entity.GetChaptersFilePath());
 
         var segments = await _sponsorBlockSegmentRepository.GetForVideo(VideoId, userId, cancellationToken);
         HasSponsorBlockSegments = segments is not [];

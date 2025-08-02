@@ -4,7 +4,7 @@
     ViewData["Title"] = Model.Entity.Name;
 }
 
-<video id="main-video" controls playsinline preload="metadata" width="100%"
+<video id="video" controls playsinline preload="metadata" width="100%"
        poster="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })">
 
     @foreach (var file in Model.Files)

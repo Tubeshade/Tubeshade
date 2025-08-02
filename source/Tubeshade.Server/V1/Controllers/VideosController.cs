@@ -14,6 +14,7 @@ using NodaTime;
 using NodaTime.Text;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
+using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.V1.Controllers;
 
@@ -80,10 +81,7 @@ public sealed class VideosController : ControllerBase
     public async Task<IActionResult> GetThumbnail(Guid id, CancellationToken cancellationToken)
     {
         var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-        var attributes = System.IO.File.GetAttributes(video.StoragePath);
-        var path = (attributes & FileAttributes.Directory) is FileAttributes.Directory
-            ? Path.Combine(video.StoragePath, "thumbnail.jpg")
-            : video.StoragePath.Replace(Path.GetFileName(video.StoragePath), "thumbnail.jpg");
+        var path = video.GetThumbnailFilePath();
 
         if (!System.IO.File.Exists(path))
         {
@@ -104,10 +102,7 @@ public sealed class VideosController : ControllerBase
     public async Task<IActionResult> GetSubtitles(Guid id, CancellationToken cancellationToken)
     {
         var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-        var attributes = System.IO.File.GetAttributes(video.StoragePath);
-        var path = (attributes & FileAttributes.Directory) is FileAttributes.Directory
-            ? Path.Combine(video.StoragePath, "subtitles.en.vtt")
-            : video.StoragePath.Replace(Path.GetFileName(video.StoragePath), "subtitles.en.vtt");
+        var path = video.GetSubtitlesFilePath();
 
         if (!System.IO.File.Exists(path))
         {
@@ -128,10 +123,7 @@ public sealed class VideosController : ControllerBase
     public async Task<IActionResult> GetChapters(Guid id, CancellationToken cancellationToken)
     {
         var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-        var attributes = System.IO.File.GetAttributes(video.StoragePath);
-        var path = (attributes & FileAttributes.Directory) is FileAttributes.Directory
-            ? Path.Combine(video.StoragePath, "chapters.vtt")
-            : video.StoragePath.Replace(Path.GetFileName(video.StoragePath), "chapters.vtt");
+        var path = video.GetChaptersFilePath();
 
         if (!System.IO.File.Exists(path))
         {

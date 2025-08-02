@@ -10,65 +10,74 @@
     @await Html.PartialAsync("_LibraryNavigation", Model.Library)
 }
 
-<video id="main-video" controls playsinline preload="metadata" width="100%"
-       poster="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })">
+<div class="row">
+    <div class="col-md-12 col-lg">
+        <video id="video" controls playsinline preload="metadata" width="100%"
+               poster="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })">
 
-    @foreach (var file in Model.Files)
-    {
-        <source
-            src="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })"
-            type="video/@file.Type.Name"/>
-    }
+            @foreach (var file in Model.Files)
+            {
+                <source
+                    src="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })"
+                    type="video/@file.Type.Name"/>
+            }
 
-    <track
-        src="@Url.Action("GetSubtitles", "Videos", new { version = "1.0", id = Model.VideoId })"
-        label="English" kind="subtitles" srclang="en" default/>
-    <track
-        src="@Url.Action("GetChapters", "Videos", new { version = "1.0", id = Model.VideoId })"
-        kind="chapters" srclang="en" default/>
-    @if (Model.HasSponsorBlockSegments)
-    {
-        <track
-            src="@Url.Action("GetSponsorBlockSegments", "Videos", new { version = "1.0", id = Model.VideoId })"
-            kind="metadata" srclang="en" label="SponsorBlock" default/>
-    }
-</video>
+            @if (Model.HasSubtitles)
+            {
+                <track
+                    src="@Url.Action("GetSubtitles", "Videos", new { version = "1.0", id = Model.VideoId })"
+                    label="English" kind="subtitles" srclang="en" default/>
+            }
 
-<section id="video-controls" class="row row-cols-sm-2 row-cols-xl-3">
-    <div class="col-12">
-        <div class="input-group">
-            <label for="sources" class="input-group-text">Resolution</label>
-            <select id="sources" class="form-control form-select">
-                @foreach (var file in Model.Files)
-                {
-                    <option
-                        value="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })">
-                        @(file.Height)@@@(file.Framerate)
-                    </option>
-                }
-            </select>
-        </div>
+            @if (Model.HasChapters)
+            {
+                <track
+                    src="@Url.Action("GetChapters", "Videos", new { version = "1.0", id = Model.VideoId })"
+                    kind="chapters" srclang="en" default/>
+            }
+
+            @if (Model.HasSponsorBlockSegments)
+            {
+                <track
+                    src="@Url.Action("GetSponsorBlockSegments", "Videos", new { version = "1.0", id = Model.VideoId })"
+                    kind="metadata" srclang="en" label="SponsorBlock" default/>
+            }
+        </video>
     </div>
 
-    <div class="col-12">
-        <div class="input-group">
-            <label for="playback-rate-input" class="input-group-text">Speed</label>
-            <input id="playback-rate-input" class="form-control" type="number" min="0" step="0.25"
-                   value="@Model.PlaybackSpeed"/>
-        </div>
-    </div>
+    <section id="video-controls" class="col-md-12 col-lg-auto">
+        <div class="row">
+            <div class="col-6 col-lg-12 mb-3">
+                <label for="sources" class="form-label">Resolution</label>
+                <select id="sources" class="form-control form-select">
+                    @foreach (var file in Model.Files)
+                    {
+                        <option
+                            value="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })">
+                            @(file.Height)@@@(file.Framerate)
+                        </option>
+                    }
+                </select>
+            </div>
 
-    <div id="chapter-marker-div" hidden class="col-12 col-sm-12">
-        <div class="input-group">
-            <label for="chapter-markers" class="input-group-text">Chapter</label>
+            <div class="col-6 col-lg-12 mb-3">
+                <label for="playback-rate-input" class="form-label">Speed</label>
+                <input id="playback-rate-input" class="form-control" type="number" min="0" step="0.25"
+                       value="@Model.PlaybackSpeed"/>
+            </div>
+        </div>
+
+        <div id="chapter-marker-div" hidden class="mb-3">
+            <label for="chapter-markers" class="form-label">Chapter</label>
             <select id="chapter-markers" class="form-control form-select"></select>
         </div>
-    </div>
-</section>
+    </section>
+</div>
 
 <h2>@Model.Entity.Name</h2>
 <h4>
-    <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@Model.Channel.Id">
+    <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId"
+       asp-route-channelId="@Model.Channel.Id">
         @Model.Channel.Name
     </a>
 </h4>
@@ -87,7 +96,7 @@
 @section Scripts
 {
     <script>
-        const video = document.querySelector("#main-video");
+        const video = document.querySelector("#video");
         video.playbackRate = @Model.PlaybackSpeed;
 
         if ("mediaSession" in navigator) {
@@ -181,6 +190,7 @@
                 createMarker(cue);
             }
 
+            chapters.size = chaptersTrack.track.cues.length;
             chapters.addEventListener("change", function (event) {
                 video.currentTime = event.target.value;
             });
