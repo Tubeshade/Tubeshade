@@ -362,7 +362,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              LIMIT @Limit
              OFFSET @Offset;
              """,
-            new GetFromChannelParameters(channelId, userId, Access.Read)
+            new GetFromChannelParameters(userId, channelId, Access.Read)
             {
                 Limit = limit,
                 Offset = offset,
@@ -413,7 +413,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              LIMIT @Limit
              OFFSET @Offset;
              """,
-            new GetFromChannelParameters(channelId, userId, Access.Read)
+            new GetFromChannelParameters(userId, channelId, Access.Read)
             {
                 Limit = limit,
                 Offset = offset,
