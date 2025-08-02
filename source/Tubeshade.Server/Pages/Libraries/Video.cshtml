@@ -140,10 +140,12 @@
 
         function onSourcesSelectorChanged() {
             const currentTime = video.currentTime;
+            const currentPlaybackRate = video.playbackRate;
             const paused = video.paused;
 
             video.src = sourcesSelector.options[sourcesSelector.selectedIndex].value;
             video.currentTime = currentTime;
+            video.playbackRate = currentPlaybackRate;
             if (!paused) {
                 video.play();
             }
