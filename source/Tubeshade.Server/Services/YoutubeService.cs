@@ -671,7 +671,7 @@ public sealed class YoutubeService
             foreach (var (chapter, index) in videoData.Data.Chapters.Select((data, index) => (data, index)))
             {
                 var startTime = Duration.FromSeconds(chapter.StartTime ?? 0);
-                var endTime = Duration.FromSeconds(videoData.Data.Duration ?? 0);
+                var endTime = Duration.FromSeconds(chapter.EndTime ?? 0);
 
                 await chapterFile.WriteLineAsync(
                     $"""
