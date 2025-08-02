@@ -152,7 +152,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                AND videos.ignored_at IS NULL
                AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NULL)
                AND library_channels.library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
-               AND to_tsvector('english', videos.name || ' ' || videos.description || ' ' || (array_to_string(videos.tags, ' ')::text)) @@ websearch_to_tsquery('english', @{nameof(GetFromLibraryParameters.Query)})
+               AND videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(GetFromLibraryParameters.Query)})
              ORDER BY videos.published_at DESC
              LIMIT @Limit
              OFFSET @Offset;
@@ -307,7 +307,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                AND library_channels.library_id = @LibraryId
                AND videos.ignored_at IS NULL
                AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND video_files.downloaded_at IS NOT NULL)
-               AND to_tsvector('english', videos.name || ' ' || videos.description || ' ' || (array_to_string(videos.tags, ' ')::text)) @@ websearch_to_tsquery('english', @{nameof(GetFromLibraryParameters.Query)})
+               AND videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(GetFromLibraryParameters.Query)})
              ORDER BY videos.published_at DESC
              LIMIT @Limit
              OFFSET @Offset;
@@ -408,7 +408,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                AND channels.id = @ChannelId
                AND videos.ignored_at IS NULL
                AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND video_files.downloaded_at IS NOT NULL)
-               AND to_tsvector('english', videos.name || ' ' || videos.description || ' ' || (array_to_string(videos.tags, ' ')::text)) @@ websearch_to_tsquery('english', @{nameof(GetFromChannelParameters.Query)})
+               AND videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(GetFromChannelParameters.Query)})
              ORDER BY videos.published_at DESC
              LIMIT @Limit
              OFFSET @Offset;
