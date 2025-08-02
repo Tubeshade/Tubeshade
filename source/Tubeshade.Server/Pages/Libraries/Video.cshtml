@@ -190,6 +190,17 @@
                 createMarker(cue);
             }
 
+            chaptersTrack.addEventListener("cuechange", function (_event) {
+                const activeCues = chaptersTrack.track.activeCues;
+                if (activeCues.length === 0) {
+                    console.warn("Chapters cue changed, but none are active");
+                    return;
+                }
+
+                const cue = activeCues[activeCues.length - 1];
+                chapters.value = cue.startTime;
+            });
+
             chapters.size = chaptersTrack.track.cues.length;
             chapters.addEventListener("change", function (event) {
                 video.currentTime = event.target.value;
