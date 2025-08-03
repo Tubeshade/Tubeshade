@@ -11,13 +11,14 @@
             </a>
 
             <div class="card-body p-2">
-                <a asp-page="/Libraries/Video" asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@video.Video.Id">
-                    <h5 class="card-title text-truncate" title="@video.Video.Name">@video.Video.Name</h5>
-                </a>
+                <h6 class="card-title text-truncate mb-0" title="@video.Video.Name">@video.Video.Name</h6>
 
-                <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@video.Video.ChannelId">
-                    <h6 class="text-truncate" title="@video.Channel.Name">@video.Channel.Name</h6>
-                </a>
+                <div class="d-flex d-inline justify-content-between">
+                    <a asp-page="/Libraries/Channels/Channel"
+                       asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@video.Video.ChannelId">
+                        <span class="text-truncate">@video.Channel.Name</span>
+                    </a>
+                </div>
 
                 <div class="d-flex d-inline justify-content-between">
                     <span>@(DateOnly.FromDateTime(video.Video.PublishedAt.ToDateTimeUtc()))</span>
