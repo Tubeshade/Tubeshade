@@ -1,0 +1,83 @@
+﻿@model Index
+
+<section id="downloadable-videos">
+    @foreach (var video in Model.PageData.Data)
+    {
+        <div class="card">
+            <div class="row g-0">
+                <div class="col-auto col-sm">
+                    <img src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Video.Id })"
+                         loading="lazy" alt="@video.Video.Name" title="@video.Video.Name"
+                         class="img-fluid card-img" width="100%"/>
+                </div>
+
+                <div class="col-sm-8 col-lg-9">
+                    <div class="card-body p-2">
+                        <h5 class="card-title">@video.Video.Name</h5>
+
+                        <a asp-page="/Channels/Channel" asp-route-channelId="@video.Video.ChannelId">
+                            <h6 class="text-truncate" title="@video.Channel.Name">@video.Channel.Name</h6>
+                        </a>
+
+                        <div class="card-text">
+                            <span>@(DateOnly.FromDateTime(video.Video.PublishedAt.ToDateTimeUtc()))</span>
+                            <span> - </span>
+                            <span>@(HumanReadablePeriodPattern.Instance.Format(video.Video.Duration))</span>
+                            @if (video.Video.Duration != video.ActualDuration)
+                            {
+                                <span>(@(HumanReadablePeriodPattern.Instance.Format(video.ActualDuration)))</span>
+                            }
+                        </div>
+
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button hx-post="" hx-page-handler="Ignore"
+                                    hx-route-videoId="@video.Video.Id"
+                                    hx-swap="delete" hx-target="closest div[class=card]"
+                                    class="btn btn-secondary" type="button">
+                                Ignore
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <nav class="text-center">
+        <span>
+            Showing <span>@Model.PageData.StartIndex</span> - <span>@Model.PageData.EndIndex</span> from <span>@Model.PageData.TotalCount</span>
+        </span>
+
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
+                <a asp-page="/Downloads/Index"
+                   asp-route-channelId="@Model.ChannelId"
+                   asp-route-pageIndex="0" asp-route-pageSize="@Model.PageSize"
+                   class="page-link">
+                    First
+                </a>
+            </li>
+
+            @foreach (var index in Model.PageData.DisplayedPages)
+            {
+                <li class="page-item @(index - 1 == Model.PageData.Page ? "active" : string.Empty)">
+                    <a asp-page="/Downloads/Index"
+                       asp-route-channelId="@Model.ChannelId"
+                       asp-route-pageIndex="@(index - 1)" asp-route-pageSize="@Model.PageSize"
+                       class="page-link" aria-current="page">
+                        @index
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
+                <a asp-page="/Downloads/Index"
+                   asp-route-channelId="@Model.ChannelId"
+                   asp-route-pageIndex="@(Model.PageData.PageCount - 1)" asp-route-pageSize="@Model.PageSize"
+                   class="page-link">
+                    Last
+                </a>
+            </li>
+        </ul>
+    </nav>
+</section>

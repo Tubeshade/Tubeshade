@@ -4,6 +4,11 @@
     ViewData["Title"] = Model.Entity.Name;
 }
 
+@section Navigation
+{
+    <partial name="Shared/_Navigation"/>
+}
+
 <video id="video" controls playsinline preload="metadata" width="100%"
        poster="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })">
 
