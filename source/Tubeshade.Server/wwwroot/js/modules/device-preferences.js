@@ -43,6 +43,7 @@ function setPreferredResolution(select) {
     for (let index = 0; index < select.options.length; index++) {
         if (select.options[index].label.startsWith(selected)) {
             select.selectedIndex = index;
+            select.dispatchEvent(new Event("change"));
             return;
         }
     }
