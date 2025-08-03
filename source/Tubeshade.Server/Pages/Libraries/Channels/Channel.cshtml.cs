@@ -220,6 +220,23 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
+    public async Task<IActionResult> OnPostViewed(string? viewed, Guid videoId)
+    {
+        var userId = User.GetUserId();
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        if (viewed is not null)
+        {
+            await _videoRepository.MarkAsWatched(videoId, userId, transaction);
+        }
+        else
+        {
+            await _videoRepository.MarkAsNotWatched(videoId, userId, transaction);
+        }
+
+        await transaction.CommitAsync();
+        return StatusCode(StatusCodes.Status200OK);
+    }
+
     private async Task<IActionResult> ChangeSubscribedAt(Instant? subscribedAt)
     {
         var userId = User.GetUserId();

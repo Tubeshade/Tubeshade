@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
+using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Server.Configuration.Auth;
@@ -17,19 +20,22 @@ public sealed class Video : LibraryPageBase
     private readonly LibraryRepository _libraryRepository;
     private readonly PreferencesRepository _preferencesRepository;
     private readonly SponsorBlockSegmentRepository _sponsorBlockSegmentRepository;
+    private readonly NpgsqlConnection _connection;
 
     public Video(
         VideoRepository videoRepository,
         ChannelRepository channelRepository,
         LibraryRepository libraryRepository,
         PreferencesRepository preferencesRepository,
-        SponsorBlockSegmentRepository sponsorBlockSegmentRepository)
+        SponsorBlockSegmentRepository sponsorBlockSegmentRepository,
+        NpgsqlConnection connection)
     {
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
         _libraryRepository = libraryRepository;
         _preferencesRepository = preferencesRepository;
         _sponsorBlockSegmentRepository = sponsorBlockSegmentRepository;
+        _connection = connection;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -72,5 +78,22 @@ public sealed class Video : LibraryPageBase
 
         var segments = await _sponsorBlockSegmentRepository.GetForVideo(VideoId, userId, cancellationToken);
         HasSponsorBlockSegments = segments is not [];
+    }
+
+    public async Task<IActionResult> OnPostViewed(string? viewed, Guid videoId)
+    {
+        var userId = User.GetUserId();
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        if (viewed is not null)
+        {
+            await _videoRepository.MarkAsWatched(videoId, userId, transaction);
+        }
+        else
+        {
+            await _videoRepository.MarkAsNotWatched(videoId, userId, transaction);
+        }
+
+        await transaction.CommitAsync();
+        return StatusCode(StatusCodes.Status200OK);
     }
 }

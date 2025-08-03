@@ -47,8 +47,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 videos.availability AS Availability,
                 videos.duration AS Duration,
                 videos.ignored_at AS IgnoredAt,
-                videos.ignored_by_user_id AS IgnoredByUserId
+                videos.ignored_by_user_id AS IgnoredByUserId,
+                video_viewed_by_users.created_at AS ViewedAt
          FROM media.videos
+           LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(GetParameters.UserId)}
          """;
 
     /// <inheritdoc />
@@ -138,8 +140,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     videos.refreshed_at AS RefreshedAt,
                     videos.availability AS Availability,
                     videos.duration AS Duration,
+                    video_viewed_by_users.created_at AS ViewedAt,
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
+                LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(GetFromLibraryParameters.UserId)}
                 INNER JOIN media.channels ON videos.channel_id = channels.id
                 INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
              WHERE {AccessFilter} 
@@ -189,8 +193,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     videos.refreshed_at AS RefreshedAt,
                     videos.availability AS Availability,
                     videos.duration AS Duration,
+                    video_viewed_by_users.created_at AS ViewedAt,
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
+                LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(GetFromLibraryParameters.UserId)}
                 INNER JOIN media.channels ON videos.channel_id = channels.id
                 INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
              WHERE {AccessFilter} 
@@ -241,8 +247,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     videos.refreshed_at AS RefreshedAt,
                     videos.availability AS Availability,
                     videos.duration AS Duration,
+                    video_viewed_by_users.created_at AS ViewedAt,
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
+                LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(GetFromLibraryParameters.UserId)}
                 INNER JOIN media.channels ON videos.channel_id = channels.id
              WHERE {AccessFilter}
                AND channels.id = @ChannelId
@@ -291,8 +299,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     videos.refreshed_at AS RefreshedAt,
                     videos.availability AS Availability,
                     videos.duration AS Duration,
+                    video_viewed_by_users.created_at AS ViewedAt,
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
+                LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(GetFromLibraryParameters.UserId)}
                 INNER JOIN media.channels ON videos.channel_id = channels.id
              WHERE {AccessFilter}
                AND channels.id = @ChannelId
@@ -414,7 +424,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return await Connection.QuerySingleOrDefaultAsync<VideoFileEntity>(command);
     }
 
-    public async ValueTask<VideoEntity?> FindByExternalId(string externalId, Guid userId, Access access, NpgsqlTransaction transaction)
+    public async ValueTask<VideoEntity?> FindByExternalId(string externalId, Guid userId, Access access,
+        NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             $"""
@@ -427,7 +438,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return await Connection.QuerySingleOrDefaultAsync<VideoEntity>(command);
     }
 
-    public async ValueTask<VideoEntity?> FindByExternalUrl(string externalUrl, Guid userId, Access access, NpgsqlTransaction transaction)
+    public async ValueTask<VideoEntity?> FindByExternalUrl(string externalUrl, Guid userId, Access access,
+        NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             $"""
@@ -460,5 +472,29 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
             transaction);
 
         return enumerable as List<EntityId> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<int> MarkAsWatched(Guid videoId, Guid userId, NpgsqlTransaction transaction)
+    {
+        return await Connection.ExecuteAsync(
+            $"""
+             INSERT INTO media.video_viewed_by_users (video_id, user_id)
+             VALUES (@videoId, @userId)
+             ON CONFLICT DO NOTHING;
+             """,
+            new { videoId, userId },
+            transaction);
+    }
+
+    public async ValueTask<int> MarkAsNotWatched(Guid videoId, Guid userId, NpgsqlTransaction transaction)
+    {
+        return await Connection.ExecuteAsync(
+            """
+            DELETE FROM media.video_viewed_by_users
+            WHERE video_viewed_by_users.video_id = @videoId
+              AND video_viewed_by_users.user_id = @userId;
+            """,
+            new { videoId, userId },
+            transaction);
     }
 }

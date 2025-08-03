@@ -42,5 +42,7 @@ public sealed record VideoEntity : ModifiableEntity, IOwnableEntity, INamedEntit
 
     public Guid? IgnoredByUserId { get; set; }
 
+    public Instant? ViewedAt { get; set; }
+
     public int TotalCount { get; init; }
 }

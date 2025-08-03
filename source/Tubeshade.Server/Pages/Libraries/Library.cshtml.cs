@@ -1,8 +1,10 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Htmx;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using SponsorBlock;
@@ -170,5 +172,22 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostViewed(string? viewed, Guid videoId)
+    {
+        var userId = User.GetUserId();
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        if (viewed is not null)
+        {
+            await _videoRepository.MarkAsWatched(videoId, userId, transaction);
+        }
+        else
+        {
+            await _videoRepository.MarkAsNotWatched(videoId, userId, transaction);
+        }
+
+        await transaction.CommitAsync();
+        return StatusCode(StatusCodes.Status200OK);
     }
 }

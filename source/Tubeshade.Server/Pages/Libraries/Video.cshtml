@@ -5,6 +5,12 @@
     ViewData["Title"] = Model.Entity.Name;
 }
 
+@section Head
+{
+    <link rel="prefetch" as="script" href="~/lib/htmx.org/dist/js/htmx.min.js"/>
+    <link rel="prefetch" as="script" href="~/js/htmx.antiforgery.js"/>
+}
+
 @section Navigation
 {
     @await Html.PartialAsync("_LibraryNavigation", Model.Library)
@@ -82,7 +88,22 @@
     </a>
 </h4>
 
-<a href="@Model.Entity.ExternalUrl">Original</a>
+<div class="row">
+    <div class="col-auto">
+        <a href="@Model.Entity.ExternalUrl">Original</a>
+    </div>
+    <form class="col-auto">
+        <input value="@(Model.VideoId)" name="videoId" hidden/>
+        <div class="form-check form-check-inline form-switch">
+            <input id="viewed" checked="@(Model.Entity.ViewedAt is not null)" name="viewed"
+                   type="checkbox" role="switch" switch title="Viewed" class="form-check-input"
+                   hx-post="" hx-page-handler="Viewed" hx-swap="none"/>
+            <label for="viewed" class="form-check-label">
+                Viewed
+            </label>
+        </div>
+    </form>
+</div>
 
 <section id="video-description">
     @foreach (var paragraph in Model.Entity.Description.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -95,6 +116,8 @@
 
 @section Scripts
 {
+    <script src="~/lib/htmx.org/dist/js/htmx.min.js"></script>
+    <script src="~/js/htmx.antiforgery.js"></script>
     <script type="module">
         import {setPreferredResolution} from "/js/modules/device-preferences.js";
 
