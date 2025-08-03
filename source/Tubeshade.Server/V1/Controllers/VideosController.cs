@@ -3,18 +3,17 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
-using NodaTime;
 using NodaTime.Text;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.V1.Controllers;
 
@@ -25,11 +24,16 @@ public sealed class VideosController : ControllerBase
 {
     private readonly VideoRepository _repository;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
+    private readonly WebVideoTextTracksService _webVideoTextTracksService;
 
-    public VideosController(VideoRepository repository, SponsorBlockSegmentRepository segmentRepository)
+    public VideosController(
+        VideoRepository repository,
+        SponsorBlockSegmentRepository segmentRepository,
+        WebVideoTextTracksService webVideoTextTracksService)
     {
         _repository = repository;
         _segmentRepository = segmentRepository;
+        _webVideoTextTracksService = webVideoTextTracksService;
     }
 
     [HttpGet]
@@ -150,26 +154,9 @@ public sealed class VideosController : ControllerBase
         }
 
         var memoryStream = new MemoryStream();
-        var writer = new StreamWriter(memoryStream, Encoding.UTF8);
+        var cues = segments.Select(TextTrackCue.FromSponsorBlockSegment);
 
-        await writer.WriteLineAsync("WEBVTT");
-        var pattern = DurationPattern.CreateWithInvariantCulture("HH:mm:ss.fff");
-
-        foreach (var (index, segment) in segments.Index())
-        {
-            var startTime = Duration.FromSeconds((double)segment.StartTime);
-            var endTime = Duration.FromSeconds((double)segment.EndTime);
-
-            await writer.WriteLineAsync(
-                $"""
-
-                 {index + 1}
-                 {pattern.Format(startTime)} --> {pattern.Format(endTime)}
-                 {segment.Category.Name}
-                 """);
-        }
-
-        await writer.FlushAsync(cancellationToken);
+        await _webVideoTextTracksService.Write(memoryStream, cues, cancellationToken);
         memoryStream.Position = 0;
 
         var modifiedAt = segments.Select(segment => segment.CreatedAt).OrderDescending().First();

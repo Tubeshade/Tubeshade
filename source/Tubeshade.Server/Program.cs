@@ -118,6 +118,8 @@ internal static class Program
             .AddCheck<DatabaseHealthCheck>(nameof(DatabaseHealthCheck));
 
         builder.Services
+            .AddScoped<WebVideoTextTracksService>()
+            .AddScoped<YtdlpWrapper>()
             .AddScoped<YoutubeService>()
             .AddBackgroundServices()
             .AddSponsorBlockClient();

@@ -10,7 +10,6 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
-using NodaTime.Text;
 using Npgsql;
 using SponsorBlock;
 using Tubeshade.Data;
@@ -19,6 +18,7 @@ using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
+using Tubeshade.Server.Pages.Shared;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
 using YoutubeDLSharp.Options;
@@ -46,6 +46,8 @@ public sealed class YoutubeService
     private readonly NpgsqlConnection _connection;
     private readonly ISponsorBlockClient _sponsorBlockClient;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
+    private readonly YtdlpWrapper _ytdlpWrapper;
+    private readonly WebVideoTextTracksService _webVideoTextTracksService;
 
     private static string VideoFormat { get; } = string.Join(',', VideoFormats);
 
@@ -61,7 +63,9 @@ public sealed class YoutubeService
         NpgsqlConnection connection,
         PreferencesRepository preferencesRepository,
         ISponsorBlockClient sponsorBlockClient,
-        SponsorBlockSegmentRepository segmentRepository)
+        SponsorBlockSegmentRepository segmentRepository,
+        YtdlpWrapper ytdlpWrapper,
+        WebVideoTextTracksService webVideoTextTracksService)
     {
         _logger = logger;
         _options = optionsMonitor.CurrentValue;
@@ -73,6 +77,8 @@ public sealed class YoutubeService
         _preferencesRepository = preferencesRepository;
         _sponsorBlockClient = sponsorBlockClient;
         _segmentRepository = segmentRepository;
+        _ytdlpWrapper = ytdlpWrapper;
+        _webVideoTextTracksService = webVideoTextTracksService;
         _imageFileRepository = imageFileRepository;
         _videoFileRepository = videoFileRepository;
     }
@@ -93,44 +99,26 @@ public sealed class YoutubeService
             FFmpegPath = _options.FfmpegPath,
         };
 
-        _logger.LogInformation("Getting metadata for {VideoUrl}", url);
-        var fetchResult = await youtube.RunVideoDataFetch(
-            url,
-            cancellationToken,
-            true,
-            false,
-            new OptionSet
-            {
-                Cookies = cookieFilepath,
-                CookiesFromBrowser = _options.CookiesFromBrowser,
-                PlaylistItems = "0",
-            });
+        var data = await _ytdlpWrapper.FetchUnknownUrlData(url, cookieFilepath, cancellationToken);
+        var channel = await GetChannel(libraryId, userId, data, transaction);
 
-        if (!fetchResult.Success)
-        {
-            throw new Exception(string.Join(Environment.NewLine, fetchResult.ErrorOutput));
-        }
-
-        var channel = await GetChannel(libraryId, userId, fetchResult.Data, transaction);
-
-        if (fetchResult.Data.ResultType is MetadataType.Video)
+        if (data.ResultType is MetadataType.Video)
         {
             await IndexVideo(
                 url,
                 channel,
                 libraryId,
                 userId,
-                fetchResult.Data,
+                data,
                 transaction,
-                youtube,
                 tempDirectory,
                 cancellationToken);
         }
-        else if (fetchResult.Data.ResultType is MetadataType.Playlist)
+        else if (data.ResultType is MetadataType.Playlist)
         {
             await IndexChannel(
                 channel,
-                fetchResult.Data,
+                data,
                 youtube,
                 cookieFilepath,
                 cancellationToken);
@@ -138,7 +126,7 @@ public sealed class YoutubeService
         else
         {
             throw new InvalidOperationException(
-                $"Unexpected metadata type when downloading video: {fetchResult.Data.ResultType}");
+                $"Unexpected metadata type when downloading video: {data.ResultType}");
         }
 
         await transaction.CommitWithRetries(_logger, cancellationToken);
@@ -195,7 +183,6 @@ public sealed class YoutubeService
         Guid userId,
         VideoData videoData,
         NpgsqlTransaction transaction,
-        YoutubeDL youtube,
         DirectoryInfo directory,
         CancellationToken cancellationToken)
     {
@@ -284,28 +271,10 @@ public sealed class YoutubeService
 
             foreach (var format in VideoFormats)
             {
-                var result = await youtube.RunVideoDataFetch(
-                    url,
-                    cancellationToken,
-                    true,
-                    false,
-                    new OptionSet
-                    {
-                        Cookies = cookieFilepath,
-                        CookiesFromBrowser = _options.CookiesFromBrowser,
-                        Format = format,
-                        NoPart = true,
-                        EmbedChapters = true,
-                    });
-
-                if (!result.Success)
+                var data = await _ytdlpWrapper.FetchVideoFormatData(url, format, cookieFilepath, cancellationToken);
+                if (data is not { ResultType: MetadataType.Video })
                 {
-                    throw new(string.Join(Environment.NewLine, result.ErrorOutput));
-                }
-
-                if (result.Data is not { ResultType: MetadataType.Video } data)
-                {
-                    _logger.LogError("Expected video, received {MetadataType} with data {VideoData}", result.Data.ResultType, result.Data);
+                    _logger.LogError("Expected video, received {MetadataType} with data {VideoData}", data.ResultType, data);
                     throw new Exception("Unexpected result type");
                 }
 
@@ -367,23 +336,23 @@ public sealed class YoutubeService
             }
         }
 
+        if (videoData.Chapters is { Length: > 0 })
+        {
+            var chaptersFilePath = video.GetChaptersFilePath();
+            _logger.LogDebug("Writing video chapters to {ChaptersFilePath}", chaptersFilePath);
+
+            await using var chapterFile = File.Create(chaptersFilePath);
+            var cues = videoData.Chapters.Select(TextTrackCue.FromYouTubeChapter);
+            await _webVideoTextTracksService.Write(chapterFile, cues, cancellationToken);
+        }
+
         var thumbnail = videoData
             .Thumbnails
             .Where(data => new UriBuilder(data.Url).Query.StartsWith("?sqp") && data.Width.HasValue)
             .OrderByDescending(data => data.Width)
             .FirstOrDefault() ?? videoData.Thumbnails.OrderByDescending(data => data.Width).First();
 
-        _ = await youtube.RunWithOptions(
-            thumbnail.Url,
-            new OptionSet
-            {
-                Output = "thumbnail.%(ext)s",
-                Paths = $"{video.StoragePath}",
-                Cookies = cookieFilepath,
-                CookiesFromBrowser = _options.CookiesFromBrowser,
-            },
-            cancellationToken);
-
+        await _ytdlpWrapper.DownloadThumbnail(thumbnail.Url, video.StoragePath, cookieFilepath, cancellationToken);
         var thumbnails = Directory.EnumerateFiles(video.StoragePath, "thumbnail.*").ToArray();
         if (thumbnails is [var thumbnailPath])
         {
@@ -607,7 +576,7 @@ public sealed class YoutubeService
                 continue;
             }
 
-            await IndexVideo(entry.Url, channel, libraryId, userId, fetchResult.Data, transaction, youtube, directory, cancellationToken);
+            await IndexVideo(entry.Url, channel, libraryId, userId, fetchResult.Data, transaction, directory, cancellationToken);
 
             if (reportProgress)
             {
@@ -662,70 +631,18 @@ public sealed class YoutubeService
                 $"Unexpected metadata type when downloading video: {videoData.Data.ResultType}");
         }
 
-        if (videoData.Data.Chapters is { Length: > 0 })
-        {
-            await using var chapterFile = File.CreateText(Path.Combine(tempDirectory.FullName, "chapters.vtt"));
-            await chapterFile.WriteLineAsync("WEBVTT");
-            var pattern = DurationPattern.CreateWithInvariantCulture("HH:mm:ss.fff");
-
-            foreach (var (chapter, index) in videoData.Data.Chapters.Select((data, index) => (data, index)))
-            {
-                var startTime = Duration.FromSeconds(chapter.StartTime ?? 0);
-                var endTime = Duration.FromSeconds(chapter.EndTime ?? 0);
-
-                await chapterFile.WriteLineAsync(
-                    $"""
-
-                     {index + 1}
-                     {pattern.Format(startTime)} --> {pattern.Format(endTime)}
-                     {chapter.Title}
-                     """);
-            }
-        }
-
         var files = await _videoRepository.GetFilesAsync(videoId, userId, transaction);
 
-        var tasks = VideoFormats.Select(async format =>
-        {
-            var result = await youtube.RunVideoDataFetch(
-                video.ExternalUrl,
-                cancellationToken,
-                true,
-                false,
-                new OptionSet
-                {
-                    Cookies = cookieFilepath,
-                    CookiesFromBrowser = _options.CookiesFromBrowser,
-                    Format = format,
-                    NoPart = true,
-                    EmbedChapters = true,
-                });
+        var selectedFormats = await _ytdlpWrapper.SelectFormats(
+            video.ExternalUrl,
+            VideoFormats,
+            cookieFilepath,
+            cancellationToken);
 
-            return (result, format);
-        });
-
-        var results = await Task.WhenAll(tasks);
-        if (results.Any(tuple => !tuple.result.Success))
-        {
-            var failedResults = results.Where(tuple => !tuple.result.Success).Select(tuple => tuple.result.ErrorOutput);
-            throw new Exception(string.Join(Environment.NewLine, failedResults.SelectMany(lines => lines)));
-        }
-
-        if (results.Any(tuple => tuple.result.Data.ResultType is not MetadataType.Video))
-        {
-            throw new InvalidOperationException("Unexpected metadata type when downloading video");
-        }
-
-        var attributes = File.GetAttributes(video.StoragePath);
-        var targetDirectory = (attributes & FileAttributes.Directory) is FileAttributes.Directory
-            ? video.StoragePath
-            : Path.GetDirectoryName(video.StoragePath)!;
-
+        var targetDirectory = video.GetDirectoryPath();
         Directory.CreateDirectory(targetDirectory);
 
-        foreach (var (data, selectedFormat) in results
-                     .Where(tuple => tuple.result.Success && tuple.result.Data.ResultType is MetadataType.Video)
-                     .Select(tuple => (tuple.result.Data, tuple.format)))
+        foreach (var (data, selectedFormat) in selectedFormats.Select(pair => (pair.Value, pair.Key)))
         {
             var formatIds = data.FormatID.Split('+');
             var formats = formatIds
@@ -782,7 +699,7 @@ public sealed class YoutubeService
                 outputProgress,
                 new OptionSet
                 {
-                    LimitRate = 1024 * 1024 * 10,
+                    LimitRate = _options.LimitRate,
                     Cookies = cookieFilepath,
                     CookiesFromBrowser = _options.CookiesFromBrowser,
                     WriteSubs = true,

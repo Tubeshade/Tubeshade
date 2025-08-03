@@ -16,6 +16,8 @@ public sealed class YtdlpOptions
     [Required]
     public required string TempPath { get; set; } = Path.GetTempPath();
 
+    public required long? LimitRate { get; set; } = 10 * 1024 * 1024;
+
     [AllowedValues(null, "brave", "chrome", "chromium", "edge", "firefox", "opera", "safari", "vivaldi", "whale")]
     public string? CookiesFromBrowser { get; set; }
 }
