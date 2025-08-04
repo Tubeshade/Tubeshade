@@ -164,11 +164,7 @@ public sealed class YoutubeService
 
             channel.StoragePath = Path.Combine(library.StoragePath, $"channel_{channel.Id}");
             await _channelRepository.UpdateAsync(channel, transaction);
-
-            await _connection.ExecuteAsync(
-                "INSERT INTO media.library_channels (library_id, channel_id) VALUES (@LibraryId, @ChannelId);",
-                new { LibraryId = libraryId, ChannelId = channel.Id },
-                transaction);
+            await _channelRepository.AddToLibrary(libraryId, channel.Id, transaction);
 
             Directory.CreateDirectory(channel.StoragePath);
         }
@@ -184,7 +180,8 @@ public sealed class YoutubeService
         VideoData videoData,
         NpgsqlTransaction transaction,
         DirectoryInfo directory,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        VideoType? type = null)
     {
         var cookieFilepath = await CreateCookieFile(libraryId, directory, cancellationToken);
 
@@ -207,6 +204,12 @@ public sealed class YoutubeService
                     videoData.Availability, "Unexpected availability value"),
             };
 
+            type ??= videoData switch
+            {
+                { LiveStatus: not (LiveStatus.None or LiveStatus.NotLive) } => VideoType.Livestream,
+                _ => VideoType.Video,
+            };
+
             var videoId = await _videoRepository.AddAsync(
                 new VideoEntity
                 {
@@ -214,6 +217,7 @@ public sealed class YoutubeService
                     ModifiedByUserId = userId,
                     OwnerId = userId,
                     Name = videoData.Title,
+                    Type = type,
                     Description = videoData.Description ?? string.Empty,
                     Categories = videoData.Categories ?? [],
                     Tags = videoData.Tags ?? [],
@@ -392,7 +396,7 @@ public sealed class YoutubeService
                 Output = "thumbnail:thumbnail.%(ext)s",
                 Paths = $"{channel.StoragePath}",
                 SkipDownload = true,
-                LimitRate = 1024 * 1024 * 10,
+                LimitRate = _options.LimitRate,
                 Cookies = cookieFilepath,
                 CookiesFromBrowser = _options.CookiesFromBrowser,
                 WriteAllThumbnails = true,
@@ -411,15 +415,9 @@ public sealed class YoutubeService
         DirectoryInfo tempDirectory,
         CancellationToken cancellationToken)
     {
-        var youtube = new YoutubeDL
-        {
-            YoutubeDLPath = _options.YtdlpPath,
-            FFmpegPath = _options.FfmpegPath,
-        };
-
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
-        await ScanChannelCore(libraryId, channelId, allVideos, false, userId, taskRepository, taskRunId, transaction, youtube, tempDirectory, cancellationToken);
+        await ScanChannelCore(libraryId, channelId, allVideos, false, userId, taskRepository, taskRunId, transaction, tempDirectory, cancellationToken);
 
         await transaction.CommitWithRetries(_logger, cancellationToken);
     }
@@ -432,12 +430,6 @@ public sealed class YoutubeService
         DirectoryInfo tempDirectory,
         CancellationToken cancellationToken)
     {
-        var youtube = new YoutubeDL
-        {
-            YoutubeDLPath = _options.YtdlpPath,
-            FFmpegPath = _options.FfmpegPath,
-        };
-
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var channels = await _channelRepository.GetSubscribedForLibrary(libraryId, userId, transaction);
 
@@ -446,7 +438,7 @@ public sealed class YoutubeService
 
         foreach (var (index, channel) in channels.Index())
         {
-            await ScanChannelCore(libraryId, channel.Id, false, true, userId, taskRepository, taskRunId, transaction, youtube, tempDirectory, cancellationToken, false);
+            await ScanChannelCore(libraryId, channel.Id, false, true, userId, taskRepository, taskRunId, transaction, tempDirectory, cancellationToken, false);
             await taskRepository.UpdateProgress(taskRunId, index + 1);
         }
 
@@ -500,7 +492,6 @@ public sealed class YoutubeService
         TaskRepository taskRepository,
         Guid taskRunId,
         NpgsqlTransaction transaction,
-        YoutubeDL youtube,
         DirectoryInfo directory,
         CancellationToken cancellationToken,
         bool reportProgress = true)
@@ -509,79 +500,78 @@ public sealed class YoutubeService
 
         var channel = await _channelRepository.GetAsync(channelId, userId, transaction);
         var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channelId, userId, cancellationToken);
-        var count = preferences?.VideosCount ?? 5;
-        var playlistItems = allVideos ? null : $"1:{count}";
-        var channelUrl = allVideos ? $"{channel.ExternalUrl}/videos" : channel.ExternalUrl;
 
-        var fetchResult = await youtube.RunVideoDataFetch(
-            channelUrl,
-            cancellationToken,
-            false,
-            false,
-            new OptionSet
-            {
-                Cookies = cookiesFilepath,
-                CookiesFromBrowser = _options.CookiesFromBrowser,
-                PlaylistItems = playlistItems,
-                YesPlaylist = false,
-                FlatPlaylist = true,
-            });
+        var types = new List<(int Count, VideoType Type)>();
 
-        if (!fetchResult.Success)
+        if (preferences is null)
         {
-            throw new(string.Join(Environment.NewLine, fetchResult.ErrorOutput));
+            types.Add((5, VideoType.Video));
+        }
+        else if (preferences.VideosCount is { } videosCount)
+        {
+            types.Add((videosCount, VideoType.Video));
         }
 
-        var entries = fetchResult.Data.Entries;
-        if (entries.Any(data => data.ResultType is MetadataType.Playlist))
+        if (preferences?.LiveStreamsCount is { } liveStreamsCount)
         {
-            _logger.LogDebug("Found multiple playlists when scanning channel");
-            entries = entries.SelectMany(data => data.Entries).ToArray();
+            types.Add((liveStreamsCount, VideoType.Livestream));
+        }
+
+        if (preferences?.ShortsCount is { } shortsCount)
+        {
+            types.Add((shortsCount, VideoType.Short));
+        }
+
+        var playlists = new Dictionary<VideoType, VideoData>();
+        foreach (var (count, type) in types)
+        {
+            var playlistData = await _ytdlpWrapper.FetchPlaylistEntryUrls(
+                $"{channel.ExternalUrl}/{type.Tab}",
+                allVideos ? null : count,
+                cookiesFilepath,
+                cancellationToken);
+
+            playlists.Add(type, playlistData);
         }
 
         if (reportProgress)
         {
-            await taskRepository.InitializeTaskProgress(taskRunId, entries.Length);
+            await taskRepository.InitializeTaskProgress(taskRunId, playlists.SelectMany(pair => pair.Value.Entries).Count());
         }
 
-        foreach (var (index, entry) in entries.Index())
+        var indexOffset = 0;
+        foreach (var (type, playlistData) in playlists)
         {
-            var existing = await _videoRepository.FindByExternalUrl(entry.Url, userId, Access.Read, transaction);
-            if (existing is not null && breakOnExisting)
+            foreach (var (index, video) in playlistData.Entries.Index())
             {
-                _logger.LogDebug("Found existing video for {VideoExternalUrl}, stopping channel scan", existing.ExternalUrl);
-                if (reportProgress)
+                var existing = await _videoRepository.FindByExternalUrl(video.Url, userId, Access.Read, transaction);
+                if (existing is not null && breakOnExisting)
                 {
-                    await taskRepository.UpdateProgress(taskRunId, entries.Length);
+                    _logger.LogDebug("Found existing video for {VideoExternalUrl}, stopping channel scan", existing.ExternalUrl);
+                    if (reportProgress)
+                    {
+                        await taskRepository.UpdateProgress(taskRunId, playlistData.Entries.Length + indexOffset);
+                    }
+
+                    break;
                 }
 
-                break;
-            }
-
-            fetchResult = await youtube.RunVideoDataFetch(
-                entry.Url,
-                cancellationToken,
-                true,
-                false,
-                new OptionSet
+                var videoResult = await _ytdlpWrapper.FetchVideoData(video.Url, cookiesFilepath, cancellationToken);
+                if (!videoResult.Success)
                 {
-                    Cookies = cookiesFilepath,
-                    CookiesFromBrowser = _options.CookiesFromBrowser,
-                    PlaylistItems = "0",
-                });
+                    _logger.LogWarning("Skipping video during channel scan - {ErrorMessage}", string.Join(Environment.NewLine, videoResult.ErrorOutput));
+                    continue;
+                }
 
-            if (!fetchResult.Success)
-            {
-                _logger.LogWarning("Skipping video during channel scan - {ErrorMessage}", string.Join(Environment.NewLine, fetchResult.ErrorOutput));
-                continue;
+                await IndexVideo(video.Url, channel, libraryId, userId, videoResult.Data, transaction, directory, cancellationToken, type);
+
+                if (reportProgress)
+                {
+                    await taskRepository.UpdateProgress(taskRunId, index + 1 + indexOffset);
+                }
             }
 
-            await IndexVideo(entry.Url, channel, libraryId, userId, fetchResult.Data, transaction, directory, cancellationToken);
-
-            if (reportProgress)
-            {
-                await taskRepository.UpdateProgress(taskRunId, index + 1);
-            }
+            indexOffset += playlistData.Entries.Length;
         }
     }
 
@@ -805,7 +795,8 @@ public sealed class YoutubeService
         await transaction.CommitWithRetries(_logger, cancellationToken);
     }
 
-    private async ValueTask<string?> CreateCookieFile(Guid libraryId,
+    private async ValueTask<string?> CreateCookieFile(
+        Guid libraryId,
         DirectoryInfo directory,
         CancellationToken cancellationToken)
     {

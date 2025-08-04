@@ -57,6 +57,71 @@ public sealed class YtdlpWrapper
         return result.Data;
     }
 
+    public async ValueTask<VideoData> FetchPlaylistEntryUrls(
+        string playlistUrl,
+        int? count,
+        string? cookieFilepath,
+        CancellationToken cancellationToken)
+    {
+        var options = _optionsMonitor.CurrentValue;
+        var youtube = new YoutubeDL
+        {
+            YoutubeDLPath = options.YtdlpPath,
+            FFmpegPath = options.FfmpegPath,
+        };
+
+        var fetchResult = await youtube.RunVideoDataFetch(
+            playlistUrl,
+            cancellationToken,
+            false,
+            false,
+            new OptionSet
+            {
+                Cookies = cookieFilepath,
+                CookiesFromBrowser = options.CookiesFromBrowser,
+                PlaylistItems = count.HasValue ? $"1:{count}" : null,
+                YesPlaylist = false,
+                FlatPlaylist = true,
+            });
+
+        if (!fetchResult.Success)
+        {
+            throw new(string.Join(Environment.NewLine, fetchResult.ErrorOutput));
+        }
+
+        if (fetchResult.Data.Entries.Any(data => data.ResultType is not MetadataType.Url))
+        {
+            throw new NotSupportedException("Playlist entry is not a url, despite specifying flat playlist");
+        }
+
+        return fetchResult.Data;
+    }
+
+    public async ValueTask<RunResult<VideoData>> FetchVideoData(
+        string videoUrl,
+        string? cookieFilepath,
+        CancellationToken cancellationToken)
+    {
+        var options = _optionsMonitor.CurrentValue;
+        var youtube = new YoutubeDL
+        {
+            YoutubeDLPath = options.YtdlpPath,
+            FFmpegPath = options.FfmpegPath,
+        };
+
+        return await youtube.RunVideoDataFetch(
+            videoUrl,
+            cancellationToken,
+            true,
+            false,
+            new OptionSet
+            {
+                Cookies = cookieFilepath,
+                CookiesFromBrowser = options.CookiesFromBrowser,
+                PlaylistItems = "0",
+            });
+    }
+
     public async ValueTask<VideoData> FetchVideoFormatData(
         string videoUrl,
         string format,

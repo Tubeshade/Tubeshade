@@ -18,6 +18,8 @@ public sealed record VideoEntity : ModifiableEntity, IOwnableEntity, INamedEntit
 
     public required string[] Tags { get; set; }
 
+    public required VideoType Type { get; set; }
+
     public long? ViewCount { get; set; }
 
     public long? LikeCount { get; set; }

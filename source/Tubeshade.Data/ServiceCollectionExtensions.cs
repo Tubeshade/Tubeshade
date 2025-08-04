@@ -27,6 +27,7 @@ public static class ServiceCollectionExtensions
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskResult, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ExternalAvailability, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ImageType, int>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<VideoType, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<VideoContainerType, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentCategory, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentAction, int>());

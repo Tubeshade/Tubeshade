@@ -134,4 +134,15 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
 
         return await Connection.QuerySingleOrDefaultAsync<ChannelEntity>(command);
     }
+
+    public async ValueTask<int> AddToLibrary(Guid libraryId, Guid channelId, NpgsqlTransaction transaction)
+    {
+        return await Connection.ExecuteAsync(
+            $"""
+            INSERT INTO media.library_channels (library_id, channel_id)
+            VALUES (@{nameof(libraryId)}, @{nameof(channelId)});
+            """,
+            new { libraryId, channelId },
+            transaction);
+    }
 }
