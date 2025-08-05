@@ -237,7 +237,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                       INNER JOIN media.libraries ON libraries.id = @{nameof(libraryId)}
                       LEFT OUTER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                       LEFT OUTER JOIN media.preferences library_p ON library_preferences.preference_id = library_p.id
-             WHERE channels.id = @{nameof(channelId)}
+             WHERE channels.id = @{nameof(channelId)} AND COALESCE(channel_p.id, library_p.id) IS NOT NULL;
              """,
             new { libraryId, channelId, userId },
             cancellationToken: cancellationToken));
@@ -268,7 +268,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                       INNER JOIN media.libraries ON libraries.id = @{nameof(libraryId)}
                       LEFT OUTER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                       LEFT OUTER JOIN media.preferences library_p ON library_preferences.preference_id = library_p.id
-             WHERE videos.id = @{nameof(videoId)}
+             WHERE videos.id = @{nameof(videoId)} AND COALESCE(channel_p.id, library_p.id) IS NOT NULL;
              """,
             new { libraryId, videoId, userId },
             cancellationToken: cancellationToken));
