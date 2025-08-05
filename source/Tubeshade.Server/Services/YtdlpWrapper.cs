@@ -163,7 +163,7 @@ public sealed class YtdlpWrapper
         return result.Data;
     }
 
-    public async ValueTask<KeyValuePair<string, VideoData>[]> SelectFormats(
+    public async ValueTask<(string SelectedFormat, FormatData[] Formats)[]> SelectFormats(
         string videoUrl,
         IEnumerable<string> formats,
         string? cookieFilepath,
@@ -213,7 +213,15 @@ public sealed class YtdlpWrapper
         }
 
         return results
-            .Select(tuple => new KeyValuePair<string, VideoData>(tuple.format, tuple.result.Data))
+            .Select(tuple =>
+            {
+                var formatIds = tuple.result.Data.FormatID.Split('+');
+                var videoFormats = formatIds
+                    .Select(formatId => tuple.result.Data.Formats.Single(format => format.FormatId == formatId))
+                    .ToArray();
+
+                return (tuple.format, videoFormats);
+            })
             .ToArray();
     }
 

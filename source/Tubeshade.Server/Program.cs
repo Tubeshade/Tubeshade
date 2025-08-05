@@ -19,6 +19,7 @@ using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Configuration.Startup;
 using Tubeshade.Server.Services;
+using Tubeshade.Server.Services.Background;
 
 namespace Tubeshade.Server;
 
@@ -118,10 +119,12 @@ internal static class Program
             .AddCheck<DatabaseHealthCheck>(nameof(DatabaseHealthCheck));
 
         builder.Services
+            .AddHostedService<TaskListenerBackgroundService>()
+            .AddHostedService<BackgroundWorkerService>()
+            .AddHostedService<SchedulerBackgroundService>()
             .AddScoped<WebVideoTextTracksService>()
             .AddScoped<YtdlpWrapper>()
             .AddScoped<YoutubeService>()
-            .AddBackgroundServices()
             .AddSponsorBlockClient();
 
         builder.Services.AddTransient<IStartupFilter, DatabaseMigrationStartupFilter>();

@@ -12,6 +12,8 @@ public sealed class SchedulerOptions
 
     public required string Period { get; set; } = "PT1M";
 
+    public required int WorkerCount { get; set; } = Math.Max(Environment.ProcessorCount - 1, 1);
+
     internal Period GetPeriod() => Pattern.Parse(Period).Value;
 
     internal TimeSpan GetPeriodTimeSpan() => GetPeriod().ToDuration().ToTimeSpan();

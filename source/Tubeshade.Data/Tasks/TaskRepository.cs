@@ -47,12 +47,12 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              payload = @{nameof(TaskEntity.Payload)}
          """;
 
-    public async ValueTask<TaskEntity?> TryDequeueTask(Guid taskId, TaskType taskType, NpgsqlTransaction transaction)
+    public async ValueTask<TaskEntity?> TryDequeueTask(Guid taskId, NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleOrDefaultAsync<TaskEntity>(new CommandDefinition(
             $"""
              {SelectSql}
-             WHERE tasks.id = @{nameof(taskId)} AND tasks.type = @{nameof(taskType)}
+             WHERE tasks.id = @{nameof(taskId)}
                AND NOT EXISTS(SELECT
                               FROM tasks.task_runs
                                        LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
@@ -61,7 +61,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              ORDER BY tasks.created_at
              LIMIT 1 FOR UPDATE SKIP LOCKED;
              """,
-            new { taskId, taskType },
+            new { taskId },
             transaction));
     }
 

@@ -636,16 +636,22 @@ public sealed class YoutubeService
             preferences?.PlayerClient,
             cancellationToken);
 
+        var totalSize = selectedFormats
+            .SelectMany(tuple => tuple.Formats)
+            .Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
+
+        if (totalSize.HasValue)
+        {
+            await taskRepository.InitializeTaskProgress(taskRunId, totalSize.Value);
+        }
+
         var targetDirectory = video.GetDirectoryPath();
         Directory.CreateDirectory(targetDirectory);
 
-        foreach (var (data, selectedFormat) in selectedFormats.Select(pair => (pair.Value, pair.Key)))
-        {
-            var formatIds = data.FormatID.Split('+');
-            var formats = formatIds
-                .Select(formatId => data.Formats.Single(format => format.FormatId == formatId))
-                .ToArray();
+        var sizeOffset = 0m;
 
+        foreach (var (selectedFormat, formats) in selectedFormats)
+        {
             foreach (var formatData in formats)
             {
                 _logger.LogDebug("Selected format {FormatData}", formatData);
@@ -660,11 +666,6 @@ public sealed class YoutubeService
             _logger.LogInformation(
                 "Selected format with size {VideoSize} MB",
                 size.HasValue ? Math.Round(size.Value / 1024 / 1024, 2) : null);
-
-            if (size.HasValue)
-            {
-                // await taskRepository.InitializeTaskProgress(taskRunId, size.Value);
-            }
 
             var fileName = videoFile.StoragePath;
             if (Directory.EnumerateFiles(targetDirectory, $"{video.Id}.*").Any(file => file.EndsWith(fileName)))
@@ -755,9 +756,9 @@ public sealed class YoutubeService
                 timestamp = newTimestamp;
                 fileSize = newFileSize;
 
-                if (size.HasValue)
+                if (totalSize.HasValue && size.HasValue)
                 {
-                    // await taskRepository.UpdateProgress(taskRunId, fileSize);
+                    await taskRepository.UpdateProgress(taskRunId, fileSize + sizeOffset);
                 }
 
                 var remaining2 = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
@@ -780,6 +781,8 @@ public sealed class YoutubeService
                 videoFile.DownloadedAt = _clock.GetCurrentInstant();
                 videoFile.DownloadedByUserId = userId;
                 await _videoFileRepository.UpdateAsync(videoFile, transaction);
+
+                sizeOffset += size ?? 0;
             }
             else
             {
