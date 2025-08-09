@@ -4,8 +4,7 @@
 <table hx-get="" hx-page-handler="Running" hx-trigger="every 2s" hx-swap="outerHTML" class="table">
     <thead>
     <tr>
-        <th>Type</th>
-        <th>Video</th>
+        <th>Task</th>
         <th>Status</th>
         <th>Action</th>
     </tr>
@@ -20,13 +19,7 @@
                 <td>
                     @if (index is 0)
                     {
-                        @run.TypeDisplay
-                    }
-                </td>
-                <td>
-                    @if (index is 0)
-                    {
-                        @run.Name
+                        <span>@task.TypeDisplay</span> <span>"@task.Name"</span>
                     }
                 </td>
                 <td>
@@ -56,7 +49,7 @@
                         {
                             <button
                                 hx-post="" hx-page-handler="Retry" hx-route-taskId="@task.Id" hx-swap="none"
-                                type="button" class="btn btn-primary">
+                                type="button" class="btn btn-primary w-100">
                                 Retry
                             </button>
                         }
@@ -64,7 +57,7 @@
                         {
                             <button
                                 hx-post="" hx-page-handler="Cancel" hx-route-taskRunId="@run.Id" hx-swap="none"
-                                type="button" class="btn btn-danger">
+                                type="button" class="btn btn-danger w-100">
                                 Cancel
                             </button>
                         }

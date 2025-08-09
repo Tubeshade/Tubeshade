@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Data.Tasks.Payloads;
+using Tubeshade.Server.Pages.Libraries.Tasks;
 
 namespace Tubeshade.Server.Services;
 
@@ -17,6 +19,34 @@ public sealed class TaskService
     {
         _connection = connection;
         _taskRepository = taskRepository;
+    }
+
+    public List<TaskModel> GroupTasks(IEnumerable<RunningTaskEntity> runningTasks)
+    {
+        return runningTasks
+            .GroupBy(task => task.Id)
+            .Select(grouping =>
+            {
+                var runs = grouping.ToArray();
+
+                return new TaskModel
+                {
+                    Id = grouping.Key,
+                    Type = runs[0].Type,
+                    Name = runs[0].Name,
+                    Runs = runs
+                        .Select(task => new TaskRunModel
+                        {
+                            Id = task.RunId,
+                            Value = task.Value,
+                            Target = task.Target,
+                            Result = task.Result,
+                            Message = task.Message,
+                        })
+                        .ToArray(),
+                };
+            })
+            .ToList();
     }
 
     public async ValueTask ScanSubscriptions(Guid userId, IEnumerable<Guid> libraryIds)

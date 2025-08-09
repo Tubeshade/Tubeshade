@@ -40,26 +40,8 @@ public sealed class Index : PageModel
     public async Task OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-
         var tasks = await _taskRepository.GetRunningTasks(userId, cancellationToken);
-
-        Tasks = tasks
-            .GroupBy(task => task.Id)
-            .Select(grouping => new TaskModel
-            {
-                Id = grouping.Key,
-                Runs = grouping.Select(task => new TaskRunModel
-                {
-                    Type = task.Type,
-                    Payload = task.Payload,
-                    Id = task.RunId!.Value,
-                    Value = task.Value,
-                    Target = task.Target,
-                    Result = task.Result,
-                    Message = task.Message,
-                }).ToArray(),
-            })
-            .ToList();
+        Tasks = _taskService.GroupTasks(tasks);
     }
 
     public async Task<IActionResult> OnGetRunning(CancellationToken cancellationToken)

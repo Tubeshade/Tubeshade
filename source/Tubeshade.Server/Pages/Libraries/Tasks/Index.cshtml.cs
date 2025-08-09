@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -39,24 +38,7 @@ public sealed class Index : LibraryPageBase
         var userId = User.GetUserId();
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
         var tasks = await _taskRepository.GetRunningTasks(LibraryId, userId, cancellationToken);
-
-        Tasks = tasks
-            .GroupBy(task => task.Id)
-            .Select(grouping => new TaskModel
-            {
-                Id = grouping.Key,
-                Runs = grouping.Select(task => new TaskRunModel
-                {
-                    Type = task.Type,
-                    Payload = task.Payload,
-                    Id = task.RunId!.Value,
-                    Value = task.Value,
-                    Target = task.Target,
-                    Result = task.Result,
-                    Message = task.Message,
-                }).ToArray(),
-            })
-            .ToList();
+        Tasks = _taskService.GroupTasks(tasks);
     }
 
     public async Task<IActionResult> OnGetRunning(CancellationToken cancellationToken)

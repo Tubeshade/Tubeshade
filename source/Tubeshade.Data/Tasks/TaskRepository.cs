@@ -197,35 +197,17 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         CancellationToken cancellationToken)
     {
         var command = new CommandDefinition(
+            // lang=sql
             $"""
-             SELECT tasks.id                 AS Id,
-                    tasks.type               AS Type,
-                    tasks.payload            AS Payload,
-                    task_runs.id             AS RunId,
-                    task_run_progress.value  AS Value,
-                    task_run_progress.target AS Target,
-                    task_run_results.result  AS Result,
-                    task_run_results.message AS Message
-             FROM tasks.tasks
-                      INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
-                      LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
-                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-             WHERE (tasks.payload::json ->> 'libraryId')::uuid = @{nameof(libraryId)}
-             ORDER BY task_run_results.created_at DESC, task_runs.created_at DESC, tasks.created_at DESC;
-             """,
-            new { libraryId },
-            cancellationToken: cancellationToken);
-
-        var enumerable = await Connection.QueryAsync<RunningTaskEntity>(command);
-        return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
-    }
-
-    public async ValueTask<List<RunningTaskEntity>> GetRunningTasks(
-        Guid userId,
-        CancellationToken cancellationToken)
-    {
-        var command = new CommandDefinition(
-            $"""
+             WITH accessible AS
+                 (SELECT libraries.id
+                  FROM media.libraries
+                  INNER JOIN identity.owners ON owners.id = libraries.owner_id
+                  INNER JOIN identity.ownerships ON
+                     ownerships.owner_id = owners.id AND
+                     ownerships.user_id = @{nameof(userId)} AND
+                     (ownerships.access = 'read' OR ownerships.access = 'owner'))
+                     
              SELECT tasks.id                 AS Id,
                     tasks.type               AS Type,
                     tasks.payload            AS Payload,
@@ -239,7 +221,61 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                       INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
                       LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
                       LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-             WHERE libraries.owner_id = @{nameof(userId)}
+             WHERE
+                 (libraries.id IN (SELECT id FROM accessible)) AND
+                 libraries.id = @{nameof(libraryId)}
+             ORDER BY task_run_results.created_at DESC, task_runs.created_at DESC, tasks.created_at DESC;
+             """,
+            new { libraryId, userId },
+            cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<RunningTaskEntity>(command);
+        return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<List<RunningTaskEntity>> GetRunningTasks(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             WITH accessible AS
+                 (SELECT libraries.id
+                  FROM media.libraries
+                  INNER JOIN identity.owners ON owners.id = libraries.owner_id
+                  INNER JOIN identity.ownerships ON
+                     ownerships.owner_id = owners.id AND
+                     ownerships.user_id = @{nameof(userId)} AND
+                     (ownerships.access = 'read' OR ownerships.access = 'owner'))
+
+             SELECT tasks.id                 AS Id,
+                    tasks.type               AS Type,
+                    tasks.payload            AS Payload,
+                    task_runs.id             AS RunId,
+                    task_run_progress.value  AS Value,
+                    task_run_progress.target AS Target,
+                    task_run_results.result  AS Result,
+                    task_run_results.message AS Message,
+                    CASE 
+                        WHEN tasks.type = 'index' THEN
+                        (tasks.payload::json ->> 'url')::text
+                        
+                        WHEN tasks.type = 'download_video' THEN
+                        (SELECT name FROM media.videos WHERE id = (tasks.payload::json ->> 'videoId')::uuid)
+                        
+                        WHEN tasks.type = 'scan_channel' THEN
+                        (SELECT name FROM media.channels WHERE id = (tasks.payload::json ->> 'channelId')::uuid)
+                        
+                        ELSE
+                        libraries.name
+                    END AS Name
+             FROM tasks.tasks
+                      INNER JOIN media.libraries ON (tasks.payload::json ->> 'libraryId')::uuid = libraries.id
+                      INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
+                      LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
+                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+             WHERE (libraries.id IN (SELECT id FROM accessible))
              ORDER BY task_run_results.created_at DESC, task_runs.created_at DESC, tasks.created_at DESC;
              """,
             new { userId },
