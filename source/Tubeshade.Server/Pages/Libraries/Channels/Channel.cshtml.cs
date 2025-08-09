@@ -220,7 +220,7 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var taskId = await _taskRepository.AddScanChannelTask(payload, userId, transaction);
-        await _taskRepository.TriggerTask(taskId, transaction);
+        await _taskRepository.TriggerTask(taskId, userId, transaction);
         await transaction.CommitAsync(cancellationToken);
 
         return StatusCode(StatusCodes.Status204NoContent);

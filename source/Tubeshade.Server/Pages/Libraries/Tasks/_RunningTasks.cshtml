@@ -1,41 +1,77 @@
-﻿@model List<TaskModel>
+﻿@using Tubeshade.Data.Tasks
+@model List<TaskModel>
 
 <table hx-get="" hx-page-handler="Running" hx-trigger="every 2s" hx-swap="outerHTML" class="table">
     <thead>
     <tr>
         <th>Type</th>
         <th>Video</th>
-        <th>Progress</th>
         <th>Status</th>
+        <th>Action</th>
     </tr>
     </thead>
 
-    <tbody>
     @foreach (var task in Model)
     {
-        <tr aria-busy="@task.HasProgress" aria-describedby="@task.ProgressBarId">
-            <td>@task.TypeDisplay</td>
-            <td>@task.Name</td>
-            <td>
-                @if (task.HasProgress)
-                {
-                    <div class="row flex-nowrap">
-                        <label for="@task.ProgressBarId" class="col-auto">@task.Value</label>
-                        <progress id="@task.ProgressBarId" max="@task.Target" value="@task.Value" class="col-auto">
-                            @task.Progress%
-                        </progress>
-                        <label for="@task.ProgressBarId" class="col-auto">@task.Target</label>
-                    </div>
-                }
-            </td>
-            <td>
-                @task.Status.Name
-                @if (task.Message is not null)
-                {
-                    <span> - @task.Message</span>
-                }
-            </td>
-        </tr>
+        <tbody>
+        @foreach (var (index, run) in task.Runs.Index())
+        {
+            <tr aria-busy="@run.HasProgress" aria-describedby="@run.ProgressBarId">
+                <td>
+                    @if (index is 0)
+                    {
+                        @run.TypeDisplay
+                    }
+                </td>
+                <td>
+                    @if (index is 0)
+                    {
+                        @run.Name
+                    }
+                </td>
+                <td>
+                    @if (run.HasProgress)
+                    {
+                        <div class="row flex-nowrap">
+                            <label for="@run.ProgressBarId" class="col-auto">@run.Value</label>
+                            <progress id="@run.ProgressBarId" max="@run.Target" value="@run.Value" class="col-auto">
+                                @run.Progress%
+                            </progress>
+                            <label for="@run.ProgressBarId" class="col-auto">@run.Target</label>
+                        </div>
+                    }
+                    else
+                    {
+                        @run.Status.Name
+                        @if (run.Message is not null)
+                        {
+                            <span> - @run.Message</span>
+                        }
+                    }
+                </td>
+                <td>
+                    @if (index is 0)
+                    {
+                        @if (run.Result is not null && run.Result != TaskResult.Successful)
+                        {
+                            <button
+                                hx-post="" hx-page-handler="Retry" hx-route-taskId="@task.Id" hx-swap="none"
+                                type="button" class="btn btn-primary">
+                                Retry
+                            </button>
+                        }
+                        else if (run.Status == TaskStatus.InProgress)
+                        {
+                            <button
+                                hx-post="" hx-page-handler="Cancel" hx-route-taskRunId="@run.Id" hx-swap="none"
+                                type="button" class="btn btn-danger">
+                                Cancel
+                            </button>
+                        }
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
     }
-    </tbody>
 </table>

@@ -89,7 +89,7 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var taskId = await _taskRepository.AddDownloadTask(payload, userId, transaction);
-        await _taskRepository.TriggerTask(taskId, transaction);
+        await _taskRepository.TriggerTask(taskId, userId, transaction);
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage();
@@ -130,7 +130,7 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var taskId = await _taskRepository.AddIndexTask(payload, userId, transaction);
-        await _taskRepository.TriggerTask(taskId, transaction);
+        await _taskRepository.TriggerTask(taskId, userId, transaction);
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage();

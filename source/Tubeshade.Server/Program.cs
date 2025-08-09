@@ -119,9 +119,11 @@ internal static class Program
             .AddCheck<DatabaseHealthCheck>(nameof(DatabaseHealthCheck));
 
         builder.Services
-            .AddHostedService<TaskListenerBackgroundService>()
+            .AddHostedService<TaskListenerService>()
+            .AddHostedService<TaskCancellationService>()
             .AddHostedService<BackgroundWorkerService>()
-            .AddHostedService<SchedulerBackgroundService>()
+            .AddHostedService<SchedulerService>()
+            .AddScoped<TaskService>()
             .AddScoped<WebVideoTextTracksService>()
             .AddScoped<YtdlpWrapper>()
             .AddScoped<YoutubeService>()

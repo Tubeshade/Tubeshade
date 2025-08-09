@@ -5,8 +5,8 @@ using Tubeshade.Server.Services.Background;
 
 namespace Tubeshade.Server.Tests.Services;
 
-[TestOf(typeof(SchedulerBackgroundService))]
-public sealed class SchedulerBackgroundServiceTests
+[TestOf(typeof(SchedulerService))]
+public sealed class SchedulerServiceTests
 {
     [Test]
     public void GetNextTime()
@@ -14,7 +14,7 @@ public sealed class SchedulerBackgroundServiceTests
         const string cron = "*/15 * * * *";
         var currentTime = Instant.FromUtc(2025, 07, 19, 12, 00);
 
-        var nextTime = SchedulerBackgroundService.GetNextTime(cron, currentTime);
+        var nextTime = SchedulerService.GetNextTime(cron, currentTime);
         nextTime.Should().Be(Instant.FromUtc(2025, 07, 19, 12, 15));
     }
 }

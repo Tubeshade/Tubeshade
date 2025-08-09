@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading;
@@ -77,8 +79,55 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     {
         await Connection.ExecuteAsync(
             // lang=sql
-            $"SELECT pg_notify('task_created', @{nameof(taskId)}::text);",
+            $"SELECT pg_notify('{TaskChannels.Created}', @{nameof(taskId)}::text);",
             new { taskId },
+            transaction);
+    }
+
+    public async ValueTask TriggerTask(Guid taskId, Guid userId, NpgsqlTransaction transaction)
+    {
+        await Connection.ExecuteAsync(
+            // lang=sql
+            $"""
+             WITH accessible AS
+                 (SELECT libraries.id
+                  FROM media.libraries
+                  INNER JOIN identity.owners ON owners.id = libraries.owner_id
+                  INNER JOIN identity.ownerships ON
+                     ownerships.owner_id = owners.id AND
+                     ownerships.user_id = @{nameof(userId)} AND
+                     (ownerships.access = 'modify' OR ownerships.access = 'owner'))
+
+             SELECT pg_notify('{TaskChannels.Created}', @{nameof(taskId)}::text)
+             FROM tasks.tasks
+                  INNER JOIN media.libraries ON (tasks.payload::json ->> 'libraryId')::uuid = libraries.id
+             WHERE(libraries.id IN (SELECT id FROM accessible)) AND tasks.id = @{nameof(taskId)};
+             """,
+            new { taskId, userId },
+            transaction);
+    }
+
+    public async ValueTask CancelTaskRun(Guid taskRunId, Guid userId, NpgsqlTransaction transaction)
+    {
+        await Connection.ExecuteAsync(
+            // lang=sql
+            $"""
+             WITH accessible AS
+                 (SELECT libraries.id
+                  FROM media.libraries
+                  INNER JOIN identity.owners ON owners.id = libraries.owner_id
+                  INNER JOIN identity.ownerships ON
+                     ownerships.owner_id = owners.id AND
+                     ownerships.user_id = @{nameof(userId)} AND
+                     (ownerships.access = 'modify' OR ownerships.access = 'owner'))
+
+             SELECT pg_notify('{TaskChannels.Cancel}', @{nameof(taskRunId)}::text)
+             FROM tasks.task_runs
+                  INNER JOIN tasks.tasks ON task_runs.task_id = tasks.id
+                  INNER JOIN media.libraries ON (tasks.payload::json ->> 'libraryId')::uuid = libraries.id
+             WHERE (libraries.id IN (SELECT id FROM accessible)) AND task_runs.id = @{nameof(taskRunId)};
+             """,
+            new { taskRunId, userId },
             transaction);
     }
 
@@ -142,6 +191,64 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             cancellationToken: cancellationToken));
     }
 
+    public async ValueTask<List<RunningTaskEntity>> GetRunningTasks(
+        Guid libraryId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var command = new CommandDefinition(
+            $"""
+             SELECT tasks.id                 AS Id,
+                    tasks.type               AS Type,
+                    tasks.payload            AS Payload,
+                    task_runs.id             AS RunId,
+                    task_run_progress.value  AS Value,
+                    task_run_progress.target AS Target,
+                    task_run_results.result  AS Result,
+                    task_run_results.message AS Message
+             FROM tasks.tasks
+                      INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
+                      LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
+                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+             WHERE (tasks.payload::json ->> 'libraryId')::uuid = @{nameof(libraryId)}
+             ORDER BY task_run_results.created_at DESC, task_runs.created_at DESC, tasks.created_at DESC;
+             """,
+            new { libraryId },
+            cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<RunningTaskEntity>(command);
+        return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<List<RunningTaskEntity>> GetRunningTasks(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var command = new CommandDefinition(
+            $"""
+             SELECT tasks.id                 AS Id,
+                    tasks.type               AS Type,
+                    tasks.payload            AS Payload,
+                    task_runs.id             AS RunId,
+                    task_run_progress.value  AS Value,
+                    task_run_progress.target AS Target,
+                    task_run_results.result  AS Result,
+                    task_run_results.message AS Message
+             FROM tasks.tasks
+                      INNER JOIN media.libraries ON (tasks.payload::json ->> 'libraryId')::uuid = libraries.id
+                      INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
+                      LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
+                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+             WHERE libraries.owner_id = @{nameof(userId)}
+             ORDER BY task_run_results.created_at DESC, task_runs.created_at DESC, tasks.created_at DESC;
+             """,
+            new { userId },
+            cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<RunningTaskEntity>(command);
+        return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
+    }
+
     public ValueTask<Guid> AddIndexTask(IndexPayload payload, Guid userId, NpgsqlTransaction transaction)
     {
         return AddTask(payload, Context.IndexPayload, userId, transaction);
@@ -157,12 +264,14 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         return AddTask(payload, Context.ScanChannelPayload, userId, transaction);
     }
 
-    public ValueTask<Guid> AddScanSubscriptionsTask(ScanSubscriptionsPayload payload, Guid userId, NpgsqlTransaction transaction)
+    public ValueTask<Guid> AddScanSubscriptionsTask(ScanSubscriptionsPayload payload, Guid userId,
+        NpgsqlTransaction transaction)
     {
         return AddTask(payload, Context.ScanSubscriptionsPayload, userId, transaction);
     }
 
-    public ValueTask<Guid> AddScanSegmentsTask(ScanSponsorBlockSegmentsPayload payload, Guid userId, NpgsqlTransaction transaction)
+    public ValueTask<Guid> AddScanSegmentsTask(ScanSponsorBlockSegmentsPayload payload, Guid userId,
+        NpgsqlTransaction transaction)
     {
         return AddTask(payload, Context.ScanSponsorBlockSegmentsPayload, userId, transaction);
     }

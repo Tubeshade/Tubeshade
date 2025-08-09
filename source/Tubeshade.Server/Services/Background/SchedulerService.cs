@@ -14,18 +14,18 @@ using Tubeshade.Server.Configuration;
 
 namespace Tubeshade.Server.Services.Background;
 
-public sealed class SchedulerBackgroundService : BackgroundService
+public sealed class SchedulerService : BackgroundService
 {
     private static readonly Func<ILogger, Instant, Instant, Duration, IDisposable?> SchedulerTickScope = LoggerMessage
         .DefineScope<Instant, Instant, Duration>("{IntervalStart} - {IntervalEnd} ({IntervalDuration})");
 
-    private readonly ILogger<SchedulerBackgroundService> _logger;
+    private readonly ILogger<SchedulerService> _logger;
     private readonly IClock _clock;
     private readonly IServiceProvider _serviceProvider;
     private readonly IOptionsMonitor<SchedulerOptions> _optionsMonitor;
 
-    public SchedulerBackgroundService(
-        ILogger<SchedulerBackgroundService> logger,
+    public SchedulerService(
+        ILogger<SchedulerService> logger,
         IClock clock,
         IServiceProvider serviceProvider,
         IOptionsMonitor<SchedulerOptions> optionsMonitor)

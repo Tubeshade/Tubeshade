@@ -1,12 +1,14 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Ardalis.SmartEnum;
 using Tubeshade.Data.Tasks;
 
 namespace Tubeshade.Server.Pages.Libraries.Tasks;
 
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public sealed class TaskStatus : SmartEnum<TaskStatus>
 {
-    public static readonly TaskStatus Queued = new("Queued", 1);
+    // public static readonly TaskStatus Queued = new("Queued", 1);
     public static readonly TaskStatus InProgress = new("In progress", 2);
     public static readonly TaskStatus Completed = new("Completed", 3);
     public static readonly TaskStatus Failed = new("Failed", 4);

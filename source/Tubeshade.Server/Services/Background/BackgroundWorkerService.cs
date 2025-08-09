@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -21,6 +23,8 @@ public sealed class BackgroundWorkerService : BackgroundService
     private static readonly SemaphoreSlim DownloadLock = new(1);
     private static readonly SemaphoreSlim SponsorBlockLock = new(1);
 
+    private static readonly ConcurrentDictionary<Guid, CancellationTokenSource> RunCancellations = [];
+
     private readonly IServiceProvider _serviceProvider;
     private readonly SchedulerOptions _options;
 
@@ -30,11 +34,22 @@ public sealed class BackgroundWorkerService : BackgroundService
         _options = options.Value;
     }
 
+    internal static async ValueTask<bool> CancelTaskRun(Guid taskRunId)
+    {
+        if (!RunCancellations.TryRemove(taskRunId, out var tokenSource))
+        {
+            return false;
+        }
+
+        await tokenSource.CancelAsync();
+        return true;
+    }
+
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Parallel.ForEachAsync(
-            TaskListenerBackgroundService.Reader.ReadAllAsync(stoppingToken),
+            TaskListenerService.TaskCreated.ReadAllAsync(stoppingToken),
             new ParallelOptions
             {
                 CancellationToken = stoppingToken,
@@ -75,19 +90,16 @@ public sealed class BackgroundWorkerService : BackgroundService
 
         try
         {
+            var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var added = RunCancellations.TryAdd(taskRunId, source);
+            Trace.Assert(added);
+
             var taskRunDirectory = Directory.CreateDirectory(taskRunDirectoryPath);
 
             // Separate scope is needed, so that all updates to task status are not within a transaction
-            await using var internalScope = _serviceProvider.CreateAsyncScope();
-            await Execute(
-                task,
-                internalScope.ServiceProvider,
-                taskRunDirectory,
-                taskRepository,
-                taskRunId,
-                cancellationToken);
-
-            await taskRepository.CompleteTask(taskRunId, cancellationToken);
+            await using var taskScope = _serviceProvider.CreateAsyncScope();
+            await Execute(task, taskScope.ServiceProvider, taskRunDirectory, taskRepository, taskRunId, source.Token);
+            await taskRepository.CompleteTask(taskRunId, source.Token);
         }
         catch (TaskCanceledException exception)
         {
@@ -110,6 +122,8 @@ public sealed class BackgroundWorkerService : BackgroundService
             {
                 logger.LogDebug("Temporary task run directory does not exist at {Path}", taskRunDirectoryPath);
             }
+
+            _ = RunCancellations.TryRemove(taskRunId, out _);
         }
     }
 
