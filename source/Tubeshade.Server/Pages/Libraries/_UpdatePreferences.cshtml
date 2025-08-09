@@ -1,4 +1,5 @@
-﻿@model UpdatePreferencesModel
+﻿@using Tubeshade.Data.Preferences
+@model UpdatePreferencesModel
 
 <form asp-page-handler="UpdatePreferences" class="mb-3">
     <div class="input-group mb-3">
@@ -23,6 +24,18 @@
         <label class="input-group-text" asp-for="ShortsCount">Shorts count</label>
         <input class="form-control" asp-for="ShortsCount" type="number" min="0" step="1"/>
         <span asp-validation-for="ShortsCount" class="text-danger"></span>
+    </div>
+
+    <div class="input-group mb-3">
+        <label class="input-group-text" asp-for="PlayerClient">Player client</label>
+        <select class="form-control form-select" asp-for="PlayerClient">
+            <option value="">Default</option>
+            @foreach (var client in PlayerClient.List)
+            {
+                <option value="@client.Name" selected="@(client.Name == Model.PlayerClient)">@client.Name</option>
+            }
+        </select>
+        <span asp-validation-for="PlayerClient" class="text-danger"></span>
     </div>
 
     <button class="btn btn-primary" type="submit">Update preferences</button>

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Tubeshade.Data.Preferences;
 using Tubeshade.Server.Configuration;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
@@ -126,6 +127,7 @@ public sealed class YtdlpWrapper
         string videoUrl,
         string format,
         string? cookieFilepath,
+        PlayerClient? client,
         CancellationToken cancellationToken)
     {
         var options = _optionsMonitor.CurrentValue;
@@ -134,6 +136,9 @@ public sealed class YtdlpWrapper
             YoutubeDLPath = options.YtdlpPath,
             FFmpegPath = options.FfmpegPath,
         };
+        var youtubeClient = client is not null
+            ? new MultiValue<string>($"youtube:player_client={client.Name}")
+            : null;
 
         var result = await youtube.RunVideoDataFetch(
             videoUrl,
@@ -147,6 +152,7 @@ public sealed class YtdlpWrapper
                 Format = format,
                 NoPart = true,
                 EmbedChapters = true,
+                ExtractorArgs = youtubeClient,
             });
 
         if (!result.Success)

@@ -16,8 +16,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO media.preferences (created_by_user_id, modified_by_user_id, playback_speed, videos_count, live_streams_count, shorts_count) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @PlaybackSpeed, @VideosCount, @LiveStreamsCount, @ShortsCount)
+         INSERT INTO media.preferences (created_by_user_id, modified_by_user_id, playback_speed, videos_count, live_streams_count, shorts_count, player_client) 
+         VALUES (@CreatedByUserId, @ModifiedByUserId, @PlaybackSpeed, @VideosCount, @LiveStreamsCount, @ShortsCount, @PlayerClient)
          RETURNING id;
          """;
 
@@ -32,7 +32,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                 playback_speed AS PlaybackSpeed,
                 videos_count AS VideosCount,
                 live_streams_count AS LiveStreamsCount,
-                shorts_count AS ShortsCount
+                shorts_count AS ShortsCount,
+                player_client AS PlayerClient
          FROM media.preferences
          """;
 
@@ -42,7 +43,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
          playback_speed = @{nameof(PreferencesEntity.PlaybackSpeed)},
          videos_count = @{nameof(PreferencesEntity.VideosCount)},
          live_streams_count = @{nameof(PreferencesEntity.LiveStreamsCount)},
-         shorts_count = @{nameof(PreferencesEntity.ShortsCount)}
+         shorts_count = @{nameof(PreferencesEntity.ShortsCount)},
+         player_client = @{nameof(PreferencesEntity.PlayerClient)}
          """;
 
     /// <inheritdoc />
@@ -69,7 +71,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     preferences.playback_speed AS PlaybackSpeed,
                     preferences.videos_count AS VideosCount,
                     preferences.live_streams_count AS LiveStreamsCount,
-                    preferences.shorts_count AS ShortsCount
+                    preferences.shorts_count AS ShortsCount,
+                    preferences.player_client AS PlayerClient
              FROM media.libraries
                 INNER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                 INNER JOIN media.preferences ON library_preferences.preference_id = preferences.id
@@ -94,7 +97,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     preferences.playback_speed AS PlaybackSpeed,
                     preferences.videos_count AS VideosCount,
                     preferences.live_streams_count AS LiveStreamsCount,
-                    preferences.shorts_count AS ShortsCount
+                    preferences.shorts_count AS ShortsCount,
+                    preferences.player_client AS PlayerClient
              FROM media.libraries
                 INNER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                 INNER JOIN media.preferences ON library_preferences.preference_id = preferences.id
@@ -136,7 +140,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     library_p.playback_speed AS PlaybackSpeed,
                     library_p.videos_count AS VideosCount,
                     library_p.live_streams_count AS LiveStreamsCount,
-                    library_p.shorts_count AS ShortsCount
+                    library_p.shorts_count AS ShortsCount,
+                    library_p.player_client AS PlayerClient
              FROM media.libraries
                       LEFT OUTER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                       LEFT OUTER JOIN media.preferences library_p ON library_preferences.preference_id = library_p.id
@@ -161,7 +166,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     preferences.playback_speed AS PlaybackSpeed,
                     preferences.videos_count AS VideosCount,
                     preferences.live_streams_count AS LiveStreamsCount,
-                    preferences.shorts_count AS ShortsCount
+                    preferences.shorts_count AS ShortsCount,
+                    preferences.player_client AS PlayerClient
              FROM media.channels
                 INNER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
                 INNER JOIN media.preferences ON channel_preferences.preference_id = preferences.id
@@ -186,7 +192,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     preferences.playback_speed AS PlaybackSpeed,
                     preferences.videos_count AS VideosCount,
                     preferences.live_streams_count AS LiveStreamsCount,
-                    preferences.shorts_count AS ShortsCount
+                    preferences.shorts_count AS ShortsCount,
+                    preferences.player_client AS PlayerClient
              FROM media.channels
                 INNER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
                 INNER JOIN media.preferences ON channel_preferences.preference_id = preferences.id
@@ -229,7 +236,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     COALESCE(channel_p.playback_speed, library_p.playback_speed) AS PlaybackSpeed,
                     COALESCE(channel_p.videos_count, library_p.videos_count) AS VideosCount,
                     COALESCE(channel_p.live_streams_count, library_p.live_streams_count) AS LiveStreamsCount,
-                    COALESCE(channel_p.shorts_count, library_p.shorts_count) AS ShortsCount
+                    COALESCE(channel_p.shorts_count, library_p.shorts_count) AS ShortsCount,
+                    COALESCE(channel_p.player_client, library_p.player_client) AS PlayerClient
              FROM media.channels
                       LEFT OUTER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
                       LEFT OUTER JOIN media.preferences channel_p ON channel_preferences.preference_id = channel_p.id
@@ -259,7 +267,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     COALESCE(channel_p.playback_speed, library_p.playback_speed) AS PlaybackSpeed,
                     COALESCE(channel_p.videos_count, library_p.videos_count) AS VideosCount,
                     COALESCE(channel_p.live_streams_count, library_p.live_streams_count) AS LiveStreamsCount,
-                    COALESCE(channel_p.shorts_count, library_p.shorts_count) AS ShortsCount
+                    COALESCE(channel_p.shorts_count, library_p.shorts_count) AS ShortsCount,
+                    COALESCE(channel_p.player_client, library_p.player_client) AS PlayerClient
              FROM media.videos
                       INNER JOIN media.channels ON videos.channel_id = channels.id
                       LEFT OUTER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id

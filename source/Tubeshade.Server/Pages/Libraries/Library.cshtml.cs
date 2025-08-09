@@ -114,6 +114,7 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
             VideosCount = preferences?.VideosCount,
             LiveStreamsCount = preferences?.LiveStreamsCount,
             ShortsCount = preferences?.ShortsCount,
+            PlayerClient = preferences?.PlayerClient?.Name,
         };
 
         return Request.IsHtmx()
@@ -131,6 +132,9 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
         var userId = User.GetUserId();
         var cancellationToken = CancellationToken.None;
+        var client = !string.IsNullOrWhiteSpace(UpdatePreferencesModel.PlayerClient)
+            ? PlayerClient.FromName(UpdatePreferencesModel.PlayerClient, true)
+            : null;
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var preferences = await _preferencesRepository.FindForLibrary(LibraryId, userId, transaction);
@@ -145,7 +149,8 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
                     VideosCount = UpdatePreferencesModel.VideosCount,
                     LiveStreamsCount = UpdatePreferencesModel.LiveStreamsCount,
                     ShortsCount = UpdatePreferencesModel.ShortsCount,
-                    SubscriptionScheduleId = null
+                    SubscriptionScheduleId = null,
+                    PlayerClient = client,
                 },
                 transaction);
 
@@ -161,6 +166,7 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
             preferences.VideosCount = UpdatePreferencesModel.VideosCount;
             preferences.LiveStreamsCount = UpdatePreferencesModel.LiveStreamsCount;
             preferences.ShortsCount = UpdatePreferencesModel.ShortsCount;
+            preferences.PlayerClient = client;
 
             var count = await _preferencesRepository.UpdateAsync(
                 preferences,

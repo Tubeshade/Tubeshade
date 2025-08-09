@@ -268,6 +268,7 @@ public sealed class YoutubeService
                 transaction);
         }
 
+        var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channel.Id, userId, cancellationToken);
         var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction);
         if (!existingVideo || files is [])
         {
@@ -275,7 +276,7 @@ public sealed class YoutubeService
 
             foreach (var format in VideoFormats)
             {
-                var data = await _ytdlpWrapper.FetchVideoFormatData(url, format, cookieFilepath, cancellationToken);
+                var data = await _ytdlpWrapper.FetchVideoFormatData(url, format, cookieFilepath, preferences?.PlayerClient, cancellationToken);
                 if (data is not { ResultType: MetadataType.Video })
                 {
                     _logger.LogError("Expected video, received {MetadataType} with data {VideoData}", data.ResultType, data);
@@ -588,6 +589,10 @@ public sealed class YoutubeService
         var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
 
         var video = await _videoRepository.GetAsync(videoId, userId, transaction);
+        var preferences = await _preferencesRepository.GetEffectiveForVideo(libraryId, videoId, userId, cancellationToken);
+        var youtubeClient = preferences?.PlayerClient is { } client
+            ? new MultiValue<string>($"youtube:player_client={client.Name}")
+            : null;
 
         var youtube = new YoutubeDL
         {
@@ -607,6 +612,7 @@ public sealed class YoutubeService
                 Cookies = cookieFilepath,
                 CookiesFromBrowser = _options.CookiesFromBrowser,
                 Format = VideoFormat,
+                ExtractorArgs = youtubeClient,
                 CustomOptions = [new Option<string>("-t") { Value = "mp4" }]
             });
 
@@ -698,6 +704,7 @@ public sealed class YoutubeService
                     SubLangs = "all,-live_chat",
                     NoPart = true,
                     EmbedChapters = true,
+                    ExtractorArgs = youtubeClient,
                     CustomOptions =
                     [
                         new Option<string>("-o") { Value = $"subtitle:{Path.Combine(tempDirectory.FullName, "subtitles.%(ext)s")}" },

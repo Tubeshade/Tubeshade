@@ -9,4 +9,6 @@ public sealed class UpdatePreferencesModel
     public int? LiveStreamsCount { get; set; }
 
     public int? ShortsCount { get; set; }
+
+    public string? PlayerClient { get; set; }
 }

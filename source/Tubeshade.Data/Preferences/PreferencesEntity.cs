@@ -14,4 +14,6 @@ public sealed record PreferencesEntity : ModifiableEntity
     public int? ShortsCount { get; set; }
 
     public Guid? SubscriptionScheduleId { get; set; }
+
+    public PlayerClient? PlayerClient { get; set; }
 }
