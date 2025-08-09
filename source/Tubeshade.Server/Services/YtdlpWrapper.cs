@@ -167,6 +167,7 @@ public sealed class YtdlpWrapper
         string videoUrl,
         IEnumerable<string> formats,
         string? cookieFilepath,
+        PlayerClient? client,
         CancellationToken cancellationToken)
     {
         var options = _optionsMonitor.CurrentValue;
@@ -175,6 +176,9 @@ public sealed class YtdlpWrapper
             YoutubeDLPath = options.YtdlpPath,
             FFmpegPath = options.FfmpegPath,
         };
+        var youtubeClient = client is not null
+            ? new MultiValue<string>($"youtube:player_client={client.Name}")
+            : null;
 
         var tasks = formats.Select(async format =>
         {
@@ -190,6 +194,7 @@ public sealed class YtdlpWrapper
                     Format = format,
                     NoPart = true,
                     EmbedChapters = true,
+                    ExtractorArgs = youtubeClient,
                 });
 
             return (result, format);

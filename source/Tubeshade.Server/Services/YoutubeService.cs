@@ -633,6 +633,7 @@ public sealed class YoutubeService
             video.ExternalUrl,
             VideoFormats,
             cookieFilepath,
+            preferences?.PlayerClient,
             cancellationToken);
 
         var targetDirectory = video.GetDirectoryPath();
