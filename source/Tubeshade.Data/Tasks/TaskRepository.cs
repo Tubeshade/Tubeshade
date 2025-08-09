@@ -215,7 +215,20 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     task_run_progress.value  AS Value,
                     task_run_progress.target AS Target,
                     task_run_results.result  AS Result,
-                    task_run_results.message AS Message
+                    task_run_results.message AS Message,
+                    CASE 
+                        WHEN tasks.type = 'index' THEN
+                        (tasks.payload::json ->> 'url')::text
+                        
+                        WHEN tasks.type = 'download_video' THEN
+                        (SELECT name FROM media.videos WHERE id = (tasks.payload::json ->> 'videoId')::uuid)
+                        
+                        WHEN tasks.type = 'scan_channel' THEN
+                        (SELECT name FROM media.channels WHERE id = (tasks.payload::json ->> 'channelId')::uuid)
+                        
+                        ELSE
+                        libraries.name
+                    END AS Name
              FROM tasks.tasks
                       INNER JOIN media.libraries ON (tasks.payload::json ->> 'libraryId')::uuid = libraries.id
                       INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
