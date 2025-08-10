@@ -3,7 +3,6 @@ set -e
 
 # need to translate relative of input archive path to absolute path in container mount
 archive_path=${1//"./"/"/root/"}
-build_image_version=$(dotnet --version)
 
 mkdir -p ./artifacts
 
@@ -14,5 +13,5 @@ docker run --rm \
 	--mount type=bind,source="$1",target="$archive_path",readonly \
 	--mount type=bind,source=./artifacts,target=/artifacts \
 	--workdir /root \
-	ghcr.io/tubeshade/tubeshade-build:"$build_image_version" \
+	ghcr.io/tubeshade/tubeshade-build:9.0.301 \
 	sh -c "./build/debian/debian.sh \"$1\" \"$2\" && mv ./tubeshade.deb /artifacts/tubeshade.deb"
