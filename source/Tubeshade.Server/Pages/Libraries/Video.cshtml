@@ -188,7 +188,6 @@
 
         const playbackRateInput = document.querySelector("#playback-rate-input");
         playbackRateInput.addEventListener("change", onPlaybackSpeedInputChange, false);
-        video.addEventListener("ratechange", onVideoRateChange, false);
 
         function onPlaybackSpeedInputChange() {
             if (video.playbackRate !== playbackRateInput.value) {
@@ -196,10 +195,22 @@
             }
         }
 
+        video.addEventListener("ratechange", onVideoRateChange, false);
         function onVideoRateChange() {
             if (playbackRateInput.value !== video.playbackRate) {
                 playbackRateInput.value = video.playbackRate;
             }
+        }
+
+        video.addEventListener("ended", onVideoEnded, false);
+        function onVideoEnded() {
+            const viewedInput = document.querySelector("#viewed");
+            if (viewedInput.checked === true) {
+                return;
+            }
+
+            viewedInput.checked = true;
+            viewedInput.dispatchEvent(new Event("change"));
         }
 
         const chaptersTrack = video.querySelector('track[kind="chapters"]');
