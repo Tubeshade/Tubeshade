@@ -63,9 +63,15 @@ jobs:
         with:
           name: Tubeshade.Server_linux-x64.zip
 
+      - uses: docker/login-action@v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build debian package
         run: >
-          build/debian/debian.sh
+          build/debian/build.sh
           "${{ steps.download.outputs.download-path }}/Tubeshade.Server_linux-x64.zip"
           "${{ github.run_number }}"
 

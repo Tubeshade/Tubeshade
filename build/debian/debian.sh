@@ -1,17 +1,15 @@
 #!/bin/bash
 set -e
 
-sudo apt update
-sudo apt install lintian -y
-
 archive_path="$1"
-version=$(cat version)
+version=$(tr -d '\r' <version)
 full_version="$version.$2"
 changelog_path="tubeshade/usr/share/doc/tubeshade/changelog.gz"
 maintainer_email="valters.melnalksnis@tubeshade.org"
 maintainer="Valters Melnalksnis <$maintainer_email>"
 
 mkdir -p tubeshade/opt/tubeshade
+rm -rf tubeshade/opt/tubeshade/*
 unzip "$archive_path" -d tubeshade/opt/tubeshade
 
 chmod +x tubeshade/opt/tubeshade/Tubeshade.Server

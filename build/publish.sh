@@ -23,15 +23,16 @@ dotnet publish \
 	/warnAsError \
 	/nologo
 
-if [ -z "$GITHUB_OUTPUT" ]; then
-	echo "Not in GitHub Actions"
-	exit 0
-fi
-
 (
 	cd "$publish_dir" || exit
 	zip -r -9 "$archive_name" .
 )
 
-echo "artifact-name=$archive_name" >>"$GITHUB_OUTPUT"
-echo "artifact=$publish_dir/$archive_name" >>"$GITHUB_OUTPUT"
+echo "artifact=$publish_dir/$archive_name"
+
+if [ -z "$GITHUB_OUTPUT" ]; then
+	exit 0
+else
+	echo "artifact-name=$archive_name" >>"$GITHUB_OUTPUT"
+	echo "artifact=$publish_dir/$archive_name" >>"$GITHUB_OUTPUT"
+fi
