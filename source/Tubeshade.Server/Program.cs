@@ -1,10 +1,12 @@
 using System.Globalization;
+using System.Linq;
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -114,6 +116,12 @@ internal static class Program
             options.ApplyCurrentCultureToResponseHeaders = true;
         });
 
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Append("text/vtt");
+        });
+
         builder.Services
             .AddHealthChecks()
             .AddCheck<DatabaseHealthCheck>(nameof(DatabaseHealthCheck));
@@ -156,6 +164,7 @@ internal static class Program
         app.UseAuthorization();
 
         app.UseRequestLocalization();
+        app.UseResponseCompression();
 
         app.MapRazorPages().RequireAuthorization(Policies.Identity);
         app.MapControllers().RequireAuthorization(Policies.User);
