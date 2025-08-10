@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using Tubeshade.Data.Identity;
 
 namespace Tubeshade.Server.Areas.Identity.Pages.Account;
 
@@ -17,7 +16,7 @@ namespace Tubeshade.Server.Areas.Identity.Pages.Account;
 public sealed class LoginModel : PageModel
 {
     private readonly ILogger<LoginModel> _logger;
-    private readonly SignInManager<UserEntity> _signInManager;
+    private readonly SignInManager _signInManager;
 
     public LoginModel(ILogger<LoginModel> logger, SignInManager signInManager)
     {

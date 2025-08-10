@@ -11,12 +11,12 @@ namespace Tubeshade.Server.Areas.Identity.Pages.Account;
 
 public sealed class LoginWith2FaModel : PageModel
 {
-    private readonly SignInManager<UserEntity> _signInManager;
+    private readonly SignInManager _signInManager;
     private readonly UserManager<UserEntity> _userManager;
     private readonly ILogger<LoginWith2FaModel> _logger;
 
     public LoginWith2FaModel(
-        SignInManager<UserEntity> signInManager,
+        SignInManager signInManager,
         UserManager<UserEntity> userManager,
         ILogger<LoginWith2FaModel> logger)
     {

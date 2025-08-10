@@ -11,12 +11,12 @@ namespace Tubeshade.Server.Areas.Identity.Pages.Account.Manage;
 public class ChangePasswordModel : PageModel
 {
     private readonly UserManager<UserEntity> _userManager;
-    private readonly SignInManager<UserEntity> _signInManager;
+    private readonly SignInManager _signInManager;
     private readonly ILogger<ChangePasswordModel> _logger;
 
     public ChangePasswordModel(
         UserManager<UserEntity> userManager,
-        SignInManager<UserEntity> signInManager,
+        SignInManager signInManager,
         ILogger<ChangePasswordModel> logger)
     {
         _userManager = userManager;

@@ -10,12 +10,12 @@ namespace Tubeshade.Server.Areas.Identity.Pages.Account.Manage;
 public class ResetAuthenticatorModel : PageModel
 {
     private readonly UserManager<UserEntity> _userManager;
-    private readonly SignInManager<UserEntity> _signInManager;
+    private readonly SignInManager _signInManager;
     private readonly ILogger<ResetAuthenticatorModel> _logger;
 
     public ResetAuthenticatorModel(
         UserManager<UserEntity> userManager,
-        SignInManager<UserEntity> signInManager,
+        SignInManager signInManager,
         ILogger<ResetAuthenticatorModel> logger)
     {
         _userManager = userManager;

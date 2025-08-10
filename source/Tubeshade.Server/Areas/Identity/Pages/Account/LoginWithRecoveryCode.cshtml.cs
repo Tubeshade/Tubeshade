@@ -11,12 +11,12 @@ namespace Tubeshade.Server.Areas.Identity.Pages.Account;
 
 public class LoginWithRecoveryCodeModel : PageModel
 {
-    private readonly SignInManager<UserEntity> _signInManager;
+    private readonly SignInManager _signInManager;
     private readonly UserManager<UserEntity> _userManager;
     private readonly ILogger<LoginWithRecoveryCodeModel> _logger;
 
     public LoginWithRecoveryCodeModel(
-        SignInManager<UserEntity> signInManager,
+        SignInManager signInManager,
         UserManager<UserEntity> userManager,
         ILogger<LoginWithRecoveryCodeModel> logger)
     {

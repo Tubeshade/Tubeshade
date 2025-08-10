@@ -10,11 +10,11 @@ namespace Tubeshade.Server.Areas.Identity.Pages.Account.Manage;
 public class SetPasswordModel : PageModel
 {
     private readonly UserManager<UserEntity> _userManager;
-    private readonly SignInManager<UserEntity> _signInManager;
+    private readonly SignInManager _signInManager;
 
     public SetPasswordModel(
         UserManager<UserEntity> userManager,
-        SignInManager<UserEntity> signInManager)
+        SignInManager signInManager)
     {
         _userManager = userManager;
         _signInManager = signInManager;
