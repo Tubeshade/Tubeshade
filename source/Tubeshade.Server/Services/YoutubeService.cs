@@ -269,76 +269,80 @@ public sealed class YoutubeService
         }
 
         var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channel.Id, userId, cancellationToken);
+
         var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction);
-        if (!existingVideo || files is [])
+        foreach (var file in files.Where(file => file.DownloadedAt is null).ToArray())
         {
-            var videoFormats = new Dictionary<string, FormatData>();
+            _logger.LogDebug("Deleting indexed but not downloaded video file {VideoFileId}", file.Id);
+            await _videoFileRepository.DeleteAsync(file, transaction);
+            files.Remove(file);
+        }
 
-            foreach (var format in VideoFormats)
+        var videoFormats = new Dictionary<string, FormatData>();
+
+        foreach (var format in VideoFormats)
+        {
+            var data = await _ytdlpWrapper.FetchVideoFormatData(url, format, cookieFilepath, preferences?.PlayerClient, cancellationToken);
+            if (data is not { ResultType: MetadataType.Video })
             {
-                var data = await _ytdlpWrapper.FetchVideoFormatData(url, format, cookieFilepath, preferences?.PlayerClient, cancellationToken);
-                if (data is not { ResultType: MetadataType.Video })
-                {
-                    _logger.LogError("Expected video, received {MetadataType} with data {VideoData}", data.ResultType, data);
-                    throw new Exception("Unexpected result type");
-                }
-
-                var formatIds = data.FormatID.Split('+');
-                var formats = formatIds
-                    .Select(formatId => data.Formats.Single(formatData => formatData.FormatId == formatId))
-                    .ToArray();
-
-                var videoFormat = formats.Single(formatData => formatData.Resolution is not "audio only");
-                videoFormats.Add(format, videoFormat);
+                _logger.LogError("Expected video, received {MetadataType} with data {VideoData}", data.ResultType, data);
+                throw new Exception("Unexpected result type");
             }
 
-            var distinctFormats = videoFormats.DistinctBy(pair => pair.Value.FormatId).ToArray();
-            _logger.LogDebug("Selected {DistinctCount} distinct video formats from {Count}", distinctFormats.Length, videoFormats.Count);
-            foreach (var format in videoFormats.Keys.Except(distinctFormats.Select(pair => pair.Key)))
+            var formatIds = data.FormatID.Split('+');
+            var formats = formatIds
+                .Select(formatId => data.Formats.Single(formatData => formatData.FormatId == formatId))
+                .ToArray();
+
+            var videoFormat = formats.Single(formatData => formatData.Resolution is not "audio only");
+            videoFormats.Add(format, videoFormat);
+        }
+
+        var distinctFormats = videoFormats.DistinctBy(pair => pair.Value.FormatId).ToArray();
+        _logger.LogDebug("Selected {DistinctCount} distinct video formats from {Count}", distinctFormats.Length, videoFormats.Count);
+        foreach (var format in videoFormats.Keys.Except(distinctFormats.Select(pair => pair.Key)))
+        {
+            _logger.LogDebug("Skipped format filter {FormatFilter}", format);
+        }
+
+        foreach (var (format, videoFormat) in distinctFormats)
+        {
+            using var scope = _logger.BeginScope("{FormatId}", videoFormat.FormatId);
+            _logger.LogDebug("Selected format filter {FormatFilter}", format);
+
+            var containerType = VideoContainerType.FromName(videoFormat.Extension);
+
+            var file = files.SingleOrDefault(file =>
+                file.Width == videoFormat.Width &&
+                Math.Round(file.Framerate) == (decimal)Math.Round(videoFormat.FrameRate!.Value));
+
+            if (file is null)
             {
-                _logger.LogDebug("Skipped format filter {FormatFilter}", format);
+                _logger.LogDebug("Could not find existing file for filter {FormatFilter}", format);
+
+                var fileId = await _videoFileRepository.AddAsync(
+                    new VideoFileEntity
+                    {
+                        CreatedByUserId = userId,
+                        ModifiedByUserId = userId,
+                        OwnerId = userId,
+                        VideoId = video.Id,
+                        StoragePath = $"video_{videoFormat.Height}.{containerType.Name}",
+                        Type = containerType,
+                        Width = videoFormat.Width!.Value,
+                        Height = videoFormat.Height!.Value,
+                        Framerate = (decimal)videoFormat.FrameRate!.Value,
+                    },
+                    transaction);
+
+                file = await _videoFileRepository.GetAsync(fileId!.Value, userId, transaction);
+            }
+            else
+            {
+                _logger.LogDebug("Found existing file {FileId} for filter {FormatFilter}", file.Id, format);
             }
 
-            foreach (var (format, videoFormat) in distinctFormats)
-            {
-                using var scope = _logger.BeginScope("{FormatId}", videoFormat.FormatId);
-                _logger.LogDebug("Selected format filter {FormatFilter}", format);
-
-                var containerType = VideoContainerType.FromName(videoFormat.Extension);
-
-                var file = files.SingleOrDefault(file =>
-                    file.Type == containerType &&
-                    file.Width == videoFormat.Width &&
-                    Math.Round(file.Framerate) == (decimal)Math.Round(videoFormat.FrameRate!.Value));
-
-                if (file is null)
-                {
-                    _logger.LogDebug("Could not find existing file for filter {FormatFilter}", format);
-
-                    var fileId = await _videoFileRepository.AddAsync(
-                        new VideoFileEntity
-                        {
-                            CreatedByUserId = userId,
-                            ModifiedByUserId = userId,
-                            OwnerId = userId,
-                            VideoId = video.Id,
-                            StoragePath = $"video_{videoFormat.Height}.{containerType.Name}",
-                            Type = containerType,
-                            Width = videoFormat.Width!.Value,
-                            Height = videoFormat.Height!.Value,
-                            Framerate = (decimal)videoFormat.FrameRate!.Value,
-                        },
-                        transaction);
-
-                    file = await _videoFileRepository.GetAsync(fileId!.Value, userId, transaction);
-                }
-                else
-                {
-                    _logger.LogDebug("Found existing file {FileId} for filter {FormatFilter}", file.Id, format);
-                }
-
-                _logger.LogDebug("Video file {VideoFile}", file);
-            }
+            _logger.LogDebug("Video file {VideoFile}", file);
         }
 
         if (videoData.Chapters is { Length: > 0 })
