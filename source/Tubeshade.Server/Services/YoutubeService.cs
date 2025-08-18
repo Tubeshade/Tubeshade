@@ -189,8 +189,6 @@ public sealed class YoutubeService
         _logger.LogDebug("Indexing video {VideoExternalId}", youtubeVideoId);
 
         var video = await _videoRepository.FindByExternalId(youtubeVideoId, userId, Access.Read, transaction);
-        var existingVideo = video is not null;
-
         if (video is null)
         {
             var publishedAt = videoData.ReleaseTimestamp ?? videoData.Timestamp;
@@ -401,7 +399,6 @@ public sealed class YoutubeService
                 Output = "thumbnail:thumbnail.%(ext)s",
                 Paths = $"{channel.StoragePath}",
                 SkipDownload = true,
-                LimitRate = _options.LimitRate,
                 Cookies = cookieFilepath,
                 CookiesFromBrowser = _options.CookiesFromBrowser,
                 WriteAllThumbnails = true,
@@ -690,6 +687,16 @@ public sealed class YoutubeService
                 _ => DownloadMergeFormat.Unspecified,
             };
 
+            var limitRate = _options.LimitRate;
+            if (size.HasValue && videoData.Data.Duration is { } duration && _options.LimitMultiplier is { } multiplier)
+            {
+                var bitrate = (long)Math.Round(size.Value * 8 * multiplier / (decimal)duration, 0);
+                if (limitRate is null || limitRate.Value > bitrate)
+                {
+                    limitRate = bitrate;
+                }
+            }
+
             _logger.LogInformation("Downloading video {VideoUrl} to {Directory}", video.ExternalUrl, tempDirectory.FullName);
             var downloadTask = youtube.RunVideoDownload(
                 video.ExternalUrl,
@@ -701,7 +708,7 @@ public sealed class YoutubeService
                 outputProgress,
                 new OptionSet
                 {
-                    LimitRate = _options.LimitRate,
+                    LimitRate = limitRate,
                     Cookies = cookieFilepath,
                     CookiesFromBrowser = _options.CookiesFromBrowser,
                     WriteSubs = true,
