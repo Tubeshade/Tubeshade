@@ -19,19 +19,23 @@ namespace Tubeshade.Server.Services.Background;
 
 public sealed class BackgroundWorkerService : BackgroundService
 {
-    private static readonly SemaphoreSlim IndexLock = new(1);
-    private static readonly SemaphoreSlim DownloadLock = new(1);
-    private static readonly SemaphoreSlim SponsorBlockLock = new(1);
-
     private static readonly ConcurrentDictionary<Guid, CancellationTokenSource> RunCancellations = [];
 
     private readonly IServiceProvider _serviceProvider;
     private readonly SchedulerOptions _options;
 
+    private readonly SemaphoreSlim _indexLock;
+    private readonly SemaphoreSlim _downloadLock;
+    private readonly SemaphoreSlim _sponsorBlockLock;
+
     public BackgroundWorkerService(IServiceProvider serviceProvider, IOptions<SchedulerOptions> options)
     {
         _serviceProvider = serviceProvider;
         _options = options.Value;
+
+        _indexLock = new(_options.IndexTaskLimit);
+        _downloadLock = new(_options.DownloadTaskLimit);
+        _sponsorBlockLock = new(_options.SponsorBlockTaskLimit);
     }
 
     internal static async ValueTask<bool> CancelTaskRun(Guid taskRunId)
@@ -127,7 +131,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
     }
 
-    private static async ValueTask Execute(
+    private async ValueTask Execute(
         TaskEntity task,
         IServiceProvider provider,
         DirectoryInfo tempDirectory,
@@ -137,7 +141,7 @@ public sealed class BackgroundWorkerService : BackgroundService
     {
         if (task.Type == TaskType.Index)
         {
-            using var scope = await IndexLock.LockAsync(cancellationToken);
+            using var scope = await _indexLock.LockAsync(cancellationToken);
             var payload = JsonSerializer.Deserialize(task.Payload, TaskPayloadContext.Default.IndexPayload)!;
             var service = provider.GetRequiredService<YoutubeService>();
             await service.Index(
@@ -149,7 +153,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.DownloadVideo)
         {
-            using var scope = await DownloadLock.LockAsync(cancellationToken);
+            using var scope = await _downloadLock.LockAsync(cancellationToken);
             var payload = JsonSerializer.Deserialize(task.Payload, TaskPayloadContext.Default.DownloadVideoPayload)!;
             var service = provider.GetRequiredService<YoutubeService>();
             await service.DownloadVideo(
@@ -163,7 +167,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.ScanChannel)
         {
-            using var scope = await IndexLock.LockAsync(cancellationToken);
+            using var scope = await _indexLock.LockAsync(cancellationToken);
             var payload = JsonSerializer.Deserialize(task.Payload, TaskPayloadContext.Default.ScanChannelPayload)!;
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanChannel(
@@ -178,7 +182,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.ScanSubscriptions)
         {
-            using var scope = await IndexLock.LockAsync(cancellationToken);
+            using var scope = await _indexLock.LockAsync(cancellationToken);
             var payload = JsonSerializer.Deserialize(task.Payload, TaskPayloadContext.Default.ScanSubscriptionsPayload)!;
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanSubscriptions(
@@ -191,7 +195,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.ScanSponsorBlockSegments)
         {
-            using var scope = await SponsorBlockLock.LockAsync(cancellationToken);
+            using var scope = await _sponsorBlockLock.LockAsync(cancellationToken);
             var payload = JsonSerializer.Deserialize(task.Payload, TaskPayloadContext.Default.ScanSponsorBlockSegmentsPayload)!;
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanSponsorBlockSegments(

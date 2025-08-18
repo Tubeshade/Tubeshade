@@ -14,6 +14,12 @@ public sealed class SchedulerOptions
 
     public required int WorkerCount { get; set; } = Math.Max(Environment.ProcessorCount - 1, 1);
 
+    public required int IndexTaskLimit { get; set; } = 1;
+
+    public required int DownloadTaskLimit { get; set; } = 1;
+
+    public required int SponsorBlockTaskLimit { get; set; } = 1;
+
     internal Period GetPeriod() => Pattern.Parse(Period).Value;
 
     internal TimeSpan GetPeriodTimeSpan() => GetPeriod().ToDuration().ToTimeSpan();
