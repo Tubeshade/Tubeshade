@@ -124,6 +124,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 Cookies = cookieFilepath,
                 CookiesFromBrowser = options.CookiesFromBrowser,
                 PlaylistItems = "0",
+                IgnoreNoFormatsError = true,
             });
     }
 
@@ -158,6 +159,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 NoPart = true,
                 EmbedChapters = true,
                 ExtractorArgs = youtubeClient,
+                IgnoreNoFormatsError = true,
             });
 
         if (!result.Success)

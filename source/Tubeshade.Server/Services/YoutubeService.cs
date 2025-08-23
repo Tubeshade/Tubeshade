@@ -306,10 +306,9 @@ public sealed class YoutubeService
         foreach (var format in VideoFormats)
         {
             var data = await _ytdlpWrapper.FetchVideoFormatData(url, format, cookieFilepath, preferences?.PlayerClient, cancellationToken);
-            if (data is not { ResultType: MetadataType.Video })
+            if (data.Formats is null or [])
             {
-                _logger.LogError("Expected video, received {MetadataType} with data {VideoData}", data.ResultType, data);
-                throw new Exception("Unexpected result type");
+                continue;
             }
 
             var formatIds = data.FormatID.Split('+');
