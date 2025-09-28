@@ -13,5 +13,5 @@ docker run --rm \
 	--mount type=bind,source="$1",target="$archive_path",readonly \
 	--mount type=bind,source=./artifacts,target=/artifacts \
 	--workdir /root \
-	ghcr.io/tubeshade/tubeshade-build:9.0.301 \
+	ghcr.io/tubeshade/tubeshade-build:9.0.305 \
 	sh -c "./build/debian/debian.sh \"$1\" \"$2\" && mv ./tubeshade.deb /artifacts/tubeshade.deb"
