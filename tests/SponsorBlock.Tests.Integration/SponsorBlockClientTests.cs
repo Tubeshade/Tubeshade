@@ -34,14 +34,14 @@ public sealed class SponsorBlockClientTests
         {
             new()
             {
-                Id = "c8829b05cd369f16e76b42d6ebcbba36368f6acf108dd0f74aeaa12a31e1a5f77",
-                StartTime = 88.18m,
-                EndTime = 101.476m,
+                Id = "a280227986a1d5689d68405a8b82175ffd039c2678f3672fa2f6c945ea6b56597",
+                StartTime = 88.405m,
+                EndTime = 101.573m,
                 Category = SegmentCategory.SelfPromotion,
                 VideoDuration = 914.241m,
                 Action = SegmentAction.Skip,
                 Locked = true,
-                Votes = -1,
+                Votes = 0,
                 Description = ""
             },
             new()
