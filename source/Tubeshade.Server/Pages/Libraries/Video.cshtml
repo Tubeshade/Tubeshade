@@ -215,6 +215,8 @@
 
         const chaptersTrack = video.querySelector('track[kind="chapters"]');
         if (chaptersTrack !== null) {
+            chaptersTrack.track.mode = "showing";
+
             const chapters = document.querySelector("#chapter-markers");
             const chaptersSection = document.querySelector("#chapter-marker-div");
 
@@ -260,6 +262,8 @@
 
         const sponsorBlockTrack = video.querySelector('track[kind="metadata"][label="SponsorBlock"]');
         if (sponsorBlockTrack !== null) {
+            sponsorBlockTrack.track.mode = "showing";
+
             sponsorBlockTrack.addEventListener("load", onSponsorBlockTrackLoad, false);
             sponsorBlockTrack.addEventListener("loaded", onSponsorBlockTrackLoad, false);
         }
