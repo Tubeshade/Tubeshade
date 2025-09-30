@@ -17,6 +17,24 @@ public sealed class VideoType : SmartEnum<VideoType>
         Tab = tab;
     }
 
+    public static bool TryFromUrl(string url, [NotNullWhen(true)] out VideoType? videoType)
+    {
+        if (url.Contains("/shorts/"))
+        {
+            videoType = Short;
+            return true;
+        }
+
+        if (url.Contains("/watch"))
+        {
+            videoType = Video;
+            return true;
+        }
+
+        videoType = null;
+        return false;
+    }
+
     [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
     public static class Names
     {

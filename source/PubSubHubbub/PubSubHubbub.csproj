@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <PackageReference Include="Ardalis.SmartEnum"/>
+        <PackageReference Include="Microsoft.Extensions.Http"/>
+        <PackageReference Include="NodaTime"/>
+    </ItemGroup>
+
+</Project>

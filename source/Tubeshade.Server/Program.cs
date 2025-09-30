@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
+using PubSubHubbub;
 using SponsorBlock;
 using Tubeshade.Data;
 using Tubeshade.Data.Identity;
@@ -77,6 +78,7 @@ internal static class Program
 
         builder.Services
             .AddMvc(options => options.ModelBinderProviders.Insert(0, new NodaTimeBindingProvider()))
+            .AddXmlSerializerFormatters()
             .AddViewOptions(options =>
             {
                 // This removed an extra input for each form parameter to specify the culture of that input
@@ -135,7 +137,9 @@ internal static class Program
             .AddScoped<WebVideoTextTracksService>()
             .AddScoped<YtdlpWrapper>()
             .AddScoped<YoutubeService>()
-            .AddSponsorBlockClient();
+            .AddSponsorBlockClient()
+            .AddScoped<SubscriptionsService>()
+            .AddPubSubHubbubClient();
 
         builder.Services.AddTransient<IStartupFilter, DatabaseMigrationStartupFilter>();
 

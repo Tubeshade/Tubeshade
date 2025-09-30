@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Htmx;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using NodaTime;
 using Npgsql;
 using SponsorBlock;
 using Tubeshade.Data;
@@ -16,6 +15,7 @@ using Tubeshade.Data.Tasks;
 using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Libraries.Channels;
 
@@ -25,29 +25,29 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
     private readonly LibraryRepository _libraryRepository;
     private readonly ChannelRepository _channelRepository;
     private readonly VideoRepository _videoRepository;
-    private readonly IClock _clock;
     private readonly TaskRepository _taskRepository;
     private readonly PreferencesRepository _preferencesRepository;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
+    private readonly SubscriptionsService _subscriptionsService;
 
     public Channel(
         ChannelRepository channelRepository,
         VideoRepository videoRepository,
         LibraryRepository libraryRepository,
         NpgsqlConnection connection,
-        IClock clock,
         TaskRepository taskRepository,
         PreferencesRepository preferencesRepository,
-        SponsorBlockSegmentRepository segmentRepository)
+        SponsorBlockSegmentRepository segmentRepository,
+        SubscriptionsService subscriptionsService)
     {
         _channelRepository = channelRepository;
         _videoRepository = videoRepository;
         _libraryRepository = libraryRepository;
         _connection = connection;
-        _clock = clock;
         _taskRepository = taskRepository;
         _preferencesRepository = preferencesRepository;
         _segmentRepository = segmentRepository;
+        _subscriptionsService = subscriptionsService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -197,12 +197,16 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
     public async Task<IActionResult> OnPostUnsubscribe()
     {
-        return await ChangeSubscribedAt(null);
+        var userId = User.GetUserId();
+        var channel =  await _subscriptionsService.Unsubscribe(ChannelId, userId);
+        return Partial("_Subscribe", channel);
     }
 
     public async Task<IActionResult> OnPostSubscribe()
     {
-        return await ChangeSubscribedAt(_clock.GetCurrentInstant());
+        var userId = User.GetUserId();
+        var channel = await _subscriptionsService.Subscribe(ChannelId, userId);
+        return Partial("_Subscribe", channel);
     }
 
     public async Task<IActionResult> OnPostScan(Guid channelId, bool? all)
@@ -241,23 +245,5 @@ public sealed class Channel : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
         await transaction.CommitAsync();
         return StatusCode(StatusCodes.Status200OK);
-    }
-
-    private async Task<IActionResult> ChangeSubscribedAt(Instant? subscribedAt)
-    {
-        var userId = User.GetUserId();
-
-        await using var transaction = await _connection.OpenAndBeginTransaction();
-        var channel = await _channelRepository.GetAsync(ChannelId, userId, transaction);
-
-        channel.SubscribedAt = subscribedAt;
-        channel.ModifiedByUserId = userId;
-        channel.ModifiedAt = subscribedAt ?? _clock.GetCurrentInstant();
-
-        var count = await _channelRepository.UpdateAsync(channel, transaction);
-        Trace.Assert(count is not 0);
-
-        await transaction.CommitAsync();
-        return Partial("_Subscribe", channel);
     }
 }

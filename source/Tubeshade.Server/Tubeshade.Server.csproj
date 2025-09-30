@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\PubSubHubbub\PubSubHubbub.csproj"/>
         <ProjectReference Include="..\Tubeshade.Data\Tubeshade.Data.csproj"/>
     </ItemGroup>
 

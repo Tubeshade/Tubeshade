@@ -83,6 +83,13 @@ public sealed class TaskService
         }
     }
 
+    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, NpgsqlTransaction transaction)
+    {
+        var payload = new IndexPayload { Url = url, UserId = userId, LibraryId = libraryId };
+        var taskId = await _taskRepository.AddIndexTask(payload, userId, transaction);
+        await _taskRepository.TriggerTask(taskId, userId, transaction);
+    }
+
     public async ValueTask RetryTask(Guid userId, Guid taskId)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();

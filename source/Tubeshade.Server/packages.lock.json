@@ -312,6 +312,14 @@
           "System.Text.Encodings.Web": "6.0.0"
         }
       },
+      "pubsubhubbub": {
+        "type": "Project",
+        "dependencies": {
+          "Ardalis.SmartEnum": "[8.2.0, )",
+          "Microsoft.Extensions.Http": "[9.0.9, )",
+          "NodaTime": "[3.2.2, )"
+        }
+      },
       "sponsorblock": {
         "type": "Project",
         "dependencies": {
