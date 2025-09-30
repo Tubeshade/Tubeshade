@@ -247,4 +247,12 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     {
         throw new NotImplementedException();
     }
+
+    public async ValueTask<Guid> GetSystemUserId(NpgsqlTransaction transaction)
+    {
+        return await _connection.QuerySingleAsync<Guid>(
+            "SELECT id FROM users WHERE normalized_name = 'SYSTEM';",
+            null,
+            transaction);
+    }
 }
