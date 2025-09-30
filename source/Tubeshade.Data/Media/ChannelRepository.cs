@@ -139,10 +139,25 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
     {
         return await Connection.ExecuteAsync(
             $"""
-            INSERT INTO media.library_channels (library_id, channel_id)
-            VALUES (@{nameof(libraryId)}, @{nameof(channelId)});
+            INSERT INTO media.library_channels (library_id, channel_id, "primary")
+            VALUES (@{nameof(libraryId)}, @{nameof(channelId)}, true);
             """,
             new { libraryId, channelId },
             transaction);
+    }
+
+    public async ValueTask<Guid> GetPrimaryLibraryId(Guid id, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            $"""
+             SELECT id
+             FROM media.libraries
+             INNER JOIN media.library_channels ON libraries.id = library_channels.library_id
+             WHERE library_channels.channel_id = @{nameof(id)} AND library_channels."primary" = true;
+             """,
+            new { id },
+            transaction);
+
+        return await Connection.QuerySingleAsync<Guid>(command);
     }
 }
