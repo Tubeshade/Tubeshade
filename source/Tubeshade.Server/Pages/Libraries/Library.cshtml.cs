@@ -115,6 +115,7 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
             LiveStreamsCount = preferences?.LiveStreamsCount,
             ShortsCount = preferences?.ShortsCount,
             PlayerClient = preferences?.PlayerClient?.Name,
+            DownloadAutomatically = preferences?.DownloadAutomatically,
         };
 
         return Request.IsHtmx()
@@ -151,6 +152,7 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
                     ShortsCount = UpdatePreferencesModel.ShortsCount,
                     SubscriptionScheduleId = null,
                     PlayerClient = client,
+                    DownloadAutomatically = preferences?.DownloadAutomatically,
                 },
                 transaction);
 
@@ -167,6 +169,7 @@ public sealed class Library : LibraryPageBase, IPaginatedDataPage<VideoModel>
             preferences.LiveStreamsCount = UpdatePreferencesModel.LiveStreamsCount;
             preferences.ShortsCount = UpdatePreferencesModel.ShortsCount;
             preferences.PlayerClient = client;
+            preferences.DownloadAutomatically = UpdatePreferencesModel.DownloadAutomatically;
 
             var count = await _preferencesRepository.UpdateAsync(
                 preferences,

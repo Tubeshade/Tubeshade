@@ -48,6 +48,7 @@ public sealed class YoutubeService
     private readonly SponsorBlockSegmentRepository _segmentRepository;
     private readonly YtdlpWrapper _ytdlpWrapper;
     private readonly WebVideoTextTracksService _webVideoTextTracksService;
+    private readonly TaskService _taskService;
 
     private static string VideoFormat { get; } = string.Join(',', VideoFormats);
 
@@ -65,7 +66,8 @@ public sealed class YoutubeService
         ISponsorBlockClient sponsorBlockClient,
         SponsorBlockSegmentRepository segmentRepository,
         YtdlpWrapper ytdlpWrapper,
-        WebVideoTextTracksService webVideoTextTracksService)
+        WebVideoTextTracksService webVideoTextTracksService,
+        TaskService taskService)
     {
         _logger = logger;
         _options = optionsMonitor.CurrentValue;
@@ -79,6 +81,7 @@ public sealed class YoutubeService
         _segmentRepository = segmentRepository;
         _ytdlpWrapper = ytdlpWrapper;
         _webVideoTextTracksService = webVideoTextTracksService;
+        _taskService = taskService;
         _imageFileRepository = imageFileRepository;
         _videoFileRepository = videoFileRepository;
     }
@@ -189,6 +192,7 @@ public sealed class YoutubeService
         _logger.LogDebug("Indexing video {VideoExternalId}", youtubeVideoId);
 
         var video = await _videoRepository.FindByExternalId(youtubeVideoId, userId, Access.Read, transaction);
+        var isNewVideo = video is null;
         if (video is null)
         {
             var publishedAt = videoData.ReleaseTimestamp ?? videoData.Timestamp;
@@ -379,6 +383,11 @@ public sealed class YoutubeService
         else if (thumbnails is not [])
         {
             throw new Exception("Multiple thumbnails");
+        }
+
+        if (isNewVideo && (preferences?.DownloadAutomatically ?? false))
+        {
+            await _taskService.DownloadVideo(userId, libraryId, video.Id, transaction);
         }
     }
 

@@ -11,4 +11,6 @@ public sealed class UpdatePreferencesModel
     public int? ShortsCount { get; set; }
 
     public string? PlayerClient { get; set; }
+
+    public bool? DownloadAutomatically { get; set; }
 }

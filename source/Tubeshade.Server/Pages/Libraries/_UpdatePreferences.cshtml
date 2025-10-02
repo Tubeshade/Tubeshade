@@ -38,5 +38,15 @@
         <span asp-validation-for="PlayerClient" class="text-danger"></span>
     </div>
 
+    <div class="input-group mb-3">
+        <label class="input-group-text" asp-for="DownloadAutomatically">Download automatically</label>
+        <select class="form-control form-select" asp-for="DownloadAutomatically">
+            <option value="@null" selected="@(Model.DownloadAutomatically is null)">Default</option>
+            <option value="@true" selected="@(Model.DownloadAutomatically)">Yes</option>
+            <option value="@false" selected="@(!Model.DownloadAutomatically)">No</option>
+        </select>
+        <span asp-validation-for="DownloadAutomatically" class="text-danger"></span>
+    </div>
+
     <button class="btn btn-primary" type="submit">Update preferences</button>
 </form>

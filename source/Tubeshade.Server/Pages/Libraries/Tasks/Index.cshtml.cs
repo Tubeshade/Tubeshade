@@ -4,9 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
 using Tubeshade.Data.Media;
-using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Services;
 
@@ -15,17 +13,11 @@ namespace Tubeshade.Server.Pages.Libraries.Tasks;
 public sealed class Index : LibraryPageBase
 {
     private readonly LibraryRepository _libraryRepository;
-    private readonly TaskRepository _taskRepository;
     private readonly TaskService _taskService;
 
-    public Index(
-        NpgsqlConnection connection,
-        LibraryRepository libraryRepository,
-        TaskRepository taskRepository,
-        TaskService taskService)
+    public Index(LibraryRepository libraryRepository, TaskService taskService)
     {
         _libraryRepository = libraryRepository;
-        _taskRepository = taskRepository;
         _taskService = taskService;
     }
 
@@ -37,8 +29,7 @@ public sealed class Index : LibraryPageBase
     {
         var userId = User.GetUserId();
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
-        var tasks = await _taskRepository.GetRunningTasks(LibraryId, userId, cancellationToken);
-        Tasks = _taskService.GroupTasks(tasks);
+        Tasks = await _taskService.GetGroupedTasks(LibraryId, userId, cancellationToken);
     }
 
     public async Task<IActionResult> OnGetRunning(CancellationToken cancellationToken)

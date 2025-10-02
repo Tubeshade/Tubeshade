@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Npgsql;
 using Tubeshade.Data;
@@ -21,32 +22,16 @@ public sealed class TaskService
         _taskRepository = taskRepository;
     }
 
-    public List<TaskModel> GroupTasks(IEnumerable<RunningTaskEntity> runningTasks)
+    public async ValueTask<List<TaskModel>> GetGroupedTasks(Guid userId, CancellationToken cancellationToken)
     {
-        return runningTasks
-            .GroupBy(task => task.Id)
-            .Select(grouping =>
-            {
-                var runs = grouping.ToArray();
+        var runningTasks = await _taskRepository.GetRunningTasks(userId, cancellationToken);
+        return GroupTasks(runningTasks);
+    }
 
-                return new TaskModel
-                {
-                    Id = grouping.Key,
-                    Type = runs[0].Type,
-                    Name = runs[0].Name,
-                    Runs = runs
-                        .Select(task => new TaskRunModel
-                        {
-                            Id = task.RunId,
-                            Value = task.Value,
-                            Target = task.Target,
-                            Result = task.Result,
-                            Message = task.Message,
-                        })
-                        .ToArray(),
-                };
-            })
-            .ToList();
+    public async ValueTask<List<TaskModel>> GetGroupedTasks(Guid libraryId, Guid userId, CancellationToken cancellationToken)
+    {
+        var runningTasks = await _taskRepository.GetRunningTasks(libraryId, userId, cancellationToken);
+        return GroupTasks(runningTasks);
     }
 
     public async ValueTask ScanSubscriptions(Guid userId, IEnumerable<Guid> libraryIds)
@@ -83,10 +68,31 @@ public sealed class TaskService
         }
     }
 
+    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        await IndexVideo(userId, libraryId, url, transaction);
+        await transaction.CommitAsync();
+    }
+
     public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, NpgsqlTransaction transaction)
     {
         var payload = new IndexPayload { Url = url, UserId = userId, LibraryId = libraryId };
         var taskId = await _taskRepository.AddIndexTask(payload, userId, transaction);
+        await _taskRepository.TriggerTask(taskId, userId, transaction);
+    }
+
+    public async ValueTask DownloadVideo(Guid userId, Guid libraryId, Guid videoId)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        await DownloadVideo(userId, libraryId, videoId, transaction);
+        await transaction.CommitAsync();
+    }
+
+    public async ValueTask DownloadVideo(Guid userId, Guid libraryId, Guid videoId, NpgsqlTransaction transaction)
+    {
+        var payload = new DownloadVideoPayload { LibraryId = libraryId, VideoId = videoId, UserId = userId };
+        var taskId = await _taskRepository.AddDownloadTask(payload, userId, transaction);
         await _taskRepository.TriggerTask(taskId, userId, transaction);
     }
 
@@ -102,5 +108,33 @@ public sealed class TaskService
         await using var transaction = await _connection.OpenAndBeginTransaction();
         await _taskRepository.CancelTaskRun(taskRunId, userId, transaction);
         await transaction.CommitAsync();
+    }
+
+    private static List<TaskModel> GroupTasks(IEnumerable<RunningTaskEntity> runningTasks)
+    {
+        return runningTasks
+            .GroupBy(task => task.Id)
+            .Select(grouping =>
+            {
+                var runs = grouping.ToArray();
+
+                return new TaskModel
+                {
+                    Id = grouping.Key,
+                    Type = runs[0].Type,
+                    Name = runs[0].Name,
+                    Runs = runs
+                        .Select(task => new TaskRunModel
+                        {
+                            Id = task.RunId,
+                            Value = task.Value,
+                            Target = task.Target,
+                            Result = task.Result,
+                            Message = task.Message,
+                        })
+                        .ToArray(),
+                };
+            })
+            .ToList();
     }
 }

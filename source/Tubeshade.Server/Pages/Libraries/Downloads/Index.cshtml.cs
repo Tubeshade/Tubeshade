@@ -12,10 +12,9 @@ using Tubeshade.Data;
 using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
-using Tubeshade.Data.Tasks;
-using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Libraries.Downloads;
 
@@ -23,28 +22,28 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
 {
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _libraryRepository;
-    private readonly TaskRepository _taskRepository;
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
     private readonly IClock _clock;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
+    private readonly TaskService _taskService;
 
     public Index(
         NpgsqlConnection connection,
         LibraryRepository libraryRepository,
-        TaskRepository taskRepository,
         VideoRepository videoRepository,
         ChannelRepository channelRepository,
         IClock clock,
-        SponsorBlockSegmentRepository segmentRepository)
+        SponsorBlockSegmentRepository segmentRepository,
+        TaskService taskService)
     {
         _connection = connection;
         _libraryRepository = libraryRepository;
-        _taskRepository = taskRepository;
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
         _clock = clock;
         _segmentRepository = segmentRepository;
+        _taskService = taskService;
     }
 
     /// <inheritdoc />
@@ -82,16 +81,7 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
     public async Task<IActionResult> OnPostStartDownload(Guid videoId)
     {
-        var userId = User.GetUserId();
-        var cancellationToken = CancellationToken.None;
-
-        var payload = new DownloadVideoPayload { LibraryId = LibraryId, VideoId = videoId, UserId = userId };
-
-        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var taskId = await _taskRepository.AddDownloadTask(payload, userId, transaction);
-        await _taskRepository.TriggerTask(taskId, userId, transaction);
-        await transaction.CommitAsync(cancellationToken);
-
+        await _taskService.DownloadVideo(User.GetUserId(), LibraryId, videoId);
         return RedirectToPage();
     }
 
@@ -123,16 +113,7 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
             return Page();
         }
 
-        var userId = User.GetUserId();
-        cancellationToken = CancellationToken.None;
-
-        var payload = new IndexPayload { Url = model.Url, LibraryId = LibraryId, UserId = userId };
-
-        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var taskId = await _taskRepository.AddIndexTask(payload, userId, transaction);
-        await _taskRepository.TriggerTask(taskId, userId, transaction);
-        await transaction.CommitAsync(cancellationToken);
-
+        await _taskService.IndexVideo(User.GetUserId(), LibraryId, model.Url);
         return RedirectToPage();
     }
 

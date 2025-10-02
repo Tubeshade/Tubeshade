@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
-using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Libraries.Tasks;
 using Tubeshade.Server.Services;
@@ -20,18 +19,15 @@ public sealed class Index : PageModel
 {
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _libraryRepository;
-    private readonly TaskRepository _taskRepository;
     private readonly TaskService _taskService;
 
     public Index(
         NpgsqlConnection connection,
         LibraryRepository libraryRepository,
-        TaskRepository taskRepository,
         TaskService taskService)
     {
         _connection = connection;
         _libraryRepository = libraryRepository;
-        _taskRepository = taskRepository;
         _taskService = taskService;
     }
 
@@ -40,8 +36,7 @@ public sealed class Index : PageModel
     public async Task OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var tasks = await _taskRepository.GetRunningTasks(userId, cancellationToken);
-        Tasks = _taskService.GroupTasks(tasks);
+        Tasks = await _taskService.GetGroupedTasks(userId, cancellationToken);
     }
 
     public async Task<IActionResult> OnGetRunning(CancellationToken cancellationToken)

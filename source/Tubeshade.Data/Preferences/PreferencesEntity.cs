@@ -16,4 +16,6 @@ public sealed record PreferencesEntity : ModifiableEntity
     public Guid? SubscriptionScheduleId { get; set; }
 
     public PlayerClient? PlayerClient { get; set; }
+
+    public bool? DownloadAutomatically { get; set; }
 }
