@@ -193,18 +193,22 @@ public sealed class YoutubeService
 
         var video = await _videoRepository.FindByExternalId(youtubeVideoId, userId, Access.Read, transaction);
         var isNewVideo = video is null;
+
+        var currentTime = _clock.GetCurrentInstant();
+        // todo: livestreams don't have duration
+        var duration = Period.FromSeconds((long)Math.Truncate(videoData.Duration!.Value));
+        var availability = videoData.Availability switch
+        {
+            Public or Unlisted => ExternalAvailability.Public,
+            Private or PremiumOnly or SubscriberOnly or NeedsAuth => ExternalAvailability.Private,
+            _ => throw new ArgumentOutOfRangeException(nameof(videoData.Availability),
+                videoData.Availability, "Unexpected availability value"),
+        };
+
         if (video is null)
         {
             var publishedAt = videoData.ReleaseTimestamp ?? videoData.Timestamp;
             var publishedInstant = Instant.FromDateTimeUtc(publishedAt!.Value);
-            var duration = Period.FromSeconds((long)Math.Truncate(videoData.Duration!.Value));
-            var availability = videoData.Availability switch
-            {
-                Public or Unlisted => ExternalAvailability.Public,
-                Private or PremiumOnly or SubscriberOnly or NeedsAuth => ExternalAvailability.Private,
-                _ => throw new ArgumentOutOfRangeException(nameof(videoData.Availability),
-                    videoData.Availability, "Unexpected availability value"),
-            };
 
             type ??= videoData switch
             {
@@ -230,7 +234,7 @@ public sealed class YoutubeService
                     ExternalId = youtubeVideoId,
                     ExternalUrl = videoData.WebpageUrl,
                     PublishedAt = publishedInstant,
-                    RefreshedAt = _clock.GetCurrentInstant(),
+                    RefreshedAt = currentTime,
                     Availability = availability,
                     Duration = duration,
                     TotalCount = 0,
@@ -243,6 +247,22 @@ public sealed class YoutubeService
             await _videoRepository.UpdateAsync(video, transaction);
 
             Directory.CreateDirectory(video.StoragePath);
+        }
+        else
+        {
+            video.ModifiedAt = currentTime;
+            video.ModifiedByUserId = userId;
+            video.Name = videoData.Title;
+            video.Description = videoData.Description ?? string.Empty;
+            video.Categories = videoData.Categories ?? [];
+            video.Tags = videoData.Tags ?? [];
+            video.ViewCount = videoData.ViewCount;
+            video.LikeCount = videoData.LikeCount;
+            video.RefreshedAt = currentTime;
+            video.Availability = availability;
+            video.Duration = duration;
+
+            await _videoRepository.UpdateAsync(video, transaction);
         }
 
         var segments = await _sponsorBlockClient.GetSegmentsPrivacy(video.ExternalId, cancellationToken);
