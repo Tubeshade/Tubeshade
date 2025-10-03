@@ -1,0 +1,47 @@
+﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Tubeshade.Data.Preferences;
+using YoutubeDLSharp;
+using YoutubeDLSharp.Metadata;
+
+namespace Tubeshade.Server.Services;
+
+public interface IYtdlpWrapper
+{
+    ValueTask<VideoData> FetchUnknownUrlData(
+        string url,
+        string? cookieFilepath,
+        CancellationToken cancellationToken);
+
+    ValueTask<VideoData> FetchPlaylistEntryUrls(
+        string playlistUrl,
+        int? count,
+        string? cookieFilepath,
+        CancellationToken cancellationToken);
+
+    ValueTask<RunResult<VideoData>> FetchVideoData(
+        string videoUrl,
+        string? cookieFilepath,
+        CancellationToken cancellationToken);
+
+    ValueTask<VideoData> FetchVideoFormatData(
+        string videoUrl,
+        string format,
+        string? cookieFilepath,
+        PlayerClient? client,
+        CancellationToken cancellationToken);
+
+    ValueTask<(string SelectedFormat, FormatData[] Formats)[]> SelectFormats(
+        string videoUrl,
+        IEnumerable<string> formats,
+        string? cookieFilepath,
+        PlayerClient? client,
+        CancellationToken cancellationToken);
+
+    ValueTask DownloadThumbnail(
+        string thumbnailUrl,
+        string path,
+        string? cookieFilepath,
+        CancellationToken cancellationToken);
+}

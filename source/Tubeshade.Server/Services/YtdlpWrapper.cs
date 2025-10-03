@@ -13,7 +13,8 @@ using YoutubeDLSharp.Options;
 
 namespace Tubeshade.Server.Services;
 
-public sealed class YtdlpWrapper
+/// <inheritdoc />
+public sealed class YtdlpWrapper : IYtdlpWrapper
 {
     private readonly ILogger<YtdlpWrapper> _logger;
     private readonly IOptionsMonitor<YtdlpOptions> _optionsMonitor;
@@ -24,6 +25,7 @@ public sealed class YtdlpWrapper
         _optionsMonitor = optionsMonitor;
     }
 
+    /// <inheritdoc />
     public async ValueTask<VideoData> FetchUnknownUrlData(
         string url,
         string? cookieFilepath,
@@ -58,6 +60,7 @@ public sealed class YtdlpWrapper
         return result.Data;
     }
 
+    /// <inheritdoc />
     public async ValueTask<VideoData> FetchPlaylistEntryUrls(
         string playlistUrl,
         int? count,
@@ -98,6 +101,7 @@ public sealed class YtdlpWrapper
         return fetchResult.Data;
     }
 
+    /// <inheritdoc />
     public async ValueTask<RunResult<VideoData>> FetchVideoData(
         string videoUrl,
         string? cookieFilepath,
@@ -123,6 +127,7 @@ public sealed class YtdlpWrapper
             });
     }
 
+    /// <inheritdoc />
     public async ValueTask<VideoData> FetchVideoFormatData(
         string videoUrl,
         string format,
@@ -163,6 +168,7 @@ public sealed class YtdlpWrapper
         return result.Data;
     }
 
+    /// <inheritdoc />
     public async ValueTask<(string SelectedFormat, FormatData[] Formats)[]> SelectFormats(
         string videoUrl,
         IEnumerable<string> formats,
@@ -225,6 +231,7 @@ public sealed class YtdlpWrapper
             .ToArray();
     }
 
+    /// <inheritdoc />
     public async ValueTask DownloadThumbnail(
         string thumbnailUrl,
         string path,

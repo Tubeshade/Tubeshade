@@ -135,7 +135,7 @@ internal static class Program
             .AddHostedService<SchedulerService>()
             .AddScoped<TaskService>()
             .AddScoped<WebVideoTextTracksService>()
-            .AddScoped<YtdlpWrapper>()
+            .AddScoped<IYtdlpWrapper, YtdlpWrapper>()
             .AddScoped<YoutubeService>()
             .AddSponsorBlockClient()
             .AddScoped<SubscriptionsService>()

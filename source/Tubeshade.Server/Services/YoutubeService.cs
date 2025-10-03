@@ -46,7 +46,7 @@ public sealed class YoutubeService
     private readonly NpgsqlConnection _connection;
     private readonly ISponsorBlockClient _sponsorBlockClient;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
-    private readonly YtdlpWrapper _ytdlpWrapper;
+    private readonly IYtdlpWrapper _ytdlpWrapper;
     private readonly WebVideoTextTracksService _webVideoTextTracksService;
     private readonly TaskService _taskService;
 
@@ -65,7 +65,7 @@ public sealed class YoutubeService
         PreferencesRepository preferencesRepository,
         ISponsorBlockClient sponsorBlockClient,
         SponsorBlockSegmentRepository segmentRepository,
-        YtdlpWrapper ytdlpWrapper,
+        IYtdlpWrapper ytdlpWrapper,
         WebVideoTextTracksService webVideoTextTracksService,
         TaskService taskService)
     {

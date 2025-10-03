@@ -41,8 +41,16 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
 
+      - name: Test file setup
+        run: |
+          touch /tmp/yt-dlp
+          touch /tmp/ffmpeg
+
       - name: Run tests
         run: ./build/test.sh
+        env:
+          Ytdlp__YtdlpPath: /tmp/yt-dlp
+          Ytdlp__FfmpegPath: /tmp/ffmpeg
 
       - name: Gather Code Coverage
         uses: codecov/codecov-action@v5.4.3
