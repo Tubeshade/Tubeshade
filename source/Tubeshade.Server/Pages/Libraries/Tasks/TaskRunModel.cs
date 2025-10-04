@@ -5,6 +5,8 @@ namespace Tubeshade.Server.Pages.Libraries.Tasks;
 
 public sealed class TaskRunModel
 {
+    private const decimal MiB = 1024 * 1024;
+
     public Guid Id { get; init; }
     public decimal? Value { get; init; }
     public decimal? Target { get; init; }
@@ -20,4 +22,14 @@ public sealed class TaskRunModel
         { Result: not null } => TaskStatus.FromResult(Result),
         _ => TaskStatus.InProgress,
     };
+
+    public string? FormattedValue => Value is { } value
+        ? IsFileSize ? $"{Math.Round(value / MiB, 1)} MiB" : $"{value}"
+        : null;
+
+    public string? FormattedTarget => Target is { } target
+        ? IsFileSize ? $"{Math.Round(target / MiB, 1)} MiB" : $"{target}"
+        : null;
+
+    private bool IsFileSize => Target is >= 10 * MiB;
 }

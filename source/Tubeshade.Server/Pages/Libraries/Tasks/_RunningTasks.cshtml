@@ -26,11 +26,11 @@
                     @if (run.HasProgress)
                     {
                         <div class="row flex-nowrap">
-                            <label for="@run.ProgressBarId" class="col-auto">@run.Value</label>
+                            <label for="@run.ProgressBarId" class="col-auto">@run.FormattedValue</label>
                             <progress id="@run.ProgressBarId" max="@run.Target" value="@run.Value" class="col-auto">
                                 @run.Progress%
                             </progress>
-                            <label for="@run.ProgressBarId" class="col-auto">@run.Target</label>
+                            <label for="@run.ProgressBarId" class="col-auto">@run.FormattedTarget</label>
                         </div>
                     }
                     else
