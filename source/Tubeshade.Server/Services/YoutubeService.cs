@@ -763,8 +763,10 @@ public sealed class YoutubeService
             {
                 var startTimestamp = Stopwatch.GetTimestamp();
 
-                storagePath =
-                    tempDirectory.EnumerateFiles($"{Path.GetFileNameWithoutExtension(fileName)}*.*").ToArray() switch
+                storagePath = tempDirectory
+                        .EnumerateFiles($"{Path.GetFileNameWithoutExtension(fileName)}*.*")
+                        .Where(file => file.Extension.ToLowerInvariant().TrimStart('.') is VideoContainerType.Names.Mp4 or VideoContainerType.Names.WebM)
+                        .ToArray() switch
                     {
                         [var tempFile] => tempFile.FullName,
                         _ => null,
