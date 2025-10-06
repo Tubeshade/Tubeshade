@@ -196,6 +196,7 @@
         }
 
         video.addEventListener("ratechange", onVideoRateChange, false);
+
         function onVideoRateChange() {
             if (playbackRateInput.value !== video.playbackRate) {
                 playbackRateInput.value = video.playbackRate;
@@ -203,6 +204,7 @@
         }
 
         video.addEventListener("ended", onVideoEnded, false);
+
         function onVideoEnded() {
             const viewedInput = document.querySelector("#viewed");
             if (viewedInput.checked === true) {
@@ -215,13 +217,17 @@
 
         const chaptersTrack = video.querySelector('track[kind="chapters"]');
         if (chaptersTrack !== null) {
-            chaptersTrack.track.mode = "showing";
-
             const chapters = document.querySelector("#chapter-markers");
             const chaptersSection = document.querySelector("#chapter-marker-div");
 
-            chaptersTrack.addEventListener("load", onChaptersTrackLoad, false);
-            chaptersTrack.addEventListener("loaded", onChaptersTrackLoad, false);
+            if (chaptersTrack.readyState === 2) {
+                console.debug("Chapters track already loaded");
+                onChaptersTrackLoad();
+            } else {
+                console.debug("Waiting for chapters track to load");
+                chaptersTrack.addEventListener("load", onChaptersTrackLoad, false);
+                chaptersTrack.addEventListener("loaded", onChaptersTrackLoad, false);
+            }
 
             function onChaptersTrackLoad() {
                 chaptersSection.removeAttribute("hidden");
@@ -262,24 +268,28 @@
 
         const sponsorBlockTrack = video.querySelector('track[kind="metadata"][label="SponsorBlock"]');
         if (sponsorBlockTrack !== null) {
-            sponsorBlockTrack.track.mode = "showing";
-
-            sponsorBlockTrack.addEventListener("load", onSponsorBlockTrackLoad, false);
-            sponsorBlockTrack.addEventListener("loaded", onSponsorBlockTrackLoad, false);
+            if (sponsorBlockTrack.readyState === 2) {
+                console.debug("SponsorBlock track already loaded");
+                onSponsorBlockTrackLoad();
+            } else {
+                console.debug("Waiting for SponsorBlock track to load");
+                sponsorBlockTrack.addEventListener("load", onSponsorBlockTrackLoad, false);
+                sponsorBlockTrack.addEventListener("loaded", onSponsorBlockTrackLoad, false);
+            }
         }
 
         function onSponsorBlockTrackLoad() {
-            sponsorBlockTrack.track.addEventListener("cuechange", function (event) {
-                const activeCues = event.target.activeCues;
+            sponsorBlockTrack.addEventListener("cuechange", function (_event) {
+                const activeCues = sponsorBlockTrack.track.activeCues;
 
                 if (activeCues.length === 1) {
                     const cue = activeCues[0];
-                    console.log("Single active cue", cue);
+                    console.debug("Single active SponsorBlock cue", cue);
                     if (cue.text !== "filler") {
                         video.currentTime = cue.endTime;
                     }
                 } else {
-                    console.debug("Zero or multiple active cues", activeCues);
+                    console.debug("Zero or multiple active SponsorBlock cues", activeCues);
                 }
             });
         }
