@@ -206,5 +206,11 @@ public sealed class BackgroundWorkerService : BackgroundService
                 tempDirectory,
                 cancellationToken);
         }
+        else if (task.Type == TaskType.RefreshSubscriptions)
+        {
+            using var scope = await _indexLock.LockAsync(cancellationToken);
+            var service = provider.GetRequiredService<SubscriptionsService>();
+            await service.RefreshSubscriptions(cancellationToken);
+        }
     }
 }

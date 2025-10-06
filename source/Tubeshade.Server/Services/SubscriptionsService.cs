@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using NodaTime;
@@ -111,5 +112,20 @@ public sealed class SubscriptionsService
         }
 
         return channel;
+    }
+
+    public async ValueTask RefreshSubscriptions(CancellationToken cancellationToken)
+    {
+        var currentTime = _clock.GetCurrentInstant();
+        var expiryLimit = currentTime.Plus(Duration.FromDays(2));
+
+        await foreach (var subscription in _channelSubscriptionRepository.GetExpiringUnbufferedAsync(expiryLimit).WithCancellation(cancellationToken))
+        {
+            await _pubSubHubbubClient.Subscribe(
+                new(subscription.Callback, UriKind.Absolute),
+                new(subscription.Topic, UriKind.Absolute),
+                subscription.Secret,
+                subscription.VerifyToken);
+        }
     }
 }
