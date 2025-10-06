@@ -116,10 +116,7 @@ public sealed class SubscriptionsService
 
     public async ValueTask RefreshSubscriptions(CancellationToken cancellationToken)
     {
-        var currentTime = _clock.GetCurrentInstant();
-        var expiryLimit = currentTime.Plus(Duration.FromDays(2));
-
-        await foreach (var subscription in _channelSubscriptionRepository.GetExpiringUnbufferedAsync(expiryLimit).WithCancellation(cancellationToken))
+        await foreach (var subscription in _channelSubscriptionRepository.GetExpiringUnbufferedAsync().WithCancellation(cancellationToken))
         {
             await _pubSubHubbubClient.Subscribe(
                 new(subscription.Callback, UriKind.Absolute),

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Dapper;
-using NodaTime;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
 
@@ -56,13 +55,12 @@ public sealed class ChannelSubscriptionRepository(NpgsqlConnection connection)
          WHERE (media.channel_subscriptions.id = @{nameof(ChannelSubscriptionEntity.Id)});
          """;
 
-    public IAsyncEnumerable<ChannelSubscriptionEntity> GetExpiringUnbufferedAsync(Instant limit)
+    public IAsyncEnumerable<ChannelSubscriptionEntity> GetExpiringUnbufferedAsync()
     {
         return Connection.QueryUnbufferedAsync<ChannelSubscriptionEntity>(
             $"""
              {SelectSql}
-             WHERE expires_at IS NOT NULL AND expires_at >= @{nameof(limit)};
-             """,
-            new { limit });
+             WHERE expires_at IS NOT NULL AND (CURRENT_TIMESTAMP - expires_at) >= '-2 days'::interval;
+             """);
     }
 }
