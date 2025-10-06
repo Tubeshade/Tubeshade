@@ -154,7 +154,7 @@ public sealed class YoutubeService
                 {
                     CreatedByUserId = userId,
                     ModifiedByUserId = userId,
-                    OwnerId = userId,
+                    OwnerId = library.OwnerId,
                     Name = data.Channel,
                     StoragePath = library.StoragePath,
                     ExternalId = youtubeChannelId,
@@ -188,6 +188,7 @@ public sealed class YoutubeService
     {
         var cookieFilepath = await CreateCookieFile(libraryId, directory, cancellationToken);
 
+        var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
         var youtubeVideoId = videoData.ID;
         _logger.LogDebug("Indexing video {VideoExternalId}", youtubeVideoId);
 
@@ -221,7 +222,7 @@ public sealed class YoutubeService
                 {
                     CreatedByUserId = userId,
                     ModifiedByUserId = userId,
-                    OwnerId = userId,
+                    OwnerId = library.OwnerId,
                     Name = videoData.Title,
                     Type = type,
                     Description = videoData.Description ?? string.Empty,
@@ -347,7 +348,7 @@ public sealed class YoutubeService
                     {
                         CreatedByUserId = userId,
                         ModifiedByUserId = userId,
-                        OwnerId = userId,
+                        OwnerId = library.OwnerId,
                         VideoId = video.Id,
                         StoragePath = $"video_{videoFormat.Height}.{containerType.Name}",
                         Type = containerType,
