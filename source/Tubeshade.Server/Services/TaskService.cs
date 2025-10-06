@@ -129,6 +129,8 @@ public sealed class TaskService
                             Id = task.RunId,
                             Value = task.Value,
                             Target = task.Target,
+                            Rate = task.Rate,
+                            Remaining = task.RemainingDuration,
                             Result = task.Result,
                             Message = task.Message,
                         })

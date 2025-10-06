@@ -790,17 +790,18 @@ public sealed class YoutubeService
                 var elapsedSeconds = Stopwatch.GetElapsedTime(timestamp, newTimestamp).TotalSeconds;
                 var sizeDelta = newFileSize - fileSize;
 
-                _logger.LogInformation(
-                    "Downloading video at {DownloadSpeed} kb/s {FilePath}",
-                    Math.Round(sizeDelta / elapsedSeconds / 1024, 0),
-                    storagePath);
-
                 timestamp = newTimestamp;
                 fileSize = newFileSize;
 
-                if (totalSize.HasValue && size.HasValue)
+                if (totalSize is { } total && size.HasValue)
                 {
-                    await taskRepository.UpdateProgress(taskRunId, fileSize + sizeOffset);
+                    var rate = sizeDelta / (decimal)elapsedSeconds;
+                    var remainingSize = total - (newFileSize + sizeOffset);
+                    var remainingDuration = rate > 0
+                        ? Period.FromNanoseconds((long)(remainingSize / rate * 1_000_000_000)).Normalize()
+                        : null;
+
+                    await taskRepository.UpdateProgress(taskRunId, fileSize + sizeOffset, rate, remainingDuration);
                 }
 
                 var remaining2 = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);

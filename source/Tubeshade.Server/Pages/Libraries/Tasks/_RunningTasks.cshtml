@@ -19,18 +19,27 @@
                 <td>
                     @if (index is 0)
                     {
-                        <span>@task.TypeDisplay</span> <span>"@task.Name"</span>
+                        <span>@task.TypeDisplay</span>
+                        <span>"@task.Name"</span>
                     }
                 </td>
                 <td>
                     @if (run.HasProgress)
                     {
-                        <div class="row flex-nowrap">
+                        <div class="row">
                             <label for="@run.ProgressBarId" class="col-auto">@run.FormattedValue</label>
                             <progress id="@run.ProgressBarId" max="@run.Target" value="@run.Value" class="col-auto">
                                 @run.Progress%
                             </progress>
                             <label for="@run.ProgressBarId" class="col-auto">@run.FormattedTarget</label>
+                            @if (run.FormattedRate is { } rate)
+                            {
+                                <span class="col-auto">@rate</span>
+                            }
+                            @if (run.FormattedRemaining is { } remaining)
+                            {
+                                <span class="col-auto">~@remaining</span>
+                            }
                         </div>
                     }
                     else

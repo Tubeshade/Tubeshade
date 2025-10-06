@@ -7,6 +7,7 @@ using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
+using NodaTime;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.Tasks.Payloads;
@@ -141,16 +142,22 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             new { taskRunId, target }));
     }
 
-    public async ValueTask UpdateProgress(Guid taskRunId, decimal newValue)
+    public async ValueTask UpdateProgress(
+        Guid taskRunId,
+        decimal newValue,
+        decimal? rate = null,
+        Period? remainingDuration = null)
     {
         var count = await Connection.ExecuteAsync(new CommandDefinition(
             $"""
              UPDATE tasks.task_run_progress
              SET modified_at = CURRENT_TIMESTAMP,
-                 value = @{nameof(newValue)}
+                 value = @{nameof(newValue)},
+                 rate = @{nameof(rate)},
+                 remaining_duration = @{nameof(remainingDuration)}
              WHERE run_id = @{nameof(taskRunId)};
              """,
-            new { taskRunId, newValue }));
+            new { taskRunId, newValue, rate, remainingDuration }));
 
         Trace.Assert(count is 1);
     }
@@ -214,6 +221,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     task_runs.id             AS RunId,
                     task_run_progress.value  AS Value,
                     task_run_progress.target AS Target,
+                    task_run_progress.rate   AS Rate,
+                    task_run_progress.remaining_duration AS RemainingDuration,
                     task_run_results.result  AS Result,
                     task_run_results.message AS Message,
                     CASE 
@@ -268,6 +277,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     task_runs.id             AS RunId,
                     task_run_progress.value  AS Value,
                     task_run_progress.target AS Target,
+                    task_run_progress.rate   AS Rate,
+                    task_run_progress.remaining_duration AS RemainingDuration,
                     task_run_results.result  AS Result,
                     task_run_results.message AS Message,
                     CASE 
