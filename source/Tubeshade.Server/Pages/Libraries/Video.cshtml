@@ -105,6 +105,21 @@
     </form>
 </div>
 
+@if (Model.Entity.Categories.Length > 0 || Model.Entity.Tags.Length > 0)
+{
+    <div class="d-flex flex-row flex-wrap">
+        @foreach (var category in Model.Entity.Categories)
+        {
+            <span class="badge rounded-pill bg-primary m-1">@category</span>
+        }
+
+        @foreach (var tag in Model.Entity.Tags)
+        {
+            <span class="badge rounded-pill bg-secondary m-1">@tag</span>
+        }
+    </div>
+}
+
 <section id="video-description">
     @foreach (var paragraph in Model.Entity.Description.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
     {
