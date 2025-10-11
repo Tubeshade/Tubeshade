@@ -80,15 +80,15 @@
     </section>
 </div>
 
-<h2>@Model.Entity.Name</h2>
-<h4>
-    <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId"
-       asp-route-channelId="@Model.Channel.Id">
-        @Model.Channel.Name
-    </a>
-</h4>
+<h3>@Model.Entity.Name</h3>
 
 <div class="row">
+    <div class="col-auto">
+        <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId"
+           asp-route-channelId="@Model.Channel.Id">
+            @Model.Channel.Name
+        </a>
+    </div>
     <div class="col-auto">
         <a href="@Model.Entity.ExternalUrl">Original</a>
     </div>
