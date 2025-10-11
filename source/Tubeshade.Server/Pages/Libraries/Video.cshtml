@@ -55,7 +55,7 @@
         <div class="row">
             <div class="col-6 col-lg-12 mb-3">
                 <label for="sources" class="form-label">Resolution</label>
-                <select id="sources" class="form-control form-select">
+                <select id="sources" class="form-control form-select" disabled="@(Model.Files.Count < 2)">
                     @foreach (var file in Model.Files)
                     {
                         <option
