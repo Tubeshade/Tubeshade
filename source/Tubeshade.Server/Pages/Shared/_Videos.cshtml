@@ -22,28 +22,3 @@
         </div>
     }
 </div>
-
-@* <nav> *@
-@*     <ul class="pagination justify-content-center"> *@
-@*         <li class="page-item @(Model.IsFirstPage ? "disabled" : string.Empty)"> *@
-@*             <a asp-page="" asp-route-page="0" asp-route-pageSize="@Model.PageSize" class="page-link"> *@
-@*                 First *@
-@*             </a> *@
-@*         </li> *@
-@* *@
-@*         @foreach (var index in Model.DisplayedPages) *@
-@*         { *@
-@*             <li class="page-item @(index - 1 == Model.Page ? "active" : string.Empty)"> *@
-@*                 <a asp-page="" asp-route-page="@Model.Page" asp-route-pageSize="@Model.PageSize" class="page-link" aria-current="page"> *@
-@*                     @index *@
-@*                 </a> *@
-@*             </li> *@
-@*         } *@
-@* *@
-@*         <li class="page-item @(Model.IsLastPage ? "disabled" : string.Empty)"> *@
-@*             <a asp-page="" asp-route-page="@Model.PageCount - 1" asp-route-pageSize="@Model.PageSize" class="page-link"> *@
-@*                 Last *@
-@*             </a> *@
-@*         </li> *@
-@*     </ul> *@
-@* </nav> *@
