@@ -368,14 +368,28 @@ public sealed class YoutubeService
             _logger.LogDebug("Video file {VideoFile}", file);
         }
 
-        if (videoData.Chapters is { Length: > 0 })
+        var youtubeChapters = videoData.Chapters?.Select(TextTrackCue.FromYouTubeChapter).ToArray();
+        var descriptionChapters = video.Description.TryExtractChapters(video.Duration, out var chaptersCues)
+            ? chaptersCues
+            : null;
+
+        var chapterCues = (youtubeChapters, descriptionChapters) switch
+        {
+            ({ Length: > 0 } cues, null) => cues,
+            (null, { Length: > 0 } cues) => cues,
+            ({ Length: > 0 } youtube, { Length: > 0 } description) => youtube.Length >= description.Length
+                ? youtube
+                : description,
+            _ => null,
+        };
+
+        if (chapterCues is { Length: > 0 } )
         {
             var chaptersFilePath = video.GetChaptersFilePath();
             _logger.LogDebug("Writing video chapters to {ChaptersFilePath}", chaptersFilePath);
 
             await using var chapterFile = File.Create(chaptersFilePath);
-            var cues = videoData.Chapters.Select(TextTrackCue.FromYouTubeChapter);
-            await _webVideoTextTracksService.Write(chapterFile, cues, cancellationToken);
+            await _webVideoTextTracksService.Write(chapterFile, chapterCues, cancellationToken);
         }
 
         var thumbnail = videoData
