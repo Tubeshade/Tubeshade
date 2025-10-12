@@ -76,7 +76,14 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             {AccessCte}
+             {AccessCte},
+                  downloading AS
+                  (SELECT (tasks.payload::json ->> 'videoId')::uuid as video_id
+                   FROM tasks.tasks
+                            INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
+                            LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+                   WHERE tasks.type = 'download_video'
+                     AND task_run_results.id IS NULL)
 
              SELECT videos.id AS {nameof(VideoEntity.Id)},
                     videos.created_at AS {nameof(VideoEntity.CreatedAt)},
@@ -101,6 +108,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              WHERE {AccessFilter}
                AND videos.ignored_at IS NULL
                AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NULL)
+               AND NOT EXISTS(SELECT 1 FROM downloading WHERE downloading.video_id = videos.id)
                AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
                AND (@{nameof(parameters.ChannelId)} IS NULL OR videos.channel_id = @{nameof(parameters.ChannelId)})
                AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(parameters.Query)}))
