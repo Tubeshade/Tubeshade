@@ -21,6 +21,19 @@ public sealed class ChannelSubscriptionRepository(NpgsqlConnection connection)
         """;
 
     /// <inheritdoc />
+    protected override string AccessCte =>
+        $"""
+         WITH accessible AS
+         (SELECT channels.id
+          FROM media.channels
+                   INNER JOIN identity.owners ON owners.id = channels.owner_id
+                   INNER JOIN identity.ownerships ON
+              ownerships.owner_id = owners.id AND
+              ownerships.user_id = @{nameof(GetParameters.UserId)} AND
+              (ownerships.access = @{nameof(GetParameters.Access)} OR ownerships.access = 'owner'))
+         """;
+
+    /// <inheritdoc />
     protected override string SelectSql =>
         """
         SELECT id AS Id,
