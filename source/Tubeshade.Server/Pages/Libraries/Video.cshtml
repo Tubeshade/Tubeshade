@@ -1,4 +1,5 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Videos/{videoId:guid}/{handler?}"
+@using NodaTime.Text
 @using Tubeshade.Server.Pages.Shared
 @model Video
 @{
@@ -82,7 +83,7 @@
 
 <h3>@Model.Entity.Name</h3>
 
-<div class="row">
+<div class="row mb-2">
     <div class="col-auto">
         <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId"
            asp-route-channelId="@Model.Channel.Id">
@@ -103,20 +104,40 @@
             </label>
         </div>
     </form>
+    <div class="col-auto">
+        Published at @LocalDatePattern.CreateWithCurrentCulture("yyyy-MM-dd").Format(Model.Entity.PublishedAt.InUtc().Date)
+    </div>
+    <div class="col-auto">
+        Refreshed at @LocalDatePattern.CreateWithCurrentCulture("yyyy-MM-dd").Format(Model.Entity.RefreshedAt.InUtc().Date)
+    </div>
+    @if (Model.Entity.ViewCount is { } viewCount)
+    {
+        <div class="col-auto">
+            @viewCount views
+        </div>
+    }
+    @if (Model.Entity.LikeCount is { } likeCount)
+    {
+        <div class="col-auto">
+            @likeCount likes
+        </div>
+    }
 </div>
 
 @if (Model.Entity.Categories.Length > 0 || Model.Entity.Tags.Length > 0)
 {
-    <div class="d-flex flex-row flex-wrap">
-        @foreach (var category in Model.Entity.Categories)
-        {
-            <span class="badge rounded-pill bg-primary m-1">@category</span>
-        }
+    <div class="row mb-2">
+        <div class="d-flex flex-row flex-wrap">
+            @foreach (var category in Model.Entity.Categories)
+            {
+                <span class="badge rounded-pill bg-primary m-1">@category</span>
+            }
 
-        @foreach (var tag in Model.Entity.Tags)
-        {
-            <span class="badge rounded-pill bg-secondary m-1">@tag</span>
-        }
+            @foreach (var tag in Model.Entity.Tags)
+            {
+                <span class="badge rounded-pill bg-secondary m-1">@tag</span>
+            }
+        </div>
     </div>
 }
 
