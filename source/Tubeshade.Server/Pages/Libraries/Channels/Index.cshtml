@@ -1,4 +1,5 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Channels/{handler?}"
+@using Tubeshade.Data.Media
 @model Index
 @{
     ViewData["Title"] = "Channels";
@@ -13,16 +14,29 @@
     <thead>
     <tr>
         <th>Name</th>
+        <th>Subscribed</th>
+        <th>Availability</th>
+        <th>Original</th>
     </tr>
     </thead>
     <tbody>
-    @foreach (var channel in Model.Entities)
+    @foreach (var channel in Model.Entities.OrderBy(channel => channel.Name))
     {
         <tr>
             <td>
-                <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@channel.Id">
+                <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId"
+                   asp-route-channelId="@channel.Id">
                     @channel.Name
                 </a>
+            </td>
+            <td>
+                <span>@(channel.SubscribedAt?.InUtc().LocalDateTime.Date.ToString() ?? "-")</span>
+            </td>
+            <td>
+                @channel.Availability.Name
+            </td>
+            <td>
+                <a href="@channel.ExternalUrl">@channel.ExternalUrl</a>
             </td>
         </tr>
     }
