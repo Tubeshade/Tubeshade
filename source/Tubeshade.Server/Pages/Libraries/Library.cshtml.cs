@@ -14,7 +14,7 @@ using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Libraries;
 
-public sealed class Library : LibraryPageBase, IVideoPage
+public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
 {
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _repository;

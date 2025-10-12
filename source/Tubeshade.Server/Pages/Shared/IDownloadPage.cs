@@ -7,22 +7,28 @@ using Tubeshade.Server.Pages.Libraries;
 
 namespace Tubeshade.Server.Pages.Shared;
 
-public interface IVideoPage : IPaginatedDataPage<VideoModel>
+public interface IDownloadPage : IPaginatedDataPage<VideoModel>
 {
-    bool? Viewed { get; }
+    Guid? ChannelId { get; }
 
     string? Query { get; }
 
     VideoType? Type { get; }
 
+    List<ChannelEntity> Channels { get; }
+
     Dictionary<string, string?> GetRouteValues(int pageIndex) => new()
     {
         { nameof(Query), Query },
-        { nameof(Viewed), Viewed?.ToString() },
+        { nameof(ChannelId), ChannelId?.ToString() },
         { nameof(Type), Type?.Name },
         { nameof(PageSize), PageSize?.ToString() },
-        { nameof(PageIndex), $"{pageIndex}" },
+        { nameof(PageIndex), pageIndex.ToString() },
     };
 
-    Task<IActionResult> OnPostViewed(string? viewed, Guid videoId);
+    Task<IActionResult> OnPostStartDownload(Guid videoId);
+
+    Task<IActionResult> OnPostScan(Guid videoId);
+
+    Task<IActionResult> OnPostIgnore(Guid videoId);
 }

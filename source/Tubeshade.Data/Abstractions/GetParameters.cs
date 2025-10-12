@@ -16,7 +16,6 @@ internal class GetSingleVideoParameters : GetVideoParameters
     public Guid Id { get; }
 }
 
-
 internal class GetVideosParameters : GetParameters
 {
     public GetVideosParameters(Guid[] videoIds, Guid userId, Access access)
@@ -39,19 +38,6 @@ internal class GetVideoParameters : GetParameters
     public Guid VideoId { get; }
 }
 
-public class GetFromLibraryChannelParameters : GetParameters
-{
-    public GetFromLibraryChannelParameters(Guid userId, Guid? libraryId, Guid? channelId, Access access)
-        : base(userId, access)
-    {
-        LibraryId = libraryId;
-        ChannelId = channelId;
-    }
-
-    public Guid? LibraryId { get; }
-    public Guid? ChannelId { get; }
-}
-
 public class GetFromLibraryParameters : GetParameters
 {
     public GetFromLibraryParameters(Guid userId, Guid libraryId, Access access)
@@ -61,17 +47,6 @@ public class GetFromLibraryParameters : GetParameters
     }
 
     public Guid LibraryId { get; }
-}
-
-internal class GetFromChannelParameters : GetParameters
-{
-    public GetFromChannelParameters(Guid userId, Guid channelId, Access access)
-        : base(userId, access)
-    {
-        ChannelId = channelId;
-    }
-
-    public Guid ChannelId { get; }
 }
 
 public class GetParameters : IAccessParameters
@@ -84,10 +59,6 @@ public class GetParameters : IAccessParameters
 
     public Guid UserId { get; }
     public Access Access { get; }
-
-    public int? Limit { get; init; }
-    public int? Offset { get; init; }
-    public string? Query { get; init; }
 }
 
 internal class GetSingleExternalUrlParameters : GetParameters

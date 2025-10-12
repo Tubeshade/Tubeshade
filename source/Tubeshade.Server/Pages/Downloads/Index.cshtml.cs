@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Htmx;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -10,23 +11,24 @@ using NodaTime;
 using Npgsql;
 using SponsorBlock;
 using Tubeshade.Data;
-using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Libraries;
 using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Downloads;
 
-public sealed class Index : PageModel, IPaginatedDataPage<VideoModel>
+public sealed class Index : PageModel, IDownloadPage
 {
     private readonly NpgsqlConnection _connection;
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
     private readonly IClock _clock;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
+    private readonly TaskService _taskService;
 
     public Index(
         NpgsqlConnection connection,
@@ -35,13 +37,15 @@ public sealed class Index : PageModel, IPaginatedDataPage<VideoModel>
         VideoRepository videoRepository,
         ChannelRepository channelRepository,
         IClock clock,
-        SponsorBlockSegmentRepository segmentRepository)
+        SponsorBlockSegmentRepository segmentRepository,
+        TaskService taskService)
     {
         _connection = connection;
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
         _clock = clock;
         _segmentRepository = segmentRepository;
+        _taskService = taskService;
     }
 
     /// <inheritdoc />
@@ -56,6 +60,10 @@ public sealed class Index : PageModel, IPaginatedDataPage<VideoModel>
     public string? Query { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public VideoType? Type { get; set; }
+
+    /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
     [BindProperty(SupportsGet = true)]
@@ -63,15 +71,43 @@ public sealed class Index : PageModel, IPaginatedDataPage<VideoModel>
 
     public List<ChannelEntity> Channels { get; set; } = [];
 
-    public async Task OnGet(CancellationToken cancellationToken)
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         _ = await OnGetCore(cancellationToken);
+        return Request.IsHtmx()
+            ? Partial("Libraries/Downloads/_DownloadableVideos", this)
+            : Page();
     }
 
-    public async Task<IActionResult> OnGetDownloadable(CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostStartDownload(Guid videoId)
     {
-        _ = await OnGetCore(cancellationToken);
-        return Partial("_DownloadableVideos", this);
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var video = await _videoRepository.GetAsync(videoId, User.GetUserId(), transaction);
+        var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, transaction);
+
+        await _taskService.DownloadVideo(User.GetUserId(), libraryId, videoId, transaction);
+        await transaction.CommitAsync();
+
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostScan(Guid videoId)
+    {
+        var userId = User.GetUserId();
+
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var video = await _videoRepository.FindAsync(videoId, userId, Access.Modify, transaction);
+        if (video is null)
+        {
+            return NotFound();
+        }
+
+        var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, transaction);
+
+        await _taskService.IndexVideo(userId, libraryId, video.ExternalUrl, transaction);
+        await transaction.CommitAsync();
+
+        return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostIgnore(Guid videoId)
@@ -104,11 +140,14 @@ public sealed class Index : PageModel, IPaginatedDataPage<VideoModel>
         var page = PageIndex ?? Defaults.PageIndex;
         var offset = pageSize * page;
         var videos = await _videoRepository.GetDownloadableVideos(
-            new GetFromLibraryChannelParameters(userId, null, ChannelId, Access.Read)
+            new VideoParameters
             {
+                UserId = userId,
+                ChannelId = ChannelId,
                 Limit = pageSize,
                 Offset = offset,
                 Query = Query,
+                Type = Type,
             },
             cancellationToken);
 

@@ -15,29 +15,9 @@
     <partial name="Shared/_Navigation"/>
 }
 
-<input class="form-control" type="search" placeholder="Search videos" asp-for="Query"
-       hx-get="" hx-page-handler="Downloadable" hx-params="*"
-       hx-trigger="input changed delay:100ms, keyup[key='Enter']"
-       hx-target="#downloadable-videos" hx-swap="outerHtml"
-       hx-indicator=".htmx-indicator"/>
+<partial name="Libraries/Downloads/_DownloadsFilter" model="@Model"/>
 
-<div class="input-group">
-    <label class="input-group-text" asp-for="ChannelId">Channel</label>
-    <select
-        asp-for="ChannelId"
-        hx-get="" hx-page-handler="Downloadable" hx-trigger="input changed"
-        hx-vals='{"pageSize": @(Model.PageSize?.ToString() ?? "null"), "pageIndex": @(Model.PageIndex?.ToString() ?? "null")}'
-        hx-target="#downloadable-videos" hx-swap="outerHtml"
-        class="form-control form-select">
-        <option selected="@(Model.ChannelId is null)">--- Select channel ---</option>
-        @foreach (var channel in Model.Channels)
-        {
-            <option selected="@(Model.ChannelId == channel.Id)" value="@channel.Id">@channel.Name</option>
-        }
-    </select>
-</div>
-
-<partial name="_DownloadableVideos" model="Model"/>
+<partial name="Libraries/Downloads/_DownloadableVideos" model="Model"/>
 
 @section Scripts
 {

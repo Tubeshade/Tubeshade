@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Htmx;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NodaTime;
 using Npgsql;
 using SponsorBlock;
 using Tubeshade.Data;
-using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
@@ -18,7 +18,7 @@ using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Libraries.Downloads;
 
-public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
+public sealed class Index : LibraryPageBase, IDownloadPage
 {
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _libraryRepository;
@@ -58,6 +58,10 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
     public string? Query { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public VideoType? Type { get; set; }
+
+    /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
     public LibraryEntity Library { get; set; } = null!;
@@ -67,21 +71,35 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
 
     public List<ChannelEntity> Channels { get; set; } = [];
 
-    public async Task OnGet(CancellationToken cancellationToken)
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = await OnGetCore(cancellationToken);
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
-    }
-
-    public async Task<IActionResult> OnGetDownloadable(CancellationToken cancellationToken)
-    {
-        _ = await OnGetCore(cancellationToken);
-        return Partial("_DownloadableVideos", this);
+        return Request.IsHtmx()
+            ? Partial("_DownloadableVideos", this)
+            : Page();
     }
 
     public async Task<IActionResult> OnPostStartDownload(Guid videoId)
     {
         await _taskService.DownloadVideo(User.GetUserId(), LibraryId, videoId);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostScan(Guid videoId)
+    {
+        var userId = User.GetUserId();
+
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var video = await _videoRepository.FindAsync(videoId, userId, Access.Modify, transaction);
+        if (video is null)
+        {
+            return NotFound();
+        }
+
+        await _taskService.IndexVideo(userId, LibraryId, video.ExternalUrl, transaction);
+        await transaction.CommitAsync();
+
         return RedirectToPage();
     }
 
@@ -127,11 +145,15 @@ public sealed class Index : LibraryPageBase, IPaginatedDataPage<VideoModel>
         var page = PageIndex ?? Defaults.PageIndex;
         var offset = pageSize * page;
         var videos = await _videoRepository.GetDownloadableVideos(
-            new GetFromLibraryChannelParameters(userId, LibraryId, ChannelId, Access.Read)
+            new VideoParameters
             {
+                UserId = userId,
+                LibraryId = LibraryId,
+                ChannelId = ChannelId,
                 Limit = pageSize,
                 Offset = offset,
                 Query = Query,
+                Type = Type,
             },
             cancellationToken);
 
