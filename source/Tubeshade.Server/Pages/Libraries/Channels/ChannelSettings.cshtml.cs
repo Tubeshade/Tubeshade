@@ -101,7 +101,7 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
                     ShortsCount = UpdatePreferencesModel.ShortsCount,
                     SubscriptionScheduleId = null,
                     PlayerClient = client,
-                    DownloadAutomatically = preferences?.DownloadAutomatically,
+                    DownloadAutomatically = UpdatePreferencesModel.DownloadAutomatically,
                 },
                 transaction);
 

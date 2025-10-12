@@ -81,7 +81,7 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
                     ShortsCount = UpdatePreferencesModel.ShortsCount,
                     SubscriptionScheduleId = null,
                     PlayerClient = client,
-                    DownloadAutomatically = preferences?.DownloadAutomatically,
+                    DownloadAutomatically = UpdatePreferencesModel.DownloadAutomatically,
                 },
                 transaction);
 
