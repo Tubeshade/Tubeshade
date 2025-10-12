@@ -1,9 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Ardalis.SmartEnum;
 
 namespace Tubeshade.Data.Media;
 
-public sealed class VideoType : SmartEnum<VideoType>
+public sealed class VideoType : SmartEnum<VideoType>, IParsable<VideoType>
 {
     public static readonly VideoType Video = new(Names.Video, 1, "videos");
     public static readonly VideoType Short = new(Names.Short, 2, "shorts");
@@ -41,5 +42,20 @@ public sealed class VideoType : SmartEnum<VideoType>
         public const string Video = "video";
         public const string Short = "short";
         public const string Livestream = "livestream";
+    }
+
+    /// <inheritdoc />
+    public static VideoType Parse(string s, IFormatProvider? provider)
+    {
+        return FromName(s, true);
+    }
+
+    /// <inheritdoc />
+    public static bool TryParse(
+        [NotNullWhen(true)] string? s,
+        IFormatProvider? provider,
+        [MaybeNullWhen(false)] out VideoType result)
+    {
+        return TryFromName(s, true, out result);
     }
 }
