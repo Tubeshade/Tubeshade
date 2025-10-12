@@ -1,15 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Htmx;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using NodaTime;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Services;
+using static System.IO.UnixFileMode;
 
 namespace Tubeshade.Server.Pages.Libraries;
 
@@ -21,6 +29,10 @@ public sealed class Video : LibraryPageBase
     private readonly PreferencesRepository _preferencesRepository;
     private readonly SponsorBlockSegmentRepository _sponsorBlockSegmentRepository;
     private readonly NpgsqlConnection _connection;
+    private readonly VideoFileRepository _fileRepository;
+    private readonly IClock _clock;
+    private readonly ILogger<Video> _logger;
+    private readonly TaskService _taskService;
 
     public Video(
         VideoRepository videoRepository,
@@ -28,7 +40,11 @@ public sealed class Video : LibraryPageBase
         LibraryRepository libraryRepository,
         PreferencesRepository preferencesRepository,
         SponsorBlockSegmentRepository sponsorBlockSegmentRepository,
-        NpgsqlConnection connection)
+        NpgsqlConnection connection,
+        VideoFileRepository fileRepository,
+        IClock clock,
+        ILogger<Video> logger,
+        TaskService taskService)
     {
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
@@ -36,6 +52,10 @@ public sealed class Video : LibraryPageBase
         _preferencesRepository = preferencesRepository;
         _sponsorBlockSegmentRepository = sponsorBlockSegmentRepository;
         _connection = connection;
+        _fileRepository = fileRepository;
+        _clock = clock;
+        _logger = logger;
+        _taskService = taskService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -94,6 +114,71 @@ public sealed class Video : LibraryPageBase
         }
 
         await transaction.CommitAsync();
+        return StatusCode(StatusCodes.Status200OK);
+    }
+
+    public async Task<IActionResult> OnPostScan()
+    {
+        var userId = User.GetUserId();
+
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var video = await _videoRepository.FindAsync(VideoId, userId, Access.Modify, transaction);
+        if (video is null)
+        {
+            return NotFound();
+        }
+
+        await _taskService.IndexVideo(userId, LibraryId, video.ExternalUrl, transaction);
+        await transaction.CommitAsync();
+
+        return StatusCode(StatusCodes.Status204NoContent);
+    }
+
+    public async Task<IActionResult> OnPostDelete()
+    {
+        var userId = User.GetUserId();
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var video = await _videoRepository.FindAsync(VideoId, userId, Access.Delete, transaction);
+        if (video is null)
+        {
+            return NotFound();
+        }
+
+        var files = await _videoRepository.GetFilesAsync(VideoId, userId, transaction);
+        foreach (var file in files)
+        {
+            var count = await _fileRepository.DeleteAsync(file.Id, userId, transaction);
+            Trace.Assert(count is 1);
+        }
+
+        if (OperatingSystem.IsLinux())
+        {
+            var permissions = System.IO.File.GetUnixFileMode(video.StoragePath);
+            if (!(permissions.HasFlag(OtherExecute) || permissions.HasFlag(GroupExecute) || permissions.HasFlag(UserExecute)) ||
+                !(permissions.HasFlag(OtherWrite) || permissions.HasFlag(GroupWrite) || permissions.HasFlag(UserWrite)))
+            {
+                throw new UnauthorizedAccessException(
+                    $"Missing required privileges in order to delete {video.StoragePath}");
+            }
+        }
+
+        video.IgnoredAt = _clock.GetCurrentInstant();
+        video.IgnoredByUserId = userId;
+
+        var updateCount = await _videoRepository.UpdateAsync(video, transaction);
+        Trace.Assert(updateCount is not 0);
+
+        await transaction.CommitAsync();
+        _logger.LogInformation("Deleting video directory {Path}", video.StoragePath);
+        Directory.Delete(video.StoragePath, true);
+
+        if (!Request.IsHtmx())
+        {
+            return RedirectToPage("/Libraries/Channels/Channel", new { LibraryId, video.ChannelId });
+        }
+
+        Response.Htmx(headers =>
+            headers.Redirect(Url.Page("/Libraries/Channels/Channel", new { LibraryId, video.ChannelId }) ?? ""));
         return StatusCode(StatusCodes.Status200OK);
     }
 }

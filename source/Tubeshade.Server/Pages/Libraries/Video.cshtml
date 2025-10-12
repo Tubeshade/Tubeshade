@@ -141,6 +141,21 @@
     </div>
 }
 
+<div class="row mb-2">
+    <div class="col-auto">
+        <button hx-post="" hx-page-handler="Scan" class="btn btn-primary btn-sm">
+            Rescan
+        </button>
+    </div>
+
+    <div class="col-auto">
+        <button hx-post="" hx-page-handler="Delete" hx-confirm="Are you sure you want to delete this video?"
+                class="btn btn-danger btn-sm">
+            Delete
+        </button>
+    </div>
+</div>
+
 <section id="video-description">
     @foreach (var paragraph in Model.Entity.Description.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
     {
