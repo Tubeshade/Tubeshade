@@ -61,12 +61,17 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              channel_id = @{nameof(VideoEntity.ChannelId)},
              storage_path = @{nameof(VideoEntity.StoragePath)},
              external_id = @{nameof(VideoEntity.ExternalId)},
-             published_at = @PublishedAt,
-             refreshed_at = @RefreshedAt,
-             availability = @Availability,
-             duration = @Duration,
-             ignored_at = @IgnoredAt,
-             ignored_by_user_id = @IgnoredByUserId
+             published_at = @{nameof(VideoEntity.PublishedAt)},
+             refreshed_at = @{nameof(VideoEntity.RefreshedAt)},
+             availability = @{nameof(VideoEntity.Availability)},
+             duration = @{nameof(VideoEntity.Duration)},
+             description = @{nameof(VideoEntity.Description)},
+             categories = @{nameof(VideoEntity.Categories)},
+             tags = @{nameof(VideoEntity.Tags)},
+             view_count = @{nameof(VideoEntity.ViewCount)},
+             like_count = @{nameof(VideoEntity.LikeCount)},
+             ignored_at = @{nameof(VideoEntity.IgnoredAt)},
+             ignored_by_user_id = @{nameof(VideoEntity.IgnoredByUserId)}
          """;
 
     public async ValueTask<List<VideoEntity>> GetDownloadableVideos(
