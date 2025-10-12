@@ -1,5 +1,4 @@
 using System;
-using NodaTime;
 using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Abstractions;
@@ -75,7 +74,7 @@ internal class GetFromChannelParameters : GetParameters
     public Guid ChannelId { get; }
 }
 
-public class GetParameters
+public class GetParameters : IAccessParameters
 {
     public GetParameters(Guid userId, Access access)
     {
@@ -124,15 +123,7 @@ internal class GetSingleParameters : GetParameters
     public Guid Id { get; }
 }
 
-internal class GetDateRange : GetParameters
+internal interface IAccessParameters
 {
-    public GetDateRange(Guid userId, Access access, LocalDate from, LocalDate to)
-        : base(userId, access)
-    {
-        From = from;
-        To = to;
-    }
-
-    public LocalDate From { get; }
-    public LocalDate To { get; }
+    Access Access { get; }
 }

@@ -1,0 +1,40 @@
+﻿@page "~/Libraries/{libraryId:guid}/Channels/{channelId:guid}/Preferences/{handler?}"
+@using Tubeshade.Data.Media
+@model ChannelSettings
+@{
+    ViewData["Title"] = $"Preferences - {Model.Entity.Name}";
+}
+
+@section Head
+{
+    <link rel="prefetch" as="script" href="~/lib/htmx.org/dist/js/htmx.min.js"/>
+    <link rel="prefetch" as="script" href="~/js/htmx.antiforgery.js"/>
+}
+
+@section Navigation
+{
+    <partial name="Libraries/_LibraryNavigation" for="Library"/>
+}
+
+<h2>@Model.Entity.Name</h2>
+
+@if (Model.Entity.Availability == ExternalAvailability.NotAvailable)
+{
+    <p>Original no longer available</p>
+}
+else
+{
+    <a href="@Model.Entity.ExternalUrl">Original</a>
+}
+
+<section id="channel-preferences">
+    <partial name="Libraries/_UpdatePreferences" for="UpdatePreferencesModel"/>
+</section>
+
+<partial name="_Subscribe" for="Entity"/>
+
+@section Scripts
+{
+    <script src="~/lib/htmx.org/dist/js/htmx.min.js"></script>
+    <script src="~/js/htmx.antiforgery.js"></script>
+}

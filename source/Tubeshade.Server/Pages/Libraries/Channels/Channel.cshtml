@@ -17,13 +17,11 @@
 
 <h2>@Model.Entity.Name</h2>
 
-<input class="form-control" type="search" placeholder="Search videos" asp-for="Query"
-       hx-get="" hx-page-handler="" hx-params="*"
-       hx-trigger="input changed delay:100ms, keyup[key='Enter']"
-       hx-target="#tabs" hx-swap="outerHtml"
-       hx-indicator=".htmx-indicator"/>
+<partial name="Libraries/_VideoFilters" model="@Model"/>
 
-<partial name="_ChannelTabs" model="@Model"/>
+<section id="videos">
+    <partial name="Libraries/_FilteredVideos" model="@Model"/>
+</section>
 
 @section Scripts
 {

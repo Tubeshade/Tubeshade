@@ -159,6 +159,21 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
             transaction);
     }
 
+    public async ValueTask<Guid> GetPrimaryLibraryId(Guid id, CancellationToken cancellationToken = default)
+    {
+        var command = new CommandDefinition(
+            $"""
+             SELECT id
+             FROM media.libraries
+             INNER JOIN media.library_channels ON libraries.id = library_channels.library_id
+             WHERE library_channels.channel_id = @{nameof(id)} AND library_channels."primary" = true;
+             """,
+            new { id },
+            cancellationToken: cancellationToken);
+
+        return await Connection.QuerySingleAsync<Guid>(command);
+    }
+
     public async ValueTask<Guid> GetPrimaryLibraryId(Guid id, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(

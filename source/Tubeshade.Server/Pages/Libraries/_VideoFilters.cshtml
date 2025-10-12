@@ -1,0 +1,49 @@
+﻿@using Tubeshade.Data.Media
+@using Tubeshade.Server.Pages.Shared
+@model Tubeshade.Server.Pages.Shared.IVideoPage
+
+<form method="get" class="row row-cols-1 row-cols-sm-auto g-2 align-items-center mb-2"
+      hx-get="" hx-page-handler="" hx-params="*" hx-push-url="true"
+      hx-trigger="input changed delay:100ms" hx-target="#videos">
+
+    <div class="col-12 col-md">
+        <input asp-for="Query" class="form-control" type="search" placeholder="Search"/>
+    </div>
+
+    <div class="col-12">
+        <select asp-for="Viewed" class="form-select">
+            <option value=""></option>
+            <option value="@true">Viewed</option>
+            <option value="@false">Not viewed</option>
+        </select>
+    </div>
+
+    <div class="col-12">
+        <select asp-for="Type" class="form-select">
+            <option value=""></option>
+            @foreach (var type in VideoType.List)
+            {
+                <option value="@type.Name">@type.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-12">
+        <input asp-for="PageSize" class="form-control" type="number" placeholder="Page size"
+               value="@(Model.PageSize is null or Defaults.PageSize ? null : Model.PageSize)"/>
+    </div>
+
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary" title="Search">
+            🔎︎
+        </button>
+    </div>
+
+    <div class="col-auto">
+        <a asp-page-handler="Settings" class="btn btn-secondary">
+            Settings
+        </a>
+    </div>
+
+    <input asp-for="PageIndex" value="@Model.PageIndex" hidden="hidden"/>
+</form>

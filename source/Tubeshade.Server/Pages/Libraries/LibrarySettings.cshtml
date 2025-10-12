@@ -1,7 +1,7 @@
-﻿@page "~/Libraries/{libraryId:guid}/{handler?}"
-@model Library
+﻿@page "~/Libraries/{libraryId:guid}/Preferences/{handler?}"
+@model LibrarySettings
 @{
-    ViewData["Title"] = Model.Entity.Name;
+    ViewData["Title"] = $"Preferences - {Model.Entity.Name}";
 }
 
 @section Head
@@ -15,10 +15,8 @@
     <partial name="_LibraryNavigation" for="Entity"/>
 }
 
-<partial name="Libraries/_VideoFilters" model="@Model"/>
-
-<section id="videos">
-    <partial name="Libraries/_FilteredVideos" model="@Model"/>
+<section id="channel-preferences">
+    <partial name="Libraries/_UpdatePreferences" for="UpdatePreferencesModel"/>
 </section>
 
 @section Scripts
