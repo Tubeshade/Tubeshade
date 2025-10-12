@@ -108,7 +108,9 @@ public sealed class SubscriptionsService
         {
             await _pubSubHubbubClient.Unsubscribe(
                 new Uri(subscription.Callback, UriKind.Absolute),
-                new Uri(subscription.Topic, UriKind.Absolute));
+                new Uri(subscription.Topic, UriKind.Absolute),
+                subscription.Secret,
+                subscription.VerifyToken);
         }
 
         return channel;

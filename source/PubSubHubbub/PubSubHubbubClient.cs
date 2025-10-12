@@ -29,7 +29,7 @@ public sealed class PubSubHubbubClient
         response.EnsureSuccessStatusCode();
     }
 
-    public async ValueTask Unsubscribe(Uri callback, Uri topic)
+    public async ValueTask Unsubscribe(Uri callback, Uri topic, string? secret, string? verifyToken)
     {
         var content = new SubscriptionRequest
         {
@@ -37,6 +37,8 @@ public sealed class PubSubHubbubClient
             Mode = SubscriptionMode.Unsubscribe,
             Topic = topic,
             Lease = null,
+            Secret = secret,
+            VerifyToken = verifyToken,
         }.ToContent();
 
         using var response = await _httpClient.PostAsync(new Uri("/subscribe", UriKind.Relative), content);
