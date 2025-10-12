@@ -121,11 +121,9 @@
 }
 
 <section id="video-description">
-    @foreach (var paragraph in Model.Entity.Description.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    @foreach (var paragraph in Model.Entity.Description.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
     {
-        <p>
-            @paragraph
-        </p>
+        <p style="white-space: pre">@paragraph</p>
     }
 </section>
 
