@@ -15,7 +15,10 @@ public sealed class TaskRunModel
     public Period? Remaining { get; init; }
     public bool HasProgress => Status == TaskStatus.InProgress;
     public string? ProgressBarId => HasProgress ? $"progress-bar-{Id}" : null;
-    public decimal Progress => Value / Target ?? 0;
+
+    public decimal Progress => Value is { } value && Target is { } target
+        ? value / target
+        : 0;
 
     public TaskResult? Result { get; init; }
     public string? Message { get; init; }
@@ -42,5 +45,5 @@ public sealed class TaskRunModel
         ? HumanReadablePeriodPattern.Instance.Format(Remaining)
         : null;
 
-    private bool IsFileSize => Target is >= 10 * MiB;
+    private bool IsFileSize => Target is >= 1 * MiB;
 }
