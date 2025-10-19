@@ -40,11 +40,11 @@ public sealed class MockYtdlpWrapper : IYtdlpWrapper
     }
 
     /// <inheritdoc />
-    public ValueTask<VideoData> FetchVideoFormatData(
-        string videoUrl,
+    public ValueTask<VideoData> FetchVideoFormatData(string videoUrl,
         string format,
         string? cookieFilepath,
         PlayerClient? client,
+        bool ignoreNoFormatsError,
         CancellationToken cancellationToken)
     {
         throw new NotSupportedException();

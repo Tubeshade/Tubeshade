@@ -305,9 +305,17 @@ public sealed class YoutubeService
 
         foreach (var format in VideoFormats)
         {
-            var data = await _ytdlpWrapper.FetchVideoFormatData(url, format, cookieFilepath, preferences?.PlayerClient, cancellationToken);
+            var data = await _ytdlpWrapper.FetchVideoFormatData(
+                url,
+                format,
+                cookieFilepath,
+                preferences?.PlayerClient,
+                availability != ExternalAvailability.Public,
+                cancellationToken);
+
             if (data.Formats is null or [])
             {
+                _logger.LogDebug("No formats found for {FormatFilter}", format);
                 continue;
             }
 
@@ -382,7 +390,7 @@ public sealed class YoutubeService
             _ => null,
         };
 
-        if (chapterCues is { Length: > 0 } )
+        if (chapterCues is { Length: > 0 })
         {
             var chaptersFilePath = video.GetChaptersFilePath();
             _logger.LogDebug("Writing video chapters to {ChaptersFilePath}", chaptersFilePath);

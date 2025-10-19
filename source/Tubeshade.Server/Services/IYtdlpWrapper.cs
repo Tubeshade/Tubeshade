@@ -30,6 +30,7 @@ public interface IYtdlpWrapper
         string format,
         string? cookieFilepath,
         PlayerClient? client,
+        bool ignoreNoFormatsError,
         CancellationToken cancellationToken);
 
     ValueTask<(string SelectedFormat, FormatData[] Formats)[]> SelectFormats(

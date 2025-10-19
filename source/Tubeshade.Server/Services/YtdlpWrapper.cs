@@ -134,6 +134,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         string format,
         string? cookieFilepath,
         PlayerClient? client,
+        bool ignoreNoFormatsError,
         CancellationToken cancellationToken)
     {
         var options = _optionsMonitor.CurrentValue;
@@ -159,7 +160,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 NoPart = true,
                 EmbedChapters = true,
                 ExtractorArgs = youtubeClient,
-                IgnoreNoFormatsError = true,
+                IgnoreNoFormatsError = ignoreNoFormatsError,
             });
 
         if (!result.Success)
