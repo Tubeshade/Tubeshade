@@ -50,6 +50,8 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 Cookies = cookieFilepath,
                 CookiesFromBrowser = options.CookiesFromBrowser,
                 PlaylistItems = "0",
+                IgnoreErrors = true,
+                IgnoreNoFormatsError = true,
             });
 
         if (!result.Success)
