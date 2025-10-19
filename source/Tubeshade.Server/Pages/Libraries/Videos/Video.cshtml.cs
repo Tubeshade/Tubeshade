@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Htmx;
@@ -68,6 +69,10 @@ public sealed class Video : LibraryPageBase
 
     public List<VideoFileEntity> Files { get; set; } = [];
 
+    public List<VideoFileEntity> PlayableFiles { get; set; } = [];
+
+    public List<VideoFileEntity> DownloadableFiles { get; set; } = [];
+
     public ChannelEntity Channel { get; set; } = null!;
 
     public LibraryEntity Library { get; set; } = null!;
@@ -86,6 +91,8 @@ public sealed class Video : LibraryPageBase
 
         Entity = await _videoRepository.GetAsync(VideoId, userId, cancellationToken);
         Files = await _videoRepository.GetFilesAsync(VideoId, userId, cancellationToken);
+        PlayableFiles = Files.Where(file => file.DownloadedAt is not null).ToList();
+        DownloadableFiles = Files.Where(file => file.DownloadedAt is null).ToList();
 
         Channel = await _channelRepository.GetAsync(Entity.ChannelId, userId, cancellationToken);
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
@@ -132,6 +139,23 @@ public sealed class Video : LibraryPageBase
         }
 
         await _taskService.IndexVideo(userId, LibraryId, video.ExternalUrl, transaction);
+        await transaction.CommitAsync();
+
+        return StatusCode(StatusCodes.Status204NoContent);
+    }
+
+    public async Task<IActionResult> OnPostDownload()
+    {
+        var userId = User.GetUserId();
+
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var video = await _videoRepository.FindAsync(VideoId, userId, Access.Modify, transaction);
+        if (video is null)
+        {
+            return NotFound();
+        }
+
+        await _taskService.DownloadVideo(userId, LibraryId, VideoId, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);

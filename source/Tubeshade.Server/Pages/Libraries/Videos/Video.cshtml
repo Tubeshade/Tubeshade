@@ -19,10 +19,11 @@
 
 <div class="row">
     <div class="col-md-12 col-lg">
-        <video id="video" controls playsinline preload="metadata" width="100%"
-               poster="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })">
+        <video id="video" controls="@(Model.PlayableFiles is not [])" playsinline preload="metadata" width="100%"
+               poster="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })"
+               disabled="@(Model.PlayableFiles is [])">
 
-            @foreach (var file in Model.Files)
+            @foreach (var file in Model.PlayableFiles)
             {
                 <source
                     src="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })"
@@ -53,11 +54,11 @@
     </div>
 
     <section id="video-controls" class="col-md-12 col-lg-auto">
-        <div class="row">
+        <div class="row" hidden="@(Model.PlayableFiles is [])">
             <div class="col-6 col-lg-12 mb-3">
                 <label for="sources" class="form-label">Resolution</label>
-                <select id="sources" class="form-control form-select" disabled="@(Model.Files.Count < 2)">
-                    @foreach (var file in Model.Files)
+                <select id="sources" class="form-control form-select" disabled="@(Model.PlayableFiles.Count < 2)">
+                    @foreach (var file in Model.PlayableFiles)
                     {
                         <option
                             value="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })">
@@ -147,6 +148,15 @@
             Rescan
         </button>
     </div>
+
+    @if (Model.DownloadableFiles is not [])
+    {
+        <div class="col-auto">
+            <button hx-post="" hx-page-handler="Download" class="btn btn-primary btn-sm">
+                Download
+            </button>
+        </div>
+    }
 
     <div class="col-auto">
         <a asp-page="/Libraries/Videos/Edit" asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@Model.VideoId"
