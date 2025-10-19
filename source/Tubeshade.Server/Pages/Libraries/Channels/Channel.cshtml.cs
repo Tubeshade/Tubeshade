@@ -59,6 +59,14 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
     [BindProperty(SupportsGet = true)]
     public VideoType? Type { get; set; }
 
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public bool? WithFiles { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public ExternalAvailability? Availability { get; set; }
+
     public LibraryEntity Library { get; set; } = null!;
 
     /// <inheritdoc />
@@ -68,6 +76,11 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
+        if (WithFiles is null && !Request.Query.ContainsKey(nameof(WithFiles)))
+        {
+            WithFiles = true;
+        }
+
         var userId = User.GetUserId();
 
         var pageSize = PageSize ?? Defaults.PageSize;
@@ -87,6 +100,8 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
                 Viewed = Viewed,
                 Query = Query,
                 Type = Type,
+                WithFiles = WithFiles,
+                Availability = Availability,
             },
             cancellationToken);
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);

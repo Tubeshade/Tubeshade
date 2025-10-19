@@ -54,12 +54,21 @@ public sealed class Index : LibraryPageBase, IDownloadPage
     [BindProperty(SupportsGet = true)]
     public int? PageIndex { get; set; }
 
+    /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
     public string? Query { get; set; }
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
     public VideoType? Type { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public bool? WithFiles { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public ExternalAvailability? Availability { get; set; }
 
     /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
@@ -137,6 +146,11 @@ public sealed class Index : LibraryPageBase, IDownloadPage
 
     private async ValueTask<Guid> OnGetCore(CancellationToken cancellationToken)
     {
+        if (WithFiles is null && !Request.Query.ContainsKey(nameof(WithFiles)))
+        {
+            WithFiles = true;
+        }
+
         var userId = User.GetUserId();
 
         Channels = await _channelRepository.GetForLibrary(LibraryId, userId, cancellationToken);
@@ -154,6 +168,8 @@ public sealed class Index : LibraryPageBase, IDownloadPage
                 Offset = offset,
                 Query = Query,
                 Type = Type,
+                WithFiles = WithFiles,
+                Availability = Availability,
             },
             cancellationToken);
 

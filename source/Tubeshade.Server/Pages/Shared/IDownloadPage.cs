@@ -15,6 +15,10 @@ public interface IDownloadPage : IPaginatedDataPage<VideoModel>
 
     VideoType? Type { get; }
 
+    bool? WithFiles { get; }
+
+    ExternalAvailability? Availability { get; }
+
     List<ChannelEntity> Channels { get; }
 
     Dictionary<string, string?> GetRouteValues(int pageIndex) => new()
@@ -22,6 +26,8 @@ public interface IDownloadPage : IPaginatedDataPage<VideoModel>
         { nameof(Query), Query },
         { nameof(ChannelId), ChannelId?.ToString() },
         { nameof(Type), Type?.Name },
+        { nameof(WithFiles), WithFiles?.ToString() },
+        { nameof(Availability), Availability?.Name },
         { nameof(PageSize), PageSize?.ToString() },
         { nameof(PageIndex), pageIndex.ToString() },
     };

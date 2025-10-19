@@ -15,11 +15,17 @@ public interface IVideoPage : IPaginatedDataPage<VideoModel>
 
     VideoType? Type { get; }
 
+    bool? WithFiles { get; }
+
+    ExternalAvailability? Availability { get; }
+
     Dictionary<string, string?> GetRouteValues(int pageIndex) => new()
     {
         { nameof(Query), Query },
         { nameof(Viewed), Viewed?.ToString() },
         { nameof(Type), Type?.Name },
+        { nameof(WithFiles), WithFiles?.ToString() },
+        { nameof(Availability), Availability?.Name },
         { nameof(PageSize), PageSize?.ToString() },
         { nameof(PageIndex), $"{pageIndex}" },
     };

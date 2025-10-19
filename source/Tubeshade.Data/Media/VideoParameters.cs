@@ -23,4 +23,8 @@ public sealed class VideoParameters : IAccessParameters
     public string? Query { get; init; }
 
     public VideoType? Type { get; init; }
+
+    public bool? WithFiles { get; init; }
+
+    public ExternalAvailability? Availability { get; init; }
 }

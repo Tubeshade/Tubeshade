@@ -1,9 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Ardalis.SmartEnum;
 
 namespace Tubeshade.Data.Media;
 
-public sealed class ExternalAvailability : SmartEnum<ExternalAvailability>
+public sealed class ExternalAvailability : SmartEnum<ExternalAvailability>, IParsable<ExternalAvailability>
 {
     public static readonly ExternalAvailability Public = new(Names.Public, 1);
     public static readonly ExternalAvailability Private = new(Names.Private, 2);
@@ -20,5 +21,20 @@ public sealed class ExternalAvailability : SmartEnum<ExternalAvailability>
         public const string Public = "public";
         public const string Private = "private";
         public const string NotAvailable = "not_available";
+    }
+
+    /// <inheritdoc />
+    public static ExternalAvailability Parse(string s, IFormatProvider? provider)
+    {
+        return FromName(s, true);
+    }
+
+    /// <inheritdoc />
+    public static bool TryParse(
+        [NotNullWhen(true)] string? s,
+        IFormatProvider? provider,
+        [MaybeNullWhen(false)] out ExternalAvailability result)
+    {
+        return TryFromName(s, true, out result);
     }
 }

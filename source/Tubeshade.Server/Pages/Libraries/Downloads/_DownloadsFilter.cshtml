@@ -12,7 +12,7 @@
 
     <div class="col-12">
         <select asp-for="ChannelId" class="form-control form-select">
-            <option selected="@(Model.ChannelId is null)" value="">--- Select channel ---</option>
+            <option selected="@(Model.ChannelId is null)" value="">All channels</option>
             @foreach (var channel in Model.Channels)
             {
                 <option selected="@(Model.ChannelId == channel.Id)" value="@channel.Id">@channel.Name</option>
@@ -22,9 +22,8 @@
 
     <div class="col-12">
         <select asp-for="Type" class="form-select">
-            <option value=""></option>
-            @foreach (var type in
-                      VideoType.List)
+            <option value="">All types</option>
+            @foreach (var type in VideoType.List)
             {
                 <option value="@type.Name">@type.Name</option>
             }
@@ -34,6 +33,26 @@
     <div class="col-12">
         <input asp-for="PageSize" class="form-control" type="number" placeholder="Page size"
                value="@(Model.PageSize is null or Defaults.PageSize ? null : Model.PageSize)"/>
+    </div>
+
+    <div class="col-12">
+        <div class="col-12">
+            <select asp-for="WithFiles" class="form-select">
+                <option value="">All</option>
+                <option value="@true">With files</option>
+                <option value="@false">Without files</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <select asp-for="Availability" class="form-select">
+            <option value="">Any availability</option>
+            @foreach (var type in ExternalAvailability.List)
+            {
+                <option value="@type.Name">@type.Name</option>
+            }
+        </select>
     </div>
 
     <div class="col-auto">

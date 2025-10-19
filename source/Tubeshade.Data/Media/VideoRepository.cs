@@ -112,12 +112,21 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
              WHERE {AccessFilter}
                AND videos.ignored_at IS NULL
-               AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NULL)
                AND NOT EXISTS(SELECT 1 FROM downloading WHERE downloading.video_id = videos.id)
+               AND ((@{nameof(parameters.WithFiles)} = TRUE AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NULL)) OR
+                    (@{nameof(parameters.WithFiles)} = FALSE AND NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)) OR
+                    (@{nameof(parameters.WithFiles)} IS NULL AND
+                     (
+                        EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NULL) OR
+                        NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)
+                     )
+                    )
+                   )
                AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
                AND (@{nameof(parameters.ChannelId)} IS NULL OR videos.channel_id = @{nameof(parameters.ChannelId)})
                AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(parameters.Query)}))
                AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
+               AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
              ORDER BY videos.published_at DESC
              LIMIT @{nameof(parameters.Limit)}
              OFFSET @{nameof(parameters.Offset)};
@@ -162,12 +171,21 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
              WHERE {AccessFilter} 
                AND videos.ignored_at IS NULL
-               AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND video_files.downloaded_at IS NOT NULL)
+               AND ((@{nameof(parameters.WithFiles)} = TRUE AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NOT NULL)) OR
+                    (@{nameof(parameters.WithFiles)} = FALSE AND NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)) OR
+                    (@{nameof(parameters.WithFiles)} IS NULL AND
+                     (
+                        EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NOT NULL) OR
+                        NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)
+                     )
+                    )
+                   )
                AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
                AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
                AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(parameters.Query)}))
                AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
                AND (@{nameof(parameters.Viewed)} IS NULL OR (video_viewed_by_users.created_at IS NOT NULL) = @{nameof(parameters.Viewed)})
+               AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
              ORDER BY videos.published_at DESC
              LIMIT @{nameof(parameters.Limit)}
              OFFSET @{nameof(parameters.Offset)};

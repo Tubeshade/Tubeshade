@@ -57,12 +57,25 @@ public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
     public VideoType? Type { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public bool? WithFiles { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public ExternalAvailability? Availability { get; set; }
+
+    /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
     public LibraryEntity Entity { get; set; } = null!;
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
+        if (WithFiles is null && !Request.Query.ContainsKey(nameof(WithFiles)))
+        {
+            WithFiles = true;
+        }
+
         var userId = User.GetUserId();
 
         var pageSize = PageSize ?? Defaults.PageSize;
@@ -80,6 +93,8 @@ public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
                 Viewed = Viewed,
                 Query = Query,
                 Type = Type,
+                WithFiles = WithFiles,
+                Availability = Availability,
             },
             cancellationToken);
 
