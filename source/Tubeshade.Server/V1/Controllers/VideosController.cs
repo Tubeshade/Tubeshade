@@ -5,7 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Htmx;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
@@ -25,15 +27,18 @@ public sealed class VideosController : ControllerBase
     private readonly VideoRepository _repository;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
     private readonly WebVideoTextTracksService _webVideoTextTracksService;
+    private readonly FileUploadService _fileUploadService;
 
     public VideosController(
         VideoRepository repository,
         SponsorBlockSegmentRepository segmentRepository,
-        WebVideoTextTracksService webVideoTextTracksService)
+        WebVideoTextTracksService webVideoTextTracksService,
+        FileUploadService fileUploadService)
     {
         _repository = repository;
         _segmentRepository = segmentRepository;
         _webVideoTextTracksService = webVideoTextTracksService;
+        _fileUploadService = fileUploadService;
     }
 
     [HttpGet]
@@ -56,6 +61,34 @@ public sealed class VideosController : ControllerBase
     public async Task<List<VideoFileEntity>> GetFiles(Guid id, CancellationToken cancellationToken)
     {
         return await _repository.GetFilesAsync(id, User.GetUserId(), cancellationToken);
+    }
+
+    [HttpPost("Files")]
+    [ProducesResponseType<Guid>(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+    [MultipartFormData]
+    [DisableFormValueModelBinding]
+    [DisableRequestSizeLimit]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadFile(Guid id, [FromQuery] Guid libraryId, CancellationToken cancellationToken)
+    {
+        var fileId = await _fileUploadService.UploadVideoFile(
+            User.GetUserId(),
+            id,
+            Request.Body,
+            Request.ContentType,
+            cancellationToken);
+
+        // The preferred solution would be to handle this in the page itself.
+        // At the time of implementing this I could not find a way to not buffer the entire file in memory
+        // in the page itself, so htmx is also referenced in the controller.
+        if (Request.IsHtmx())
+        {
+            var redirect = Url.Page("/Libraries/Video", new { libraryId, videoId = id, fileId });
+            Response.Htmx(headers => headers.Redirect(redirect ?? string.Empty));
+        }
+
+        return CreatedAtAction(nameof(GetFile), new { version = "1.0", id, fileId }, fileId);
     }
 
     [HttpGet("Files/{fileId:guid}")]

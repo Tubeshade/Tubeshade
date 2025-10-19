@@ -23,6 +23,7 @@ using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Configuration.Startup;
 using Tubeshade.Server.Services;
 using Tubeshade.Server.Services.Background;
+using Tubeshade.Server.Services.Ffmpeg;
 
 namespace Tubeshade.Server;
 
@@ -144,6 +145,9 @@ internal static class Program
             .AddScoped<YoutubeService>()
             .AddSponsorBlockClient()
             .AddScoped<SubscriptionsService>()
+            .AddScoped<FileUploadService>()
+            .AddSingleton<FfmpegService>()
+            .AddSingleton<FileSystemService>()
             .AddPubSubHubbubClient();
 
         builder.Services.AddTransient<IStartupFilter, DatabaseMigrationStartupFilter>();

@@ -149,6 +149,13 @@
     </div>
 
     <div class="col-auto">
+        <a asp-page="/Libraries/Videos/Edit" asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@Model.VideoId"
+           class="btn btn-primary btn-sm">
+            Edit
+        </a>
+    </div>
+
+    <div class="col-auto">
         <button hx-post="" hx-page-handler="Delete" hx-confirm="Are you sure you want to delete this video?"
                 class="btn btn-danger btn-sm">
             Delete

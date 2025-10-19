@@ -1,0 +1,126 @@
+﻿using System.Text.Json.Serialization;
+
+namespace Tubeshade.Server.Services.Ffmpeg;
+
+public sealed class Stream
+{
+    [JsonPropertyName("index")]
+    public required int Index { get; set; }
+
+    [JsonPropertyName("codec_name")]
+    public required string CodecName { get; set; }
+
+    [JsonPropertyName("codec_long_name")]
+    public required string CodecLongName { get; set; }
+
+    [JsonPropertyName("profile")]
+    public required string Profile { get; set; }
+
+    [JsonPropertyName("codec_type")]
+    public required string CodecType { get; set; }
+
+    [JsonPropertyName("codec_tag_string")]
+    public required string CodecTagString { get; set; }
+
+    [JsonPropertyName("codec_tag")]
+    public required string CodecTag { get; set; }
+
+    [JsonPropertyName("width")]
+    public int? Width { get; set; }
+
+    [JsonPropertyName("height")]
+    public int? Height { get; set; }
+
+    [JsonPropertyName("coded_width")]
+    public int? CodedWidth { get; set; }
+
+    [JsonPropertyName("coded_height")]
+    public int? CodedHeight { get; set; }
+
+    [JsonPropertyName("closed_captions")]
+    public int? ClosedCaptions { get; set; }
+
+    [JsonPropertyName("has_b_frames")]
+    public int? HasBFrames { get; set; }
+
+    [JsonPropertyName("pix_fmt")]
+    public string? PixFmt { get; set; }
+
+    [JsonPropertyName("level")]
+    public int? Level { get; set; }
+
+    [JsonPropertyName("color_range")]
+    public string? ColorRange { get; set; }
+
+    [JsonPropertyName("color_space")]
+    public string? ColorSpace { get; set; }
+
+    [JsonPropertyName("color_transfer")]
+    public string? ColorTransfer { get; set; }
+
+    [JsonPropertyName("color_primaries")]
+    public string? ColorPrimaries { get; set; }
+
+    [JsonPropertyName("chroma_location")]
+    public string? ChromaLocation { get; set; }
+
+    [JsonPropertyName("refs")]
+    public int? Refs { get; set; }
+
+    [JsonPropertyName("is_avc")]
+    public string? IsAvc { get; set; }
+
+    [JsonPropertyName("nal_length_size")]
+    public string? NalLengthSize { get; set; }
+
+    [JsonPropertyName("r_frame_rate")]
+    public required string RFrameRate { get; set; }
+
+    [JsonPropertyName("avg_frame_rate")]
+    public required string AvgFrameRate { get; set; }
+
+    [JsonPropertyName("time_base")]
+    public required string TimeBase { get; set; }
+
+    [JsonPropertyName("start_pts")]
+    public required int StartPts { get; set; }
+
+    [JsonPropertyName("start_time")]
+    public required decimal StartTime { get; set; }
+
+    [JsonPropertyName("duration_ts")]
+    public int? DurationTs { get; set; }
+
+    [JsonPropertyName("duration")]
+    public decimal? Duration { get; set; }
+
+    [JsonPropertyName("bit_rate")]
+    public string? BitRate { get; set; }
+
+    [JsonPropertyName("bits_per_raw_sample")]
+    public string? BitsPerRawSample { get; set; }
+
+    [JsonPropertyName("nb_frames")]
+    public decimal? NbFrames { get; set; }
+
+    [JsonPropertyName("disposition")]
+    public required Disposition Disposition { get; set; }
+
+    [JsonPropertyName("tags")]
+    public required StreamTags Tags { get; set; }
+
+    [JsonPropertyName("sample_fmt")]
+    public string? SampleFmt { get; set; }
+
+    [JsonPropertyName("sample_rate")]
+    public string? SampleRate { get; set; }
+
+    [JsonPropertyName("channels")]
+    public int? Channels { get; set; }
+
+    [JsonPropertyName("channel_layout")]
+    public string? ChannelLayout { get; set; }
+
+    [JsonPropertyName("bits_per_sample")]
+    public int? BitsPerSample { get; set; }
+}
