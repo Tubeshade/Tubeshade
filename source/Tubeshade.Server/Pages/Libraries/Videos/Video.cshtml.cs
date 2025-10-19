@@ -19,7 +19,7 @@ using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Services;
 using static System.IO.UnixFileMode;
 
-namespace Tubeshade.Server.Pages.Libraries;
+namespace Tubeshade.Server.Pages.Libraries.Videos;
 
 public sealed class Video : LibraryPageBase
 {

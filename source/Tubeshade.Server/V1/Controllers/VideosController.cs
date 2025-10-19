@@ -84,7 +84,7 @@ public sealed class VideosController : ControllerBase
         // in the page itself, so htmx is also referenced in the controller.
         if (Request.IsHtmx())
         {
-            var redirect = Url.Page("/Libraries/Video", new { libraryId, videoId = id, fileId });
+            var redirect = Url.Page("/Libraries/Videos/Video", new { libraryId, videoId = id, fileId });
             Response.Htmx(headers => headers.Redirect(redirect ?? string.Empty));
         }
 
