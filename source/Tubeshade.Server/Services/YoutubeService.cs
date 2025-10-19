@@ -553,17 +553,17 @@ public sealed class YoutubeService
         {
             types.Add((5, VideoType.Video));
         }
-        else if (preferences.VideosCount is { } videosCount)
+        else if (preferences.VideosCount is { } videosCount and not 0)
         {
             types.Add((videosCount, VideoType.Video));
         }
 
-        if (preferences?.LiveStreamsCount is { } liveStreamsCount)
+        if (preferences?.LiveStreamsCount is { } liveStreamsCount and not 0)
         {
             types.Add((liveStreamsCount, VideoType.Livestream));
         }
 
-        if (preferences?.ShortsCount is { } shortsCount)
+        if (preferences?.ShortsCount is { } shortsCount and not 0)
         {
             types.Add((shortsCount, VideoType.Short));
         }
