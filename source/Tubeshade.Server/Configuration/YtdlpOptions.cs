@@ -14,6 +14,9 @@ public sealed class YtdlpOptions
     public required string FfmpegPath { get; set; }
 
     [Required]
+    public required string FfprobePath { get; set; }
+
+    [Required]
     public required string TempPath { get; set; } = Path.GetTempPath();
 
     public long? LimitRate { get; set; } = 10 * 1024 * 1024;

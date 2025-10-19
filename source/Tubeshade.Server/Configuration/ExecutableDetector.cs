@@ -19,11 +19,16 @@ public sealed class ExecutableDetector : IPostConfigureOptions<YtdlpOptions>, IV
     /// <inheritdoc />
     public ValidateOptionsResult Validate(string? name, YtdlpOptions options)
     {
-        var errors = new List<string>(2);
+        var errors = new List<string>(3);
 
         if (!File.Exists(options.FfmpegPath))
         {
             errors.Add($"ffmpeg does not exist at path '{options.FfmpegPath}'");
+        }
+
+        if (!File.Exists(options.FfprobePath))
+        {
+            errors.Add($"ffprobe does not exist at path '{options.FfprobePath}'");
         }
 
         if (!File.Exists(options.YtdlpPath))
@@ -52,6 +57,16 @@ public sealed class ExecutableDetector : IPostConfigureOptions<YtdlpOptions>, IV
             {
                 _logger.LogInformation("Found ffmpeg at {FfmpegPath}", path);
                 options.FfmpegPath = path;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(options.FfprobePath))
+        {
+            _logger.LogInformation("ffprobe path is not set, trying to find it");
+            if (LocateExecutable("ffprobe") is { } path)
+            {
+                _logger.LogInformation("Found ffprobe at {FfprobePath}", path);
+                options.FfprobePath = path;
             }
         }
 

@@ -45,7 +45,8 @@ ENV DOTNET_gcServer=0 \
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
     Ytdlp__YtdlpPath=/tubeshade/yt-dlp \
-    Ytdlp__FfmpegPath=/usr/bin/ffmpeg
+    Ytdlp__FfmpegPath=/usr/bin/ffmpeg \
+    Ytdlp__FfprobePath=/usr/bin/ffprobe
 
 USER app
 VOLUME /home/app
