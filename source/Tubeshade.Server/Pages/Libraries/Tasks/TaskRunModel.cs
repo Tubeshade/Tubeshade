@@ -16,7 +16,7 @@ public sealed class TaskRunModel
     public bool HasProgress => Status == TaskStatus.InProgress;
     public string? ProgressBarId => HasProgress ? $"progress-bar-{Id}" : null;
 
-    public decimal Progress => Value is { } value && Target is { } target
+    public decimal Progress => Value is { } value && Target is { } target and not 0
         ? value / target
         : 0;
 
