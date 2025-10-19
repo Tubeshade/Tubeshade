@@ -11,19 +11,19 @@ public sealed class Stream
     public required string CodecName { get; set; }
 
     [JsonPropertyName("codec_long_name")]
-    public required string CodecLongName { get; set; }
+    public string? CodecLongName { get; set; }
 
     [JsonPropertyName("profile")]
-    public required string Profile { get; set; }
+    public string? Profile { get; set; }
 
     [JsonPropertyName("codec_type")]
     public required string CodecType { get; set; }
 
     [JsonPropertyName("codec_tag_string")]
-    public required string CodecTagString { get; set; }
+    public string? CodecTagString { get; set; }
 
     [JsonPropertyName("codec_tag")]
-    public required string CodecTag { get; set; }
+    public string? CodecTag { get; set; }
 
     [JsonPropertyName("width")]
     public int? Width { get; set; }
@@ -80,7 +80,7 @@ public sealed class Stream
     public required string AvgFrameRate { get; set; }
 
     [JsonPropertyName("time_base")]
-    public required string TimeBase { get; set; }
+    public string? TimeBase { get; set; }
 
     [JsonPropertyName("start_pts")]
     public required int StartPts { get; set; }
