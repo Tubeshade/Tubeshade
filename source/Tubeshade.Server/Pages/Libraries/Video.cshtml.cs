@@ -61,6 +61,9 @@ public sealed class Video : LibraryPageBase
     [BindProperty(SupportsGet = true)]
     public Guid VideoId { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public Guid? FileId { get; set; }
+
     public VideoEntity Entity { get; set; } = null!;
 
     public List<VideoFileEntity> Files { get; set; } = [];

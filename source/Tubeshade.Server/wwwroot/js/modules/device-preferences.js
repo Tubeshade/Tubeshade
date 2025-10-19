@@ -18,7 +18,17 @@ function setMaximumResolution(resolution) {
     }
 }
 
-function setPreferredResolution(select) {
+function setPreferredResolution(select, fileId) {
+    if (fileId !== null && fileId.length > 0) {
+        for (let index = 0; index < select.options.length; index++){
+            if (select.options[index].value.endsWith(fileId)){
+                select.selectedIndex = index;
+                select.dispatchEvent(new Event("change"));
+                return;
+            }
+        }
+    }
+
     const preferred = getMaximumResolution();
     if (preferred === null) {
         return;

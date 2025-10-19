@@ -220,7 +220,7 @@
         }
 
         sourcesSelector.addEventListener("change", onSourcesSelectorChanged, false);
-        setPreferredResolution(sourcesSelector);
+        setPreferredResolution(sourcesSelector, "@Model.FileId");
 
         function onSourcesSelectorChanged() {
             const currentTime = video.currentTime;
