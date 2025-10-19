@@ -107,6 +107,11 @@ internal static class Program
                 options.SubstituteApiVersionInUrl = true;
             });
 
+        builder.Services.AddAntiforgery(options =>
+        {
+            options.HeaderName = "X-CSRF-TOKEN";
+        });
+
         builder.Services.AddRequestLocalization(options =>
         {
             var cultures = new CultureInfo[] { new("en-US"), new("en") };
