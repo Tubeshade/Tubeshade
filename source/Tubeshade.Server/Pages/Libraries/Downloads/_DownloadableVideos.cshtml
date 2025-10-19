@@ -8,10 +8,12 @@
                 <div class="card">
                     <div class="row g-0">
                         <div class="col-sm">
-                            <img
-                                src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Video.Id })"
-                                loading="lazy" alt="@video.Video.Name" title="@video.Video.Name"
-                                class="img-fluid card-img" width="100%"/>
+                            <a asp-page="/Videos/Video" asp-route-videoId="@video.Video.Id">
+                                <img
+                                    src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Video.Id })"
+                                    loading="lazy" alt="@video.Video.Name" title="@video.Video.Name"
+                                    class="img-fluid card-img" width="100%"/>
+                            </a>
                         </div>
 
                         <div class="col-sm-7 col-md-8 col-xl-6">
@@ -43,6 +45,11 @@
                                             hx-swap="none" class="btn btn-primary" type="button">
                                         Rescan
                                     </button>
+
+                                    <a asp-page="/Videos/Edit" asp-route-videoId="@video.Video.Id"
+                                       class="btn btn-primary" type="button">
+                                        Edit
+                                    </a>
 
                                     <button hx-post="" hx-page-handler="Ignore" hx-route-videoId="@video.Video.Id"
                                             hx-swap="delete" hx-target="#card-@video.Video.Id"
