@@ -12,6 +12,8 @@ public sealed class TaskModel
 
     public required TaskRunModel[] Runs { get; init; }
 
+    public required int TotalCount { get; init; }
+
     public string TypeDisplay => Type.Name switch
     {
         TaskType.Names.Index => "Index",

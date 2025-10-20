@@ -1,79 +1,114 @@
 ﻿@using Tubeshade.Data.Tasks
-@model List<TaskModel>
+@model Tubeshade.Server.Pages.Shared.ITaskPage
 
-<table hx-get="" hx-page-handler="Running" hx-trigger="every 2s" hx-swap="outerHTML" class="table">
-    <thead>
-    <tr>
-        <th>Task</th>
-        <th>Status</th>
-        <th>Action</th>
-    </tr>
-    </thead>
+<section hx-get="" hx-page-handler="Running" hx-trigger="every 2s" hx-swap="outerHTML" id="tasks"
+         hx-include="#filter" hx-params="*">
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Task</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        </thead>
 
-    @foreach (var task in Model)
-    {
-        <tbody>
-        @foreach (var (index, run) in task.Runs.Index())
+        @foreach (var task in Model.PageData.Data)
         {
-            <tr aria-busy="@run.HasProgress" aria-describedby="@run.ProgressBarId">
-                <td>
-                    @if (index is 0)
-                    {
-                        <span>@task.TypeDisplay</span>
-                        <span>"@task.Name"</span>
-                    }
-                </td>
-                <td>
-                    @if (run.HasProgress)
-                    {
-                        <div class="row">
-                            <label for="@run.ProgressBarId" class="col-auto">@run.FormattedValue</label>
-                            <progress id="@run.ProgressBarId" max="@run.Target" value="@run.Value" class="col-auto">
-                                @run.Progress%
-                            </progress>
-                            <label for="@run.ProgressBarId" class="col-auto">@run.FormattedTarget</label>
-                            @if (run.FormattedRate is { } rate)
+            <tbody>
+            @foreach (var (index, run) in task.Runs.Index())
+            {
+                <tr aria-busy="@run.HasProgress" aria-describedby="@run.ProgressBarId">
+                    <td>
+                        @if (index is 0)
+                        {
+                            <span>@task.TypeDisplay</span>
+                            <span>"@task.Name"</span>
+                        }
+                    </td>
+                    <td>
+                        @if (run.HasProgress)
+                        {
+                            <div class="row">
+                                <label for="@run.ProgressBarId" class="col-auto">@run.FormattedValue</label>
+                                <progress id="@run.ProgressBarId" max="@run.Target" value="@run.Value" class="col-auto">
+                                    @run.Progress%
+                                </progress>
+                                <label for="@run.ProgressBarId" class="col-auto">@run.FormattedTarget</label>
+                                @if (run.FormattedRate is { } rate)
+                                {
+                                    <span class="col-auto">@rate</span>
+                                }
+                                @if (run.FormattedRemaining is { } remaining)
+                                {
+                                    <span class="col-auto">~@remaining</span>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            @run.Status.Name
+                            @if (run.Message is not null)
                             {
-                                <span class="col-auto">@rate</span>
+                                <span> - @run.Message</span>
                             }
-                            @if (run.FormattedRemaining is { } remaining)
+                        }
+                    </td>
+                    <td>
+                        @if (index is 0)
+                        {
+                            @if (run.Result is not null && run.Result != TaskResult.Successful)
                             {
-                                <span class="col-auto">~@remaining</span>
+                                <button
+                                    hx-post="" hx-page-handler="Retry" hx-route-taskId="@task.Id" hx-swap="none"
+                                    type="button" class="btn btn-primary w-100">
+                                    Retry
+                                </button>
                             }
-                        </div>
-                    }
-                    else
-                    {
-                        @run.Status.Name
-                        @if (run.Message is not null)
-                        {
-                            <span> - @run.Message</span>
+                            else if (run.Status == TaskStatus.InProgress)
+                            {
+                                <button
+                                    hx-post="" hx-page-handler="Cancel" hx-route-taskRunId="@run.Id" hx-swap="none"
+                                    type="button" class="btn btn-danger w-100">
+                                    Cancel
+                                </button>
+                            }
                         }
-                    }
-                </td>
-                <td>
-                    @if (index is 0)
-                    {
-                        @if (run.Result is not null && run.Result != TaskResult.Successful)
-                        {
-                            <button
-                                hx-post="" hx-page-handler="Retry" hx-route-taskId="@task.Id" hx-swap="none"
-                                type="button" class="btn btn-primary w-100">
-                                Retry
-                            </button>
-                        }
-                        else if (run.Status == TaskStatus.InProgress)
-                        {
-                            <button
-                                hx-post="" hx-page-handler="Cancel" hx-route-taskRunId="@run.Id" hx-swap="none"
-                                type="button" class="btn btn-danger w-100">
-                                Cancel
-                            </button>
-                        }
-                    }
-                </td>
-            </tr>
+                    </td>
+                </tr>
+            }
+            </tbody>
         }
-        </tbody>
-    }
-</table>
+    </table>
+
+    <nav class="text-center">
+    <span>
+        Showing @Model.PageData.StartIndex - @Model.PageData.EndIndex from @Model.PageData.TotalCount
+    </span>
+
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
+                <a asp-page="" asp-all-route-data="@(Model.GetRouteValues(0))"
+                   class="page-link">
+                    First
+                </a>
+            </li>
+
+            @foreach (var index in Model.PageData.DisplayedPages)
+            {
+                <li class="page-item @(index - 1 == Model.PageData.Page ? "active" : string.Empty)">
+                    <a asp-page="" asp-all-route-data="@(Model.GetRouteValues(index - 1))"
+                       class="page-link" aria-current="page">
+                        @index
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
+                <a asp-page="" asp-all-route-data="@(Model.GetRouteValues(Model.PageData.PageCount - 1))"
+                   class="page-link">
+                    Last
+                </a>
+            </li>
+        </ul>
+    </nav>
+</section>

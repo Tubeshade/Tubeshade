@@ -18,4 +18,6 @@ public sealed record RunningTaskEntity
     public TaskResult? Result { get; init; }
     public string? Message { get; init; }
     public string? Name { get; init; }
+
+    public required int TotalCount { get; init; }
 }

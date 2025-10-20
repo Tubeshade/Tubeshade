@@ -2,9 +2,9 @@
 using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.AccessControl;
 
-namespace Tubeshade.Data.Media;
+namespace Tubeshade.Data.Tasks;
 
-public sealed class VideoParameters : IAccessParameters, IPaginatedParameters
+public sealed class TaskParameters : IAccessParameters, IPaginatedParameters
 {
     public required Guid UserId { get; init; }
 
@@ -13,21 +13,9 @@ public sealed class VideoParameters : IAccessParameters, IPaginatedParameters
 
     public Guid? LibraryId { get; init; }
 
-    public Guid? ChannelId { get; init; }
-
     /// <inheritdoc />
     public required int Limit { get; init; }
 
     /// <inheritdoc />
     public required int Offset { get; init; }
-
-    public bool? Viewed { get; init; }
-
-    public string? Query { get; init; }
-
-    public VideoType? Type { get; init; }
-
-    public bool? WithFiles { get; init; }
-
-    public ExternalAvailability? Availability { get; init; }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,13 +8,15 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Libraries.Tasks;
+using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Tasks;
 
-public sealed class Index : PageModel
+public sealed class Index : PageModel, ITaskPage
 {
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _libraryRepository;
@@ -31,18 +32,50 @@ public sealed class Index : PageModel
         _taskService = taskService;
     }
 
-    public List<TaskModel> Tasks { get; set; } = [];
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public int? PageSize { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public int? PageIndex { get; set; }
+
+    /// <inheritdoc />
+    public PaginatedData<TaskModel> PageData { get; set; } = null!;
 
     public async Task OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        Tasks = await _taskService.GetGroupedTasks(userId, cancellationToken);
+
+        var pageSize = PageSize ?? Defaults.PageSize;
+        var page = PageIndex ?? Defaults.PageIndex;
+        var offset = pageSize * page;
+
+        var tasks = await _taskService.GetGroupedTasks(
+            new TaskParameters
+            {
+                UserId = userId,
+                Limit = pageSize,
+                Offset = offset,
+            },
+            cancellationToken);
+
+        var totalCount = tasks is [] ? 0 : tasks[0].TotalCount;
+
+        PageData = new PaginatedData<TaskModel>
+        {
+            LibraryId = null,
+            Data = tasks,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+        };
     }
 
     public async Task<IActionResult> OnGetRunning(CancellationToken cancellationToken)
     {
         await OnGet(cancellationToken);
-        return Partial("Libraries/Tasks/_RunningTasks", Tasks);
+        return Partial("Libraries/Tasks/_RunningTasks", this);
     }
 
     public async Task<IActionResult> OnPostScanSubscriptions()

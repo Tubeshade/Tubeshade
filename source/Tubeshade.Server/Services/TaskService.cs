@@ -22,15 +22,11 @@ public sealed class TaskService
         _taskRepository = taskRepository;
     }
 
-    public async ValueTask<List<TaskModel>> GetGroupedTasks(Guid userId, CancellationToken cancellationToken)
+    public async ValueTask<List<TaskModel>> GetGroupedTasks(
+        TaskParameters parameters,
+        CancellationToken cancellationToken)
     {
-        var runningTasks = await _taskRepository.GetRunningTasks(userId, cancellationToken);
-        return GroupTasks(runningTasks);
-    }
-
-    public async ValueTask<List<TaskModel>> GetGroupedTasks(Guid libraryId, Guid userId, CancellationToken cancellationToken)
-    {
-        var runningTasks = await _taskRepository.GetRunningTasks(libraryId, userId, cancellationToken);
+        var runningTasks = await _taskRepository.GetRunningTasks(parameters, cancellationToken);
         return GroupTasks(runningTasks);
     }
 
@@ -123,6 +119,7 @@ public sealed class TaskService
                     Id = grouping.Key,
                     Type = runs[0].Type,
                     Name = runs[0].Name,
+                    TotalCount = runs[0].TotalCount,
                     Runs = runs
                         .Select(task => new TaskRunModel
                         {

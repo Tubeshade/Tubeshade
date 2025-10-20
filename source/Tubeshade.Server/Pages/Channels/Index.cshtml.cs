@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
@@ -17,9 +15,6 @@ public sealed class Index : PageModel
     {
         _channelRepository = channelRepository;
     }
-
-    [BindProperty(SupportsGet = true)]
-    public Guid? LibraryId { get; set; }
 
     public List<ChannelEntity> Channels { get; set; } = [];
 
