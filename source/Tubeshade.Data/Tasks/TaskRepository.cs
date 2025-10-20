@@ -258,7 +258,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                       INNER JOIN media.libraries ON (filtered_tasks.payload::json ->> 'libraryId')::uuid = libraries.id
                       INNER JOIN tasks.task_runs ON filtered_tasks.id = task_runs.task_id
                       LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
-                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id;
+                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+             ORDER BY task_run_results.created_at DESC, task_runs.created_at DESC, filtered_tasks.created_at DESC;
              """,
             parameters,
             cancellationToken: cancellationToken);
