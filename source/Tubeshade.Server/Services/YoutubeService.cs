@@ -775,17 +775,15 @@ public sealed class YoutubeService
                     ]
                 });
 
-            string? storagePath = null;
-
             var timestamp = Stopwatch.GetTimestamp();
             var fileSize = 0L;
             var pollingDelay = TimeSpan.FromSeconds(2);
 
-            while (!downloadTask.IsCompleted || storagePath is null)
+            while (!downloadTask.IsCompleted)
             {
                 var startTimestamp = Stopwatch.GetTimestamp();
 
-                storagePath = tempDirectory
+                var storagePath = tempDirectory
                         .EnumerateFiles($"{Path.GetFileNameWithoutExtension(fileName)}*.*")
                         .Where(file => file.Extension.ToLowerInvariant().TrimStart('.') is VideoContainerType.Names.Mp4 or VideoContainerType.Names.WebM)
                         .ToArray() switch
