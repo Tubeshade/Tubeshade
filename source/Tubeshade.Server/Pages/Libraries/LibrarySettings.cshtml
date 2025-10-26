@@ -4,12 +4,6 @@
     ViewData["Title"] = $"Preferences - {Model.Entity.Name}";
 }
 
-@section Head
-{
-    <link rel="prefetch" as="script" href="~/lib/htmx.org/dist/js/htmx.min.js"/>
-    <link rel="prefetch" as="script" href="~/js/htmx.antiforgery.js"/>
-}
-
 @section Navigation
 {
     <partial name="_LibraryNavigation" for="Entity"/>
@@ -18,9 +12,3 @@
 <section id="channel-preferences">
     <partial name="Libraries/_UpdatePreferences" for="UpdatePreferencesModel"/>
 </section>
-
-@section Scripts
-{
-    <script src="~/lib/htmx.org/dist/js/htmx.min.js"></script>
-    <script src="~/js/htmx.antiforgery.js"></script>
-}

@@ -6,7 +6,7 @@
 
 @section Navigation
 {
-    <partial name="Shared/_Navigation"/>
+    <partial name="Shared/_Navigation" model="@Model"/>
 }
 
 @await Html.PartialAsync("_AddLibrary", new AddLibraryModel { TimeZoneIds = Model.TimeZoneIds })

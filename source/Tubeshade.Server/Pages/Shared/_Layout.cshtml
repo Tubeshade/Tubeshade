@@ -14,6 +14,11 @@
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+
+    <link rel="prefetch" as="script" href="~/lib/htmx.org/dist/js/htmx.min.js"/>
+    <link rel="prefetch" as="script" href="~/js/htmx.antiforgery.js"/>
+    <link rel="prefetch" as="script" href="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"/>
+
     @await RenderSectionAsync("Head", false)
 </head>
 
@@ -54,6 +59,9 @@
     </div>
 </footer>
 
+<script src="~/lib/htmx.org/dist/js/htmx.min.js"></script>
+<script src="~/js/htmx.antiforgery.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

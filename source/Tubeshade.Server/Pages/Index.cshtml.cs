@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,22 +17,25 @@ using Tubeshade.Server.Pages.Videos;
 
 namespace Tubeshade.Server.Pages;
 
-public sealed class IndexModel : PageModel, IVideoPage
+public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
 {
     private readonly NpgsqlConnection _connection;
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
+    private readonly LibraryRepository _libraryRepository;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
 
     public IndexModel(
         NpgsqlConnection connection,
         VideoRepository videoRepository,
         ChannelRepository channelRepository,
+        LibraryRepository libraryRepository,
         SponsorBlockSegmentRepository segmentRepository)
     {
         _connection = connection;
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
+        _libraryRepository = libraryRepository;
         _segmentRepository = segmentRepository;
     }
 
@@ -59,6 +63,9 @@ public sealed class IndexModel : PageModel, IVideoPage
     /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
+    /// <inheritdoc />
+    public IEnumerable<LibraryEntity> Libraries { get; private set; } = null!;
+
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         if (WithFiles is null && !Request.Query.ContainsKey(nameof(WithFiles)))
@@ -67,6 +74,8 @@ public sealed class IndexModel : PageModel, IVideoPage
         }
 
         var userId = User.GetUserId();
+
+        Libraries = await _libraryRepository.GetAsync(userId, cancellationToken);
 
         var pageSize = PageSize ?? Defaults.PageSize;
         var page = PageIndex ?? Defaults.PageIndex;

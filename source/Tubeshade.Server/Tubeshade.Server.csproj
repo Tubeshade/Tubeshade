@@ -38,7 +38,7 @@
 
         <RemoveDir Directories="@(LibDirectory)"/>
 
-        <!--<Copy SourceFiles="@(BootstrapJs)" DestinationFolder="wwwroot/lib/bootstrap/dist/js"/>-->
+        <Copy SourceFiles="@(BootstrapJs)" DestinationFolder="wwwroot/lib/bootstrap/dist/js"/>
         <Copy SourceFiles="@(BootstrapCss)" DestinationFolder="wwwroot/lib/bootstrap/dist/css"/>
 
         <Copy SourceFiles="@(HtmxJs)" DestinationFolder="wwwroot/lib/htmx.org/dist/js"/>

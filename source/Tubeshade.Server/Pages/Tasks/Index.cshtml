@@ -4,15 +4,9 @@
     ViewData["Title"] = "Tasks";
 }
 
-@section Head
-{
-    <link rel="prefetch" as="script" href="~/lib/htmx.org/dist/js/htmx.min.js"/>
-    <link rel="prefetch" as="script" href="~/js/htmx.antiforgery.js"/>
-}
-
 @section Navigation
 {
-    <partial name="Shared/_Navigation"/>
+    <partial name="Shared/_Navigation" model="@Model"/>
 }
 
 <div class="btn-group">
@@ -28,8 +22,6 @@
 
 @section Scripts
 {
-    <script src="~/lib/htmx.org/dist/js/htmx.min.js"></script>
-    <script src="~/js/htmx.antiforgery.js"></script>
     <script>
         function onPollingChanged() {
             const input = document.querySelector("#task-polling");

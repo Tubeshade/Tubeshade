@@ -4,12 +4,6 @@
     ViewData["Title"] = Model.Entity.Name;
 }
 
-@section Head
-{
-    <link rel="prefetch" as="script" href="~/lib/htmx.org/dist/js/htmx.min.js"/>
-    <link rel="prefetch" as="script" href="~/js/htmx.antiforgery.js"/>
-}
-
 @section Navigation
 {
     <partial name="Libraries/_LibraryNavigation" for="Library"/>
@@ -22,9 +16,3 @@
 <section id="videos">
     <partial name="Videos/_FilteredVideos" model="@Model"/>
 </section>
-
-@section Scripts
-{
-    <script src="~/lib/htmx.org/dist/js/htmx.min.js"></script>
-    <script src="~/js/htmx.antiforgery.js"></script>
-}

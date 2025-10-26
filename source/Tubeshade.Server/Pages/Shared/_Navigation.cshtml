@@ -1,7 +1,27 @@
-﻿<li class="nav-item">
-    <a class="nav-link" asp-page="/Libraries/Index">
+﻿@model INonLibraryPage
+
+<li class="nav-item dropdown d-inline-flex">
+    <a class="nav-link dropdown-toggle" href="#"
+       id="libraries-menu-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
         Libraries
     </a>
+
+    <ul class="dropdown-menu" aria-labelledby="libraries-menu-link">
+        @foreach (var library in Model.Libraries)
+        {
+            <li>
+                <a class="dropdown-item" asp-page="/Libraries/Library" asp-route-libraryId="@library.Id">
+                    @library.Name
+                </a>
+            </li>
+        }
+        <li><hr class="dropdown-divider"/></li>
+        <li>
+            <a class="dropdown-item" asp-page="/Libraries/Index">
+                All
+            </a>
+        </li>
+    </ul>
 </li>
 <li class="nav-item">
     <a class="nav-link" asp-page="/Channels/Index">

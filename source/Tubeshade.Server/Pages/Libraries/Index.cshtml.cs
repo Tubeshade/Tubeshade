@@ -14,10 +14,11 @@ using Tubeshade.Data.Media;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Configuration.Auth;
+using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Libraries;
 
-public sealed class Index : PageModel
+public sealed class Index : PageModel, INonLibraryPage
 {
     private readonly ILogger<Index> _logger;
     private readonly NpgsqlConnection _connection;
@@ -41,6 +42,9 @@ public sealed class Index : PageModel
         _scheduleRepository = scheduleRepository;
         _timeZoneProvider = timeZoneProvider;
     }
+
+    /// <inheritdoc />
+    public IEnumerable<LibraryEntity> Libraries => Entities;
 
     public List<LibraryEntity> Entities { get; set; } = [];
 

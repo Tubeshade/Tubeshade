@@ -21,20 +21,21 @@ using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Downloads;
 
-public sealed class Index : PageModel, IDownloadPage
+public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
 {
     private readonly NpgsqlConnection _connection;
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
+    private readonly LibraryRepository _libraryRepository;
     private readonly IClock _clock;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
     private readonly TaskService _taskService;
 
     public Index(
         NpgsqlConnection connection,
-        LibraryRepository libraryRepository,
         TaskRepository taskRepository,
         VideoRepository videoRepository,
+        LibraryRepository libraryRepository,
         ChannelRepository channelRepository,
         IClock clock,
         SponsorBlockSegmentRepository segmentRepository,
@@ -43,6 +44,7 @@ public sealed class Index : PageModel, IDownloadPage
         _connection = connection;
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
+        _libraryRepository = libraryRepository;
         _clock = clock;
         _segmentRepository = segmentRepository;
         _taskService = taskService;
@@ -77,6 +79,9 @@ public sealed class Index : PageModel, IDownloadPage
 
     [BindProperty(SupportsGet = true)]
     public Guid? ChannelId { get; set; }
+
+    /// <inheritdoc />
+    public IEnumerable<LibraryEntity> Libraries { get; private set; } = [];
 
     public List<ChannelEntity> Channels { get; set; } = [];
 
@@ -148,6 +153,7 @@ public sealed class Index : PageModel, IDownloadPage
 
         var userId = User.GetUserId();
 
+        Libraries = await _libraryRepository.GetAsync(userId, cancellationToken);
         Channels = await _channelRepository.GetAsync(userId, cancellationToken);
 
         var pageSize = PageSize ?? Defaults.PageSize;

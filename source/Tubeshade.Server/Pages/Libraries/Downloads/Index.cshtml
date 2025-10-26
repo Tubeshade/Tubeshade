@@ -5,12 +5,6 @@
     ViewData["Title"] = $"Downloads - {Model.Library.Name}";
 }
 
-@section Head
-{
-    <link rel="prefetch" as="script" href="~/lib/htmx.org/dist/js/htmx.min.js"/>
-    <link rel="prefetch" as="script" href="~/js/htmx.antiforgery.js"/>
-}
-
 @section Navigation
 {
     <partial name="Libraries/_LibraryNavigation" for="Library"/>
@@ -23,9 +17,3 @@
 <partial name="Downloads/_DownloadsFilter" model="@Model"/>
 
 <partial name="Downloads/_DownloadableVideos" model="Model"/>
-
-@section Scripts
-{
-    <script src="~/lib/htmx.org/dist/js/htmx.min.js"></script>
-    <script src="~/js/htmx.antiforgery.js"></script>
-}

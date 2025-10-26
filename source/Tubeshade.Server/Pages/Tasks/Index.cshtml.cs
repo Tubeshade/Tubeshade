@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Tasks;
 
-public sealed class Index : PageModel, ITaskPage
+public sealed class Index : PageModel, ITaskPage, INonLibraryPage
 {
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _libraryRepository;
@@ -42,9 +43,13 @@ public sealed class Index : PageModel, ITaskPage
     /// <inheritdoc />
     public PaginatedData<TaskModel> PageData { get; set; } = null!;
 
+    /// <inheritdoc />
+    public IEnumerable<LibraryEntity> Libraries { get; private set; } = null!;
+
     public async Task OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
+        Libraries = await _libraryRepository.GetAsync(userId, cancellationToken);
 
         var pageSize = PageSize ?? Defaults.PageSize;
         var page = PageIndex ?? Defaults.PageIndex;
@@ -74,7 +79,7 @@ public sealed class Index : PageModel, ITaskPage
     public async Task<IActionResult> OnGetRunning(CancellationToken cancellationToken)
     {
         await OnGet(cancellationToken);
-        return Partial("Libraries/Tasks/_RunningTasks", this);
+        return Partial("Tasks/_RunningTasks", this);
     }
 
     public async Task<IActionResult> OnPostScanSubscriptions()
