@@ -13,6 +13,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
+using Tubeshade.Server.Pages.Downloads;
 using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services;
@@ -86,7 +87,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
         var userId = await OnGetCore(cancellationToken);
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
         return Request.IsHtmx()
-            ? Partial("_DownloadableVideos", this)
+            ? Partial("Downloads/_DownloadableVideos", this)
             : Page();
     }
 

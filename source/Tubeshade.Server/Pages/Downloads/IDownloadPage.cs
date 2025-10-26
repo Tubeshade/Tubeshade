@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Tubeshade.Data.Media;
+using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Pages.Videos;
 
-namespace Tubeshade.Server.Pages.Shared;
+namespace Tubeshade.Server.Pages.Downloads;
 
 public interface IDownloadPage : IPaginatedDataPage<VideoModel>
 {

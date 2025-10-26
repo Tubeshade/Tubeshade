@@ -1,4 +1,5 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Downloads/{handler?}"
+@using Tubeshade.Server.Pages.Downloads
 @model Index
 @{
     ViewData["Title"] = $"Downloads - {Model.Library.Name}";
@@ -16,12 +17,12 @@
 }
 
 <div class="row mb-2">
-    <partial name="_DownloadVideo" model="new DownloadVideoModel()"/>
+    <partial name="Downloads/_DownloadVideo" model="new DownloadVideoModel()"/>
 </div>
 
-<partial name="_DownloadsFilter" model="@Model"/>
+<partial name="Downloads/_DownloadsFilter" model="@Model"/>
 
-<partial name="_DownloadableVideos" model="Model"/>
+<partial name="Downloads/_DownloadableVideos" model="Model"/>
 
 @section Scripts
 {

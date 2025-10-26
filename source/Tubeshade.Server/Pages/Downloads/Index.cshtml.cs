@@ -84,7 +84,7 @@ public sealed class Index : PageModel, IDownloadPage
     {
         _ = await OnGetCore(cancellationToken);
         return Request.IsHtmx()
-            ? Partial("Libraries/Downloads/_DownloadableVideos", this)
+            ? Partial("Downloads/_DownloadableVideos", this)
             : Page();
     }
 

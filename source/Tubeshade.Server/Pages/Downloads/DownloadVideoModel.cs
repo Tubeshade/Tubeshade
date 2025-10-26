@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Tubeshade.Server.Pages.Libraries.Downloads;
+namespace Tubeshade.Server.Pages.Downloads;
 
 public sealed class DownloadVideoModel
 {
