@@ -28,7 +28,7 @@ namespace Tubeshade.Server.Services;
 
 public sealed class YoutubeService
 {
-    private static readonly string[] VideoFormats =
+    private static readonly string[] DefaultVideoFormats =
     [
         "bv+(ba[format_note*=original]/ba)/best",
         "bv*[height<=720]+(ba[format_note*=original]/ba)"
@@ -49,8 +49,6 @@ public sealed class YoutubeService
     private readonly IYtdlpWrapper _ytdlpWrapper;
     private readonly WebVideoTextTracksService _webVideoTextTracksService;
     private readonly TaskService _taskService;
-
-    private static string VideoFormat { get; } = string.Join(',', VideoFormats);
 
     public YoutubeService(
         ILogger<YoutubeService> logger,
@@ -302,8 +300,11 @@ public sealed class YoutubeService
         }
 
         var videoFormats = new Dictionary<string, FormatData>();
+        var formatSelectors = preferences?.Formats is { Length: > 0 } preferredFormats
+            ? preferredFormats
+            : DefaultVideoFormats;
 
-        foreach (var format in VideoFormats)
+        foreach (var format in formatSelectors)
         {
             var data = await _ytdlpWrapper.FetchVideoFormatData(
                 url,
@@ -642,6 +643,10 @@ public sealed class YoutubeService
 
         var video = await _videoRepository.GetAsync(videoId, userId, transaction);
         var preferences = await _preferencesRepository.GetEffectiveForVideo(libraryId, videoId, userId, cancellationToken);
+        var formatSelectors = preferences?.Formats is { Length: > 0 } preferredFormats
+            ? preferredFormats
+            : DefaultVideoFormats;
+
         var youtubeClient = preferences?.PlayerClient is { } client
             ? new MultiValue<string>($"youtube:player_client={client.Name}")
             : null;
@@ -663,7 +668,7 @@ public sealed class YoutubeService
             {
                 Cookies = cookieFilepath,
                 CookiesFromBrowser = _options.CookiesFromBrowser,
-                Format = VideoFormat,
+                Format = string.Join(',', formatSelectors),
                 ExtractorArgs = youtubeClient,
                 CustomOptions = [new Option<string>("-t") { Value = "mp4" }]
             });
@@ -683,7 +688,7 @@ public sealed class YoutubeService
 
         var selectedFormats = await _ytdlpWrapper.SelectFormats(
             video.ExternalUrl,
-            VideoFormats,
+            formatSelectors,
             cookieFilepath,
             preferences?.PlayerClient,
             cancellationToken);

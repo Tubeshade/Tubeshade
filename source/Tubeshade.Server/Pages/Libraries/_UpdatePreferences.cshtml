@@ -48,5 +48,11 @@
         <span asp-validation-for="DownloadAutomatically" class="text-danger"></span>
     </div>
 
+    <div class="input-group mb-3">
+        <label class="input-group-text" asp-for="Formats">Download format(s)</label>
+        <input class="form-control" asp-for="Formats" type="text"/>
+        <span asp-validation-for="Formats" class="text-danger"></span>
+    </div>
+
     <button class="btn btn-primary" type="submit">Update preferences</button>
 </form>
