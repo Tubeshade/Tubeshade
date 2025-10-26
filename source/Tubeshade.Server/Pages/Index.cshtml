@@ -4,16 +4,25 @@
     ViewData["Title"] = "Home page";
 }
 
+@section Head
+{
+    <link rel="prefetch" as="script" href="~/lib/htmx.org/dist/js/htmx.min.js"/>
+    <link rel="prefetch" as="script" href="~/js/htmx.antiforgery.js"/>
+}
+
 @section Navigation
 {
-    <li class="nav-item">
-        <a class="nav-link" asp-page="/Libraries/Index">
-            Libraries
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" asp-page="/Channels/Index">
-            Channels
-        </a>
-    </li>
+    <partial name="Shared/_Navigation"/>
+}
+
+<partial name="Videos/_VideoFilters" model="@Model"/>
+
+<section id="videos">
+    <partial name="Videos/_FilteredVideos" model="@Model"/>
+</section>
+
+@section Scripts
+{
+    <script src="~/lib/htmx.org/dist/js/htmx.min.js"></script>
+    <script src="~/js/htmx.antiforgery.js"></script>
 }
