@@ -4,7 +4,8 @@
     @foreach (var video in Model.Data)
     {
         <div class="card m-1">
-            <a asp-page="/Libraries/Videos/Video" asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@video.Video.Id">
+            <a asp-page="@(Model.LibraryId is not null ? "/Libraries/Videos/Video" : "/Videos/Video")"
+               asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@video.Video.Id">
                 <img src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Video.Id })"
                      loading="lazy" alt="@video.Video.Name" title="@video.Video.Name"
                      class="card-img-top" style="aspect-ratio: calc(16 / 9);"/>
@@ -14,7 +15,7 @@
                 <h6 class="card-title text-truncate mb-0" title="@video.Video.Name">@video.Video.Name</h6>
 
                 <div class="d-flex d-inline justify-content-between">
-                    <a asp-page="/Libraries/Channels/Channel"
+                    <a asp-page="@(Model.LibraryId is not null ? "/Libraries/Channels/Channel" : "/Channels/Channel")"
                        asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@video.Video.ChannelId">
                         <span class="text-truncate">@video.Channel.Name</span>
                     </a>
