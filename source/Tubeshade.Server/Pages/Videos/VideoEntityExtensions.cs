@@ -2,7 +2,7 @@
 using System.IO;
 using Tubeshade.Data.Media;
 
-namespace Tubeshade.Server.Pages.Shared;
+namespace Tubeshade.Server.Pages.Videos;
 
 public static class VideoEntityExtensions
 {

@@ -18,7 +18,7 @@ using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
-using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Pages.Videos;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
 using YoutubeDLSharp.Options;

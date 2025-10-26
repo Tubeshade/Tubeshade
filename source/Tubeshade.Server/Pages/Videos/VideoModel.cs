@@ -1,7 +1,7 @@
 ﻿using NodaTime;
 using Tubeshade.Data.Media;
 
-namespace Tubeshade.Server.Pages.Libraries;
+namespace Tubeshade.Server.Pages.Videos;
 
 public sealed class VideoModel
 {

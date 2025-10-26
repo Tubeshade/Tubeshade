@@ -9,7 +9,7 @@ using NodaTime;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
-using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services.Ffmpeg;
 using Tubeshade.Server.V1;
 using Stream = Tubeshade.Server.Services.Ffmpeg.Stream;

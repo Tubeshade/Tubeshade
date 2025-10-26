@@ -11,6 +11,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Pages.Videos;
 
 namespace Tubeshade.Server.Pages.Libraries.Channels;
 
@@ -137,7 +138,7 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
         };
 
         return Request.IsHtmx()
-            ? Partial("Libraries/_FilteredVideos", this)
+            ? Partial("Videos/_FilteredVideos", this)
             : Page();
     }
 

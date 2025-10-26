@@ -16,7 +16,7 @@ using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Server.Configuration.Auth;
-using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services;
 using static System.IO.UnixFileMode;
 

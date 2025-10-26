@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Tubeshade.Data.Media;
-using Tubeshade.Server.Pages.Libraries;
+using Tubeshade.Server.Pages.Videos;
 
 namespace Tubeshade.Server.Pages.Shared;
 

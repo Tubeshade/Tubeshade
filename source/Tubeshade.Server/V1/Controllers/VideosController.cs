@@ -14,7 +14,7 @@ using Microsoft.Net.Http.Headers;
 using NodaTime.Text;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
-using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.V1.Controllers;
