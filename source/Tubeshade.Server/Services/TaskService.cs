@@ -7,7 +7,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Data.Tasks.Payloads;
-using Tubeshade.Server.Pages.Libraries.Tasks;
+using Tubeshade.Server.Pages.Tasks;
 
 namespace Tubeshade.Server.Services;
 

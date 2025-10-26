@@ -1,5 +1,5 @@
 ﻿@using Tubeshade.Server.Pages.Shared
-@model Tubeshade.Server.Pages.Shared.ITaskPage
+@model ITaskPage
 
 <form method="get" class="row row-cols-1 row-cols-sm-auto g-2 align-items-center mb-2"
       hx-get="" hx-page-handler="Running" hx-params="*" hx-push-url="true"
@@ -21,4 +21,4 @@
     <input asp-for="PageIndex" value="@Model.PageIndex" hidden="hidden"/>
 </form>
 
-<partial name="Libraries/Tasks/_RunningTasks" model="@Model"/>
+<partial name="Tasks/_RunningTasks" model="@Model"/>

@@ -1,7 +1,7 @@
 ﻿using System;
 using Tubeshade.Data.Tasks;
 
-namespace Tubeshade.Server.Pages.Libraries.Tasks;
+namespace Tubeshade.Server.Pages.Tasks;
 
 public sealed class TaskModel
 {

@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using Ardalis.SmartEnum;
 using Tubeshade.Data.Tasks;
 
-namespace Tubeshade.Server.Pages.Libraries.Tasks;
+namespace Tubeshade.Server.Pages.Tasks;
 
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public sealed class TaskStatus : SmartEnum<TaskStatus>

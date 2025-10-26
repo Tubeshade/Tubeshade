@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Tubeshade.Server.Pages.Libraries.Tasks;
+using Tubeshade.Server.Pages.Shared;
 
-namespace Tubeshade.Server.Pages.Shared;
+namespace Tubeshade.Server.Pages.Tasks;
 
 public interface ITaskPage : IPaginatedDataPage<TaskModel>
 {

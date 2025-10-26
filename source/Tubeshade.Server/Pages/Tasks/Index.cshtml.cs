@@ -10,7 +10,6 @@ using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
-using Tubeshade.Server.Pages.Libraries.Tasks;
 using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Services;
 
