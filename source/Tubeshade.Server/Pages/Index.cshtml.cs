@@ -40,24 +40,31 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
     }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public int? PageSize { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public int? PageIndex { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public bool? Viewed { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public string? Query { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public VideoType? Type { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public bool? WithFiles { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public ExternalAvailability? Availability { get; set; }
 
     /// <inheritdoc />

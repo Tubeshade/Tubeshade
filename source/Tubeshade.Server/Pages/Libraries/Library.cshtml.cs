@@ -132,7 +132,7 @@ public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
         };
 
         return Request.IsHtmx()
-            ? Partial("_FilteredVideos", this)
+            ? Partial("Videos/_FilteredVideos", this)
             : Page();
     }
 
