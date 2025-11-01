@@ -753,6 +753,17 @@ public sealed class YoutubeService
                 }
             }
 
+            var customOptions = new List<IOption>
+            {
+                new Option<string>("-o") { Value = $"subtitle:{Path.Combine(tempDirectory.FullName, "subtitles.%(ext)s")}" },
+            };
+
+            if (_options.JavascriptRuntimePath is { } javascriptRuntimePath)
+            {
+                customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
+            }
+
+
             _logger.LogInformation("Downloading video {VideoUrl} to {Directory}", video.ExternalUrl, tempDirectory.FullName);
             var downloadTask = youtube.RunVideoDownload(
                 video.ExternalUrl,
@@ -774,10 +785,7 @@ public sealed class YoutubeService
                     NoPart = true,
                     EmbedChapters = true,
                     ExtractorArgs = youtubeClient,
-                    CustomOptions =
-                    [
-                        new Option<string>("-o") { Value = $"subtitle:{Path.Combine(tempDirectory.FullName, "subtitles.%(ext)s")}" },
-                    ]
+                    CustomOptions = customOptions.ToArray(),
                 });
 
             var timestamp = Stopwatch.GetTimestamp();
