@@ -40,6 +40,12 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             FFmpegPath = options.FfmpegPath,
         };
 
+        var customOptions = new List<IOption>();
+        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
+        {
+            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
+        }
+
         var result = await youtube.RunVideoDataFetch(
             url,
             cancellationToken,
@@ -52,6 +58,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 PlaylistItems = "0",
                 IgnoreErrors = true,
                 IgnoreNoFormatsError = true,
+                CustomOptions = customOptions.ToArray(),
             });
 
         if (!result.Success)
@@ -76,6 +83,12 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             FFmpegPath = options.FfmpegPath,
         };
 
+        var customOptions = new List<IOption>();
+        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
+        {
+            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
+        }
+
         var fetchResult = await youtube.RunVideoDataFetch(
             playlistUrl,
             cancellationToken,
@@ -88,6 +101,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 PlaylistItems = count.HasValue ? $"1:{count}" : null,
                 YesPlaylist = false,
                 FlatPlaylist = true,
+                CustomOptions = customOptions.ToArray(),
             });
 
         if (!fetchResult.Success)
@@ -116,6 +130,12 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             FFmpegPath = options.FfmpegPath,
         };
 
+        var customOptions = new List<IOption>();
+        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
+        {
+            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
+        }
+
         return await youtube.RunVideoDataFetch(
             videoUrl,
             cancellationToken,
@@ -127,6 +147,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 CookiesFromBrowser = options.CookiesFromBrowser,
                 PlaylistItems = "0",
                 IgnoreNoFormatsError = true,
+                CustomOptions = customOptions.ToArray(),
             });
     }
 
@@ -145,9 +166,16 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             YoutubeDLPath = options.YtdlpPath,
             FFmpegPath = options.FfmpegPath,
         };
+
         var youtubeClient = client is not null
             ? new MultiValue<string>($"youtube:player_client={client.Name}")
             : null;
+
+        var customOptions = new List<IOption>();
+        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
+        {
+            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
+        }
 
         var result = await youtube.RunVideoDataFetch(
             videoUrl,
@@ -163,6 +191,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 EmbedChapters = true,
                 ExtractorArgs = youtubeClient,
                 IgnoreNoFormatsError = ignoreNoFormatsError,
+                CustomOptions = customOptions.ToArray(),
             });
 
         if (!result.Success)
@@ -187,9 +216,16 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             YoutubeDLPath = options.YtdlpPath,
             FFmpegPath = options.FfmpegPath,
         };
+
         var youtubeClient = client is not null
             ? new MultiValue<string>($"youtube:player_client={client.Name}")
             : null;
+
+        var customOptions = new List<IOption>();
+        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
+        {
+            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
+        }
 
         var tasks = formats.Select(async format =>
         {
@@ -206,6 +242,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                     NoPart = true,
                     EmbedChapters = true,
                     ExtractorArgs = youtubeClient,
+                    CustomOptions = customOptions.ToArray(),
                 });
 
             return (result, format);
@@ -250,6 +287,12 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             FFmpegPath = options.FfmpegPath,
         };
 
+        var customOptions = new List<IOption>();
+        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
+        {
+            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
+        }
+
         var result = await youtube.RunWithOptions(
             thumbnailUrl,
             new OptionSet
@@ -258,6 +301,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 Paths = path,
                 Cookies = cookieFilepath,
                 CookiesFromBrowser = options.CookiesFromBrowser,
+                CustomOptions = customOptions.ToArray(),
             },
             cancellationToken);
 
