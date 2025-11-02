@@ -31,6 +31,7 @@ COPY --chmod=-w --from=build /tubeshade/yt-dlp ./
 RUN apk add --no-cache icu-data-full icu-libs
 RUN apk add --no-cache tzdata
 RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache deno
 
 COPY --chmod=-w --from=build [ \
 "/tubeshade/source/Tubeshade.Server/bin/Release/net${DOTNET_CHANNEL}/${DOTNET_RUNTIME}/publish/Tubeshade.Server", \
@@ -46,7 +47,8 @@ ENV DOTNET_gcServer=0 \
     LANG=en_US.UTF-8 \
     Ytdlp__YtdlpPath=/tubeshade/yt-dlp \
     Ytdlp__FfmpegPath=/usr/bin/ffmpeg \
-    Ytdlp__FfprobePath=/usr/bin/ffprobe
+    Ytdlp__FfprobePath=/usr/bin/ffprobe \
+    Ytdlp__JavascriptRuntimePath=/usr/bin/deno
 
 USER app
 VOLUME /home/app
