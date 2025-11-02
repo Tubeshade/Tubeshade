@@ -70,7 +70,7 @@ public sealed class Index : LibraryPageBase, ITaskPage
     public async Task<IActionResult> OnGetRunning(CancellationToken cancellationToken)
     {
         await OnGet(cancellationToken);
-        return Partial("_RunningTasks", this);
+        return Partial("Tasks/_RunningTasks", this);
     }
 
     public async Task<IActionResult> OnPostScanSubscriptions()
