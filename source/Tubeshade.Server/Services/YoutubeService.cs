@@ -657,6 +657,16 @@ public sealed class YoutubeService
             FFmpegPath = _options.FfmpegPath,
         };
 
+        var formatCustomOptions = new List<IOption>
+        {
+            new Option<string>("-t") { Value = "mp4" },
+        };
+
+        if (_options.JavascriptRuntimePath is { } formatJavascriptRuntimePath)
+        {
+            formatCustomOptions.Add(new Option<string>("--js-runtimes") { Value = formatJavascriptRuntimePath });
+        }
+
         _logger.LogInformation("Getting video metadata for {VideoUrl}", video.ExternalUrl);
 
         var videoData = await youtube.RunVideoDataFetch(
@@ -670,7 +680,7 @@ public sealed class YoutubeService
                 CookiesFromBrowser = _options.CookiesFromBrowser,
                 Format = string.Join(',', formatSelectors),
                 ExtractorArgs = youtubeClient,
-                CustomOptions = [new Option<string>("-t") { Value = "mp4" }]
+                CustomOptions = formatCustomOptions.ToArray(),
             });
 
         if (!videoData.Success)
@@ -762,7 +772,6 @@ public sealed class YoutubeService
             {
                 customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
             }
-
 
             _logger.LogInformation("Downloading video {VideoUrl} to {Directory}", video.ExternalUrl, tempDirectory.FullName);
             var downloadTask = youtube.RunVideoDownload(
