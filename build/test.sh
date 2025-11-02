@@ -2,6 +2,9 @@
 set -e
 
 ./build/build.sh
+
+docker build --tag tubeshade-integration-tests ./
+
 dotnet test \
 	-p:CollectCoverage=true \
 	-p:BuildInParallel=true \

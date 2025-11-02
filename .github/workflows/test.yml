@@ -41,18 +41,14 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
 
-      - name: Test file setup
-        run: |
-          touch /tmp/yt-dlp
-          touch /tmp/ffmpeg
-          touch /tmp/ffprobe
+      - uses: docker/login-action@v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run tests
         run: ./build/test.sh
-        env:
-          Ytdlp__YtdlpPath: /tmp/yt-dlp
-          Ytdlp__FfmpegPath: /tmp/ffmpeg
-          Ytdlp__FfprobePath: /tmp/ffprobe
 
       - name: Gather Code Coverage
         uses: codecov/codecov-action@v5.4.3
