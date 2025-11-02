@@ -12,11 +12,11 @@ public sealed class SchedulerOptions
 
     public required string Period { get; set; } = "PT1M";
 
-    public required int WorkerCount { get; set; } = Math.Max(Environment.ProcessorCount - 1, 1);
+    public required int WorkerCount { get; set; } = 12;
 
     public required int IndexTaskLimit { get; set; } = 1;
 
-    public required int DownloadTaskLimit { get; set; } = 1;
+    public required int DownloadTaskLimit { get; set; } = 2;
 
     public required int SponsorBlockTaskLimit { get; set; } = 1;
 

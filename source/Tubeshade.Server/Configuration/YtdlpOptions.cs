@@ -21,9 +21,9 @@ public sealed class YtdlpOptions
 
     public string? JavascriptRuntimePath { get; set; }
 
-    public long? LimitRate { get; set; } = 10 * 1024 * 1024;
+    public long? LimitRate { get; set; } = 5 * 1024 * 1024;
 
-    public decimal? LimitMultiplier { get; set; }
+    public decimal? LimitMultiplier { get; set; } = 2.5m;
 
     [AllowedValues(null, "brave", "chrome", "chromium", "edge", "firefox", "opera", "safari", "vivaldi", "whale")]
     public string? CookiesFromBrowser { get; set; }
