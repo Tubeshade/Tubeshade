@@ -10,6 +10,7 @@ using Npgsql;
 using PubSubHubbub;
 using PubSubHubbub.Models;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
@@ -26,6 +27,7 @@ public sealed class NotificationsController : ControllerBase
     private readonly NpgsqlConnection _connection;
     private readonly ChannelRepository _channelRepository;
     private readonly ChannelSubscriptionRepository _channelSubscriptionRepository;
+    private readonly VideoRepository _videoRepository;
     private readonly PreferencesRepository _preferencesRepository;
     private readonly IClock _clock;
     private readonly TaskService _taskService;
@@ -36,6 +38,7 @@ public sealed class NotificationsController : ControllerBase
         ChannelRepository channelRepository,
         NpgsqlConnection connection,
         ChannelSubscriptionRepository channelSubscriptionRepository,
+        VideoRepository videoRepository,
         PreferencesRepository preferencesRepository,
         IClock clock,
         TaskService taskService,
@@ -49,6 +52,7 @@ public sealed class NotificationsController : ControllerBase
         _taskService = taskService;
         _userRepository = userRepository;
         _logger = logger;
+        _videoRepository = videoRepository;
         _preferencesRepository = preferencesRepository;
     }
 
@@ -146,7 +150,13 @@ public sealed class NotificationsController : ControllerBase
         var userId = await _userRepository.GetSystemUserId(transaction);
         var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, transaction);
         var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channelId, userId, CancellationToken.None);
-        _ = VideoType.TryFromUrl(videoUrl, out var videoType);
+        var existingVideo = await _videoRepository.FindByExternalUrl(videoUrl, userId, Access.Read, transaction);
+
+        var videoType = existingVideo?.Type;
+        if (videoType is null)
+        {
+            _ = VideoType.TryFromUrl(videoUrl, out videoType);
+        }
 
         if (preferences is null ||
             videoType is null ||
