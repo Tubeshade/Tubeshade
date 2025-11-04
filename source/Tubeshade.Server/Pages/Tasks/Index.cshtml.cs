@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Htmx;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -46,7 +47,8 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
     /// <inheritdoc />
     public IEnumerable<LibraryEntity> Libraries { get; private set; } = null!;
 
-    public async Task OnGet(CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
         Libraries = await _libraryRepository.GetAsync(userId, cancellationToken);
@@ -74,12 +76,10 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
             PageSize = pageSize,
             TotalCount = totalCount,
         };
-    }
 
-    public async Task<IActionResult> OnGetRunning(CancellationToken cancellationToken)
-    {
-        await OnGet(cancellationToken);
-        return Partial("Tasks/_RunningTasks", this);
+        return Request.IsHtmx()
+            ? Partial("Tasks/_RunningTasks", this)
+            : Page();
     }
 
     public async Task<IActionResult> OnPostScanSubscriptions()

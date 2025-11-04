@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Htmx;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Tubeshade.Data.Media;
@@ -36,7 +37,8 @@ public sealed class Index : LibraryPageBase, ITaskPage
     /// <inheritdoc />
     public PaginatedData<TaskModel> PageData { get; set; } = null!;
 
-    public async Task OnGet(CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
 
@@ -65,12 +67,10 @@ public sealed class Index : LibraryPageBase, ITaskPage
             PageSize = pageSize,
             TotalCount = totalCount,
         };
-    }
 
-    public async Task<IActionResult> OnGetRunning(CancellationToken cancellationToken)
-    {
-        await OnGet(cancellationToken);
-        return Partial("Tasks/_RunningTasks", this);
+        return Request.IsHtmx()
+            ? Partial("Tasks/_RunningTasks", this)
+            : Page();
     }
 
     public async Task<IActionResult> OnPostScanSubscriptions()

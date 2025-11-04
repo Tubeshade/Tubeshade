@@ -218,9 +218,12 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                            ownerships.owner_id = owners.id AND
                            ownerships.user_id = @{nameof(parameters.UserId)} AND
                            (ownerships.access = @{nameof(parameters.Access)} OR ownerships.access = 'owner'))
-             
+
              SELECT filtered_tasks.id                    AS Id,
                     filtered_tasks.type                  AS Type,
+                    filtered_tasks.library_id            AS LibraryId,
+                    filtered_tasks.channel_id            AS ChannelId,
+                    filtered_tasks.video_id              AS VideoId,
                     task_runs.id                         AS RunId,
                     task_run_progress.value              AS Value,
                     task_run_progress.target             AS Target,
@@ -237,13 +240,13 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                         
                         WHEN filtered_tasks.type = 'index' THEN
                             filtered_tasks.url
-             
+
                         WHEN filtered_tasks.type = 'download_video' THEN
                             (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
-             
+
                         WHEN filtered_tasks.type = 'scan_channel' THEN
                             (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
-             
+
                         ELSE
                             libraries.name
                         END                              AS Name,

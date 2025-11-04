@@ -108,23 +108,27 @@ public sealed class TaskService
             .Select(grouping =>
             {
                 var runs = grouping.ToArray();
+                var task = runs[0];
 
                 return new TaskModel
                 {
                     Id = grouping.Key,
-                    Type = runs[0].Type,
-                    Name = runs[0].Name,
-                    TotalCount = runs[0].TotalCount,
+                    Type = task.Type,
+                    Name = task.Name,
+                    LibraryId = task.LibraryId,
+                    ChannelId = task.ChannelId,
+                    VideoId = task.VideoId,
+                    TotalCount = task.TotalCount,
                     Runs = runs
-                        .Select(task => new TaskRunModel
+                        .Select(run => new TaskRunModel
                         {
-                            Id = task.RunId,
-                            Value = task.Value,
-                            Target = task.Target,
-                            Rate = task.Rate,
-                            Remaining = task.RemainingDuration,
-                            Result = task.Result,
-                            Message = task.Message,
+                            Id = run.RunId,
+                            Value = run.Value,
+                            Target = run.Target,
+                            Rate = run.Rate,
+                            Remaining = run.RemainingDuration,
+                            Result = run.Result,
+                            Message = run.Message,
                         })
                         .ToArray(),
                 };

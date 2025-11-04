@@ -10,6 +10,12 @@ public sealed class TaskModel
 
     public required string? Name { get; init; }
 
+    public required Guid? LibraryId { get; init; }
+
+    public required Guid? ChannelId { get; init; }
+
+    public required Guid? VideoId { get; init; }
+
     public required TaskRunModel[] Runs { get; init; }
 
     public required int TotalCount { get; init; }

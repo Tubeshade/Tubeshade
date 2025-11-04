@@ -1,7 +1,7 @@
 ﻿@using Tubeshade.Data.Tasks
 @model ITaskPage
 
-<section hx-get="" hx-page-handler="Running" hx-trigger="every 2s" hx-swap="outerHTML" id="tasks"
+<section hx-get="" hx-page-handler="" hx-trigger="every 2s" hx-swap="outerHTML" id="tasks"
          hx-include="#filter" hx-params="*">
     <table class="table">
         <thead>
@@ -22,7 +22,44 @@
                         @if (index is 0)
                         {
                             <span>@task.TypeDisplay</span>
-                            <span>"@task.Name"</span>
+                            @if (task.Type == TaskType.Index)
+                            {
+                                @if (task.VideoId is { } videoId)
+                                {
+                                    <a asp-page="/Videos/Video" asp-route-videoId="@videoId">
+                                        <span>"@task.Name"</span>
+                                    </a>
+                                }
+                                else if (task.ChannelId is { } channelId)
+                                {
+                                    <a asp-page="/Channels/Channel" asp-route-channelId="@channelId">
+                                        <span>"@task.Name"</span>
+                                    </a>
+                                }
+                            }
+                            else if (task.Type == TaskType.DownloadVideo && task.VideoId is { } videoId)
+                            {
+                                <a asp-page="/Videos/Video" asp-route-videoId="@videoId">
+                                    <span>"@task.Name"</span>
+                                </a>
+                            }
+                            else if (task.Type == TaskType.ScanChannel && task.ChannelId is { } channelId)
+                            {
+                                <a asp-page="/Channels/Channel" asp-route-channelId="@channelId">
+                                    <span>"@task.Name"</span>
+                                </a>
+                            }
+                            else if ((task.Type == TaskType.ScanSubscriptions || task.Type == TaskType.ScanSponsorBlockSegments || task.Type == TaskType.RefreshSubscriptions) &&
+                                     task.LibraryId is { } libraryId)
+                            {
+                                <a asp-page="/Libraries/Library" asp-route-libraryId="@libraryId">
+                                    <span>"@task.Name"</span>
+                                </a>
+                            }
+                            else
+                            {
+                                <span>"@task.Name"</span>
+                            }
                         }
                     </td>
                     <td>
