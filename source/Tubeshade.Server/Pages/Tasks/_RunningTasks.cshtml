@@ -36,6 +36,10 @@
                                         <span>"@task.Name"</span>
                                     </a>
                                 }
+                                else
+                                {
+                                    <span>"@task.Name"</span>
+                                }
                             }
                             else if (task.Type == TaskType.DownloadVideo && task.VideoId is { } videoId)
                             {
