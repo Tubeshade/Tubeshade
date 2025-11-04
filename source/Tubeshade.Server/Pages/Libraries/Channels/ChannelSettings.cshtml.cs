@@ -9,7 +9,6 @@ using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
-using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Services;
@@ -124,16 +123,8 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
         var userId = User.GetUserId();
         var cancellationToken = CancellationToken.None;
 
-        var payload = new ScanChannelPayload
-        {
-            LibraryId = LibraryId,
-            ChannelId = channelId,
-            UserId = userId,
-            All = all ?? false,
-        };
-
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var taskId = await _taskRepository.AddScanChannelTask(payload, userId, transaction);
+        var taskId = await _taskRepository.AddScanChannelTask(LibraryId, channelId, all ?? false, userId, transaction);
         await _taskRepository.TriggerTask(taskId, userId, transaction);
         await transaction.CommitAsync(cancellationToken);
 

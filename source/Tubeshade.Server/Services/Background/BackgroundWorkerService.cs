@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +11,6 @@ using Microsoft.Extensions.Options;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
-using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Configuration;
 
 namespace Tubeshade.Server.Services.Background;
@@ -142,24 +140,26 @@ public sealed class BackgroundWorkerService : BackgroundService
         if (task.Type == TaskType.Index)
         {
             using var scope = await _indexLock.LockAsync(cancellationToken);
-            var payload = JsonSerializer.Deserialize(task.Payload, TaskPayloadContext.Default.IndexPayload)!;
             var service = provider.GetRequiredService<YoutubeService>();
-            await service.Index(
-                payload.Url,
-                payload.LibraryId,
-                payload.UserId,
+            var result = await service.Index(
+                task.Url!,
+                task.LibraryId!.Value,
+                task.UserId!.Value,
                 tempDirectory,
                 cancellationToken);
+
+            task.ChannelId = result.ChannelId;
+            task.VideoId = result.VideoId;
+            await taskRepository.UpdateAsync(task);
         }
         else if (task.Type == TaskType.DownloadVideo)
         {
             using var scope = await _downloadLock.LockAsync(cancellationToken);
-            var payload = JsonSerializer.Deserialize(task.Payload, TaskPayloadContext.Default.DownloadVideoPayload)!;
             var service = provider.GetRequiredService<YoutubeService>();
             await service.DownloadVideo(
-                payload.LibraryId,
-                payload.VideoId,
-                payload.UserId,
+                task.LibraryId!.Value,
+                task.VideoId!.Value,
+                task.UserId!.Value,
                 taskRepository,
                 taskRunId,
                 tempDirectory,
@@ -168,13 +168,12 @@ public sealed class BackgroundWorkerService : BackgroundService
         else if (task.Type == TaskType.ScanChannel)
         {
             using var scope = await _indexLock.LockAsync(cancellationToken);
-            var payload = JsonSerializer.Deserialize(task.Payload, TaskPayloadContext.Default.ScanChannelPayload)!;
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanChannel(
-                payload.LibraryId,
-                payload.ChannelId,
-                payload.All,
-                payload.UserId,
+                task.LibraryId!.Value,
+                task.ChannelId!.Value,
+                task.AllVideos,
+                task.UserId!.Value,
                 taskRepository,
                 taskRunId,
                 tempDirectory,
@@ -183,11 +182,10 @@ public sealed class BackgroundWorkerService : BackgroundService
         else if (task.Type == TaskType.ScanSubscriptions)
         {
             using var scope = await _indexLock.LockAsync(cancellationToken);
-            var payload = JsonSerializer.Deserialize(task.Payload, TaskPayloadContext.Default.ScanSubscriptionsPayload)!;
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanSubscriptions(
-                payload.LibraryId,
-                payload.UserId,
+                task.LibraryId!.Value,
+                task.UserId!.Value,
                 taskRepository,
                 taskRunId,
                 tempDirectory,
@@ -196,11 +194,10 @@ public sealed class BackgroundWorkerService : BackgroundService
         else if (task.Type == TaskType.ScanSponsorBlockSegments)
         {
             using var scope = await _sponsorBlockLock.LockAsync(cancellationToken);
-            var payload = JsonSerializer.Deserialize(task.Payload, TaskPayloadContext.Default.ScanSponsorBlockSegmentsPayload)!;
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanSponsorBlockSegments(
-                payload.LibraryId,
-                payload.UserId,
+                task.LibraryId!.Value,
+                task.UserId!.Value,
                 taskRepository,
                 taskRunId,
                 tempDirectory,

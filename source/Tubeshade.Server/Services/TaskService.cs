@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
-using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Pages.Tasks;
 
 namespace Tubeshade.Server.Services;
@@ -41,8 +40,7 @@ public sealed class TaskService
     {
         foreach (var id in libraryIds)
         {
-            var payload = new ScanSubscriptionsPayload { LibraryId = id, UserId = userId };
-            var taskId = await _taskRepository.AddScanSubscriptionsTask(payload, userId, transaction);
+            var taskId = await _taskRepository.AddScanSubscriptionsTask(id, userId, transaction);
             await _taskRepository.TriggerTask(taskId, userId, transaction);
         }
     }
@@ -58,8 +56,7 @@ public sealed class TaskService
     {
         foreach (var id in libraryIds)
         {
-            var payload = new ScanSponsorBlockSegmentsPayload { LibraryId = id, UserId = userId };
-            var taskId = await _taskRepository.AddScanSegmentsTask(payload, userId, transaction);
+            var taskId = await _taskRepository.AddScanSegmentsTask(id, userId, transaction);
             await _taskRepository.TriggerTask(taskId, userId, transaction);
         }
     }
@@ -73,8 +70,7 @@ public sealed class TaskService
 
     public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, NpgsqlTransaction transaction)
     {
-        var payload = new IndexPayload { Url = url, UserId = userId, LibraryId = libraryId };
-        var taskId = await _taskRepository.AddIndexTask(payload, userId, transaction);
+        var taskId = await _taskRepository.AddIndexTask(url, libraryId, userId, transaction);
         await _taskRepository.TriggerTask(taskId, userId, transaction);
     }
 
@@ -87,8 +83,7 @@ public sealed class TaskService
 
     public async ValueTask DownloadVideo(Guid userId, Guid libraryId, Guid videoId, NpgsqlTransaction transaction)
     {
-        var payload = new DownloadVideoPayload { LibraryId = libraryId, VideoId = videoId, UserId = userId };
-        var taskId = await _taskRepository.AddDownloadTask(payload, userId, transaction);
+        var taskId = await _taskRepository.AddDownloadTask(videoId, libraryId, userId, transaction);
         await _taskRepository.TriggerTask(taskId, userId, transaction);
     }
 

@@ -83,7 +83,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
             $"""
              {AccessCte},
                   downloading AS
-                  (SELECT (tasks.payload::json ->> 'videoId')::uuid as video_id
+                  (SELECT tasks.video_id
                    FROM tasks.tasks
                             INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
                             LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id

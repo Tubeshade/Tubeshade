@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +11,6 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Tasks;
-using Tubeshade.Data.Tasks.Payloads;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
 
@@ -102,15 +100,23 @@ public sealed class Index : PageModel, INonLibraryPage
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
-        var payload = new ScanSubscriptionsPayload { LibraryId = Guid.Empty, UserId = userId };
-        var taskId = await _taskRepository.AddScanSubscriptionsTask(payload, userId, transaction);
-        var task = await _taskRepository.GetAsync(taskId, userId, transaction);
+        var taskId = await _taskRepository.AddAsync(
+            new TaskEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                Type = TaskType.ScanSubscriptions,
+                UserId = userId,
+            },
+            transaction);
+        var task = await _taskRepository.GetAsync(taskId!.Value, userId, transaction);
         var scheduleId = await _scheduleRepository.AddAsync(new ScheduleEntity
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
                 OwnerId = userId,
-                TaskId = taskId,
+                TaskId = task.Id,
                 CronExpression = model.CronExpression,
                 TimeZoneId = model.TimeZoneId,
             },
@@ -127,8 +133,7 @@ public sealed class Index : PageModel, INonLibraryPage
             },
             transaction);
 
-        payload = new ScanSubscriptionsPayload { LibraryId = id!.Value, UserId = userId };
-        task.Payload = JsonSerializer.Serialize(payload, TaskPayloadContext.Default.ScanSubscriptionsPayload);
+        task.LibraryId = id!.Value;
         await _taskRepository.UpdateAsync(task, transaction);
         await transaction.CommitAsync(cancellationToken);
 

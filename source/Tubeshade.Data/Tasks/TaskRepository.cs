@@ -2,44 +2,44 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using NodaTime;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
-using Tubeshade.Data.Tasks.Payloads;
 
 namespace Tubeshade.Data.Tasks;
 
 public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepositoryBase<TaskEntity>(connection)
 {
-    private static readonly TaskPayloadContext Context = TaskPayloadContext.Default;
-
     /// <inheritdoc />
     protected override string TableName => "tasks.tasks";
 
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, payload) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Type, @Payload)
+         INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos) 
+         VALUES (@{nameof(TaskEntity.CreatedByUserId)}, @{nameof(TaskEntity.ModifiedByUserId)}, @{nameof(TaskEntity.OwnerId)}, @{nameof(TaskEntity.Type)}, @{nameof(TaskEntity.UserId)}, @{nameof(TaskEntity.LibraryId)}, @{nameof(TaskEntity.ChannelId)}, @{nameof(TaskEntity.VideoId)}, @{nameof(TaskEntity.Url)}, @{nameof(TaskEntity.AllVideos)})
          RETURNING id;
          """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
         $"""
-         SELECT id AS Id,
-                created_at AS CreatedAt,
-                created_by_user_id AS CreatedByUserId,
-                modified_at AS ModifiedAt,
-                modified_by_user_id AS ModifiedByUserId,
-                owner_id AS OwnerId,
-                type AS Type,
-                payload AS Payload
+         SELECT id AS {nameof(TaskEntity.Id)},
+                created_at AS {nameof(TaskEntity.CreatedAt)},
+                created_by_user_id AS {nameof(TaskEntity.CreatedByUserId)},
+                modified_at AS {nameof(TaskEntity.ModifiedAt)},
+                modified_by_user_id AS {nameof(TaskEntity.ModifiedByUserId)},
+                owner_id AS {nameof(TaskEntity.OwnerId)},
+                type AS {nameof(TaskEntity.Type)},
+                user_id AS {nameof(TaskEntity.UserId)},
+                library_id AS {nameof(TaskEntity.LibraryId)},
+                channel_id AS {nameof(TaskEntity.ChannelId)},
+                video_id AS {nameof(TaskEntity.VideoId)},
+                url AS {nameof(TaskEntity.Url)},
+                all_videos AS {nameof(TaskEntity.AllVideos)}
          FROM tasks.tasks
          """;
 
@@ -47,7 +47,12 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     protected override string UpdateSet =>
         $"""
              type = @{nameof(TaskEntity.Type)},
-             payload = @{nameof(TaskEntity.Payload)}
+             user_id = @{nameof(TaskEntity.UserId)},
+             library_id = @{nameof(TaskEntity.LibraryId)},
+             channel_id = @{nameof(TaskEntity.ChannelId)},
+             video_id = @{nameof(TaskEntity.VideoId)},
+             url = @{nameof(TaskEntity.Url)},
+             all_videos = @{nameof(TaskEntity.AllVideos)}
          """;
 
     public async ValueTask<TaskEntity?> TryDequeueTask(Guid taskId, NpgsqlTransaction transaction)
@@ -101,7 +106,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
              SELECT pg_notify('{TaskChannels.Created}', @{nameof(taskId)}::text)
              FROM tasks.tasks
-                  INNER JOIN media.libraries ON (tasks.payload::json ->> 'libraryId')::uuid = libraries.id
+                  INNER JOIN media.libraries ON tasks.library_id = libraries.id
              WHERE(libraries.id IN (SELECT id FROM accessible)) AND tasks.id = @{nameof(taskId)};
              """,
             new { taskId, userId },
@@ -125,7 +130,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              SELECT pg_notify('{TaskChannels.Cancel}', @{nameof(taskRunId)}::text)
              FROM tasks.task_runs
                   INNER JOIN tasks.tasks ON task_runs.task_id = tasks.id
-                  INNER JOIN media.libraries ON (tasks.payload::json ->> 'libraryId')::uuid = libraries.id
+                  INNER JOIN media.libraries ON tasks.library_id = libraries.id
              WHERE (libraries.id IN (SELECT id FROM accessible)) AND task_runs.id = @{nameof(taskRunId)};
              """,
             new { taskRunId, userId },
@@ -216,7 +221,6 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              
              SELECT filtered_tasks.id                    AS Id,
                     filtered_tasks.type                  AS Type,
-                    filtered_tasks.payload               AS Payload,
                     task_runs.id                         AS RunId,
                     task_run_progress.value              AS Value,
                     task_run_progress.target             AS Target,
@@ -225,14 +229,20 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     task_run_results.result              AS Result,
                     task_run_results.message             AS Message,
                     CASE
+                        WHEN filtered_tasks.type = 'index' AND filtered_tasks.video_id IS NOT NULL THEN
+                            (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
+
+                        WHEN filtered_tasks.type = 'index' AND filtered_tasks.channel_id IS NOT NULL THEN
+                            (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
+                        
                         WHEN filtered_tasks.type = 'index' THEN
-                            (filtered_tasks.payload::json ->> 'url')::text
+                            filtered_tasks.url
              
                         WHEN filtered_tasks.type = 'download_video' THEN
-                            (SELECT name FROM media.videos WHERE id = (filtered_tasks.payload::json ->> 'videoId')::uuid)
+                            (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
              
                         WHEN filtered_tasks.type = 'scan_channel' THEN
-                            (SELECT name FROM media.channels WHERE id = (filtered_tasks.payload::json ->> 'channelId')::uuid)
+                            (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
              
                         ELSE
                             libraries.name
@@ -240,13 +250,16 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     count                                AS {nameof(RunningTaskEntity.TotalCount)}
              FROM (SELECT tasks.id,
                           tasks.type,
-                          tasks.payload,
+                          tasks.library_id,
+                          tasks.channel_id,
+                          tasks.video_id,
+                          tasks.url,
                           tasks.created_at,
                           MAX(task_run_results.created_at) AS result_created,
                           MAX(task_runs.created_at)        AS run_created,
                           count(*) OVER ()                 AS count
                    FROM tasks.tasks
-                            INNER JOIN media.libraries ON (tasks.payload::json ->> 'libraryId')::uuid = libraries.id
+                            INNER JOIN media.libraries ON tasks.library_id = libraries.id
                             INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
                             LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
                             LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
@@ -255,7 +268,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                    GROUP BY tasks.id, tasks.created_at
                    ORDER BY result_created DESC, run_created DESC, tasks.created_at DESC
                    OFFSET @{nameof(parameters.Offset)} LIMIT @{nameof(parameters.Limit)}) filtered_tasks
-                      INNER JOIN media.libraries ON (filtered_tasks.payload::json ->> 'libraryId')::uuid = libraries.id
+                      INNER JOIN media.libraries ON filtered_tasks.library_id = libraries.id
                       INNER JOIN tasks.task_runs ON filtered_tasks.id = task_runs.task_id
                       LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
                       LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
@@ -268,55 +281,111 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
     }
 
-    public ValueTask<Guid> AddIndexTask(IndexPayload payload, Guid userId, NpgsqlTransaction transaction)
+    public ValueTask<Guid> AddIndexTask(string url, Guid libraryId, Guid userId, NpgsqlTransaction transaction)
     {
-        return AddTask(payload, Context.IndexPayload, userId, transaction);
-    }
-
-    public ValueTask<Guid> AddDownloadTask(DownloadVideoPayload payload, Guid userId, NpgsqlTransaction transaction)
-    {
-        return AddTask(payload, Context.DownloadVideoPayload, userId, transaction);
-    }
-
-    public ValueTask<Guid> AddScanChannelTask(ScanChannelPayload payload, Guid userId, NpgsqlTransaction transaction)
-    {
-        return AddTask(payload, Context.ScanChannelPayload, userId, transaction);
-    }
-
-    public ValueTask<Guid> AddScanSubscriptionsTask(ScanSubscriptionsPayload payload, Guid userId,
-        NpgsqlTransaction transaction)
-    {
-        return AddTask(payload, Context.ScanSubscriptionsPayload, userId, transaction);
-    }
-
-    public ValueTask<Guid> AddScanSegmentsTask(ScanSponsorBlockSegmentsPayload payload, Guid userId,
-        NpgsqlTransaction transaction)
-    {
-        return AddTask(payload, Context.ScanSponsorBlockSegmentsPayload, userId, transaction);
-    }
-
-    private async ValueTask<Guid> AddTask<TTaskPayload>(
-        TTaskPayload payload,
-        JsonTypeInfo<TTaskPayload> typeInfo,
-        Guid userId,
-        NpgsqlTransaction transaction)
-        where TTaskPayload : PayloadBase, ITaskPayload
-    {
-        var type = TTaskPayload.TaskType;
-        var payloadJson = JsonSerializer.Serialize(payload, typeInfo);
-
-        var taskId = await AddAsync(new TaskEntity
+        return AddTask(new TaskEntity
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
                 OwnerId = userId,
-                Type = type,
-                Payload = payloadJson,
+                Type = TaskType.Index,
+                UserId = userId,
+                LibraryId = libraryId,
+                ChannelId = null,
+                VideoId = null,
+                Url = url,
+                AllVideos = false,
             },
             transaction);
+    }
 
+    public ValueTask<Guid> AddDownloadTask(Guid videoId, Guid libraryId, Guid userId, NpgsqlTransaction transaction)
+    {
+        return AddTask(new TaskEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                Type = TaskType.DownloadVideo,
+                UserId = userId,
+                LibraryId = libraryId,
+                ChannelId = null,
+                VideoId = videoId,
+                Url = null,
+                AllVideos = false,
+            },
+            transaction);
+    }
+
+    public ValueTask<Guid> AddScanChannelTask(
+        Guid libraryId,
+        Guid channelId,
+        bool allVideos,
+        Guid userId,
+        NpgsqlTransaction transaction)
+    {
+        return AddTask(new TaskEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                Type = TaskType.ScanChannel,
+                UserId = userId,
+                LibraryId = libraryId,
+                ChannelId = channelId,
+                VideoId = null,
+                Url = null,
+                AllVideos = allVideos,
+            },
+            transaction);
+    }
+
+    public ValueTask<Guid> AddScanSubscriptionsTask(Guid libraryId, Guid userId, NpgsqlTransaction transaction)
+    {
+        return AddTask(new TaskEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                Type = TaskType.ScanSubscriptions,
+                UserId = userId,
+                LibraryId = libraryId,
+                ChannelId = null,
+                VideoId = null,
+                Url = null,
+                AllVideos = false,
+            },
+            transaction);
+    }
+
+    public ValueTask<Guid> AddScanSegmentsTask(Guid libraryId, Guid userId, NpgsqlTransaction transaction)
+    {
+        return AddTask(new TaskEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                Type = TaskType.ScanSponsorBlockSegments,
+                UserId = userId,
+                LibraryId = libraryId,
+                ChannelId = null,
+                VideoId = null,
+                Url = null,
+                AllVideos = false,
+            },
+            transaction);
+    }
+
+    public async ValueTask<int> UpdateAsync(TaskEntity task)
+    {
+        var command = new CommandDefinition(UpdateSql, task);
+        return await Connection.ExecuteAsync(command);
+    }
+
+    private async ValueTask<Guid> AddTask(TaskEntity task, NpgsqlTransaction transaction)
+    {
+        var taskId = await AddAsync(task, transaction);
         Trace.Assert(taskId is not null);
-
         return taskId.Value;
     }
 }

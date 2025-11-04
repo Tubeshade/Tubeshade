@@ -84,7 +84,7 @@ public sealed class YoutubeService
         _videoFileRepository = videoFileRepository;
     }
 
-    public async ValueTask Index(
+    public async ValueTask<UrlIndexingResult> Index(
         string url,
         Guid libraryId,
         Guid userId,
@@ -102,10 +102,11 @@ public sealed class YoutubeService
 
         var data = await _ytdlpWrapper.FetchUnknownUrlData(url, cookieFilepath, cancellationToken);
         var channel = await GetChannel(libraryId, userId, data, transaction);
+        var result = new UrlIndexingResult { ChannelId = channel.Id };
 
         if (data.ResultType is MetadataType.Video)
         {
-            await IndexVideo(
+            result.VideoId = await IndexVideo(
                 url,
                 channel,
                 libraryId,
@@ -131,6 +132,7 @@ public sealed class YoutubeService
         }
 
         await transaction.CommitWithRetries(_logger, cancellationToken);
+        return result;
     }
 
     private async ValueTask<ChannelEntity> GetChannel(
@@ -173,7 +175,7 @@ public sealed class YoutubeService
         return channel;
     }
 
-    private async ValueTask IndexVideo(
+    private async ValueTask<Guid> IndexVideo(
         string url,
         ChannelEntity channel,
         Guid libraryId,
@@ -432,6 +434,8 @@ public sealed class YoutubeService
         {
             await _taskService.DownloadVideo(userId, libraryId, video.Id, transaction);
         }
+
+        return video.Id;
     }
 
     private async ValueTask IndexChannel(
