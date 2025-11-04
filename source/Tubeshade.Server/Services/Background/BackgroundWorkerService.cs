@@ -21,14 +21,19 @@ public sealed class BackgroundWorkerService : BackgroundService
 
     private readonly IServiceProvider _serviceProvider;
     private readonly SchedulerOptions _options;
+    private readonly FileSystemService _fileSystemService;
 
     private readonly SemaphoreSlim _indexLock;
     private readonly SemaphoreSlim _downloadLock;
     private readonly SemaphoreSlim _sponsorBlockLock;
 
-    public BackgroundWorkerService(IServiceProvider serviceProvider, IOptions<SchedulerOptions> options)
+    public BackgroundWorkerService(
+        IServiceProvider serviceProvider,
+        IOptions<SchedulerOptions> options,
+        FileSystemService fileSystemService)
     {
         _serviceProvider = serviceProvider;
+        _fileSystemService = fileSystemService;
         _options = options.Value;
 
         _indexLock = new(_options.IndexTaskLimit);
@@ -63,7 +68,6 @@ public sealed class BackgroundWorkerService : BackgroundService
     private async ValueTask ProcessTask(Guid taskId, CancellationToken cancellationToken)
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
-        var options = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<YtdlpOptions>>().Value;
 
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<BackgroundWorkerService>>();
         using var loggerScope = logger.BeginScope("{TaskId}", taskId);
@@ -88,19 +92,17 @@ public sealed class BackgroundWorkerService : BackgroundService
             await dequeueTransaction.CommitAsync(cancellationToken);
         }
 
-        var taskRunDirectoryPath = Path.Combine(options.TempPath, $"task-run_{taskRunId:N}");
-
         try
         {
             var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             var added = RunCancellations.TryAdd(taskRunId, source);
             Trace.Assert(added);
 
-            var taskRunDirectory = Directory.CreateDirectory(taskRunDirectoryPath);
+            using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory("task-run", taskRunId);
 
             // Separate scope is needed, so that all updates to task status are not within a transaction
             await using var taskScope = _serviceProvider.CreateAsyncScope();
-            await Execute(task, taskScope.ServiceProvider, taskRunDirectory, taskRepository, taskRunId, source.Token);
+            await Execute(task, taskScope.ServiceProvider, scopedDirectory.Directory, taskRepository, taskRunId, source.Token);
             await taskRepository.CompleteTask(taskRunId, source.Token);
         }
         catch (TaskCanceledException exception)
@@ -115,16 +117,6 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         finally
         {
-            if (Directory.Exists(taskRunDirectoryPath))
-            {
-                logger.LogDebug("Deleting temporary task run directory {Path}", taskRunDirectoryPath);
-                Directory.Delete(taskRunDirectoryPath, true);
-            }
-            else
-            {
-                logger.LogDebug("Temporary task run directory does not exist at {Path}", taskRunDirectoryPath);
-            }
-
             _ = RunCancellations.TryRemove(taskRunId, out _);
         }
     }
