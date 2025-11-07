@@ -8,7 +8,7 @@ namespace Tubeshade.Server.Pages.Tasks;
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public sealed class TaskStatus : SmartEnum<TaskStatus>
 {
-    // public static readonly TaskStatus Queued = new("Queued", 1);
+    public static readonly TaskStatus Queued = new("Queued", 1);
     public static readonly TaskStatus InProgress = new("In progress", 2);
     public static readonly TaskStatus Completed = new("Completed", 3);
     public static readonly TaskStatus Failed = new("Failed", 4);
@@ -19,11 +19,17 @@ public sealed class TaskStatus : SmartEnum<TaskStatus>
     {
     }
 
-    public static TaskStatus FromResult(TaskResult result) => result.Name switch
+    public static TaskStatus FromResult(RunState state, TaskResult? result) => (state.Name, result?.Name) switch
     {
-        TaskResult.Names.Successful => Completed,
-        TaskResult.Names.Failed => Failed,
-        TaskResult.Names.Cancelled => Cancelled,
-        _ => throw new ArgumentOutOfRangeException(nameof(result), result, "Unexpected result"),
+        (RunState.Names.Queued, null) => Queued,
+        (RunState.Names.Running, null) => InProgress,
+        (RunState.Names.Finished, { } resultName) => resultName switch
+        {
+            TaskResult.Names.Successful => Completed,
+            TaskResult.Names.Failed => Failed,
+            TaskResult.Names.Cancelled => Cancelled,
+            _ => throw new ArgumentOutOfRangeException(nameof(result), result, "Unexpected result"),
+        },
+        _ => throw new ArgumentException($"Unexpected state {state.Name} and result {result?.Name} combination"),
     };
 }

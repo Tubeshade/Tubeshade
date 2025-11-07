@@ -3,22 +3,33 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Pages.Tasks;
+using Tubeshade.Server.Services.Background;
+using static System.Data.IsolationLevel;
 
 namespace Tubeshade.Server.Services;
 
 public sealed class TaskService
 {
+    private readonly ILogger<TaskService> _logger;
     private readonly NpgsqlConnection _connection;
     private readonly TaskRepository _taskRepository;
+    private readonly TaskListenerService _taskListenerService;
 
-    public TaskService(NpgsqlConnection connection, TaskRepository taskRepository)
+    public TaskService(
+        ILogger<TaskService> logger,
+        NpgsqlConnection connection,
+        TaskRepository taskRepository,
+        TaskListenerService taskListenerService)
     {
         _connection = connection;
         _taskRepository = taskRepository;
+        _logger = logger;
+        _taskListenerService = taskListenerService;
     }
 
     public async ValueTask<List<TaskModel>> GetGroupedTasks(
@@ -101,6 +112,35 @@ public sealed class TaskService
         await transaction.CommitAsync();
     }
 
+    public async ValueTask WaitForBlockingTasks(TaskEntity task, Guid taskRunId, CancellationToken cancellationToken)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction(ReadCommitted, cancellationToken);
+        var blockingRunIds = await _taskRepository.GetBlockingTaskRunIds(task, transaction);
+
+        if (blockingRunIds.Count is not 0)
+        {
+            _logger.BlockingTaskRuns(blockingRunIds.Count, taskRunId);
+
+            using var listener = new RunFinishedListener(_taskListenerService);
+            while (blockingRunIds.Count > 0)
+            {
+                var finishedTaskRunId = await listener.Reader.ReadAsync(cancellationToken);
+                if (blockingRunIds.Remove(finishedTaskRunId))
+                {
+                    _logger.RemovedBlockingTaskRun(finishedTaskRunId, taskRunId, blockingRunIds.Count);
+                }
+                else
+                {
+                    _logger.NonBlockingTaskRun(finishedTaskRunId, taskRunId);
+                }
+            }
+        }
+
+        _logger.StartingTaskRun(taskRunId, task.Id);
+        await _taskRepository.StartTaskRun(taskRunId, transaction);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
     private static List<TaskModel> GroupTasks(IEnumerable<RunningTaskEntity> runningTasks)
     {
         return runningTasks
@@ -123,6 +163,7 @@ public sealed class TaskService
                         .Select(run => new TaskRunModel
                         {
                             Id = run.RunId,
+                            State = run.RunState,
                             Value = run.Value,
                             Target = run.Target,
                             Rate = run.Rate,

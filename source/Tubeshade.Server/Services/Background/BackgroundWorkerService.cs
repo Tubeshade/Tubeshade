@@ -22,6 +22,7 @@ public sealed class BackgroundWorkerService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly SchedulerOptions _options;
     private readonly FileSystemService _fileSystemService;
+    private readonly TaskListenerService _taskListenerService;
 
     private readonly SemaphoreSlim _indexLock;
     private readonly SemaphoreSlim _downloadLock;
@@ -30,10 +31,12 @@ public sealed class BackgroundWorkerService : BackgroundService
     public BackgroundWorkerService(
         IServiceProvider serviceProvider,
         IOptions<SchedulerOptions> options,
-        FileSystemService fileSystemService)
+        FileSystemService fileSystemService,
+        TaskListenerService taskListenerService)
     {
         _serviceProvider = serviceProvider;
         _fileSystemService = fileSystemService;
+        _taskListenerService = taskListenerService;
         _options = options.Value;
 
         _indexLock = new(_options.IndexTaskLimit);
@@ -56,7 +59,7 @@ public sealed class BackgroundWorkerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Parallel.ForEachAsync(
-            TaskListenerService.TaskCreated.ReadAllAsync(stoppingToken),
+            _taskListenerService.TaskCreated.ReadAllAsync(stoppingToken),
             new ParallelOptions
             {
                 CancellationToken = stoppingToken,
@@ -71,10 +74,11 @@ public sealed class BackgroundWorkerService : BackgroundService
 
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<BackgroundWorkerService>>();
         using var loggerScope = logger.BeginScope("{TaskId}", taskId);
-        logger.LogDebug("Received created task id");
+        logger.ReceivedCreatedTask(taskId);
 
         var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
         var taskRepository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
+        var taskService = scope.ServiceProvider.GetRequiredService<TaskService>();
 
         TaskEntity? task;
         Guid taskRunId;
@@ -84,10 +88,11 @@ public sealed class BackgroundWorkerService : BackgroundService
             task = await taskRepository.TryDequeueTask(taskId, dequeueTransaction);
             if (task is null)
             {
-                logger.LogDebug("Could not dequeue task {TaskId}", taskId);
+                logger.CouldNotDequeueTask(taskId);
                 return;
             }
 
+            logger.AddingTaskRun(taskId);
             taskRunId = await taskRepository.AddTaskRun(task.Id, dequeueTransaction);
             await dequeueTransaction.CommitAsync(cancellationToken);
         }
@@ -98,6 +103,8 @@ public sealed class BackgroundWorkerService : BackgroundService
             var added = RunCancellations.TryAdd(taskRunId, source);
             Trace.Assert(added);
 
+            await taskService.WaitForBlockingTasks(task, taskRunId, source.Token);
+
             using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory("task-run", taskRunId);
 
             // Separate scope is needed, so that all updates to task status are not within a transaction
@@ -105,14 +112,14 @@ public sealed class BackgroundWorkerService : BackgroundService
             await Execute(task, taskScope.ServiceProvider, scopedDirectory.Directory, taskRepository, taskRunId, source.Token);
             await taskRepository.CompleteTask(taskRunId, source.Token);
         }
-        catch (TaskCanceledException exception)
+        catch (Exception exception) when (exception is TaskCanceledException or OperationCanceledException)
         {
-            logger.LogWarning(exception, "Task cancelled");
+            logger.TaskCancelled(exception);
             await taskRepository.CancelledTask(taskRunId, CancellationToken.None);
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Task failed unexpectedly");
+            logger.TaskFailed(exception);
             await taskRepository.FailedTask(taskRunId, exception, CancellationToken.None);
         }
         finally

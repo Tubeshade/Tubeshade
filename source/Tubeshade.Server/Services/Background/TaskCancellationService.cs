@@ -8,16 +8,18 @@ namespace Tubeshade.Server.Services.Background;
 public sealed class TaskCancellationService : BackgroundService
 {
     private readonly ILogger<TaskCancellationService> _logger;
+    private readonly TaskListenerService _taskListenerService;
 
-    public TaskCancellationService(ILogger<TaskCancellationService> logger)
+    public TaskCancellationService(ILogger<TaskCancellationService> logger, TaskListenerService taskListenerService)
     {
         _logger = logger;
+        _taskListenerService = taskListenerService;
     }
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var reader = TaskListenerService.TaskRunCancelled;
+        var reader = _taskListenerService.TaskRunCancelled;
 
         while (await reader.WaitToReadAsync(stoppingToken))
         {

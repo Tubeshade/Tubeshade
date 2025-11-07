@@ -15,7 +15,7 @@ namespace Tubeshade.Server.Services.Background;
 
 public sealed class TaskListenerService : BackgroundService
 {
-    private static readonly FrozenDictionary<string, Channel<Guid>> Channels = TaskChannels.Names
+    private readonly FrozenDictionary<string, Channel<Guid>> _channels = TaskChannels.Names
         .ToFrozenDictionary(name => name, _ => Channel.CreateUnbounded<Guid>(
             new UnboundedChannelOptions
             {
@@ -27,13 +27,13 @@ public sealed class TaskListenerService : BackgroundService
     private readonly ILogger<TaskListenerService> _logger;
     private readonly NpgsqlMultiHostDataSource _dataSource;
 
-    internal static ChannelReader<Guid> TaskCreated => Channels[TaskChannels.Created].Reader;
+    internal ChannelReader<Guid> TaskCreated => _channels[TaskChannels.Created].Reader;
 
-    internal static ChannelReader<Guid> TaskRunCancelled => Channels[TaskChannels.Cancel].Reader;
+    internal ChannelReader<Guid> TaskRunCancelled => _channels[TaskChannels.Cancel].Reader;
 
-    public TaskListenerService(
-        ILogger<TaskListenerService> logger,
-        NpgsqlMultiHostDataSource dataSource)
+    internal event EventHandler<Guid>? TaskRunFinished;
+
+    public TaskListenerService(ILogger<TaskListenerService> logger, NpgsqlMultiHostDataSource dataSource)
     {
         _logger = logger;
         _dataSource = dataSource;
@@ -66,7 +66,7 @@ public sealed class TaskListenerService : BackgroundService
     private void ConnectionOnNotification(object? sender, NpgsqlNotificationEventArgs args)
     {
         _logger.LogDebug("Received notification {NotificationChannel} from {NotificationPid}", args.Channel, args.PID);
-        if (!Channels.TryGetValue(args.Channel, out var channel))
+        if (!_channels.TryGetValue(args.Channel, out var channel))
         {
             _logger.LogWarning("Unexpected notification channel {NotificationChannel}", args.Channel);
             return;
@@ -82,5 +82,10 @@ public sealed class TaskListenerService : BackgroundService
         _logger.LogInformation("Starting task {TaskId}", id);
         var queued = channel.Writer.TryWrite(id);
         Trace.Assert(queued);
+
+        if (args.Channel is TaskChannels.RunFinished)
+        {
+            TaskRunFinished?.Invoke(this, id);
+        }
     }
 }

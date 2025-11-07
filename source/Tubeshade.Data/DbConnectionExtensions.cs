@@ -19,12 +19,20 @@ public static class DbConnectionExtensions
             : Task.CompletedTask;
     }
 
-    public static async ValueTask<NpgsqlTransaction> OpenAndBeginTransaction(
+    public static ValueTask<NpgsqlTransaction> OpenAndBeginTransaction(
         this NpgsqlConnection connection,
         CancellationToken cancellationToken = default)
     {
+        return OpenAndBeginTransaction(connection, IsolationLevel.Serializable, cancellationToken);
+    }
+
+    public static async ValueTask<NpgsqlTransaction> OpenAndBeginTransaction(
+        this NpgsqlConnection connection,
+        IsolationLevel isolationLevel,
+        CancellationToken cancellationToken = default)
+    {
         await connection.OpenConnection(cancellationToken);
-        return await connection.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        return await connection.BeginTransactionAsync(isolationLevel, cancellationToken);
     }
 
     public static async ValueTask CommitWithRetries(

@@ -24,6 +24,7 @@ public static class ServiceCollectionExtensions
     {
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<Access, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskType, int>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<RunState, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskResult, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ExternalAvailability, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ImageType, int>());

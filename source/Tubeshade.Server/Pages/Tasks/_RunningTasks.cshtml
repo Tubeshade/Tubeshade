@@ -67,7 +67,11 @@
                         }
                     </td>
                     <td>
-                        @if (run.HasProgress)
+                        @if (run.State == RunState.Queued)
+                        {
+                            <span>Queued</span>
+                        }
+                        else if (run.HasProgress)
                         {
                             <div class="row">
                                 <label for="@run.ProgressBarId" class="col-auto">@run.FormattedValue</label>
@@ -105,7 +109,7 @@
                                     Retry
                                 </button>
                             }
-                            else if (run.Status == TaskStatus.InProgress)
+                            else if (run.Status == TaskStatus.InProgress || run.Status == TaskStatus.Queued)
                             {
                                 <button
                                     hx-post="" hx-page-handler="Cancel" hx-route-taskRunId="@run.Id" hx-swap="none"

@@ -135,7 +135,8 @@ internal static class Program
             .AddCheck<DatabaseHealthCheck>(nameof(DatabaseHealthCheck));
 
         builder.Services
-            .AddHostedService<TaskListenerService>()
+            .AddSingleton<TaskListenerService>()
+            .AddHostedService<TaskListenerService>(provider => provider.GetRequiredService<TaskListenerService>())
             .AddHostedService<TaskCancellationService>()
             .AddHostedService<BackgroundWorkerService>()
             .AddHostedService<SchedulerService>()

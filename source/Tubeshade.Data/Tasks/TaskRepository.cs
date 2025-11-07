@@ -76,9 +76,27 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask<Guid> AddTaskRun(Guid taskId, NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
-            $"INSERT INTO tasks.task_runs (task_id) VALUES (@{nameof(taskId)}) RETURNING id;",
+            $"""
+             INSERT INTO tasks.task_runs (task_id, state)
+             VALUES (@{nameof(taskId)}, '{RunState.Names.Queued}')
+             RETURNING id;
+             """,
             new { taskId },
             transaction));
+    }
+
+    public async ValueTask StartTaskRun(Guid taskRunId, NpgsqlTransaction transaction)
+    {
+        var count = await Connection.ExecuteAsync(new CommandDefinition(
+            $"""
+             UPDATE tasks.task_runs
+             SET state = '{RunState.Names.Running}'
+             WHERE id = @{nameof(taskRunId)};
+             """,
+            new { taskRunId },
+            transaction));
+
+        Trace.Assert(count is 1);
     }
 
     public async ValueTask TriggerTask(Guid taskId, NpgsqlTransaction transaction)
@@ -169,38 +187,59 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
     public async ValueTask<Guid> CompleteTask(Guid taskRunId, CancellationToken cancellationToken)
     {
-        return await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+        await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
+        await FinishTaskRun(taskRunId, transaction);
+
+        var id =  await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+            // lang=sql
             $"""
              INSERT INTO tasks.task_run_results (run_id, result, message)
              VALUES (@{nameof(taskRunId)}, @result, NULL)
              RETURNING id;
              """,
             new { taskRunId, result = TaskResult.Successful },
-            cancellationToken: cancellationToken));
+            transaction));
+
+        await transaction.CommitAsync(cancellationToken);
+        return id;
     }
 
     public async ValueTask<Guid> CancelledTask(Guid taskRunId, CancellationToken cancellationToken)
     {
-        return await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+        await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
+        await FinishTaskRun(taskRunId, transaction);
+
+        var id =  await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+            // lang=sql
             $"""
              INSERT INTO tasks.task_run_results (run_id, result, message)
              VALUES (@{nameof(taskRunId)}, @result, NULL)
              RETURNING id;
              """,
             new { taskRunId, result = TaskResult.Cancelled },
-            cancellationToken: cancellationToken));
+            transaction));
+
+        await transaction.CommitAsync(cancellationToken);
+        return id;
     }
 
     public async ValueTask<Guid> FailedTask(Guid taskRunId, Exception exception, CancellationToken cancellationToken)
     {
-        return await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+        await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
+        await FinishTaskRun(taskRunId, transaction);
+
+        var id =  await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+            // lang=sql
             $"""
              INSERT INTO tasks.task_run_results (run_id, result, message)
              VALUES (@{nameof(taskRunId)}, @result, @message)
              RETURNING id;
              """,
             new { taskRunId, result = TaskResult.Failed, message = exception.Message },
-            cancellationToken: cancellationToken));
+            transaction));
+
+        await transaction.CommitAsync(cancellationToken);
+        return id;
     }
 
     public async ValueTask<List<RunningTaskEntity>> GetRunningTasks(
@@ -225,6 +264,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     filtered_tasks.channel_id            AS ChannelId,
                     filtered_tasks.video_id              AS VideoId,
                     task_runs.id                         AS RunId,
+                    task_runs.state                      AS RunState,
                     task_run_progress.value              AS Value,
                     task_run_progress.target             AS Target,
                     task_run_progress.rate               AS Rate,
@@ -282,6 +322,44 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
         var enumerable = await Connection.QueryAsync<RunningTaskEntity>(command);
         return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<List<Guid>> GetBlockingTaskRunIds(TaskEntity task, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             WITH matching_videos AS
+                      (SELECT id, external_url, channel_id
+                       FROM media.videos
+                       WHERE id = @{nameof(task.VideoId)}
+                          OR external_url = @{nameof(task.Url)}),
+
+                  matching_channels AS
+                      (SELECT channels.id
+                       FROM media.channels
+                                LEFT OUTER JOIN matching_videos ON channel_id = channels.id
+                       WHERE matching_videos.id IS NOT NULL
+                          OR channels.id = @{nameof(task.ChannelId)})
+
+             SELECT task_runs.id
+             FROM tasks.tasks
+                      INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
+                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+             WHERE task_run_results.id IS NULL
+               AND tasks.created_at < @{nameof(task.CreatedAt)}
+               AND (tasks.video_id IN (SELECT id FROM matching_videos)
+                 OR tasks.url IN (SELECT external_url FROM matching_videos)
+                 OR tasks.channel_id IN (SELECT id FROM matching_channels)
+                 OR (@{nameof(task.VideoId)} IS NOT NULL AND tasks.video_id = @{nameof(task.VideoId)})
+                 OR (@{nameof(task.ChannelId)} IS NOT NULL AND tasks.channel_id = @{nameof(task.ChannelId)})
+                 OR (@{nameof(task.Url)} IS NOT NULL AND tasks.url = @{nameof(task.Url)}));
+             """,
+            task,
+            transaction);
+
+        var enumerable = await Connection.QueryAsync<Guid>(command);
+        return enumerable as List<Guid> ?? enumerable.ToList();
     }
 
     public ValueTask<Guid> AddIndexTask(string url, Guid libraryId, Guid userId, NpgsqlTransaction transaction)
@@ -390,5 +468,20 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         var taskId = await AddAsync(task, transaction);
         Trace.Assert(taskId is not null);
         return taskId.Value;
+    }
+
+    private async ValueTask FinishTaskRun(Guid taskRunId, NpgsqlTransaction transaction)
+    {
+        await Connection.ExecuteAsync(new CommandDefinition(
+            // lang=sql
+            $"""
+             UPDATE tasks.task_runs
+             SET state = '{RunState.Names.Finished}'
+             WHERE id = @{nameof(taskRunId)};
+
+             SELECT pg_notify('{TaskChannels.RunFinished}', @{nameof(taskRunId)}::text);
+             """,
+            new { taskRunId },
+            transaction));
     }
 }
