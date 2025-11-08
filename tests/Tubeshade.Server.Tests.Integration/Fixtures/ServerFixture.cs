@@ -51,7 +51,7 @@ public sealed partial class ServerFixture : IAsyncDisposable
                 "Database:ConnectionString",
                 "Host=database; Port=5432; Username=postgres; Password=postgres; Include Error Detail=true")
             .WithPortBinding(8080, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(StartedRegex()))
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8080).UntilMessageIsLogged(StartedRegex()))
             .DependsOn(_postgreSqlContainer)
             .Build();
 

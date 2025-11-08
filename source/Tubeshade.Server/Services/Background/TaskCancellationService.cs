@@ -9,11 +9,16 @@ public sealed class TaskCancellationService : BackgroundService
 {
     private readonly ILogger<TaskCancellationService> _logger;
     private readonly TaskListenerService _taskListenerService;
+    private readonly BackgroundWorkerService _backgroundWorkerService;
 
-    public TaskCancellationService(ILogger<TaskCancellationService> logger, TaskListenerService taskListenerService)
+    public TaskCancellationService(
+        ILogger<TaskCancellationService> logger,
+        TaskListenerService taskListenerService,
+        BackgroundWorkerService backgroundWorkerService)
     {
         _logger = logger;
         _taskListenerService = taskListenerService;
+        _backgroundWorkerService = backgroundWorkerService;
     }
 
     /// <inheritdoc />
@@ -25,7 +30,8 @@ public sealed class TaskCancellationService : BackgroundService
         {
             var taskRunId = await reader.ReadAsync(stoppingToken);
             _logger.LogDebug("Cancelling task run {TaskRunId}", taskRunId);
-            var cancelled = await BackgroundWorkerService.CancelTaskRun(taskRunId);
+
+            var cancelled = await _backgroundWorkerService.CancelTaskRun(taskRunId);
             if (!cancelled)
             {
                 _logger.LogDebug("No task run with id {TaskRunId} to cancel", taskRunId);

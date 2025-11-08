@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,8 +8,12 @@ using Tubeshade.Data.Migrations;
 
 namespace Tubeshade.Server.Configuration.Startup;
 
-internal sealed class DatabaseMigrationStartupFilter : IStartupFilter
+public sealed class DatabaseMigrationStartupFilter : IStartupFilter
 {
+    private readonly TaskCompletionSource _taskCompletionSource = new();
+
+    internal Task MigrationTask => _taskCompletionSource.Task;
+
     /// <inheritdoc />
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => builder =>
     {
@@ -20,9 +25,12 @@ internal sealed class DatabaseMigrationStartupFilter : IStartupFilter
 
         using (var scope = builder.ApplicationServices.CreateScope())
         {
-            var connection = scope.ServiceProvider.GetRequiredService<NpgsqlMultiHostDataSource>();
-            connection.ReloadTypes();
+            var dataSource = scope.ServiceProvider.GetRequiredService<NpgsqlDataSource>();
+            dataSource.ReloadTypes();
+            dataSource.Clear();
         }
+
+        _taskCompletionSource.SetResult();
 
         next(builder);
     };

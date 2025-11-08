@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
+using Tubeshade.Server.Configuration.Startup;
 
 namespace Tubeshade.Server.Services.Background;
 
@@ -26,6 +27,7 @@ public sealed class TaskListenerService : BackgroundService
 
     private readonly ILogger<TaskListenerService> _logger;
     private readonly NpgsqlMultiHostDataSource _dataSource;
+    private readonly DatabaseMigrationStartupFilter _migrationStartupFilter;
 
     internal ChannelReader<Guid> TaskCreated => _channels[TaskChannels.Created].Reader;
 
@@ -33,15 +35,21 @@ public sealed class TaskListenerService : BackgroundService
 
     internal event EventHandler<Guid>? TaskRunFinished;
 
-    public TaskListenerService(ILogger<TaskListenerService> logger, NpgsqlMultiHostDataSource dataSource)
+    public TaskListenerService(
+        ILogger<TaskListenerService> logger,
+        NpgsqlMultiHostDataSource dataSource,
+        DatabaseMigrationStartupFilter migrationStartupFilter)
     {
         _logger = logger;
         _dataSource = dataSource;
+        _migrationStartupFilter = migrationStartupFilter;
     }
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await _migrationStartupFilter.MigrationTask;
+
         await using var connection = _dataSource.CreateConnection(TargetSessionAttributes.Any);
         await connection.OpenConnection(stoppingToken);
 

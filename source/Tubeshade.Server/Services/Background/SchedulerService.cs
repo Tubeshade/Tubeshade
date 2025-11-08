@@ -11,6 +11,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
+using Tubeshade.Server.Configuration.Startup;
 
 namespace Tubeshade.Server.Services.Background;
 
@@ -23,22 +24,27 @@ public sealed class SchedulerService : BackgroundService
     private readonly IClock _clock;
     private readonly IServiceProvider _serviceProvider;
     private readonly IOptionsMonitor<SchedulerOptions> _optionsMonitor;
+    private readonly DatabaseMigrationStartupFilter _migrationStartupFilter;
 
     public SchedulerService(
         ILogger<SchedulerService> logger,
         IClock clock,
         IServiceProvider serviceProvider,
-        IOptionsMonitor<SchedulerOptions> optionsMonitor)
+        IOptionsMonitor<SchedulerOptions> optionsMonitor,
+        DatabaseMigrationStartupFilter migrationStartupFilter)
     {
         _logger = logger;
         _clock = clock;
         _serviceProvider = serviceProvider;
         _optionsMonitor = optionsMonitor;
+        _migrationStartupFilter = migrationStartupFilter;
     }
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await _migrationStartupFilter.MigrationTask;
+
         var timerPeriod = _optionsMonitor.CurrentValue.GetPeriodTimeSpan();
         using var timer = new PeriodicTimer(timerPeriod);
         // timer has the same scope as change monitor

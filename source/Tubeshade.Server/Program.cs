@@ -138,7 +138,8 @@ internal static class Program
             .AddSingleton<TaskListenerService>()
             .AddHostedService<TaskListenerService>(provider => provider.GetRequiredService<TaskListenerService>())
             .AddHostedService<TaskCancellationService>()
-            .AddHostedService<BackgroundWorkerService>()
+            .AddSingleton<BackgroundWorkerService>()
+            .AddHostedService<BackgroundWorkerService>(provider => provider.GetRequiredService<BackgroundWorkerService>())
             .AddHostedService<SchedulerService>()
             .AddScoped<TaskService>()
             .AddScoped<WebVideoTextTracksService>()
@@ -151,7 +152,9 @@ internal static class Program
             .AddSingleton<FileSystemService>()
             .AddPubSubHubbubClient();
 
-        builder.Services.AddTransient<IStartupFilter, DatabaseMigrationStartupFilter>();
+        builder.Services
+            .AddSingleton<DatabaseMigrationStartupFilter>()
+            .AddSingleton<IStartupFilter, DatabaseMigrationStartupFilter>(provider => provider.GetRequiredService<DatabaseMigrationStartupFilter>());
 
         builder.Services.AddCors(options => options.AddDefaultPolicy(cors =>
             cors.AllowAnyMethod()

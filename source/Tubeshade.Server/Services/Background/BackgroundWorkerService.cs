@@ -17,7 +17,7 @@ namespace Tubeshade.Server.Services.Background;
 
 public sealed class BackgroundWorkerService : BackgroundService
 {
-    private static readonly ConcurrentDictionary<Guid, CancellationTokenSource> RunCancellations = [];
+    private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _runCancellations = [];
 
     private readonly IServiceProvider _serviceProvider;
     private readonly SchedulerOptions _options;
@@ -44,9 +44,9 @@ public sealed class BackgroundWorkerService : BackgroundService
         _sponsorBlockLock = new(_options.SponsorBlockTaskLimit);
     }
 
-    internal static async ValueTask<bool> CancelTaskRun(Guid taskRunId)
+    internal async ValueTask<bool> CancelTaskRun(Guid taskRunId)
     {
-        if (!RunCancellations.TryRemove(taskRunId, out var tokenSource))
+        if (!_runCancellations.TryRemove(taskRunId, out var tokenSource))
         {
             return false;
         }
@@ -100,7 +100,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         try
         {
             var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            var added = RunCancellations.TryAdd(taskRunId, source);
+            var added = _runCancellations.TryAdd(taskRunId, source);
             Trace.Assert(added);
 
             await taskService.WaitForBlockingTasks(task, taskRunId, source.Token);
@@ -124,7 +124,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         finally
         {
-            _ = RunCancellations.TryRemove(taskRunId, out _);
+            _ = _runCancellations.TryRemove(taskRunId, out _);
         }
     }
 
