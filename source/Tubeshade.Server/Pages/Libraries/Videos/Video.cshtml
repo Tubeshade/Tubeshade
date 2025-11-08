@@ -345,15 +345,20 @@
         function onSponsorBlockTrackLoad() {
             sponsorBlockTrack.addEventListener("cuechange", function (_event) {
                 const activeCues = sponsorBlockTrack.track.activeCues;
+                let skippableCues = [];
 
-                if (activeCues.length === 1) {
-                    const cue = activeCues[0];
-                    console.debug("Single active SponsorBlock cue", cue);
+                for (let i = 0; i < activeCues.length; i++) {
+                    const cue = activeCues[i];
                     if (cue.text !== "filler") {
-                        video.currentTime = cue.endTime;
+                        skippableCues.push(cue);
                     }
+                }
+
+                if (skippableCues.length === 1) {
+                    const cue = skippableCues[0];
+                    video.currentTime = cue.endTime;
                 } else {
-                    console.debug("Zero or multiple active SponsorBlock cues", activeCues);
+                    console.debug(`${skippableCues.length} active SponsorBlock cues`, skippableCues);
                 }
             });
         }
