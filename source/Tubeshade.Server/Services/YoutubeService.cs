@@ -30,7 +30,7 @@ public sealed class YoutubeService
 {
     private static readonly string[] DefaultVideoFormats =
     [
-        "bv+(ba[format_note*=original]/ba)/best",
+        "bv[url!*='xtags=sr%3D1']+(ba[format_note*=original]/ba)/best[url!*='xtags=sr%3D1']",
         "bv*[height<=720]+(ba[format_note*=original]/ba)"
     ];
 
