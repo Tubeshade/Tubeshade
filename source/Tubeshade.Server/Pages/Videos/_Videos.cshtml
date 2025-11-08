@@ -1,4 +1,5 @@
-﻿@model Tubeshade.Server.Pages.Shared.PaginatedData<VideoModel>
+﻿@using NodaTime.Text
+@model Tubeshade.Server.Pages.Shared.PaginatedData<VideoModel>
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))">
     @foreach (var video in Model.Data)
@@ -33,7 +34,9 @@
                 </div>
 
                 <div class="d-flex d-inline justify-content-between">
-                    <span>@(DateOnly.FromDateTime(video.Video.PublishedAt.ToDateTimeUtc()))</span>
+                    <time datetime="@InstantPattern.General.Format(video.Video.PublishedAt)">
+                        @LocalDatePattern.Iso.Format(video.Video.PublishedAt.InUtc().Date)
+                    </time>
                     <div>
                         <span>@(HumanReadablePeriodPattern.Instance.Format(video.Video.Duration))</span>
                         @if (video.Video.Duration != video.ActualDuration)

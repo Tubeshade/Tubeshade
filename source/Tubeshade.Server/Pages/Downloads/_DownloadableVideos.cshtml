@@ -1,4 +1,5 @@
-﻿@model IDownloadPage
+﻿@using NodaTime.Text
+@model IDownloadPage
 
 <section id="downloadable-videos">
     <div class="row row-cols-1 row-cols-xl-2 g-2 mb-2">
@@ -25,7 +26,9 @@
                                 </a>
 
                                 <div class="card-text">
-                                    <span>@(DateOnly.FromDateTime(video.Video.PublishedAt.ToDateTimeUtc()))</span>
+                                    <time datetime="@InstantPattern.General.Format(video.Video.PublishedAt)">
+                                        @LocalDatePattern.Iso.Format(video.Video.PublishedAt.InUtc().Date)
+                                    </time>
                                     <span> - </span>
                                     <span>@(HumanReadablePeriodPattern.Instance.Format(video.Video.Duration))</span>
                                     @if (video.Video.Duration != video.ActualDuration)

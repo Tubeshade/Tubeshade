@@ -1,4 +1,5 @@
 ﻿@page "~/Channels/{handler?}"
+@using NodaTime.Text
 @model Index
 @{
     ViewData["Title"] = "Channels";
@@ -28,7 +29,16 @@
                 </a>
             </td>
             <td>
-                <span>@(channel.SubscribedAt?.InUtc().LocalDateTime.Date.ToString() ?? "-")</span>
+                @if (channel.SubscribedAt is { } time)
+                {
+                    <time datetime="@InstantPattern.General.Format(time)">
+                        @LocalDatePattern.Iso.Format(time.InUtc().Date)
+                    </time>
+                }
+                else
+                {
+                    <span>-</span>
+                }
             </td>
             <td>
                 @channel.Availability.Name

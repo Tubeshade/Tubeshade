@@ -100,10 +100,16 @@
         </div>
     </form>
     <div class="col-auto">
-        Published at @LocalDatePattern.CreateWithCurrentCulture("yyyy-MM-dd").Format(Model.Entity.PublishedAt.InUtc().Date)
+        Published at
+        <time datetime="@InstantPattern.General.Format(Model.Entity.PublishedAt)">
+            @LocalDatePattern.Iso.Format(Model.Entity.PublishedAt.InUtc().Date)
+        </time>
     </div>
     <div class="col-auto">
-        Refreshed at @LocalDatePattern.CreateWithCurrentCulture("yyyy-MM-dd").Format(Model.Entity.RefreshedAt.InUtc().Date)
+        Refreshed at
+        <time datetime="@InstantPattern.General.Format(Model.Entity.RefreshedAt)">
+            @LocalDatePattern.Iso.Format(Model.Entity.RefreshedAt.InUtc().Date)
+        </time>
     </div>
     @if (Model.Entity.ViewCount is { } viewCount)
     {
