@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -138,11 +137,10 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
             var task1 = (await repository.TryDequeueTask(taskId, transaction))!;
             task1.Should().NotBeNull();
 
-            var blockingIds = await repository.GetBlockingTaskRunIds(task1, transaction);
-            blockingIds.Should().BeEmpty();
+            (await repository.GetBlockingTaskRunIds(task1, CancellationToken.None)).Should().BeEmpty();
 
             task1RunId = await repository.AddTaskRun(taskId, transaction);
-            await repository.StartTaskRun(task1RunId, transaction);
+            await repository.StartTaskRun(task1RunId, CancellationToken.None);
             await transaction.CommitAsync();
         }
 
@@ -159,22 +157,18 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
             await transaction.CommitAsync();
         }
 
-        await using (var transaction = await connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted))
+        var blockingIds = await repository.GetBlockingTaskRunIds(task2, CancellationToken.None);
+        blockingIds.Should().ContainSingle().Which.Should().Be(task1RunId);
+
+        await using (var parallelScope = Fixture.Services.CreateAsyncScope())
         {
-            var blockingIds = await repository.GetBlockingTaskRunIds(task2, transaction);
-            blockingIds.Should().ContainSingle().Which.Should().Be(task1RunId);
-
-            await using (var parallelScope = Fixture.Services.CreateAsyncScope())
-            {
-                var parallelRepository = parallelScope.ServiceProvider.GetRequiredService<TaskRepository>();
-                await parallelRepository.CompleteTask(task1RunId, CancellationToken.None);
-            }
-
-            blockingIds = await repository.GetBlockingTaskRunIds(task2, transaction);
-            blockingIds.Should().BeEmpty();
-
-            await repository.StartTaskRun(task2RunId, transaction);
-            await transaction.CommitAsync();
+            var parallelRepository = parallelScope.ServiceProvider.GetRequiredService<TaskRepository>();
+            await parallelRepository.CompleteTask(task1RunId, CancellationToken.None);
         }
+
+        blockingIds = await repository.GetBlockingTaskRunIds(task2, CancellationToken.None);
+        blockingIds.Should().BeEmpty();
+
+        await repository.StartTaskRun(task2RunId, CancellationToken.None);
     }
 }

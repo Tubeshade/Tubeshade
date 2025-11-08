@@ -138,7 +138,7 @@ public sealed class BackgroundWorkerService : BackgroundService
     {
         if (task.Type == TaskType.Index)
         {
-            using var scope = await _indexLock.LockAsync(cancellationToken);
+            using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
             var service = provider.GetRequiredService<YoutubeService>();
             var result = await service.Index(
                 task.Url!,
@@ -153,7 +153,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.DownloadVideo)
         {
-            using var scope = await _downloadLock.LockAsync(cancellationToken);
+            using var scope = await LockAsync(_downloadLock, taskRepository, taskRunId, cancellationToken);
             var service = provider.GetRequiredService<YoutubeService>();
             await service.DownloadVideo(
                 task.LibraryId!.Value,
@@ -166,7 +166,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.ScanChannel)
         {
-            using var scope = await _indexLock.LockAsync(cancellationToken);
+            using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanChannel(
                 task.LibraryId!.Value,
@@ -180,7 +180,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.ScanSubscriptions)
         {
-            using var scope = await _indexLock.LockAsync(cancellationToken);
+            using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanSubscriptions(
                 task.LibraryId!.Value,
@@ -192,7 +192,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.ScanSponsorBlockSegments)
         {
-            using var scope = await _sponsorBlockLock.LockAsync(cancellationToken);
+            using var scope = await LockAsync(_sponsorBlockLock, taskRepository, taskRunId, cancellationToken);
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanSponsorBlockSegments(
                 task.LibraryId!.Value,
@@ -204,9 +204,21 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.RefreshSubscriptions)
         {
-            using var scope = await _indexLock.LockAsync(cancellationToken);
+            using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
             var service = provider.GetRequiredService<SubscriptionsService>();
             await service.RefreshSubscriptions(cancellationToken);
         }
+    }
+
+    private static async ValueTask<SemaphoreSlimExtensions.SemaphoreScope> LockAsync(
+        SemaphoreSlim semaphore,
+        TaskRepository repository,
+        Guid taskRunId,
+        CancellationToken cancellationToken)
+    {
+        var scope = await semaphore.LockAsync(cancellationToken);
+        await repository.StartTaskRun(taskRunId, cancellationToken);
+
+        return scope;
     }
 }

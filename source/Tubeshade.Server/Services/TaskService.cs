@@ -9,7 +9,6 @@ using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Pages.Tasks;
 using Tubeshade.Server.Services.Background;
-using static System.Data.IsolationLevel;
 
 namespace Tubeshade.Server.Services;
 
@@ -114,8 +113,7 @@ public sealed class TaskService
 
     public async ValueTask WaitForBlockingTasks(TaskEntity task, Guid taskRunId, CancellationToken cancellationToken)
     {
-        await using var transaction = await _connection.OpenAndBeginTransaction(ReadCommitted, cancellationToken);
-        var blockingRunIds = await _taskRepository.GetBlockingTaskRunIds(task, transaction);
+        var blockingRunIds = await _taskRepository.GetBlockingTaskRunIds(task, cancellationToken);
 
         if (blockingRunIds.Count is not 0)
         {
@@ -135,10 +133,6 @@ public sealed class TaskService
                 }
             }
         }
-
-        _logger.StartingTaskRun(taskRunId, task.Id);
-        await _taskRepository.StartTaskRun(taskRunId, transaction);
-        await transaction.CommitAsync(cancellationToken);
     }
 
     private static List<TaskModel> GroupTasks(IEnumerable<RunningTaskEntity> runningTasks)

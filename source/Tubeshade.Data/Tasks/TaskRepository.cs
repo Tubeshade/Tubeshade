@@ -85,7 +85,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             transaction));
     }
 
-    public async ValueTask StartTaskRun(Guid taskRunId, NpgsqlTransaction transaction)
+    public async ValueTask StartTaskRun(Guid taskRunId, CancellationToken cancellationToken)
     {
         var count = await Connection.ExecuteAsync(new CommandDefinition(
             $"""
@@ -94,7 +94,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              WHERE id = @{nameof(taskRunId)};
              """,
             new { taskRunId },
-            transaction));
+            cancellationToken: cancellationToken));
 
         Trace.Assert(count is 1);
     }
@@ -324,7 +324,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
     }
 
-    public async ValueTask<List<Guid>> GetBlockingTaskRunIds(TaskEntity task, NpgsqlTransaction transaction)
+    public async ValueTask<List<Guid>> GetBlockingTaskRunIds(TaskEntity task, CancellationToken cancellationToken)
     {
         var command = new CommandDefinition(
             // lang=sql
@@ -356,7 +356,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                  OR (@{nameof(task.Url)} IS NOT NULL AND tasks.url = @{nameof(task.Url)}));
              """,
             task,
-            transaction);
+            cancellationToken: cancellationToken);
 
         var enumerable = await Connection.QueryAsync<Guid>(command);
         return enumerable as List<Guid> ?? enumerable.ToList();
