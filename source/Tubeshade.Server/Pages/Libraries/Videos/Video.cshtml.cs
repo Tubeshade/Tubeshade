@@ -198,6 +198,7 @@ public sealed class Video : LibraryPageBase
         await transaction.CommitAsync();
         _logger.LogInformation("Deleting video directory {Path}", video.StoragePath);
         Directory.Delete(video.StoragePath, true);
+        Directory.CreateDirectory(video.StoragePath);
 
         if (!Request.IsHtmx())
         {
