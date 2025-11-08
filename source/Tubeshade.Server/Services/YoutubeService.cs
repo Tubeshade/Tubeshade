@@ -733,19 +733,18 @@ public sealed class YoutubeService
             var videoFile = files.Single(file => file.Type == containerType && file.Height == videoFormat.Height!.Value);
 
             var size = formats.Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
+            if (videoFile.DownloadedAt is not null)
+            {
+                _logger.LogInformation("Video file {VideoFileId} already exists", videoFile.Id);
+                sizeOffset += size ?? 0;
+                continue;
+            }
 
             _logger.LogInformation(
                 "Selected format with size {VideoSize} MB",
                 size.HasValue ? Math.Round(size.Value / 1024 / 1024, 2) : null);
 
             var fileName = videoFile.StoragePath;
-            if (Directory.EnumerateFiles(targetDirectory, $"{video.Id}.*").Any(file => file.EndsWith(fileName)))
-            {
-                _logger.LogInformation("Video already exists {VideoUrl}", video.ExternalUrl);
-                await transaction.CommitAsync(cancellationToken);
-                return;
-            }
-
             youtube.OutputFolder = tempDirectory.FullName;
             youtube.OutputFileTemplate = $"{Path.GetFileNameWithoutExtension(fileName)}.%(ext)s";
 
