@@ -1,4 +1,4 @@
-﻿ARG DOTNET_SDK_VERSION="9.0.305"
+﻿ARG DOTNET_SDK_VERSION="9.0.306"
 
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_SDK_VERSION}
 
