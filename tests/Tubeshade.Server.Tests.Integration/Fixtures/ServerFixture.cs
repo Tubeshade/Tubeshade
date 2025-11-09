@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -11,15 +9,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Testcontainers.PostgreSql;
 using Tubeshade.Data;
+using Tubeshade.Data.Migrations;
 
 namespace Tubeshade.Server.Tests.Integration.Fixtures;
 
-public sealed partial class ServerFixture : IAsyncDisposable
+public sealed class ServerFixture : IAsyncDisposable
 {
-    private const string ServerImageName = "tubeshade-integration-tests";
-
     private readonly PostgreSqlContainer _postgreSqlContainer;
-    private readonly IContainer _serverContainer;
     private readonly List<IContainer> _containers;
 
     internal string Name { get; }
@@ -44,18 +40,7 @@ public sealed partial class ServerFixture : IAsyncDisposable
             .WithCommand("-c", "full_page_writes=off")
             .Build();
 
-        _serverContainer = new ContainerBuilder()
-            .WithImage(ServerImageName)
-            .WithNetwork(network)
-            .WithEnvironment(
-                "Database:ConnectionString",
-                "Host=database; Port=5432; Username=postgres; Password=postgres; Include Error Detail=true")
-            .WithPortBinding(8080, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8080).UntilMessageIsLogged(StartedRegex()))
-            .DependsOn(_postgreSqlContainer)
-            .Build();
-
-        _containers = [_postgreSqlContainer, _serverContainer];
+        _containers = [_postgreSqlContainer];
     }
 
     public async ValueTask InitializeAsync()
@@ -71,6 +56,10 @@ public sealed partial class ServerFixture : IAsyncDisposable
             .AddLogging(builder => builder.AddSimpleConsole())
             .AddDatabase()
             .BuildServiceProvider(true);
+
+        await using var scope = Services.CreateAsyncScope();
+        var migrationService = scope.ServiceProvider.GetRequiredService<DatabaseMigrationService>();
+        migrationService.Migrate();
     }
 
     /// <inheritdoc />
@@ -78,16 +67,4 @@ public sealed partial class ServerFixture : IAsyncDisposable
     {
         await Task.WhenAll(_containers.Select(container => container.StopAsync()));
     }
-
-    internal Uri GetBaseAddress() => new UriBuilder
-    {
-        Scheme = "http",
-        Host = "localhost",
-        Port = _serverContainer.GetMappedPublicPort(),
-    }.Uri;
-
-    internal HttpClient CreateHttpClient() => new() { BaseAddress = GetBaseAddress() };
-
-    [GeneratedRegex(".*Now listening on.*")]
-    private static partial Regex StartedRegex();
 }

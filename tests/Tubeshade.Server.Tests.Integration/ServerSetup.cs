@@ -10,7 +10,7 @@ public static class ServerSetup
 {
     internal static ServerFixture[] Fixtures { get; } =
     [
-        new("17.5-bookworm"),
+        new("18.1-trixie"),
     ];
 
     [OneTimeSetUp]

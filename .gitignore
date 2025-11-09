@@ -21,3 +21,7 @@ bld/
 
 lib/
 node_modules/
+
+# Test results
+[Tt]est[Rr]esults/
+coverage.cobertura.xml

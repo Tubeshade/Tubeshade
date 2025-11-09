@@ -48,7 +48,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run tests
-        run: ./build/test.sh
+        run: ./build/test.sh Debug
 
       - name: Gather Code Coverage
         uses: codecov/codecov-action@v5.5.1
