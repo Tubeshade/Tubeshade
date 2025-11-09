@@ -1,7 +1,7 @@
 {
   "name": "tubeshade",
   "dependencies": {
-    "bootstrap": "5.3.6",
-    "htmx.org": "2.0.4"
+    "bootstrap": "5.3.8",
+    "htmx.org": "2.0.8"
   }
 }
