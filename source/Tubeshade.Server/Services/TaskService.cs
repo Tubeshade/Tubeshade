@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Pages.Tasks;
-using Tubeshade.Server.Services.Background;
 
 namespace Tubeshade.Server.Services;
 
@@ -17,18 +17,12 @@ public sealed class TaskService
     private readonly ILogger<TaskService> _logger;
     private readonly NpgsqlConnection _connection;
     private readonly TaskRepository _taskRepository;
-    private readonly TaskListenerService _taskListenerService;
 
-    public TaskService(
-        ILogger<TaskService> logger,
-        NpgsqlConnection connection,
-        TaskRepository taskRepository,
-        TaskListenerService taskListenerService)
+    public TaskService(ILogger<TaskService> logger, NpgsqlConnection connection, TaskRepository taskRepository)
     {
         _connection = connection;
         _taskRepository = taskRepository;
         _logger = logger;
-        _taskListenerService = taskListenerService;
     }
 
     public async ValueTask<List<TaskModel>> GetGroupedTasks(
@@ -111,7 +105,11 @@ public sealed class TaskService
         await transaction.CommitAsync();
     }
 
-    public async ValueTask WaitForBlockingTasks(TaskEntity task, Guid taskRunId, CancellationToken cancellationToken)
+    public async ValueTask WaitForBlockingTasks(
+        ChannelReader<Guid> reader,
+        TaskEntity task,
+        Guid taskRunId,
+        CancellationToken cancellationToken)
     {
         var blockingRunIds = await _taskRepository.GetBlockingTaskRunIds(task, cancellationToken);
 
@@ -119,10 +117,9 @@ public sealed class TaskService
         {
             _logger.BlockingTaskRuns(blockingRunIds.Count, taskRunId);
 
-            using var listener = new RunFinishedListener(_taskListenerService);
             while (blockingRunIds.Count > 0)
             {
-                var finishedTaskRunId = await listener.Reader.ReadAsync(cancellationToken);
+                var finishedTaskRunId = await reader.ReadAsync(cancellationToken);
                 if (blockingRunIds.Remove(finishedTaskRunId))
                 {
                     _logger.RemovedBlockingTaskRun(finishedTaskRunId, taskRunId, blockingRunIds.Count);

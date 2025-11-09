@@ -83,6 +83,8 @@ public sealed class BackgroundWorkerService : BackgroundService
         TaskEntity? task;
         Guid taskRunId;
 
+        using var listener = new RunFinishedListener(_taskListenerService);
+
         await using (var dequeueTransaction = await connection.OpenAndBeginTransaction(cancellationToken))
         {
             task = await taskRepository.TryDequeueTask(taskId, dequeueTransaction);
@@ -103,7 +105,7 @@ public sealed class BackgroundWorkerService : BackgroundService
             var added = _runCancellations.TryAdd(taskRunId, source);
             Trace.Assert(added);
 
-            await taskService.WaitForBlockingTasks(task, taskRunId, source.Token);
+            await taskService.WaitForBlockingTasks(listener.Reader, task, taskRunId, source.Token);
 
             using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory("task-run", taskRunId);
 

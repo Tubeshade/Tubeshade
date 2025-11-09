@@ -14,7 +14,7 @@ internal readonly struct RunFinishedListener : IDisposable
 
     private readonly TaskListenerService _taskListenerService;
 
-    public RunFinishedListener(TaskListenerService taskListenerService)
+    internal RunFinishedListener(TaskListenerService taskListenerService)
     {
         _taskListenerService = taskListenerService;
         Reader = _channel.Reader;
@@ -22,7 +22,7 @@ internal readonly struct RunFinishedListener : IDisposable
         _taskListenerService.TaskRunFinished += OnTaskRunFinished;
     }
 
-    public ChannelReader<Guid> Reader { get; }
+    internal ChannelReader<Guid> Reader { get; }
 
     /// <inheritdoc />
     public void Dispose()
