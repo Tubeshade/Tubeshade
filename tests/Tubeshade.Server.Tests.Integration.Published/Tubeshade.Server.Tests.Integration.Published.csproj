@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\source\Tubeshade.Server\Tubeshade.Server.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Testcontainers.PostgreSql"/>
+        <PackageReference Include="TUnit"/>
+        <PackageReference Include="TUnit.Playwright"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Remove="FluentAssertions"/>
+        <PackageReference Remove="Microsoft.AspNetCore.Mvc.Testing"/>
+        <PackageReference Remove="Microsoft.Playwright.NUnit"/>
+        <PackageReference Remove="Microsoft.NET.Test.Sdk"/>
+        <PackageReference Remove="NUnit"/>
+        <PackageReference Remove="NUnit.Analyzers"/>
+        <PackageReference Remove="NUnit3TestAdapter"/>
+    </ItemGroup>
+
+    <Target Name="InstallPlaywright" AfterTargets="Build">
+        <Exec WorkingDirectory="./" Command="powershell $(OutputPath)playwright.ps1 install firefox" Condition="'$(OS)'=='Windows_NT'"/>
+        <Exec WorkingDirectory="./" Command="pwsh $(OutputPath)playwright.ps1 install firefox" Condition="'$(OS)'!='Windows_NT'"/>
+    </Target>
+
+</Project>
