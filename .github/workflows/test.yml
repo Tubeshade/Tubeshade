@@ -27,21 +27,21 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-dotnet@v4.3.1
-      - uses: actions/setup-node@v4.4.0
+      - uses: actions/checkout@v5.0.0
+      - uses: actions/setup-dotnet@v5.0.0
+      - uses: actions/setup-node@v6.0.0
         with:
           node-version: 22
           cache: 'npm'
           cache-dependency-path: 'source/Tubeshade.Server/package-lock.json'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4.2.3
+        uses: actions/cache@v4.3.0
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
 
-      - uses: docker/login-action@v3.4.0
+      - uses: docker/login-action@v3.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -51,15 +51,13 @@ jobs:
         run: ./build/test.sh
 
       - name: Gather Code Coverage
-        uses: codecov/codecov-action@v5.4.3
-        if: false
+        uses: codecov/codecov-action@v5.5.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
       - name: Gather Test Results
         uses: codecov/test-results-action@v1.1.1
-        if: false
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
@@ -69,8 +67,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-node@v4.4.0
+      - uses: actions/checkout@v5.0.0
+      - uses: actions/setup-node@v6.0.0
         with:
           node-version: 22
           cache: 'npm'
@@ -88,22 +86,22 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v5.0.0
 
-      - uses: actions/setup-dotnet@v4.3.1
+      - uses: actions/setup-dotnet@v5.0.0
       - name: Cache NuGet packages
-        uses: actions/cache@v4.2.3
+        uses: actions/cache@v4.3.0
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
 
-      - uses: actions/setup-node@v4.4.0
+      - uses: actions/setup-node@v6.0.0
         with:
           node-version: 22
           cache: 'npm'
           cache-dependency-path: 'source/Tubeshade.Server/package-lock.json'
 
-      - uses: docker/login-action@v3.4.0
+      - uses: docker/login-action@v3.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -118,7 +116,7 @@ jobs:
       - name: Build debian package
         run: build/debian/build.sh "${{ steps.publish.outputs.artifact }}" "${{ github.run_number }}"
 
-      - uses: actions/upload-artifact@v4.6.2
+      - uses: actions/upload-artifact@v5.0.0
         if: false
         with:
           name: Tubeshade.Server_linux-x64.deb
