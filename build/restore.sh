@@ -1,10 +1,13 @@
 #!/bin/sh
 set -e
 
-if [ -z "$1" ]; then
+project=$1
+configuration=${2:-"Release"}
+
+if [ -z "$project" ]; then
 	echo "Restoring solution"
-	dotnet restore --locked-mode /p:Configuration="Release"
+	dotnet restore --locked-mode /p:Configuration="${configuration}"
 else
-	echo "Restoring project $1"
-	dotnet restore ./source/"$1"/"$1".csproj --locked-mode /p:Configuration="Release"
+	echo "Restoring project $project"
+	dotnet restore ./source/"$project"/"$project".csproj --locked-mode /p:Configuration="${configuration}"
 fi

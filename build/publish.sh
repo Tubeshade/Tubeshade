@@ -1,25 +1,27 @@
 #!/bin/sh
 set -e
 
-version=$(tr -d '[:space:]' <version)
-publish_dir="./source/$1/bin/Release/net9.0/$2/publish"
-archive_name="$1_$2.zip"
+project=$1
+runtime=$2
+build=$3
+tag=$4
 
-./build/restore.sh "$1"
+version=$(tr -d '[:space:]' <version)
+publish_dir="./source/${project}/bin/Release/net9.0/${runtime}/publish"
+archive_name="${project}_${runtime}.zip"
+
+./build/restore.sh "${project}"
+
+echo "Publishing project ${project} for runtime ${runtime}; build ${build}; tag '${tag}'"
 
 dotnet publish \
-	./source/"$1"/"$1".csproj \
-	--runtime "$2" \
+	./source/"${project}"/"${project}".csproj \
+	--runtime "${runtime}" \
 	--configuration Release \
 	--self-contained \
 	--no-restore \
-	-p:AssemblyVersion="$version.$3" \
-	-p:InformationalVersion="$version$4$2" \
-	-p:DebuggerSupport=false \
-	-p:DebugSymbols=false \
-	-p:DebugType=None \
-	-p:TrimmerRemoveSymbols=true \
-	-p:StripSymbols=true \
+	-p:AssemblyVersion="$version.$build" \
+	-p:InformationalVersion="$version$tag$runtime" \
 	/warnAsError \
 	/nologo
 
