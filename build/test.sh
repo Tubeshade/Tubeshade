@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-./build/build.sh
+configuration=${1:-"Release"}
+
+./build/build.sh "$configuration"
 
 docker build --tag tubeshade-integration-tests ./
 docker build --tag tubeshade-cover-tests --file ./build/docker/test-image/Dockerfile ./
@@ -15,7 +17,7 @@ dotnet test \
 	-p:DebugType=portable \
 	-p:CopyLocalLockFileAssemblies=true \
 	-m:8 \
-	--configuration Release \
+	--configuration "$configuration" \
 	--collect:"XPlat Code Coverage" \
 	--logger:"junit;LogFilePath=TestResults/test-result.junit.xml" \
 	--no-build

@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
 
-./build/restore.sh
-dotnet build --configuration Release --no-restore /warnAsError /nologo /clp:NoSummary
+configuration=${1:-"Release"}
+
+./build/restore.sh "" "$configuration"
+dotnet build --configuration "$configuration" --no-restore /warnAsError /nologo /clp:NoSummary
