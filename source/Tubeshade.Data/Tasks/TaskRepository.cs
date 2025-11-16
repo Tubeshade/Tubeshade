@@ -298,6 +298,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                           tasks.video_id,
                           tasks.url,
                           tasks.created_at,
+                          MAX(task_run_results.created_at) AS result_created,
+                          MAX(task_runs.created_at)        AS run_created,
                           count(*) OVER ()                 AS count
                    FROM tasks.tasks
                             INNER JOIN media.libraries ON tasks.library_id = libraries.id
@@ -307,13 +309,13 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                    WHERE (libraries.id IN (SELECT id FROM accessible))
                      AND (@{nameof(parameters.LibraryId)} IS NULL OR libraries.id = @{nameof(parameters.LibraryId)})
                    GROUP BY tasks.id, tasks.created_at
-                   ORDER BY greatest(MAX(task_run_results.created_at), MAX(task_run_progress.modified_at), MAX(task_runs.created_at), tasks.created_at) DESC
+                   ORDER BY result_created DESC, run_created DESC, tasks.created_at DESC
                    OFFSET @{nameof(parameters.Offset)} LIMIT @{nameof(parameters.Limit)}) filtered_tasks
                       INNER JOIN media.libraries ON filtered_tasks.library_id = libraries.id
                       INNER JOIN tasks.task_runs ON filtered_tasks.id = task_runs.task_id
                       LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
                       LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-             ORDER BY greatest(task_run_results.created_at, task_run_progress.modified_at, task_runs.created_at, filtered_tasks.created_at) DESC;
+             ORDER BY task_run_results.created_at DESC, task_runs.created_at DESC, filtered_tasks.created_at DESC;
              """,
             parameters,
             cancellationToken: cancellationToken);
