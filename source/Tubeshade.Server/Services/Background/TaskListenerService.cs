@@ -53,16 +53,16 @@ public sealed class TaskListenerService : BackgroundService
         await using var connection = _dataSource.CreateConnection(TargetSessionAttributes.Any);
         await connection.OpenConnection(stoppingToken);
 
-        _logger.LogDebug("Starting to listen database notifications");
+        _logger.ListeningToDatabaseNotifications();
         connection.Notification += ConnectionOnNotification;
 
         foreach (var channel in TaskChannels.Names)
         {
-            _logger.LogDebug("Starting to listen on channel {NotificationChannel}", channel);
+            _logger.ListeningToNotificationChannel(channel);
             await connection.ExecuteAsync($"LISTEN {channel};");
         }
 
-        _logger.LogInformation("Listening for database notifications from {Datasource}", connection.DataSource);
+        _logger.ListeningToDatabaseNotifications(connection.DataSource);
         while (!stoppingToken.IsCancellationRequested)
         {
             await connection.WaitAsync(stoppingToken);
@@ -73,21 +73,21 @@ public sealed class TaskListenerService : BackgroundService
 
     private void ConnectionOnNotification(object? sender, NpgsqlNotificationEventArgs args)
     {
-        _logger.LogDebug("Received notification {NotificationChannel} from {NotificationPid}", args.Channel, args.PID);
+        _logger.ReceivedNotification(args.Channel, args.PID);
         if (!_channels.TryGetValue(args.Channel, out var channel))
         {
-            _logger.LogWarning("Unexpected notification channel {NotificationChannel}", args.Channel);
+            _logger.UnexpectedNotificationChannel(args.Channel);
             return;
         }
 
-        _logger.LogDebug("Received created task notification with payload {NotificationPayload}", args.Payload);
+        _logger.ReceivedNotification(args.Channel, args.Payload);
         if (!Guid.TryParse(args.Payload, out var id))
         {
-            _logger.LogWarning("Failed to parse task id from notification payload {NotificationPayload}", args.Payload);
+            _logger.UnexpectedNotificationPayload(args.Payload);
             return;
         }
 
-        _logger.LogInformation("Starting task {TaskId}", id);
+        _logger.QueueingNotification(args.Channel, id);
         var queued = channel.Writer.TryWrite(id);
         Trace.Assert(queued);
 

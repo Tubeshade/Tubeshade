@@ -57,4 +57,28 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(16, Debug, "Channel {ExternalUrl} is not from YouTube")]
     internal static partial void ChannelNotFromYouTube(this ILogger logger, string externalUrl);
+
+    [LoggerMessage(17, Debug, "Starting to listen database notifications")]
+    internal static partial void ListeningToDatabaseNotifications(this ILogger logger);
+
+    [LoggerMessage(18, Debug, "Starting to listen on channel {NotificationChannel}")]
+    internal static partial void ListeningToNotificationChannel(this ILogger logger, string notificationChannel);
+
+    [LoggerMessage(19, Information, "Listening for database notifications from {Datasource}")]
+    internal static partial void ListeningToDatabaseNotifications(this ILogger logger, string datasource);
+
+    [LoggerMessage(20, Debug, "Received notification {NotificationChannel} from {NotificationPid}")]
+    internal static partial void ReceivedNotification(this ILogger logger, string notificationChannel, int notificationPid);
+
+    [LoggerMessage(21, Warning, "Unexpected notification channel {NotificationChannel}")]
+    internal static partial void UnexpectedNotificationChannel(this ILogger logger, string notificationChannel);
+
+    [LoggerMessage(22, Debug, "Received notification {NotificationChannel} with payload {NotificationPayload}")]
+    internal static partial void ReceivedNotification(this ILogger logger, string notificationChannel, string notificationPayload);
+
+    [LoggerMessage(23, Warning, "Failed to parse notification payload {NotificationPayload}")]
+    internal static partial void UnexpectedNotificationPayload(this ILogger logger, string notificationPayload);
+
+    [LoggerMessage(24, Information, "Queuing notification {NotificationChannel} {NotificationPayload}")]
+    internal static partial void QueueingNotification(this ILogger logger, string notificationChannel, Guid notificationPayload);
 }
