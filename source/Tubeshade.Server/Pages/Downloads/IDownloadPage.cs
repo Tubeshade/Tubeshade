@@ -10,15 +10,15 @@ namespace Tubeshade.Server.Pages.Downloads;
 
 public interface IDownloadPage : IPaginatedDataPage<VideoModel>
 {
-    Guid? ChannelId { get; }
+    Guid? ChannelId { get; set; }
 
-    string? Query { get; }
+    string? Query { get; set; }
 
-    VideoType? Type { get; }
+    VideoType? Type { get; set; }
 
-    bool? WithFiles { get; }
+    bool? WithFiles { get; set; }
 
-    ExternalAvailability? Availability { get; }
+    ExternalAvailability? Availability { get; set; }
 
     List<ChannelEntity> Channels { get; }
 

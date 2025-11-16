@@ -148,10 +148,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
 
     private async ValueTask<Guid> OnGetCore(CancellationToken cancellationToken)
     {
-        if (WithFiles is null && !Request.Query.ContainsKey(nameof(WithFiles)))
-        {
-            WithFiles = true;
-        }
+        this.ApplyDefaultFilters();
 
         var userId = User.GetUserId();
 

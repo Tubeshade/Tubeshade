@@ -9,15 +9,15 @@ namespace Tubeshade.Server.Pages.Videos;
 
 public interface IVideoPage : IPaginatedDataPage<VideoModel>
 {
-    bool? Viewed { get; }
+    bool? Viewed { get; set; }
 
-    string? Query { get; }
+    string? Query { get; set; }
 
-    VideoType? Type { get; }
+    VideoType? Type { get; set; }
 
-    bool? WithFiles { get; }
+    bool? WithFiles { get; set; }
 
-    ExternalAvailability? Availability { get; }
+    ExternalAvailability? Availability { get; set; }
 
     Dictionary<string, string?> GetRouteValues(int pageIndex) => new()
     {
