@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
 using Npgsql;
@@ -77,6 +78,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
     }
 
     [Test]
+    [Order(1)]
     public async Task IndexVideoWhileDownloading()
     {
         await using var scope = Fixture.Services.CreateAsyncScope();
@@ -170,5 +172,50 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         blockingIds.Should().BeEmpty();
 
         await repository.StartTaskRun(task2RunId, CancellationToken.None);
+    }
+
+    [Test]
+    [Order(2)]
+    public async Task CompleteStuckTasks()
+    {
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
+
+        Guid taskId;
+        Guid taskRunId;
+
+        await using (var transaction = await connection.OpenAndBeginTransaction())
+        {
+            taskId = await repository.AddIndexTask("https://example.org", _libraryId, _userId, transaction);
+            taskRunId = await repository.AddTaskRun(taskId, transaction);
+            await repository.StartTaskRun(taskRunId, CancellationToken.None);
+
+            await transaction.CommitAsync();
+        }
+
+        var parameters = new TaskParameters { UserId = _userId, LibraryId = _libraryId, Limit = 100, Offset = 0, };
+
+        var tasks = await repository.GetRunningTasks(parameters, CancellationToken.None);
+
+        var runningTask = tasks.Should().ContainSingle(entity => entity.Id == taskId).Subject;
+        using (new AssertionScope())
+        {
+            runningTask.RunId.Should().Be(taskRunId);
+            runningTask.RunState.Should().Be(RunState.Running);
+        }
+
+        await repository.CompleteStuckTasks(CancellationToken.None);
+
+        tasks = await repository.GetRunningTasks(parameters, CancellationToken.None);
+
+        tasks.Should().AllSatisfy(entity => entity.RunState.Should().Be(RunState.Finished));
+        runningTask = tasks.Should().ContainSingle(entity => entity.Id == taskId).Subject;
+        using (new AssertionScope())
+        {
+            runningTask.RunId.Should().Be(taskRunId);
+            runningTask.RunState.Should().Be(RunState.Finished);
+            runningTask.Result.Should().Be(TaskResult.Failed);
+        }
     }
 }

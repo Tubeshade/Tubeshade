@@ -190,7 +190,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
         await FinishTaskRun(taskRunId, transaction);
 
-        var id =  await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+        var id = await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
             // lang=sql
             $"""
              INSERT INTO tasks.task_run_results (run_id, result, message)
@@ -209,7 +209,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
         await FinishTaskRun(taskRunId, transaction);
 
-        var id =  await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+        var id = await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
             // lang=sql
             $"""
              INSERT INTO tasks.task_run_results (run_id, result, message)
@@ -228,7 +228,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
         await FinishTaskRun(taskRunId, transaction);
 
-        var id =  await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+        var id = await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
             // lang=sql
             $"""
              INSERT INTO tasks.task_run_results (run_id, result, message)
@@ -461,6 +461,34 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     {
         var command = new CommandDefinition(UpdateSql, task);
         return await Connection.ExecuteAsync(command);
+    }
+
+    public async ValueTask CompleteStuckTasks(CancellationToken cancellationToken)
+    {
+        await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
+
+        var taskRunIds = await Connection.QueryAsync<Guid>(new(
+            $"""
+            SELECT id
+            FROM tasks.task_runs
+            WHERE state != '{RunState.Names.Finished}';
+            """,
+            new { },
+            transaction));
+
+        foreach (var taskRunId in taskRunIds)
+        {
+            await FinishTaskRun(taskRunId, transaction);
+            await Connection.ExecuteAsync(new(
+                $"""
+                INSERT INTO tasks.task_run_results (run_id, result, message)
+                VALUES (@{nameof(taskRunId)}, @result, 'Failed because server was stopped unexpectedly');
+                """,
+                new { taskRunId, result = TaskResult.Failed },
+                transaction));
+        }
+
+        await transaction.CommitAsync(cancellationToken);
     }
 
     private async ValueTask<Guid> AddTask(TaskEntity task, NpgsqlTransaction transaction)
