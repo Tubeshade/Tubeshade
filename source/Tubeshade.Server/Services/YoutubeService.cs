@@ -131,7 +131,7 @@ public sealed class YoutubeService
                 $"Unexpected metadata type when downloading video: {data.ResultType}");
         }
 
-        await transaction.CommitWithRetries(_logger, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return result;
     }
 
@@ -477,7 +477,7 @@ public sealed class YoutubeService
 
         await ScanChannelCore(libraryId, channelId, allVideos, false, userId, taskRepository, taskRunId, transaction, tempDirectory, cancellationToken);
 
-        await transaction.CommitWithRetries(_logger, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public async ValueTask ScanSubscriptions(
@@ -500,7 +500,7 @@ public sealed class YoutubeService
             await taskRepository.UpdateProgress(taskRunId, index + 1);
         }
 
-        await transaction.CommitWithRetries(_logger, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public async ValueTask ScanSponsorBlockSegments(
@@ -538,7 +538,7 @@ public sealed class YoutubeService
             await taskRepository.UpdateProgress(taskRunId, index + 1);
         }
 
-        await transaction.CommitWithRetries(_logger, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     private async ValueTask ScanChannelCore(
@@ -891,7 +891,7 @@ public sealed class YoutubeService
             tempFile.MoveTo(targetFilePath);
         }
 
-        await transaction.CommitWithRetries(_logger, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     private async ValueTask<string?> CreateCookieFile(
