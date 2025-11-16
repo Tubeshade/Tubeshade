@@ -298,7 +298,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                           tasks.video_id,
                           tasks.url,
                           tasks.created_at,
-                          MAX(task_run_results.created_at) AS result_created,
+                          MAX(COALESCE(task_run_results.created_at, 'infinity')) AS result_created,
                           MAX(task_runs.created_at)        AS run_created,
                           count(*) OVER ()                 AS count
                    FROM tasks.tasks
