@@ -51,4 +51,10 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(14, Error, "Task failed unexpectedly")]
     internal static partial void TaskFailed(this ILogger logger, Exception exception);
+
+    [LoggerMessage(15, Debug, "PubSubHubbub callback base uri is not set")]
+    internal static partial void PubSubHubbubCallbackNotSet(this ILogger logger);
+
+    [LoggerMessage(16, Debug, "Channel {ExternalUrl} is not from YouTube")]
+    internal static partial void ChannelNotFromYouTube(this ILogger logger, string externalUrl);
 }

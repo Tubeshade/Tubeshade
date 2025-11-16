@@ -13,7 +13,7 @@ ARG DOTNET_RUNTIME
 WORKDIR /tubeshade
 COPY ./ ./
 
-RUN touch /usr/bin/yt-dlp && touch /usr/bin/ffmpeg && touch /usr/bin/ffprobe && touch /usr/bin/deno
+ADD --checksum="sha256:1b48caf7d5ef7826a72595fb9bcb194c7ee3a877ea5e10d26b52bc996757761b" --chmod="+xr-w" https://github.com/yt-dlp/yt-dlp/releases/download/2025.11.12/yt-dlp_linux /usr/bin/yt-dlp
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     ./build/docker/test-image/publish.sh "Tubeshade.Server" $DOTNET_RUNTIME $BUILD_NUMBER
@@ -29,7 +29,6 @@ ENV DOTNET_CHANNEL=$DOTNET_CHANNEL \
     LANG=en_US.UTF-8 \
     Ytdlp__YtdlpPath=/usr/bin/yt-dlp \
     Ytdlp__FfmpegPath=/usr/bin/ffmpeg \
-    Ytdlp__FfprobePath=/usr/bin/ffprobe \
-    Ytdlp__JavascriptRuntimePath=/usr/bin/deno
+    Ytdlp__FfprobePath=/usr/bin/ffprobe
 
 CMD ["/tubeshade/build/docker/test-image/cover.sh"]

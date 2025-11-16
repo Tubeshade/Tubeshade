@@ -2,17 +2,20 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
 using Npgsql;
 using PubSubHubbub;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
+using static System.StringComparison;
 
 namespace Tubeshade.Server.Services;
 
 public sealed class SubscriptionsService
 {
+    private readonly ILogger<SubscriptionsService> _logger;
     private readonly NpgsqlConnection _connection;
     private readonly ChannelRepository _channelRepository;
     private readonly ChannelSubscriptionRepository _channelSubscriptionRepository;
@@ -21,6 +24,7 @@ public sealed class SubscriptionsService
     private readonly IOptionsMonitor<PubSubHubbubOptions> _optionsMonitor;
 
     public SubscriptionsService(
+        ILogger<SubscriptionsService> logger,
         NpgsqlConnection connection,
         ChannelRepository channelRepository,
         ChannelSubscriptionRepository channelSubscriptionRepository,
@@ -28,6 +32,7 @@ public sealed class SubscriptionsService
         PubSubHubbubClient pubSubHubbubClient,
         IOptionsMonitor<PubSubHubbubOptions> optionsMonitor)
     {
+        _logger = logger;
         _connection = connection;
         _channelRepository = channelRepository;
         _channelSubscriptionRepository = channelSubscriptionRepository;
@@ -51,32 +56,48 @@ public sealed class SubscriptionsService
         Trace.Assert(updatedChannelCount is not 0);
 
         var options = _optionsMonitor.CurrentValue;
-
-        var callbackUri = new UriBuilder(options.CallbackBaseUri)
+        if (options.CallbackBaseUri is null)
         {
-            Path = $"/api/v1.0/YouTube/Notifications/{channelId}",
-        }.Uri;
-        var topicUri = new Uri($"https://www.youtube.com/xml/feeds/videos.xml?channel_id={channel.ExternalId}", UriKind.Absolute);
-        var verifyToken = Guid.NewGuid().ToString("N");
-        var secret = options.Secret;
+            _logger.PubSubHubbubCallbackNotSet();
+        }
 
-        var subscriptionId = await _channelSubscriptionRepository.AddAsync(
-            new ChannelSubscriptionEntity
+        var host = new Uri(channel.ExternalUrl, UriKind.Absolute).Host;
+        var isChannelFromYouTube = host.Equals("youtube.com", OrdinalIgnoreCase) || host.EndsWith(".youtube.com", OrdinalIgnoreCase);
+        if (!isChannelFromYouTube)
+        {
+            _logger.ChannelNotFromYouTube(channel.ExternalUrl);
+        }
+
+        if (options.CallbackBaseUri is { } callbackBaseUri && isChannelFromYouTube)
+        {
+            var callbackUri = new UriBuilder(callbackBaseUri)
             {
-                Id = channelId,
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                Status = SubscriptionStatus.SubscriptionPending,
-                Callback = callbackUri.ToString(),
-                Topic = topicUri.ToString(),
-                VerifyToken = verifyToken,
-                Secret = secret,
-            },
-            transaction);
-        Trace.Assert(subscriptionId is not null);
-        await transaction.CommitAsync();
+                Path = $"/api/v1.0/YouTube/Notifications/{channelId}",
+            }.Uri;
 
-        await _pubSubHubbubClient.Subscribe(callbackUri, topicUri, secret, verifyToken);
+            var topicUri = new Uri($"https://www.youtube.com/xml/feeds/videos.xml?channel_id={channel.ExternalId}", UriKind.Absolute);
+            var verifyToken = Guid.NewGuid().ToString("N");
+            var secret = options.Secret;
+
+            var subscriptionId = await _channelSubscriptionRepository.AddAsync(
+                new ChannelSubscriptionEntity
+                {
+                    Id = channelId,
+                    CreatedByUserId = userId,
+                    ModifiedByUserId = userId,
+                    Status = SubscriptionStatus.SubscriptionPending,
+                    Callback = callbackUri.ToString(),
+                    Topic = topicUri.ToString(),
+                    VerifyToken = verifyToken,
+                    Secret = secret,
+                },
+                transaction);
+
+            Trace.Assert(subscriptionId is not null);
+            await _pubSubHubbubClient.Subscribe(callbackUri, topicUri, secret, verifyToken);
+        }
+
+        await transaction.CommitAsync();
 
         return channel;
     }

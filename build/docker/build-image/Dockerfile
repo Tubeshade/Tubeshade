@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     lintian \
     gettext \
-    tree
+    tree \
+    ffmpeg
 
 LABEL org.opencontainers.image.source=https://github.com/Tubeshade/Tubeshade

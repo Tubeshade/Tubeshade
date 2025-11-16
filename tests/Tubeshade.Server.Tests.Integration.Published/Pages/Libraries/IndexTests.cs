@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Playwright;
@@ -46,5 +47,33 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
 
             await Page.GoBackAsync();
         }
+
+        await Page.GetByText("Downloads").ClickAsync();
+        (await Page.TitleAsync()).Should().Be($"Downloads - {name} - Tubeshade");
+
+        await Page.GetByPlaceholder("Video or channel URL").FillAsync("https://www.youtube.com/@Computerphile");
+        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Scan" }).ClickAsync();
+
+        await Page.GetByText("Tasks").ClickAsync();
+        (await Page.TitleAsync()).Should().Be($"Tasks - {name} - Tubeshade");
+
+        await Page.GetByText("Completed").WaitForAsync();
+
+        await Page.GetByText("Channels").ClickAsync();
+        (await Page.TitleAsync()).Should().Be($"Channels - {name} - Tubeshade");
+
+        await Page.GetByText("Computerphile").ClickAsync();
+        (await Page.TitleAsync()).Should().Be("Computerphile - Tubeshade");
+
+        await Page.GetByText("Settings").ClickAsync();
+        (await Page.TitleAsync()).Should().Be("Preferences - Computerphile - Tubeshade");
+
+        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Subscribe" }).ClickAsync();
+        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Unsubscribe" }).ClickAsync();
+        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Subscribe" }).ClickAsync();
+
+        await Page.GetByText("Channels").ClickAsync();
+        (await Page.TitleAsync()).Should().Be($"Channels - {name} - Tubeshade");
+        await Page.GetByText(DateTimeOffset.Now.ToString("yyyy-MM-dd")).WaitForAsync();
     }
 }

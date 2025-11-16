@@ -10,8 +10,7 @@ public sealed class PubSubHubbubOptions
     [Required]
     public Uri BaseUrl { get; set; } = new("https://pubsubhubbub.appspot.com", UriKind.Absolute);
 
-    [Required]
-    public required Uri CallbackBaseUri { get; set; }
+    public Uri? CallbackBaseUri { get; set; }
 
     [MaxLength(200)]
     public string? Secret { get; set; }
