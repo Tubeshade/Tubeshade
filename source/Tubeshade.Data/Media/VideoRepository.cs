@@ -186,7 +186,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
                AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(parameters.Query)}))
                AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
-               AND (@{nameof(parameters.Viewed)} IS NULL OR (@{nameof(parameters.Viewed)} = TRUE AND video_viewed_by_users.viewed = TRUE) OR (@{nameof(parameters.Viewed)} = FALSE AND video_viewed_by_users.viewed != FALSE))
+               AND (@{nameof(parameters.Viewed)} IS NULL
+                        OR (@{nameof(parameters.Viewed)} = TRUE AND video_viewed_by_users.viewed = TRUE)
+                        OR (@{nameof(parameters.Viewed)} = FALSE AND (video_viewed_by_users.viewed IS NULL OR video_viewed_by_users.viewed = FALSE)))
                AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
              ORDER BY videos.published_at DESC
              LIMIT @{nameof(parameters.Limit)}
