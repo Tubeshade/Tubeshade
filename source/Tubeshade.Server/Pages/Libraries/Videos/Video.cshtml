@@ -1,4 +1,5 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Videos/{videoId:guid}/{handler?}"
+@using System.Globalization
 @using NodaTime.Text
 @using Tubeshade.Server.Pages.Shared
 @model Video
@@ -91,7 +92,7 @@
     <form class="col-auto">
         <input value="@(Model.VideoId)" name="videoId" hidden/>
         <div class="form-check form-check-inline form-switch">
-            <input id="viewed" checked="@(Model.Entity.ViewedAt is not null)" name="viewed"
+            <input id="viewed" checked="@(Model.Entity.Viewed is true)" name="viewed"
                    type="checkbox" role="switch" switch title="Viewed" class="form-check-input"
                    hx-post="" hx-page-handler="Viewed" hx-swap="none"/>
             <label for="viewed" class="form-check-label">
@@ -186,7 +187,26 @@
         import {setPreferredResolution} from "/js/modules/device-preferences.js";
 
         const video = document.querySelector("#video");
-        video.playbackRate = @Model.PlaybackSpeed;
+        video.playbackRate = @Model.PlaybackSpeed.ToString(CultureInfo.InvariantCulture);
+        video.currentTime = @((Model.Entity.Position ?? 0).ToString(CultureInfo.InvariantCulture));
+
+        video.addEventListener("ended", reportPlaybackPosition, false);
+        video.addEventListener("pause", reportPlaybackPosition, false);
+        video.addEventListener("play", reportPlaybackPosition, false);
+        video.addEventListener("seeked", reportPlaybackPosition, false);
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") {
+                reportPlaybackPosition();
+            }
+        });
+
+        function reportPlaybackPosition() {
+            const data = new URLSearchParams();
+            data.set("position", video.currentTime);
+
+            navigator.sendBeacon("@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))", data);
+        }
 
         if ("mediaSession" in navigator) {
             // since thumbnail endpoint requires authentication, the artwork source cannot be simply set to the url of the thumbnail

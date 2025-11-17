@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
 using Htmx;
@@ -12,6 +15,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using NodaTime.Text;
+using Npgsql;
+using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Videos;
@@ -24,17 +29,20 @@ namespace Tubeshade.Server.V1.Controllers;
 [Route("api/v{version:apiVersion}/[controller]/{id:guid}")]
 public sealed class VideosController : ControllerBase
 {
+    private readonly NpgsqlConnection _connection;
     private readonly VideoRepository _repository;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
     private readonly WebVideoTextTracksService _webVideoTextTracksService;
     private readonly FileUploadService _fileUploadService;
 
     public VideosController(
+        NpgsqlConnection connection,
         VideoRepository repository,
         SponsorBlockSegmentRepository segmentRepository,
         WebVideoTextTracksService webVideoTextTracksService,
         FileUploadService fileUploadService)
     {
+        _connection = connection;
         _repository = repository;
         _segmentRepository = segmentRepository;
         _webVideoTextTracksService = webVideoTextTracksService;
@@ -54,6 +62,17 @@ public sealed class VideosController : ControllerBase
             video.ModifiedAt.ToDateTimeOffset(),
             new EntityTagHeaderValue(new StringSegment($"\"{id}\"")),
             true);
+    }
+
+    [HttpPost("PlaybackPosition")]
+    [Consumes(MediaTypeNames.Application.FormUrlEncoded)]
+    public async Task<NoContentResult> UpdatePlaybackPosition(Guid id, [Required, FromForm] double? position)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted);
+        await _repository.UpdatePlaybackPosition(id, User.GetUserId(), position!.Value, transaction);
+        await transaction.CommitAsync();
+
+        return NoContent();
     }
 
     [HttpGet("Files")]

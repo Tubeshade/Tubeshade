@@ -49,7 +49,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 videos.duration AS Duration,
                 videos.ignored_at AS IgnoredAt,
                 videos.ignored_by_user_id AS IgnoredByUserId,
-                video_viewed_by_users.created_at AS ViewedAt
+                video_viewed_by_users.viewed AS Viewed,
+                video_viewed_by_users.position AS Position
          FROM media.videos
            LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(GetParameters.UserId)}
          """;
@@ -159,11 +160,12 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     videos.storage_path AS {nameof(VideoEntity.StoragePath)},
                     videos.external_id AS {nameof(VideoEntity.ExternalId)},
                     videos.external_url AS {nameof(VideoEntity.ExternalUrl)},
-                    videos.published_at AS PublishedAt,
-                    videos.refreshed_at AS RefreshedAt,
-                    videos.availability AS Availability,
-                    videos.duration AS Duration,
-                    video_viewed_by_users.created_at AS ViewedAt,
+                    videos.published_at AS {nameof(VideoEntity.PublishedAt)},
+                    videos.refreshed_at AS {nameof(VideoEntity.RefreshedAt)},
+                    videos.availability AS {nameof(VideoEntity.Availability)},
+                    videos.duration AS {nameof(VideoEntity.Duration)},
+                    video_viewed_by_users.viewed AS {nameof(VideoEntity.Viewed)},
+                    video_viewed_by_users.position AS {nameof(VideoEntity.Position)},
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
                 LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(parameters.UserId)}
@@ -184,7 +186,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
                AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(parameters.Query)}))
                AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
-               AND (@{nameof(parameters.Viewed)} IS NULL OR (video_viewed_by_users.created_at IS NOT NULL) = @{nameof(parameters.Viewed)})
+               AND (@{nameof(parameters.Viewed)} IS NULL OR (@{nameof(parameters.Viewed)} = TRUE AND video_viewed_by_users.viewed = TRUE) OR (@{nameof(parameters.Viewed)} = FALSE AND video_viewed_by_users.viewed != FALSE))
                AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
              ORDER BY videos.published_at DESC
              LIMIT @{nameof(parameters.Limit)}
@@ -356,9 +358,11 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     {
         return await Connection.ExecuteAsync(
             $"""
-             INSERT INTO media.video_viewed_by_users (video_id, user_id)
-             VALUES (@videoId, @userId)
-             ON CONFLICT DO NOTHING;
+             INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed)
+             VALUES (@{nameof(videoId)}, @{nameof(userId)}, true)
+             ON CONFLICT (video_id, user_id) DO UPDATE
+             SET modified_at = CURRENT_TIMESTAMP,
+                 viewed = true;
              """,
             new { videoId, userId },
             transaction);
@@ -367,12 +371,32 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     public async ValueTask<int> MarkAsNotWatched(Guid videoId, Guid userId, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
-            """
-            DELETE FROM media.video_viewed_by_users
-            WHERE video_viewed_by_users.video_id = @videoId
-              AND video_viewed_by_users.user_id = @userId;
+            $"""
+            UPDATE media.video_viewed_by_users
+            SET modified_at = CURRENT_TIMESTAMP,
+                viewed = false
+            WHERE video_viewed_by_users.video_id = @{nameof(videoId)}
+              AND video_viewed_by_users.user_id = @{nameof(userId)};
             """,
             new { videoId, userId },
+            transaction);
+    }
+
+    public async ValueTask<int> UpdatePlaybackPosition(Guid videoId, Guid userId, double position, NpgsqlTransaction transaction)
+    {
+        return await Connection.ExecuteAsync(
+            $"""
+            INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed)
+            VALUES (@{nameof(videoId)}, @{nameof(userId)}, false)
+            ON CONFLICT DO NOTHING;         
+
+            UPDATE media.video_viewed_by_users
+            SET modified_at = CURRENT_TIMESTAMP,
+                position = @{nameof(position)}
+            WHERE video_viewed_by_users.video_id = @{nameof(videoId)}
+              AND video_viewed_by_users.user_id = @{nameof(userId)};
+            """,
+            new { videoId, userId, position },
             transaction);
     }
 }
