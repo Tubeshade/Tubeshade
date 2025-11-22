@@ -190,11 +190,11 @@
         video.playbackRate = @Model.PlaybackSpeed.ToString(CultureInfo.InvariantCulture);
         video.currentTime = @((Model.Entity.Position ?? 0).ToString(CultureInfo.InvariantCulture));
 
-        video.addEventListener("ended", reportPlaybackPosition, false);
         video.addEventListener("pause", reportPlaybackPosition, false);
         video.addEventListener("play", reportPlaybackPosition, false);
         video.addEventListener("seeked", reportPlaybackPosition, false);
 
+        document.addEventListener("pagehide", reportPlaybackPosition, false);
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "hidden") {
                 reportPlaybackPosition();
@@ -202,10 +202,9 @@
         });
 
         function reportPlaybackPosition() {
-            const data = new URLSearchParams();
-            data.set("position", video.currentTime);
-
-            navigator.sendBeacon("@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))", data);
+            navigator.sendBeacon(
+                "@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))",
+                new URLSearchParams({"position": video.currentTime}));
         }
 
         if ("mediaSession" in navigator) {
@@ -294,6 +293,10 @@
             if (viewedInput.checked === true) {
                 return;
             }
+
+            navigator.sendBeacon(
+                "@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))",
+                new URLSearchParams({"position": "0"}));
 
             viewedInput.checked = true;
             viewedInput.dispatchEvent(new Event("change"));
