@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Linq;
 using Asp.Versioning;
@@ -5,6 +6,7 @@ using Asp.Versioning.Conventions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
@@ -78,7 +80,23 @@ internal static class Program
             .AddSingleton(DateTimeZoneProviders.Tzdb);
 
         builder.Services
-            .AddMvc(options => options.ModelBinderProviders.Insert(0, new NodaTimeBindingProvider()))
+            .AddMvc(options =>
+            {
+                options.ModelBinderProviders.Insert(0, new NodaTimeBindingProvider());
+                options.CacheProfiles.Add(
+                    CacheProfiles.Static,
+                    new CacheProfile
+                    {
+                        Duration = (int)TimeSpan.FromDays(30).TotalSeconds,
+                        Location = ResponseCacheLocation.Client,
+                    });
+                options.CacheProfiles.Add(
+                    CacheProfiles.Dynamic,
+                    new CacheProfile
+                    {
+                        Location = ResponseCacheLocation.None,
+                    });
+            })
             .AddXmlSerializerFormatters()
             .AddViewOptions(options =>
             {

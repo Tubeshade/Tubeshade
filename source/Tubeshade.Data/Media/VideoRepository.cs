@@ -275,7 +275,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     public async ValueTask<VideoFileEntity?> FindFileAsync(
         Guid id,
         Guid userId,
-        CancellationToken cancellationToken = default)
+        NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             // lang=sql
@@ -301,9 +301,40 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              WHERE {AccessFilter} AND video_files.id = @{nameof(GetSingleParameters.Id)};
              """,
             new GetSingleParameters(id, userId, Access.Read),
-            cancellationToken: cancellationToken);
+            transaction);
 
         return await Connection.QuerySingleOrDefaultAsync<VideoFileEntity>(command);
+    }
+
+    public async ValueTask<ImageFileEntity?> FindThumbnailAsync(
+        Guid id,
+        Guid userId,
+        NpgsqlTransaction transaction)
+    {
+        var parameters = new GetSingleParameters(id, userId, Access.Read);
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             {AccessCte}
+
+             SELECT image_files.id AS Id,
+                    image_files.created_at AS CreatedAt,
+                    image_files.created_by_user_id AS CreatedByUserId,
+                    image_files.storage_path AS StoragePath,
+                    image_files.type AS Type,
+                    image_files.width AS Width,
+                    image_files.height AS Height
+             FROM media.image_files
+                INNER JOIN media.video_images ON image_files.id = video_images.image_id
+                INNER JOIN media.videos ON video_images.video_id = videos.id
+             WHERE {AccessFilter}
+               AND videos.id = @{nameof(parameters.Id)}
+               AND image_files.type = 'thumbnail';
+             """,
+            parameters,
+            transaction);
+
+        return await Connection.QuerySingleOrDefaultAsync<ImageFileEntity>(command);
     }
 
     public async ValueTask<VideoEntity?> FindByExternalId(string externalId, Guid userId, Access access,
