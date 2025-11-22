@@ -201,6 +201,29 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return enumerable as List<VideoEntity> ?? enumerable.ToList();
     }
 
+    public async ValueTask<List<string>> GetForReindex(Guid libraryId, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             SELECT videos.external_url
+             FROM media.videos
+                 INNER JOIN media.library_channels ON videos.channel_id = library_channels.channel_id
+             WHERE library_channels."primary" 
+               AND library_channels.library_id = @{nameof(libraryId)}
+               AND videos.refreshed_at - videos.published_at >= 'PT15M' 
+               AND videos.refreshed_at - videos.published_at <= 'PT1H'
+               AND CURRENT_TIMESTAMP - videos.refreshed_at >= 'PT15M'
+               AND NOT EXISTS(SELECT 1 FROM media.sponsorblock_segments WHERE sponsorblock_segments.video_id = videos.id)
+             LIMIT 5;
+             """,
+            new { libraryId },
+            transaction);
+
+        var enumerable = await Connection.QueryAsync<string>(command);
+        return enumerable as List<string> ?? enumerable.ToList();
+    }
+
     public async ValueTask<List<VideoFileEntity>> GetFilesAsync(
         Guid videoId,
         Guid userId,
@@ -374,30 +397,31 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     {
         return await Connection.ExecuteAsync(
             $"""
-            UPDATE media.video_viewed_by_users
-            SET modified_at = CURRENT_TIMESTAMP,
-                viewed = false
-            WHERE video_viewed_by_users.video_id = @{nameof(videoId)}
-              AND video_viewed_by_users.user_id = @{nameof(userId)};
-            """,
+             UPDATE media.video_viewed_by_users
+             SET modified_at = CURRENT_TIMESTAMP,
+                 viewed = false
+             WHERE video_viewed_by_users.video_id = @{nameof(videoId)}
+               AND video_viewed_by_users.user_id = @{nameof(userId)};
+             """,
             new { videoId, userId },
             transaction);
     }
 
-    public async ValueTask<int> UpdatePlaybackPosition(Guid videoId, Guid userId, double position, NpgsqlTransaction transaction)
+    public async ValueTask<int> UpdatePlaybackPosition(Guid videoId, Guid userId, double position,
+        NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
             $"""
-            INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed)
-            VALUES (@{nameof(videoId)}, @{nameof(userId)}, false)
-            ON CONFLICT DO NOTHING;         
+             INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed)
+             VALUES (@{nameof(videoId)}, @{nameof(userId)}, false)
+             ON CONFLICT DO NOTHING;         
 
-            UPDATE media.video_viewed_by_users
-            SET modified_at = CURRENT_TIMESTAMP,
-                position = @{nameof(position)}
-            WHERE video_viewed_by_users.video_id = @{nameof(videoId)}
-              AND video_viewed_by_users.user_id = @{nameof(userId)};
-            """,
+             UPDATE media.video_viewed_by_users
+             SET modified_at = CURRENT_TIMESTAMP,
+                 position = @{nameof(position)}
+             WHERE video_viewed_by_users.video_id = @{nameof(videoId)}
+               AND video_viewed_by_users.user_id = @{nameof(userId)};
+             """,
             new { videoId, userId, position },
             transaction);
     }

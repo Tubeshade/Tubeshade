@@ -210,6 +210,15 @@ public sealed class BackgroundWorkerService : BackgroundService
             var service = provider.GetRequiredService<SubscriptionsService>();
             await service.RefreshSubscriptions(cancellationToken);
         }
+        else if (task.Type == TaskType.ReindexVideos)
+        {
+            using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
+            var service = provider.GetRequiredService<YoutubeService>();
+            await service.Reindex(
+                task.LibraryId!.Value,
+                task.UserId!.Value,
+                cancellationToken);
+        }
     }
 
     private static async ValueTask<SemaphoreSlimExtensions.SemaphoreScope> LockAsync(

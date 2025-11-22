@@ -894,6 +894,18 @@ public sealed class YoutubeService
         await transaction.CommitAsync(cancellationToken);
     }
 
+    public async ValueTask Reindex(Guid libraryId, Guid userId, CancellationToken cancellationToken)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+
+        foreach (var videoUrl in await _videoRepository.GetForReindex(libraryId, transaction))
+        {
+            await _taskService.IndexVideo(userId, libraryId, videoUrl, transaction);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
     private async ValueTask<string?> CreateCookieFile(
         Guid libraryId,
         DirectoryInfo directory,
