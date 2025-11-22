@@ -202,9 +202,13 @@
         });
 
         function reportPlaybackPosition() {
+            const position = Math.abs(video.duration - video.currentTime) < 0.1
+                ? 0
+                : video.currentTime;
+
             navigator.sendBeacon(
                 "@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))",
-                new URLSearchParams({"position": video.currentTime}));
+                new URLSearchParams({"position": position}));
         }
 
         if ("mediaSession" in navigator) {
@@ -296,7 +300,7 @@
 
             navigator.sendBeacon(
                 "@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))",
-                new URLSearchParams({"position": "0"}));
+                new URLSearchParams({"position": 0}));
 
             viewedInput.checked = true;
             viewedInput.dispatchEvent(new Event("change"));
