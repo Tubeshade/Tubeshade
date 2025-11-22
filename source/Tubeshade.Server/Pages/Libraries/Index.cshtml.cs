@@ -122,7 +122,7 @@ public sealed class Index : PageModel, INonLibraryPage
             },
             transaction);
 
-        var id = await _repository.AddAsync(new LibraryEntity
+        var libraryId = await _repository.AddAsync(new LibraryEntity
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
@@ -133,10 +133,35 @@ public sealed class Index : PageModel, INonLibraryPage
             },
             transaction);
 
-        task.LibraryId = id!.Value;
+        task.LibraryId = libraryId!.Value;
         await _taskRepository.UpdateAsync(task, transaction);
+
+        var rescanTaskId = await _taskRepository.AddAsync(
+            new TaskEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                Type = TaskType.ReindexVideos,
+                UserId = userId,
+                LibraryId = libraryId.Value,
+            },
+            transaction);
+
+        await _scheduleRepository.AddAsync(
+            new ScheduleEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                TaskId = rescanTaskId!.Value,
+                CronExpression = "* * * * *",
+                TimeZoneId = model.TimeZoneId
+            },
+            transaction);
+
         await transaction.CommitAsync(cancellationToken);
 
-        return RedirectToPage(nameof(Library), new { libraryId = id });
+        return RedirectToPage(nameof(Library), new { libraryId });
     }
 }

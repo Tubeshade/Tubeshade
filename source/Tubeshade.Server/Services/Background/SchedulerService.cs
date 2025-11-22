@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Cronos;
@@ -84,7 +85,8 @@ public sealed class SchedulerService : BackgroundService
 
                 _logger.LogDebug("Starting task {TaskId} based on schedule", schedule.TaskId);
 
-                await using var transaction = await connection.OpenAndBeginTransaction(stoppingToken);
+                // we only use NOTIFY here, so transaction isolation does not matter
+                await using var transaction = await connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, stoppingToken);
                 await taskRepository.TriggerTask(schedule.TaskId, transaction);
                 await transaction.CommitAsync(stoppingToken);
             }

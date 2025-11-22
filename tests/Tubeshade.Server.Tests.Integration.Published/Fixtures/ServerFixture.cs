@@ -14,6 +14,7 @@ using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 using NUnit.Framework;
 using Testcontainers.PostgreSql;
+using Tubeshade.Server.Configuration;
 
 namespace Tubeshade.Server.Tests.Integration.Published.Fixtures;
 
@@ -73,6 +74,7 @@ public sealed partial class ServerFixture : IServerFixture
             .WithEnvironment(
                 "Database__ConnectionString",
                 "Host=database; Port=5432; Username=postgres; Password=postgres; Include Error Detail=true")
+            .WithEnvironment($"{SchedulerOptions.SectionName}__{nameof(SchedulerOptions.Period)}", "PT5S")
             .WithPortBinding(8080, true)
             .WithWaitStrategy(Wait
                 .ForUnixContainer()

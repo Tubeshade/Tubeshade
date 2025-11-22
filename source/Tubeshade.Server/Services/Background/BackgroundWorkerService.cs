@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -85,7 +86,8 @@ public sealed class BackgroundWorkerService : BackgroundService
 
         using var listener = new RunFinishedListener(_taskListenerService);
 
-        await using (var dequeueTransaction = await connection.OpenAndBeginTransaction(cancellationToken))
+        // we only do a single read at the start of the transaction, so ReadCommitted is ok
+        await using (var dequeueTransaction = await connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, cancellationToken))
         {
             task = await taskRepository.TryDequeueTask(taskId, dequeueTransaction);
             if (task is null)
@@ -209,6 +211,15 @@ public sealed class BackgroundWorkerService : BackgroundService
             using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
             var service = provider.GetRequiredService<SubscriptionsService>();
             await service.RefreshSubscriptions(cancellationToken);
+        }
+        else if (task.Type == TaskType.ReindexVideos)
+        {
+            using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
+            var service = provider.GetRequiredService<YoutubeService>();
+            await service.Reindex(
+                task.LibraryId!.Value,
+                task.UserId!.Value,
+                cancellationToken);
         }
     }
 

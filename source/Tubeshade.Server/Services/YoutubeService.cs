@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -889,6 +890,19 @@ public sealed class YoutubeService
             var targetFilePath = Path.Combine(targetDirectory, tempFile.Name);
             _logger.LogDebug("Moving file from {SourcePath} to {TargetPath}", tempFile.FullName, targetFilePath);
             tempFile.MoveTo(targetFilePath);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async ValueTask Reindex(Guid libraryId, Guid userId, CancellationToken cancellationToken)
+    {
+        // we only read data at the start of the transaction, so ReadCommitted is ok
+        await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, cancellationToken);
+
+        foreach (var videoUrl in await _videoRepository.GetForReindex(libraryId, transaction))
+        {
+            await _taskService.IndexVideo(userId, libraryId, videoUrl, transaction);
         }
 
         await transaction.CommitAsync(cancellationToken);

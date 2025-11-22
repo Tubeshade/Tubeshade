@@ -308,6 +308,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                             LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
                    WHERE (libraries.id IN (SELECT id FROM accessible))
                      AND (@{nameof(parameters.LibraryId)} IS NULL OR libraries.id = @{nameof(parameters.LibraryId)})
+                     AND tasks.type != '{TaskType.Names.ReindexVideos}'
                    GROUP BY tasks.id, tasks.created_at
                    ORDER BY result_created DESC, run_created DESC, tasks.created_at DESC
                    OFFSET @{nameof(parameters.Offset)} LIMIT @{nameof(parameters.Limit)}) filtered_tasks
@@ -353,7 +354,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                  OR tasks.channel_id IN (SELECT id FROM matching_channels)
                  OR (@{nameof(task.VideoId)} IS NOT NULL AND tasks.video_id = @{nameof(task.VideoId)})
                  OR (@{nameof(task.ChannelId)} IS NOT NULL AND tasks.channel_id = @{nameof(task.ChannelId)})
-                 OR (@{nameof(task.Url)} IS NOT NULL AND tasks.url = @{nameof(task.Url)}));
+                 OR (@{nameof(task.Url)} IS NOT NULL AND tasks.url = @{nameof(task.Url)})
+                 OR (@{nameof(task.Type)} = tasks.type AND tasks.type = '{TaskType.Names.ReindexVideos}'));
              """,
             task,
             cancellationToken: cancellationToken);

@@ -27,6 +27,7 @@ public sealed class TaskModel
         TaskType.Names.ScanChannel => "Scan channel",
         TaskType.Names.ScanSubscriptions => "Scan subscriptions",
         TaskType.Names.ScanSponsorBlockSegments => "Scan Sponsor Block segments",
+        TaskType.Names.ReindexVideos => "Reindex videos",
         _ => throw new ArgumentOutOfRangeException(),
     };
 }
