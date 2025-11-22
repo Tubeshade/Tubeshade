@@ -20,6 +20,11 @@ public sealed record VideoFileEntity : ModifiableEntity
 
     public required decimal Framerate { get; set; }
 
+    // ReSharper disable once TypeWithSuspiciousEqualityIsUsedInRecord.Global
+    public byte[]? Hash { get; set; }
+
+    public HashAlgorithm? HashAlgorithm { get; set; }
+
     public Instant? DownloadedAt { get; set; }
 
     public Guid? DownloadedByUserId { get; set; }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Dapper;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
@@ -51,22 +50,18 @@ public sealed class ChannelSubscriptionRepository(NpgsqlConnection connection)
         """;
 
     /// <inheritdoc />
-    protected override string UpdateSet => throw new NotSupportedException();
-
-    /// <inheritdoc />
-    protected override string UpdateSql =>
+    protected override string UpdateSet =>
         $"""
-         UPDATE media.channel_subscriptions
-         SET modified_at = CURRENT_TIMESTAMP,
-             modified_by_user_id = @{nameof(ChannelSubscriptionEntity.ModifiedByUserId)},
              status = @{nameof(ChannelSubscriptionEntity.Status)},
              callback = @{nameof(ChannelSubscriptionEntity.Callback)},
              topic = @{nameof(ChannelSubscriptionEntity.Topic)},
              expires_at = @{nameof(ChannelSubscriptionEntity.ExpiresAt)},
              verify_token = @{nameof(ChannelSubscriptionEntity.VerifyToken)},
              secret = @{nameof(ChannelSubscriptionEntity.Secret)}
-         WHERE (media.channel_subscriptions.id = @{nameof(ChannelSubscriptionEntity.Id)});
          """;
+
+    /// <inheritdoc />
+    protected override string UpdateSql => UpdateUnsafeSql;
 
     public IAsyncEnumerable<ChannelSubscriptionEntity> GetExpiringUnbufferedAsync()
     {

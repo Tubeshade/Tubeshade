@@ -15,8 +15,8 @@ public sealed class ImageFileRepository(NpgsqlConnection connection) : Repositor
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO media.image_files (created_by_user_id, storage_path, type, width, height) 
-         VALUES (@CreatedByUserId, @StoragePath, @Type, @Width, @Height)
+         INSERT INTO media.image_files (created_by_user_id, storage_path, type, width, height, hash, hash_algorithm) 
+         VALUES (@CreatedByUserId, @StoragePath, @Type, @Width, @Height, @Hash, @HashAlgorithm)
          RETURNING id;
          """;
 
@@ -29,7 +29,9 @@ public sealed class ImageFileRepository(NpgsqlConnection connection) : Repositor
                 storage_path AS {nameof(ImageFileEntity.StoragePath)},
                 type AS {nameof(ImageFileEntity.Type)},
                 width AS {nameof(ImageFileEntity.Width)},
-                height AS {nameof(ImageFileEntity.Height)}
+                height AS {nameof(ImageFileEntity.Height)},
+                hash AS {nameof(VideoFileEntity.Hash)},
+                hash_algorithm AS {nameof(VideoFileEntity.HashAlgorithm)}
          FROM media.image_files
          """;
 
@@ -45,5 +47,42 @@ public sealed class ImageFileRepository(NpgsqlConnection connection) : Repositor
             transaction);
 
         return await Connection.ExecuteAsync(command);
+    }
+
+    public async ValueTask UpdateHashAsync(
+        Guid id,
+        byte[] hash,
+        HashAlgorithm hashAlgorithm,
+        NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             UPDATE media.image_files
+             SET hash = @{nameof(hash)},
+                 hash_algorithm = @{nameof(hashAlgorithm)}
+             WHERE id = @{nameof(id)}
+             """,
+            new { id, hash, hashAlgorithm },
+            transaction);
+
+        await Connection.ExecuteAsync(command);
+    }
+
+    public async ValueTask<string?> FindBasePathUnsafe(Guid id, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             SELECT videos.storage_path
+             FROM media.image_files
+                INNER JOIN media.video_images ON image_files.id = video_images.image_id
+                INNER JOIN media.videos ON video_images.video_id = videos.id
+             WHERE image_files.id = @{nameof(id)};
+             """,
+            new { id },
+            transaction);
+
+        return await Connection.QuerySingleOrDefaultAsync<string>(command);
     }
 }

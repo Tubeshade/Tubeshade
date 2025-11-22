@@ -98,12 +98,32 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
         return await Connection.QuerySingleAsync<TEntity>(command);
     }
 
+    public async ValueTask<TEntity> GetUnsafeAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var command = new CommandDefinition(
+            SelectSingleSql,
+            new GetSingleParameters(id, Guid.Empty, Access.Read),
+            cancellationToken: cancellationToken);
+
+        return await Connection.QuerySingleAsync<TEntity>(command);
+    }
+
     /// <inheritdoc />
     public async ValueTask<TEntity> GetAsync(Guid id, Guid userId, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             SelectAccessibleSingleSql,
             new GetSingleParameters(id, userId, Access.Read),
+            transaction);
+
+        return await Connection.QuerySingleAsync<TEntity>(command);
+    }
+
+    public async ValueTask<TEntity> GetUnsafeAsync(Guid id, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            SelectSingleSql,
+            new GetSingleParameters(id, Guid.Empty, Access.Read),
             transaction);
 
         return await Connection.QuerySingleAsync<TEntity>(command);
@@ -164,6 +184,14 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
             SelectAccessibleSql,
             new GetParameters(userId, Access.Read),
             cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<TEntity>(command);
+        return enumerable as List<TEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<List<TEntity>> GetUnsafeAsync(CancellationToken cancellationToken = default)
+    {
+        var command = new CommandDefinition(SelectSql, cancellationToken: cancellationToken);
 
         var enumerable = await Connection.QueryAsync<TEntity>(command);
         return enumerable as List<TEntity> ?? enumerable.ToList();

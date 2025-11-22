@@ -81,4 +81,16 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(24, Information, "Queuing notification {NotificationChannel} {NotificationPayload}")]
     internal static partial void QueueingNotification(this ILogger logger, string notificationChannel, Guid notificationPayload);
+
+    [LoggerMessage(25, Trace, "Skipping video file {VideoFileId}")]
+    internal static partial void SkippingVideoFile(this ILogger logger, Guid videoFileId);
+
+    [LoggerMessage(26, Debug, "Replacing placeholder hash with {HashAlgorithm} for video file {VideoFileId} stored at {Path}")]
+    internal static partial void ReplacingVideoPlaceholderHash(this ILogger logger, string hashAlgorithm, Guid videoFileId, string path);
+
+    [LoggerMessage(27, Trace, "Skipping image file {ImageFileId}")]
+    internal static partial void SkippingImageFile(this ILogger logger, Guid imageFileId);
+
+    [LoggerMessage(28, Debug, "Replacing placeholder hash with {HashAlgorithm} for image file {ImageFileId} stored at {Path}")]
+    internal static partial void ReplacingImagePlaceholderHash(this ILogger logger, string hashAlgorithm, Guid imageFileId, string path);
 }

@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentAction, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<PlayerClient, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SubscriptionStatus, int>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<HashAlgorithm, int>());
 
         SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
         SqlMapper.AddTypeHandler(new PeriodTypeHandler());

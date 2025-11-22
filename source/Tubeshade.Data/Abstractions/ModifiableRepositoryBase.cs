@@ -14,17 +14,22 @@ public abstract class ModifiableRepositoryBase<TEntity> : RepositoryBase<TEntity
 
     protected abstract string UpdateSet { get; }
 
-    protected virtual string UpdateSql =>
+    protected virtual string UpdateUnsafeSql =>
         $"""
-         {UpdateAccessCte}
-
          UPDATE {TableName}
          SET modified_at = CURRENT_TIMESTAMP,
              modified_by_user_id = @{nameof(IModifiableEntity.ModifiedByUserId)},
          {UpdateSet}
 
-         WHERE {AccessFilter}
-           AND ({TableName}.id = @{nameof(IEntity.Id)});
+         WHERE ({TableName}.id = @{nameof(IEntity.Id)})
+         """;
+
+    protected virtual string UpdateSql =>
+        $"""
+         {UpdateAccessCte}
+
+         {UpdateUnsafeSql}
+           AND {AccessFilter};
          """;
 
     protected virtual string UpdateAccessCte =>
@@ -44,6 +49,12 @@ public abstract class ModifiableRepositoryBase<TEntity> : RepositoryBase<TEntity
     public async ValueTask<int> UpdateAsync(TEntity entity, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(UpdateSql, entity, transaction);
+        return await Connection.ExecuteAsync(command);
+    }
+
+    public async ValueTask<int> UpdateUnsafeAsync(TEntity entity, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(UpdateUnsafeSql, entity, transaction);
         return await Connection.ExecuteAsync(command);
     }
 

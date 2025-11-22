@@ -12,8 +12,8 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO media.video_files (created_by_user_id, modified_by_user_id, owner_id, video_id, storage_path, type, width, height, framerate, downloaded_at, downloaded_by_user_id) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @VideoId, @StoragePath, @Type, @Width, @Height, @Framerate,@DownloadedAt, @DownloadedByUserId)
+         INSERT INTO media.video_files (created_by_user_id, modified_by_user_id, owner_id, video_id, storage_path, type, width, height, framerate, downloaded_at, downloaded_by_user_id, hash, hash_algorithm) 
+         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @VideoId, @StoragePath, @Type, @Width, @Height, @Framerate,@DownloadedAt, @DownloadedByUserId, @Hash, @HashAlgorithm)
          RETURNING id;
          """;
 
@@ -33,7 +33,9 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
                 height AS {nameof(VideoFileEntity.Height)},
                 framerate AS {nameof(VideoFileEntity.Framerate)},
                 downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-                downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
+                downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)},
+                hash AS {nameof(VideoFileEntity.Hash)},
+                hash_algorithm AS {nameof(VideoFileEntity.HashAlgorithm)}
          FROM media.video_files
          """;
 
@@ -47,6 +49,8 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
              height = @{nameof(VideoFileEntity.Height)},
              framerate = @{nameof(VideoFileEntity.Framerate)},
              downloaded_at = @{nameof(VideoFileEntity.DownloadedAt)},
-             downloaded_by_user_id = @{nameof(VideoFileEntity.DownloadedByUserId)}
+             downloaded_by_user_id = @{nameof(VideoFileEntity.DownloadedByUserId)},
+             hash = @{nameof(VideoFileEntity.Hash)},
+             hash_algorithm = @{nameof(VideoFileEntity.HashAlgorithm)}
          """;
 }
