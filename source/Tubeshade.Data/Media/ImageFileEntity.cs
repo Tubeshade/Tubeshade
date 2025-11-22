@@ -11,4 +11,8 @@ public sealed record ImageFileEntity : Entity
     public required int Width { get; set; }
 
     public required int Height { get; set; }
+
+    public required byte[] Hash { get; set; }
+
+    public required HashAlgorithm HashAlgorithm { get; set; }
 }

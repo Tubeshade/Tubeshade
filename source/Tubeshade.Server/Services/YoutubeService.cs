@@ -412,6 +412,9 @@ public sealed class YoutubeService
         var thumbnails = Directory.EnumerateFiles(video.StoragePath, "thumbnail.*").ToArray();
         if (thumbnails is [var thumbnailPath])
         {
+            var hashAlgorithm = HashAlgorithm.Default;
+            var hashData = await hashAlgorithm.ComputeHashAsync(thumbnailPath, cancellationToken);
+
             var imageFileId = await _imageFileRepository.AddAsync(
                 new()
                 {
@@ -419,7 +422,9 @@ public sealed class YoutubeService
                     StoragePath = Path.GetFileName(thumbnailPath),
                     Type = ImageType.Thumbnail,
                     Width = thumbnail.Width!.Value,
-                    Height = thumbnail.Height!.Value
+                    Height = thumbnail.Height!.Value,
+                    Hash = hashData,
+                    HashAlgorithm = hashAlgorithm,
                 },
                 transaction);
 
@@ -864,10 +869,18 @@ public sealed class YoutubeService
             {
                 _logger.LogInformation("Downloaded video {VideoUrl}", video.ExternalUrl);
 
+                var hashAlgorithm = HashAlgorithm.Default;
+                var hashData = await hashAlgorithm.ComputeHashAsync(
+                    Path.Combine(video.StoragePath, videoFile.StoragePath),
+                    cancellationToken);
+
                 videoFile.ModifiedAt = _clock.GetCurrentInstant();
                 videoFile.ModifiedByUserId = userId;
                 videoFile.DownloadedAt = _clock.GetCurrentInstant();
                 videoFile.DownloadedByUserId = userId;
+                videoFile.Hash = hashData;
+                videoFile.HashAlgorithm = hashAlgorithm;
+
                 await _videoFileRepository.UpdateAsync(videoFile, transaction);
 
                 sizeOffset += size ?? 0;

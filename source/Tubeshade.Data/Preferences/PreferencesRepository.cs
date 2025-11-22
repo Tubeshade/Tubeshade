@@ -55,7 +55,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
     protected override string AccessCte => string.Empty;
 
     /// <inheritdoc />
-    protected override string UpdateAccessCte => string.Empty;
+    protected override string UpdateSql => UpdateUnsafeSql;
 
     /// <inheritdoc />
     protected override string AccessFilter => "(1 = 1)";

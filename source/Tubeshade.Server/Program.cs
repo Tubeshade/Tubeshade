@@ -141,6 +141,7 @@ internal static class Program
             .AddSingleton<BackgroundWorkerService>()
             .AddHostedService<BackgroundWorkerService>(provider => provider.GetRequiredService<BackgroundWorkerService>())
             .AddHostedService<SchedulerService>()
+            .AddHostedService<FileHashMigrationService>()
             .AddScoped<TaskService>()
             .AddScoped<WebVideoTextTracksService>()
             .AddScoped<IYtdlpWrapper, YtdlpWrapper>()
