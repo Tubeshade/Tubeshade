@@ -17,7 +17,9 @@ using Microsoft.Net.Http.Headers;
 using NodaTime.Text;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
+using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services;
@@ -49,21 +51,6 @@ public sealed class VideosController : ControllerBase
         _fileUploadService = fileUploadService;
     }
 
-    [HttpGet]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
-    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
-    {
-        var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-
-        var stream = System.IO.File.OpenRead(video.StoragePath);
-        return File(
-            stream,
-            $"video/{Path.GetExtension(video.StoragePath)}",
-            video.ModifiedAt.ToDateTimeOffset(),
-            new EntityTagHeaderValue(new StringSegment($"\"{id}\"")),
-            true);
-    }
-
     [HttpPost("PlaybackPosition")]
     [Consumes(MediaTypeNames.Application.FormUrlEncoded)]
     public async Task<NoContentResult> UpdatePlaybackPosition(Guid id, [Required, FromForm] double? position)
@@ -76,7 +63,6 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Files")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
     public async Task<List<VideoFileEntity>> GetFiles(Guid id, CancellationToken cancellationToken)
     {
         return await _repository.GetFilesAsync(id, User.GetUserId(), cancellationToken);
@@ -111,55 +97,77 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Files/{fileId:guid}")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
+    [ResponseCache(CacheProfileName = CacheProfiles.Static)]
     public async Task<IActionResult> GetFile(Guid id, Guid fileId, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var videoFile = await _repository.FindFileAsync(fileId, userId, cancellationToken);
+
+        await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, cancellationToken);
+        var video = await _repository.FindAsync(id, userId, Access.Read, transaction);
+        if (video is null)
+        {
+            return NotFound();
+        }
+
+        var videoFile = await _repository.FindFileAsync(fileId, userId, transaction);
         if (videoFile?.DownloadedAt is null)
         {
             return NotFound();
         }
 
-        var video = await _repository.GetAsync(videoFile.VideoId, userId, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
         var file = new FileInfo(Path.Combine(video.StoragePath, videoFile.StoragePath));
         var stream = file.OpenRead();
         return File(
             stream,
             $"video/{videoFile.Type.Name}",
-            videoFile.CreatedAt.ToDateTimeOffset(),
+            file.LastWriteTimeUtc,
             new EntityTagHeaderValue(new StringSegment($"\"video_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")),
             true);
     }
 
     [HttpGet("Thumbnail")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
+    [ResponseCache(CacheProfileName = CacheProfiles.Static)]
     public async Task<IActionResult> GetThumbnail(Guid id, CancellationToken cancellationToken)
     {
-        var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-        var path = video.GetThumbnailFilePath();
+        var userId = User.GetUserId();
 
-        if (!System.IO.File.Exists(path))
+        await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, cancellationToken);
+        var video = await _repository.FindAsync(id, userId, Access.Read, transaction);
+        if (video is null)
         {
             return NotFound();
         }
 
-        var file = new FileInfo(path);
+        var thumbnail = await _repository.FindThumbnailAsync(id, userId, transaction);
+        if (thumbnail is null)
+        {
+            return NotFound();
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+
+        var file = new FileInfo(Path.Combine(video.StoragePath, thumbnail.StoragePath));
         var stream = file.OpenRead();
         return File(
             stream,
-            "image/jpeg",
+            $"image/{Path.GetExtension(thumbnail.StoragePath).Trim('.')}",
             file.LastWriteTimeUtc,
             new EntityTagHeaderValue(new StringSegment($"\"thumbnail_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")));
     }
 
     [HttpGet("Subtitles")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
+    [ResponseCache(CacheProfileName = CacheProfiles.Dynamic)]
     public async Task<IActionResult> GetSubtitles(Guid id, CancellationToken cancellationToken)
     {
-        var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-        var path = video.GetSubtitlesFilePath();
+        var video = await _repository.FindAsync(id, User.GetUserId(), Access.Read, cancellationToken);
+        if (video is null)
+        {
+            return NotFound();
+        }
 
+        var path = video.GetSubtitlesFilePath();
         if (!System.IO.File.Exists(path))
         {
             return NotFound();
@@ -175,12 +183,16 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Chapters")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
+    [ResponseCache(CacheProfileName = CacheProfiles.Dynamic)]
     public async Task<IActionResult> GetChapters(Guid id, CancellationToken cancellationToken)
     {
-        var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-        var path = video.GetChaptersFilePath();
+        var video = await _repository.FindAsync(id, User.GetUserId(), Access.Read, cancellationToken);
+        if (video is null)
+        {
+            return NotFound();
+        }
 
+        var path = video.GetChaptersFilePath();
         if (!System.IO.File.Exists(path))
         {
             return NotFound();
@@ -196,7 +208,7 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("SponsorBlock")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
+    [ResponseCache(CacheProfileName = CacheProfiles.Dynamic)]
     public async Task<IActionResult> GetSponsorBlockSegments(Guid id, CancellationToken cancellationToken)
     {
         var segments = await _segmentRepository.GetForVideo(id, User.GetUserId(), cancellationToken);
