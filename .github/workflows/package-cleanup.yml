@@ -24,6 +24,7 @@ jobs:
         image:
           - 'tubeshade'
           - 'tubeshade-build'
+          - 'tubeshade-runtime-deps'
 
     steps:
       - uses: actions/delete-package-versions@v5.0.0
