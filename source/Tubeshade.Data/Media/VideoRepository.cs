@@ -219,8 +219,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
 
              SELECT external_url
              FROM stale_videos
-             WHERE from_publish >= 'PT15M' 
-               AND from_publish <= 'PT1H'
+             WHERE from_publish <= 'PT1H'
                AND from_now >= 'PT15M'
                AND NOT EXISTS(SELECT 1 FROM media.sponsorblock_segments WHERE sponsorblock_segments.video_id = stale_videos.id)
              ORDER BY stale_videos.published_at DESC
