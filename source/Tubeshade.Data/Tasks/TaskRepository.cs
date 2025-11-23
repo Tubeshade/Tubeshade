@@ -471,14 +471,15 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
         var taskRunIds = await Connection.QueryAsync<Guid>(new(
             $"""
-            SELECT id
+            SELECT task_runs.id
             FROM tasks.task_runs
-            WHERE state != '{RunState.Names.Finished}';
+                LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+            WHERE task_run_results.id IS NULL;
             """,
             new { },
             transaction));
 
-        foreach (var taskRunId in taskRunIds)
+        foreach (var taskRunId in taskRunIds.Distinct())
         {
             await FinishTaskRun(taskRunId, transaction);
             await Connection.ExecuteAsync(new(
