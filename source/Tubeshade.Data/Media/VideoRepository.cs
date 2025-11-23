@@ -207,13 +207,15 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
             // lang=sql
             $"""
              WITH stale_videos AS (SELECT videos.id,
-                                   external_url,
-                                   refreshed_at - published_at AS from_publish,
-                                   CURRENT_TIMESTAMP - refreshed_at AS from_now
-                            FROM media.videos
-                                INNER JOIN media.library_channels ON videos.channel_id = library_channels.channel_id
-                            WHERE library_channels."primary" 
-                              AND library_channels.library_id = @{nameof(libraryId)})
+                                          videos.published_at,
+                                          external_url,
+                                          refreshed_at - published_at AS from_publish,
+                                          CURRENT_TIMESTAMP - refreshed_at AS from_now
+                                   FROM media.videos
+                                       INNER JOIN media.library_channels ON videos.channel_id = library_channels.channel_id
+                                   WHERE library_channels."primary" 
+                                     AND library_channels.library_id = @{nameof(libraryId)}
+                                     AND videos.ignored_at IS NULL)
 
              SELECT external_url
              FROM stale_videos
@@ -221,6 +223,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                AND from_publish <= 'PT1H'
                AND from_now >= 'PT15M'
                AND NOT EXISTS(SELECT 1 FROM media.sponsorblock_segments WHERE sponsorblock_segments.video_id = stale_videos.id)
+             ORDER BY stale_videos.published_at DESC
              LIMIT 5;
              """,
             new { libraryId },
