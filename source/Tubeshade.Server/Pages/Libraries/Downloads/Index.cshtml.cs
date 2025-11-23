@@ -108,7 +108,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
             return NotFound();
         }
 
-        await _taskService.IndexVideo(userId, LibraryId, video.ExternalUrl, transaction);
+        await _taskService.IndexVideo(userId, LibraryId, video, transaction);
         await transaction.CommitAsync();
 
         return RedirectToPage();

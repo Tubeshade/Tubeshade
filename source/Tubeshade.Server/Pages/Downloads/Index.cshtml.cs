@@ -118,7 +118,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
 
         var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, transaction);
 
-        await _taskService.IndexVideo(userId, libraryId, video.ExternalUrl, transaction);
+        await _taskService.IndexVideo(userId, libraryId, video, transaction);
         await transaction.CommitAsync();
 
         return RedirectToPage();

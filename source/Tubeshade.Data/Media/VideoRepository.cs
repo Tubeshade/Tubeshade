@@ -201,12 +201,13 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return enumerable as List<VideoEntity> ?? enumerable.ToList();
     }
 
-    public async ValueTask<List<string>> GetForReindex(Guid libraryId, NpgsqlTransaction transaction)
+    public async ValueTask<List<(Guid VideoId, Guid ChannelId, string VideoUrl)>> GetForReindex(Guid libraryId, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             // lang=sql
             $"""
              WITH stale_videos AS (SELECT videos.id,
+                                          videos.channel_id,
                                           videos.published_at,
                                           external_url,
                                           refreshed_at - published_at AS from_publish,
@@ -217,7 +218,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                                      AND library_channels.library_id = @{nameof(libraryId)}
                                      AND videos.ignored_at IS NULL)
 
-             SELECT external_url
+             SELECT id,
+                    channel_id,
+                    external_url
              FROM stale_videos
              WHERE from_publish <= 'PT1H'
                AND from_now >= 'PT15M'
@@ -228,8 +231,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
             new { libraryId },
             transaction);
 
-        var enumerable = await Connection.QueryAsync<string>(command);
-        return enumerable as List<string> ?? enumerable.ToList();
+        var enumerable = await Connection.QueryAsync<(Guid, Guid, string)>(command);
+        return enumerable as List<(Guid, Guid, string)> ?? enumerable.ToList();
     }
 
     public async ValueTask<List<VideoFileEntity>> GetFilesAsync(

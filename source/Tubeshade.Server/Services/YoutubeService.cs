@@ -89,6 +89,8 @@ public sealed class YoutubeService
         string url,
         Guid libraryId,
         Guid userId,
+        Guid? videoId,
+        Guid? channelId,
         DirectoryInfo tempDirectory,
         CancellationToken cancellationToken)
     {
@@ -102,13 +104,18 @@ public sealed class YoutubeService
         };
 
         var data = await _ytdlpWrapper.FetchUnknownUrlData(url, cookieFilepath, cancellationToken);
-        var channel = await GetChannel(libraryId, userId, data, transaction);
+
+        var channel = videoId is not null && channelId is not null
+            ? await _channelRepository.GetAsync(channelId.Value, userId, transaction)
+            : await GetChannel(libraryId, userId, data, transaction);
+
         var result = new UrlIndexingResult { ChannelId = channel.Id };
 
         if (data.ResultType is MetadataType.Video)
         {
             result.VideoId = await IndexVideo(
                 url,
+                videoId,
                 channel,
                 libraryId,
                 userId,
@@ -178,6 +185,7 @@ public sealed class YoutubeService
 
     private async ValueTask<Guid> IndexVideo(
         string url,
+        Guid? videoId,
         ChannelEntity channel,
         Guid libraryId,
         Guid userId,
@@ -197,15 +205,35 @@ public sealed class YoutubeService
         var isNewVideo = video is null;
 
         var currentTime = _clock.GetCurrentInstant();
-        // todo: livestreams don't have duration
-        var duration = Period.FromSeconds((long)Math.Truncate(videoData.Duration!.Value));
         var availability = videoData.Availability switch
         {
             Public or Unlisted => ExternalAvailability.Public,
             Private or PremiumOnly or SubscriberOnly or NeedsAuth => ExternalAvailability.Private,
-            _ => throw new ArgumentOutOfRangeException(nameof(videoData.Availability),
-                videoData.Availability, "Unexpected availability value"),
+            null => ExternalAvailability.NotAvailable,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(videoData.Availability),
+                videoData.Availability,
+                "Unexpected availability value"),
         };
+
+        if (availability == ExternalAvailability.NotAvailable)
+        {
+            if (video is not null)
+            {
+                video.ModifiedAt = currentTime;
+                video.ModifiedByUserId = userId;
+                video.RefreshedAt = currentTime;
+                video.Availability = availability;
+
+                await _videoRepository.UpdateAsync(video, transaction);
+                return video.Id;
+            }
+
+            throw new InvalidOperationException("Video is not available");
+        }
+
+        // todo: livestreams don't have duration
+        var duration = Period.FromSeconds((long)Math.Truncate(videoData.Duration!.Value));
 
         if (video is null)
         {
@@ -218,7 +246,7 @@ public sealed class YoutubeService
                 _ => VideoType.Video,
             };
 
-            var videoId = await _videoRepository.AddAsync(
+            videoId = await _videoRepository.AddAsync(
                 new VideoEntity
                 {
                     CreatedByUserId = userId,
@@ -622,7 +650,7 @@ public sealed class YoutubeService
                     continue;
                 }
 
-                await IndexVideo(video.Url, channel, libraryId, userId, videoResult.Data, transaction, directory, cancellationToken, type);
+                await IndexVideo(video.Url, null, channel, libraryId, userId, videoResult.Data, transaction, directory, cancellationToken, type);
 
                 if (reportProgress)
                 {
@@ -900,9 +928,9 @@ public sealed class YoutubeService
         // we only read data at the start of the transaction, so ReadCommitted is ok
         await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, cancellationToken);
 
-        foreach (var videoUrl in await _videoRepository.GetForReindex(libraryId, transaction))
+        foreach (var (videoId, channelId, videoUrl) in await _videoRepository.GetForReindex(libraryId, transaction))
         {
-            await _taskService.IndexVideo(userId, libraryId, videoUrl, transaction);
+            await _taskService.IndexVideo(userId, libraryId, videoUrl, channelId, videoId, transaction);
         }
 
         await transaction.CommitAsync(cancellationToken);

@@ -382,6 +382,24 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             transaction);
     }
 
+    public ValueTask<Guid> AddIndexTask(string url, Guid videoId, Guid channelId, Guid libraryId, Guid userId, NpgsqlTransaction transaction)
+    {
+        return AddTask(new TaskEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                Type = TaskType.Index,
+                UserId = userId,
+                LibraryId = libraryId,
+                ChannelId = channelId,
+                VideoId = videoId,
+                Url = url,
+                AllVideos = false,
+            },
+            transaction);
+    }
+
     public ValueTask<Guid> AddDownloadTask(Guid videoId, Guid libraryId, Guid userId, NpgsqlTransaction transaction)
     {
         return AddTask(new TaskEntity

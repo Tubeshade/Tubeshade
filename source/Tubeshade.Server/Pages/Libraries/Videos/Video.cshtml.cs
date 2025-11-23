@@ -138,7 +138,7 @@ public sealed class Video : LibraryPageBase
             return NotFound();
         }
 
-        await _taskService.IndexVideo(userId, LibraryId, video.ExternalUrl, transaction);
+        await _taskService.IndexVideo(userId, LibraryId, video, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);

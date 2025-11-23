@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.Media;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Pages.Tasks;
 
@@ -75,6 +76,17 @@ public sealed class TaskService
     public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, NpgsqlTransaction transaction)
     {
         var taskId = await _taskRepository.AddIndexTask(url, libraryId, userId, transaction);
+        await _taskRepository.TriggerTask(taskId, userId, transaction);
+    }
+
+    public ValueTask IndexVideo(Guid userId, Guid libraryId, VideoEntity video, NpgsqlTransaction transaction)
+    {
+        return IndexVideo(userId, libraryId, video.ExternalUrl, video.ChannelId, video.Id, transaction);
+    }
+
+    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, Guid channelId, Guid videoId, NpgsqlTransaction transaction)
+    {
+        var taskId = await _taskRepository.AddIndexTask(url, videoId, channelId, libraryId, userId, transaction);
         await _taskRepository.TriggerTask(taskId, userId, transaction);
     }
 

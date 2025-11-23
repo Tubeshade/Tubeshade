@@ -148,6 +148,8 @@ public sealed class BackgroundWorkerService : BackgroundService
                 task.Url!,
                 task.LibraryId!.Value,
                 task.UserId!.Value,
+                task.VideoId,
+                task.ChannelId,
                 tempDirectory,
                 cancellationToken);
 
