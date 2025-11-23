@@ -7,7 +7,7 @@ build=$3
 tag=$4
 
 version=$(tr -d '[:space:]' <version)
-publish_dir="./source/${project}/bin/Release/net9.0/${runtime}/publish"
+publish_dir="./source/${project}/bin/Release/net10.0/${runtime}/publish"
 archive_name="${project}_${runtime}.zip"
 
 ./build/restore.sh "${project}"

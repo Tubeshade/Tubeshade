@@ -1,10 +1,9 @@
 <Project>
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <!--		<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
         <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
-        <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.Extensions.Configuration.Binder.SourceGeneration</InterceptorsNamespaces>
 
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>

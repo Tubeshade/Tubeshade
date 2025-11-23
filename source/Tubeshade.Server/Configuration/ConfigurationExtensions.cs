@@ -44,7 +44,9 @@ internal static class ConfigurationExtensions
         where TOptions : notnull, new()
     {
         // todo this breaks EnableConfigurationBindingGenerator, as it does not support generics
+#pragma warning disable SYSLIB1104
         return (configuration.GetSection(sectionName).Get<TOptions>() ?? new()).ValidateAndThrow();
+#pragma warning restore SYSLIB1104
     }
 
     internal static string GetSectionName(this Type type)
