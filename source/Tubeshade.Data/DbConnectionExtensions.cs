@@ -18,13 +18,15 @@ public static class DbConnectionExtensions
             : Task.CompletedTask;
     }
 
-    public static ValueTask<NpgsqlTransaction> OpenAndBeginTransaction(this NpgsqlConnection connection,
+    public static ValueTask<NpgsqlTransaction> OpenAndBeginTransaction(
+        this NpgsqlConnection connection,
         CancellationToken cancellationToken = default)
     {
         return OpenAndBeginTransaction(connection, IsolationLevel.Serializable, cancellationToken);
     }
 
-    public static async ValueTask<NpgsqlTransaction> OpenAndBeginTransaction(this NpgsqlConnection connection,
+    public static async ValueTask<NpgsqlTransaction> OpenAndBeginTransaction(
+        this NpgsqlConnection connection,
         IsolationLevel isolationLevel,
         CancellationToken cancellationToken = default)
     {
@@ -32,7 +34,9 @@ public static class DbConnectionExtensions
         return await connection.BeginTransactionAsync(isolationLevel, cancellationToken);
     }
 
-    public static async ValueTask ExecuteWithinTransaction(this NpgsqlConnection connection, ILogger logger,
+    public static async ValueTask ExecuteWithinTransaction(
+        this NpgsqlConnection connection,
+        ILogger logger,
         Func<NpgsqlTransaction, ValueTask> action,
         CancellationToken cancellationToken = default)
     {
@@ -49,7 +53,7 @@ public static class DbConnectionExtensions
             }
             catch (PostgresException exception) when (exception.IsTransient && attempt < attempts - 1)
             {
-                logger.LogWarning(exception, "Failed to commit transaction, retrying");
+                logger.LogWarning("Failed to commit transaction, retrying");
                 await Task.Delay(50 * (int)Math.Pow(2, attempt), cancellationToken);
             }
         }
