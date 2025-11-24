@@ -113,17 +113,21 @@ public sealed class Video : LibraryPageBase
     public async Task<IActionResult> OnPostViewed(string? viewed, Guid videoId)
     {
         var userId = User.GetUserId();
-        await using var transaction = await _connection.OpenAndBeginTransaction();
-        if (viewed is not null)
-        {
-            await _videoRepository.MarkAsWatched(videoId, userId, transaction);
-        }
-        else
-        {
-            await _videoRepository.MarkAsNotWatched(videoId, userId, transaction);
-        }
 
-        await transaction.CommitAsync();
+        await _connection.ExecuteWithinTransaction(
+            _logger,
+            async transaction =>
+            {
+                if (viewed is not null)
+                {
+                    await _videoRepository.MarkAsWatched(videoId, userId, transaction);
+                }
+                else
+                {
+                    await _videoRepository.MarkAsNotWatched(videoId, userId, transaction);
+                }
+            });
+
         return StatusCode(StatusCodes.Status200OK);
     }
 

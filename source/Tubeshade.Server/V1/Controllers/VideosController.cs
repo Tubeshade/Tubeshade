@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -12,6 +11,7 @@ using Htmx;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using NodaTime.Text;
@@ -29,6 +29,7 @@ namespace Tubeshade.Server.V1.Controllers;
 [Route("api/v{version:apiVersion}/[controller]/{id:guid}")]
 public sealed class VideosController : ControllerBase
 {
+    private readonly ILogger<VideosController> _logger;
     private readonly NpgsqlConnection _connection;
     private readonly VideoRepository _repository;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
@@ -36,12 +37,14 @@ public sealed class VideosController : ControllerBase
     private readonly FileUploadService _fileUploadService;
 
     public VideosController(
+        ILogger<VideosController> logger,
         NpgsqlConnection connection,
         VideoRepository repository,
         SponsorBlockSegmentRepository segmentRepository,
         WebVideoTextTracksService webVideoTextTracksService,
         FileUploadService fileUploadService)
     {
+        _logger = logger;
         _connection = connection;
         _repository = repository;
         _segmentRepository = segmentRepository;
@@ -68,9 +71,12 @@ public sealed class VideosController : ControllerBase
     [Consumes(MediaTypeNames.Application.FormUrlEncoded)]
     public async Task<NoContentResult> UpdatePlaybackPosition(Guid id, [Required, FromForm] double? position)
     {
-        await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted);
-        await _repository.UpdatePlaybackPosition(id, User.GetUserId(), position!.Value, transaction);
-        await transaction.CommitAsync();
+        await _connection.ExecuteWithinTransaction(
+            _logger,
+             async transaction =>
+             {
+                 await _repository.UpdatePlaybackPosition(id, User.GetUserId(), position!.Value, transaction);
+             });
 
         return NoContent();
     }
