@@ -16,12 +16,13 @@ using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Server.Services;
 using Tubeshade.Server.V1.Models;
+using LoggerExtensions = Tubeshade.Server.Services.LoggerExtensions;
 
 namespace Tubeshade.Server.V1.Controllers.YouTube;
 
 [ApiController]
 [AllowAnonymous]
-[Route("api/v{version:apiVersion}/YouTube/[controller]")]
+[Route("api/v{version:apiVersion}/YouTube/[controller]/{channelId:guid}")]
 public sealed class NotificationsController : ControllerBase
 {
     private readonly NpgsqlConnection _connection;
@@ -56,12 +57,12 @@ public sealed class NotificationsController : ControllerBase
         _preferencesRepository = preferencesRepository;
     }
 
-    [HttpGet("{channelId:guid}")]
+    [HttpGet]
     public async Task<IActionResult> Get(Guid channelId, IntentVerificationRequest request)
     {
-        using (_logger.BeginScope("{@VerificationRequest}", request))
+        using (LoggerExtensions.IntentVerificationScope(_logger, request))
         {
-            _logger.LogDebug("Received intent verification request for channel {ChannelId}", channelId);
+            _logger.ReceivedIntentVerificationRequest(channelId);
         }
 
         if (!SubscriptionMode.TryFromName(request.Mode, true, out var mode))
@@ -79,7 +80,7 @@ public sealed class NotificationsController : ControllerBase
             return NotFound();
         }
 
-        _logger.LogInformation("Received intent verification request for channel {ChannelName}", channel.Name);
+        _logger.ReceivedIntentVerificationRequest(channel.Name);
 
         var subscription = await _channelSubscriptionRepository.FindAsync(channel.Id, transaction);
         if (subscription is null)
@@ -128,13 +129,13 @@ public sealed class NotificationsController : ControllerBase
         return Ok(request.Challenge);
     }
 
-    [HttpPost("{channelId:guid}")]
+    [HttpPost]
     [Consumes(MediaTypeNames.Application.Xml)]
     public async Task<IActionResult> Post(Guid channelId, Feed feed)
     {
-        using (_logger.BeginScope("{@Feed}", feed))
+        using (LoggerExtensions.FeedUpdateScope(_logger, feed))
         {
-            _logger.LogDebug("Received feed update notification for channel {ChannelId}", channelId);
+            _logger.ReceivedFeedUpdate(channelId);
         }
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
@@ -145,7 +146,7 @@ public sealed class NotificationsController : ControllerBase
         }
 
         var videoUrl = feed.Entry.Link.Uri;
-        _logger.LogInformation("Received feed update notification for channel {ChannelName} video {VideoUrl}", channel.Name, videoUrl);
+        _logger.ReceivedFeedUpdate(channel.Name, videoUrl);
 
         var userId = await _userRepository.GetSystemUserId(transaction);
         var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, transaction);
@@ -164,11 +165,18 @@ public sealed class NotificationsController : ControllerBase
             (videoType.Name is VideoType.Names.Livestream && preferences.LiveStreamsCount > 0) ||
             (videoType.Name is VideoType.Names.Short && preferences.ShortsCount > 0))
         {
-            await _taskService.IndexVideo(userId, libraryId, videoUrl, transaction);
+            if (existingVideo is not null)
+            {
+                await _taskService.IndexVideo(userId, libraryId, existingVideo, transaction);
+            }
+            else
+            {
+                await _taskService.IndexVideo(userId, libraryId, videoUrl, transaction);
+            }
         }
         else
         {
-            _logger.LogInformation("Not indexing video of type {VideoType} due to preferences", videoType.Name);
+            _logger.FeedUpdatedIgnored(videoType.Name);
         }
 
         await transaction.CommitAsync();

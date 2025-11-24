@@ -1,11 +1,19 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
+using PubSubHubbub.Models;
+using Tubeshade.Server.V1.Models;
 using static Microsoft.Extensions.Logging.LogLevel;
 
 namespace Tubeshade.Server.Services;
 
 internal static partial class LoggerExtensions
 {
+    internal static readonly Func<ILogger, IntentVerificationRequest, IDisposable?> IntentVerificationScope =
+        LoggerMessage.DefineScope<IntentVerificationRequest>("{@VerificationRequest}");
+
+    internal static readonly Func<ILogger, Feed, IDisposable?> FeedUpdateScope =
+        LoggerMessage.DefineScope<Feed>("{@Feed}");
+
     [LoggerMessage(1, Debug, "Created temporary directory {Path}")]
     internal static partial void Created(this ILogger logger, string path);
 
@@ -81,4 +89,19 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(24, Information, "Queuing notification {NotificationChannel} {NotificationPayload}")]
     internal static partial void QueueingNotification(this ILogger logger, string notificationChannel, Guid notificationPayload);
+
+    [LoggerMessage(25, Debug, "Received intent verification request for channel {ChannelId}")]
+    internal static partial void ReceivedIntentVerificationRequest(this ILogger logger, Guid channelId);
+
+    [LoggerMessage(26, Information, "Received intent verification request for channel {ChannelName}")]
+    internal static partial void ReceivedIntentVerificationRequest(this ILogger logger, string channelName);
+
+    [LoggerMessage(27, Debug, "Received feed update notification for channel {ChannelId}")]
+    internal static partial void ReceivedFeedUpdate(this ILogger logger, Guid channelId);
+
+    [LoggerMessage(28, Information, "Received feed update notification for channel {ChannelName} video {VideoUrl}")]
+    internal static partial void ReceivedFeedUpdate(this ILogger logger, string channelName, string videoUrl);
+
+    [LoggerMessage(29, Information, "Not indexing video of type {VideoType} due to preferences")]
+    internal static partial void FeedUpdatedIgnored(this ILogger logger, string videoType);
 }
