@@ -128,7 +128,7 @@ public sealed class VideosController : ControllerBase
             stream,
             $"video/{videoFile.Type.Name}",
             videoFile.CreatedAt.ToDateTimeOffset(),
-            new EntityTagHeaderValue(new StringSegment($"\"video_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")),
+            new EntityTagHeaderValue(new StringSegment($"\"{Convert.ToBase64String(videoFile.Hash!)}\"")),
             true);
     }
 
