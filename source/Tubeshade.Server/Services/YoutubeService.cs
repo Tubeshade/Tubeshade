@@ -539,7 +539,6 @@ public sealed class YoutubeService
         Guid userId,
         TaskRepository taskRepository,
         Guid taskRunId,
-        DirectoryInfo tempDirectory,
         CancellationToken cancellationToken)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);

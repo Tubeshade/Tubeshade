@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Data;
 using System.Diagnostics;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +17,7 @@ namespace Tubeshade.Server.Services.Background;
 
 public sealed class BackgroundWorkerService : BackgroundService
 {
+    private const string TaskRunPrefix = "task-run";
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _runCancellations = [];
 
     private readonly IServiceProvider _serviceProvider;
@@ -109,11 +109,9 @@ public sealed class BackgroundWorkerService : BackgroundService
 
             await taskService.WaitForBlockingTasks(listener.Reader, task, taskRunId, source.Token);
 
-            using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory("task-run", taskRunId);
-
             // Separate scope is needed, so that all updates to task status are not within a transaction
             await using var taskScope = _serviceProvider.CreateAsyncScope();
-            await Execute(task, taskScope.ServiceProvider, scopedDirectory.Directory, taskRepository, taskRunId, source.Token);
+            await Execute(task, taskScope.ServiceProvider, taskRepository, taskRunId, source.Token);
             await taskRepository.CompleteTask(taskRunId, source.Token);
         }
         catch (Exception exception) when (exception is TaskCanceledException or OperationCanceledException)
@@ -135,7 +133,6 @@ public sealed class BackgroundWorkerService : BackgroundService
     private async ValueTask Execute(
         TaskEntity task,
         IServiceProvider provider,
-        DirectoryInfo tempDirectory,
         TaskRepository taskRepository,
         Guid taskRunId,
         CancellationToken cancellationToken)
@@ -143,6 +140,8 @@ public sealed class BackgroundWorkerService : BackgroundService
         if (task.Type == TaskType.Index)
         {
             using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
+            using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory(TaskRunPrefix, taskRunId);
+
             var service = provider.GetRequiredService<YoutubeService>();
             var result = await service.Index(
                 task.Url!,
@@ -150,7 +149,7 @@ public sealed class BackgroundWorkerService : BackgroundService
                 task.UserId!.Value,
                 task.VideoId,
                 task.ChannelId,
-                tempDirectory,
+                scopedDirectory.Directory,
                 cancellationToken);
 
             task.ChannelId = result.ChannelId;
@@ -160,6 +159,8 @@ public sealed class BackgroundWorkerService : BackgroundService
         else if (task.Type == TaskType.DownloadVideo)
         {
             using var scope = await LockAsync(_downloadLock, taskRepository, taskRunId, cancellationToken);
+            using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory(TaskRunPrefix, taskRunId);
+
             var service = provider.GetRequiredService<YoutubeService>();
             await service.DownloadVideo(
                 task.LibraryId!.Value,
@@ -167,12 +168,14 @@ public sealed class BackgroundWorkerService : BackgroundService
                 task.UserId!.Value,
                 taskRepository,
                 taskRunId,
-                tempDirectory,
+                scopedDirectory.Directory,
                 cancellationToken);
         }
         else if (task.Type == TaskType.ScanChannel)
         {
             using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
+            using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory(TaskRunPrefix, taskRunId);
+
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanChannel(
                 task.LibraryId!.Value,
@@ -181,19 +184,21 @@ public sealed class BackgroundWorkerService : BackgroundService
                 task.UserId!.Value,
                 taskRepository,
                 taskRunId,
-                tempDirectory,
+                scopedDirectory.Directory,
                 cancellationToken);
         }
         else if (task.Type == TaskType.ScanSubscriptions)
         {
             using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
+            using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory(TaskRunPrefix, taskRunId);
+
             var service = provider.GetRequiredService<YoutubeService>();
             await service.ScanSubscriptions(
                 task.LibraryId!.Value,
                 task.UserId!.Value,
                 taskRepository,
                 taskRunId,
-                tempDirectory,
+                scopedDirectory.Directory,
                 cancellationToken);
         }
         else if (task.Type == TaskType.ScanSponsorBlockSegments)
@@ -205,7 +210,6 @@ public sealed class BackgroundWorkerService : BackgroundService
                 task.UserId!.Value,
                 taskRepository,
                 taskRunId,
-                tempDirectory,
                 cancellationToken);
         }
         else if (task.Type == TaskType.RefreshSubscriptions)
