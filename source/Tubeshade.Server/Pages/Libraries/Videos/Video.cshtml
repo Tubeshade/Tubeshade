@@ -188,7 +188,10 @@
 
         const video = document.querySelector("#video");
         video.playbackRate = @Model.PlaybackSpeed.ToString(CultureInfo.InvariantCulture);
-        video.currentTime = @((Model.Entity.Position ?? 0).ToString(CultureInfo.InvariantCulture));
+        @if (Model.Entity.Position is { } position and > Defaults.PlaybackEpsilon)
+        {
+            @: video.currentTime = @(position.ToString(CultureInfo.InvariantCulture));
+        }
 
         video.addEventListener("pause", reportPlaybackPosition, false);
         video.addEventListener("play", reportPlaybackPosition, false);
