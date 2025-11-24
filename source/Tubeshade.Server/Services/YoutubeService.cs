@@ -232,13 +232,15 @@ public sealed class YoutubeService
             throw new InvalidOperationException("Video is not available");
         }
 
-        // todo: livestreams don't have duration
-        var duration = Period.FromSeconds((long)Math.Truncate(videoData.Duration!.Value));
+        // todo: livestreams, as well as videos from some sites besides YouTube, don't have duration
+        var duration = Period.FromSeconds(
+            (long)Math.Truncate(videoData.Duration ?? throw new InvalidOperationException("Video is missing duration")));
 
         if (video is null)
         {
-            var publishedAt = videoData.ReleaseTimestamp ?? videoData.Timestamp;
-            var publishedInstant = Instant.FromDateTimeUtc(publishedAt!.Value);
+            var publishedAt = videoData.ReleaseTimestamp ?? videoData.Timestamp
+                ?? throw new InvalidOperationException("Video is missing publish date");
+            var publishedInstant = Instant.FromDateTimeUtc(publishedAt);
 
             type ??= videoData switch
             {
