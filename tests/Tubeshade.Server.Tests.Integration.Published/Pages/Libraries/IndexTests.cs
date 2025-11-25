@@ -72,6 +72,23 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
         await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Unsubscribe" }).ClickAsync();
         await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Subscribe" }).ClickAsync();
 
+        await Page.GetByText("Video count").FillAsync("1");
+        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Update preferences" }).ClickAsync();
+        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Scan", Exact = true }).ClickAsync();
+
+        await Page.GetByText("Tasks").ClickAsync();
+        (await Page.TitleAsync()).Should().Be($"Tasks - {name} - Tubeshade");
+
+        await Page
+            .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Cancel" })
+            .WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden });
+
+        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Retry" }).ClickAsync();
+
+        await Page
+            .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Cancel" })
+            .WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden });
+
         await Page.GetByText("Channels").ClickAsync();
         (await Page.TitleAsync()).Should().Be($"Channels - {name} - Tubeshade");
         await Page.GetByText(DateTimeOffset.Now.ToString("yyyy-MM-dd")).WaitForAsync();
