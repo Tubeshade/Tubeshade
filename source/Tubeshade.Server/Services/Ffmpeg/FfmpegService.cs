@@ -48,14 +48,14 @@ public sealed class FfmpegService
             StandardOutputEncoding = Encoding.UTF8,
         };
 
-        var process = Process.Start(processInfo);
+        using var process = Process.Start(processInfo);
         if (process is null)
         {
             throw new InvalidOperationException("Failed to start ffprobe");
         }
 
         ProbeResponse response;
-        await using (cancellationToken.Register(() => process.Kill()))
+        await using (cancellationToken.Register(state => (state as Process)?.Kill(), process))
         {
             string error;
             using (var reader = new StreamReader(process.StandardError.BaseStream))
@@ -132,7 +132,7 @@ public sealed class FfmpegService
             StandardOutputEncoding = Encoding.UTF8,
         };
 
-        var process = Process.Start(processInfo);
+        using var process = Process.Start(processInfo);
         if (process is null)
         {
             throw new InvalidOperationException("Failed to start ffmpeg");
@@ -140,7 +140,7 @@ public sealed class FfmpegService
 
         string? error;
         string? output;
-        await using (cancellationToken.Register(() => process.Kill()))
+        await using (cancellationToken.Register(state => (state as Process)?.Kill(), process))
         {
             using (var reader = new StreamReader(process.StandardError.BaseStream))
             {

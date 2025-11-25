@@ -126,7 +126,10 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         finally
         {
-            _ = _runCancellations.TryRemove(taskRunId, out _);
+            if (_runCancellations.TryRemove(taskRunId, out var source))
+            {
+                source.Dispose();
+            }
         }
     }
 

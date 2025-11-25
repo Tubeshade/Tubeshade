@@ -90,7 +90,7 @@ public sealed class ExecutableDetector : IPostConfigureOptions<YtdlpOptions>, IV
             RedirectStandardError = true,
         };
 
-        var process = Process.Start(processInfo);
+        using var process = Process.Start(processInfo);
         if (process is null)
         {
             _logger.LogWarning("Failed start process for locating executable");
