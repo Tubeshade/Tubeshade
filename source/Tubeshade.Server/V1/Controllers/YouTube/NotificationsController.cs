@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using NodaTime;
@@ -77,7 +78,7 @@ public sealed class NotificationsController : ControllerBase
         var channel = await _channelRepository.FindAsync(channelId, transaction);
         if (channel is null)
         {
-            return NotFound();
+            return Problem("Channel does not exist", statusCode: StatusCodes.Status404NotFound);
         }
 
         _logger.ReceivedIntentVerificationRequest(channel.Name);
@@ -85,7 +86,7 @@ public sealed class NotificationsController : ControllerBase
         var subscription = await _channelSubscriptionRepository.FindAsync(channel.Id, transaction);
         if (subscription is null)
         {
-            return NotFound();
+            return Problem("Subscription request not found", statusCode: StatusCodes.Status404NotFound);
         }
 
         if (request.VerifyToken != subscription.VerifyToken)
@@ -142,7 +143,7 @@ public sealed class NotificationsController : ControllerBase
         var channel = await _channelRepository.FindAsync(channelId, transaction);
         if (channel is null)
         {
-            return NoContent();
+            return Problem("Channel does not exist", statusCode: StatusCodes.Status404NotFound);
         }
 
         var videoUrl = feed.Entry.Link.Uri;
