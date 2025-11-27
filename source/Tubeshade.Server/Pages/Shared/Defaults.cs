@@ -1,4 +1,6 @@
-﻿namespace Tubeshade.Server.Pages.Shared;
+﻿using Tubeshade.Data.Media;
+
+namespace Tubeshade.Server.Pages.Shared;
 
 internal static class Defaults
 {
@@ -6,4 +8,7 @@ internal static class Defaults
     internal const int PageIndex = 0;
 
     internal const double PlaybackEpsilon = 10;
+
+    internal static readonly SortVideoBy VideoOrder = SortVideoBy.PublishedAt;
+    internal static readonly SortDirection SortDirection = SortDirection.Descending;
 }

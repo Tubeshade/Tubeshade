@@ -68,6 +68,14 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
     [BindProperty(SupportsGet = true)]
     public ExternalAvailability? Availability { get; set; }
 
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortVideoBy? SortBy { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortDirection? SortDirection { get; set; }
+
     public LibraryEntity Library { get; set; } = null!;
 
     /// <inheritdoc />
@@ -77,31 +85,12 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
-        this.ApplyDefaultFilters();
-
         var userId = User.GetUserId();
-
-        var pageSize = PageSize ?? Defaults.PageSize;
-        var page = PageIndex ?? Defaults.PageIndex;
-        var offset = pageSize * page;
+        var parameters = this.GetVideoParameters(userId, LibraryId, ChannelId);
 
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
         Entity = await _channelRepository.GetAsync(ChannelId, userId, cancellationToken);
-        var videos = await _videoRepository.GetFiltered(
-            new VideoParameters
-            {
-                UserId = userId,
-                LibraryId = LibraryId,
-                ChannelId = ChannelId,
-                Limit = pageSize,
-                Offset = offset,
-                Viewed = Viewed,
-                Query = Query,
-                Type = Type,
-                WithFiles = WithFiles,
-                Availability = Availability,
-            },
-            cancellationToken);
+        var videos = await _videoRepository.GetFiltered(parameters, cancellationToken);
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);
 
         var videoIds = videos.Select(video => video.Id).ToArray();
@@ -129,8 +118,8 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
         {
             LibraryId = LibraryId,
             Data = models,
-            Page = page,
-            PageSize = pageSize,
+            Page = PageIndex ?? Defaults.PageIndex,
+            PageSize = parameters.Limit,
             TotalCount = totalCount,
         };
 

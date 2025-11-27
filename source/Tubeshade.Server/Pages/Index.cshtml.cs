@@ -68,6 +68,14 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
     public ExternalAvailability? Availability { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortVideoBy? SortBy { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortDirection? SortDirection { get; set; }
+
+    /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
     /// <inheritdoc />
@@ -75,30 +83,12 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
-        this.ApplyDefaultFilters();
-
         var userId = User.GetUserId();
+        var parameters = this.GetVideoParameters(userId, null, null);
 
         Libraries = await _libraryRepository.GetAsync(userId, cancellationToken);
 
-        var pageSize = PageSize ?? Defaults.PageSize;
-        var page = PageIndex ?? Defaults.PageIndex;
-        var offset = pageSize * page;
-        var videos = await _videoRepository.GetFiltered(
-            new VideoParameters
-            {
-                UserId = userId,
-                LibraryId = null,
-                ChannelId = null,
-                Limit = pageSize,
-                Offset = offset,
-                Viewed = Viewed,
-                Query = Query,
-                Type = Type,
-                WithFiles = WithFiles,
-                Availability = Availability,
-            },
-            cancellationToken);
+        var videos = await _videoRepository.GetFiltered(parameters, cancellationToken);
 
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);
 
@@ -127,8 +117,8 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
         {
             LibraryId = null,
             Data = models,
-            Page = page,
-            PageSize = pageSize,
+            Page = PageIndex ?? Defaults.PageIndex,
+            PageSize = parameters.Limit,
             TotalCount = totalCount,
         };
 

@@ -30,4 +30,8 @@ public sealed class VideoParameters : IAccessParameters, IPaginatedParameters
     public bool? WithFiles { get; init; }
 
     public ExternalAvailability? Availability { get; init; }
+
+    public required SortVideoBy SortBy { get; init; }
+
+    public required SortDirection SortDirection { get; init; }
 }

@@ -66,35 +66,25 @@ public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
     public ExternalAvailability? Availability { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortVideoBy? SortBy { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortDirection? SortDirection { get; set; }
+
+    /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
     public LibraryEntity Entity { get; set; } = null!;
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
-        this.ApplyDefaultFilters();
-
         var userId = User.GetUserId();
-
-        var pageSize = PageSize ?? Defaults.PageSize;
-        var page = PageIndex ?? Defaults.PageIndex;
-        var offset = pageSize * page;
+        var parameters = this.GetVideoParameters(userId, LibraryId, null);
 
         Entity = await _repository.GetAsync(LibraryId, userId, cancellationToken);
-        var videos = await _videoRepository.GetFiltered(
-            new VideoParameters
-            {
-                UserId = userId,
-                LibraryId = LibraryId,
-                Limit = pageSize,
-                Offset = offset,
-                Viewed = Viewed,
-                Query = Query,
-                Type = Type,
-                WithFiles = WithFiles,
-                Availability = Availability,
-            },
-            cancellationToken);
+        var videos = await _videoRepository.GetFiltered(parameters, cancellationToken);
 
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);
 
@@ -123,8 +113,8 @@ public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
         {
             LibraryId = LibraryId,
             Data = models,
-            Page = page,
-            PageSize = pageSize,
+            Page = PageIndex ?? Defaults.PageIndex,
+            PageSize = parameters.Limit,
             TotalCount = totalCount,
         };
 

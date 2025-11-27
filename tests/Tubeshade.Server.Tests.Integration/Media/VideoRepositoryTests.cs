@@ -194,6 +194,8 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
         var allVideos = await repository.GetFiltered(
             new VideoParameters
             {
+                SortBy = SortVideoBy.PublishedAt,
+                SortDirection = SortDirection.Descending,
                 UserId = _userId,
                 LibraryId = _libraryId,
                 Limit = 24,
@@ -204,6 +206,8 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
         var viewedVideos = await repository.GetFiltered(
             new VideoParameters
             {
+                SortBy = SortVideoBy.PublishedAt,
+                SortDirection = SortDirection.Descending,
                 UserId = _userId,
                 LibraryId = _libraryId,
                 Limit = 24,
@@ -214,6 +218,8 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
         var notViewedVideos = await repository.GetFiltered(
             new VideoParameters
             {
+                SortBy = SortVideoBy.PublishedAt,
+                SortDirection = SortDirection.Descending,
                 UserId = _userId,
                 LibraryId = _libraryId,
                 Limit = 24,

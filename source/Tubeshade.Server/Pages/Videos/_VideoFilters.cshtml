@@ -51,6 +51,26 @@
     </div>
 
     <div class="col-12">
+        <label asp-for="SortBy" hidden="hidden">Sort by</label>
+        <select asp-for="SortBy" class="form-select">
+            @foreach (var order in SortVideoBy.List)
+            {
+                <option value="@order.Name" selected="@(Model.SortBy == order)">@order.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="SortDirection" hidden="hidden">Sort direction</label>
+        <select asp-for="SortDirection" class="form-select">
+            @foreach (var direction in SortDirection.List)
+            {
+                <option value="@direction.Name" selected="@(Model.SortDirection == direction)">@direction.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-12">
         <label asp-for="PageSize" hidden="hidden">Page size</label>
         <input asp-for="PageSize" class="form-control" type="number" placeholder="Page size"
                value="@(Model.PageSize is null or Defaults.PageSize ? null : Model.PageSize)"/>

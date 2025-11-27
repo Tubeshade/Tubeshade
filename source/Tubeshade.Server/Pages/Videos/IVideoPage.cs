@@ -19,6 +19,10 @@ public interface IVideoPage : IPaginatedDataPage<VideoModel>
 
     ExternalAvailability? Availability { get; set; }
 
+    public SortVideoBy? SortBy { get; set; }
+
+    public SortDirection? SortDirection { get; set; }
+
     Dictionary<string, string?> GetRouteValues(int pageIndex) => new()
     {
         { nameof(Query), Query },
@@ -26,6 +30,8 @@ public interface IVideoPage : IPaginatedDataPage<VideoModel>
         { nameof(Type), Type?.Name },
         { nameof(WithFiles), WithFiles?.ToString() },
         { nameof(Availability), Availability?.Name },
+        { nameof(SortBy), SortBy?.Name },
+        { nameof(SortDirection), SortDirection?.Name },
         { nameof(PageSize), PageSize?.ToString() },
         { nameof(PageIndex), $"{pageIndex}" },
     };

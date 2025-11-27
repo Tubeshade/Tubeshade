@@ -73,6 +73,14 @@ public sealed class Index : LibraryPageBase, IDownloadPage
     public ExternalAvailability? Availability { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortVideoBy? SortBy { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortDirection? SortDirection { get; set; }
+
+    /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
     public LibraryEntity Library { get; set; } = null!;
@@ -148,29 +156,12 @@ public sealed class Index : LibraryPageBase, IDownloadPage
 
     private async ValueTask<Guid> OnGetCore(CancellationToken cancellationToken)
     {
-        this.ApplyDefaultFilters();
-
         var userId = User.GetUserId();
+        var parameters = this.GetVideoParameters(userId, LibraryId, ChannelId);
 
         Channels = await _channelRepository.GetForLibrary(LibraryId, userId, cancellationToken);
 
-        var pageSize = PageSize ?? Defaults.PageSize;
-        var page = PageIndex ?? Defaults.PageIndex;
-        var offset = pageSize * page;
-        var videos = await _videoRepository.GetDownloadableVideos(
-            new VideoParameters
-            {
-                UserId = userId,
-                LibraryId = LibraryId,
-                ChannelId = ChannelId,
-                Limit = pageSize,
-                Offset = offset,
-                Query = Query,
-                Type = Type,
-                WithFiles = WithFiles,
-                Availability = Availability,
-            },
-            cancellationToken);
+        var videos = await _videoRepository.GetDownloadableVideos(parameters, cancellationToken);
 
         var videoIds = videos.Select(video => video.Id).ToArray();
         var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);
@@ -197,8 +188,8 @@ public sealed class Index : LibraryPageBase, IDownloadPage
         {
             LibraryId = LibraryId,
             Data = models,
-            Page = page,
-            PageSize = pageSize,
+            Page = PageIndex ?? Defaults.PageIndex,
+            PageSize = parameters.Limit,
             TotalCount = totalCount,
         };
 

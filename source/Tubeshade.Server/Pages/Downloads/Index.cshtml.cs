@@ -75,6 +75,14 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
     public ExternalAvailability? Availability { get; set; }
 
     /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortVideoBy? SortBy { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortDirection? SortDirection { get; set; }
+
+    /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
     [BindProperty(SupportsGet = true)]
@@ -146,29 +154,13 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
 
     private async ValueTask<Guid> OnGetCore(CancellationToken cancellationToken)
     {
-        this.ApplyDefaultFilters();
-
         var userId = User.GetUserId();
+        var parameters = this.GetVideoParameters(userId, null, ChannelId);
 
         Libraries = await _libraryRepository.GetAsync(userId, cancellationToken);
         Channels = await _channelRepository.GetAsync(userId, cancellationToken);
 
-        var pageSize = PageSize ?? Defaults.PageSize;
-        var page = PageIndex ?? Defaults.PageIndex;
-        var offset = pageSize * page;
-        var videos = await _videoRepository.GetDownloadableVideos(
-            new VideoParameters
-            {
-                UserId = userId,
-                ChannelId = ChannelId,
-                Limit = pageSize,
-                Offset = offset,
-                Query = Query,
-                Type = Type,
-                WithFiles = WithFiles,
-                Availability = Availability,
-            },
-            cancellationToken);
+        var videos = await _videoRepository.GetDownloadableVideos(parameters, cancellationToken);
 
         var videoIds = videos.Select(video => video.Id).ToArray();
         var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);
@@ -195,8 +187,8 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         {
             LibraryId = null,
             Data = models,
-            Page = page,
-            PageSize = pageSize,
+            Page = PageIndex ?? Defaults.PageIndex,
+            PageSize = parameters.Limit,
             TotalCount = totalCount,
         };
 
