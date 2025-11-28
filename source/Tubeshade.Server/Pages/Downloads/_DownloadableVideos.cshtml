@@ -41,23 +41,23 @@
                                     <button hx-post="" hx-page-handler="StartDownload" hx-route-videoId="@video.Video.Id"
                                             hx-swap="delete" hx-target="#card-@video.Video.Id"
                                             class="btn btn-success" type="button">
-                                        Download
+                                        @SharedResources.Button_Download
                                     </button>
 
                                     <button hx-post="" hx-page-handler="Scan" hx-route-videoId="@video.Video.Id"
                                             hx-swap="none" class="btn btn-primary" type="button">
-                                        Rescan
+                                        @SharedResources.Button_Rescan
                                     </button>
 
                                     <a asp-page="/Videos/Edit" asp-route-videoId="@video.Video.Id"
                                        class="btn btn-primary" type="button">
-                                        Edit
+                                        @SharedResources.Button_Edit
                                     </a>
 
                                     <button hx-post="" hx-page-handler="Ignore" hx-route-videoId="@video.Video.Id"
                                             hx-swap="delete" hx-target="#card-@video.Video.Id"
                                             class="btn btn-secondary" type="button">
-                                        Ignore
+                                        @SharedResources.Button_Ignore
                                     </button>
                                 </div>
                             </div>
@@ -70,14 +70,14 @@
 
     <nav class="text-center">
         <span>
-            Showing <span>@Model.PageData.StartIndex</span> - <span>@Model.PageData.EndIndex</span> from <span>@Model.PageData.TotalCount</span>
+            @(string.Format(SharedResources.Pagination_PageSummary, Model.PageData.StartIndex, Model.PageData.EndIndex, Model.PageData.TotalCount))
         </span>
 
         <ul class="pagination justify-content-center">
             <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
                 <a asp-page="" asp-all-route-data="@Model.GetRouteValues(0)"
                    class="page-link">
-                    First
+                    @SharedResources.Pagination_First
                 </a>
             </li>
 
@@ -94,7 +94,7 @@
             <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
                 <a asp-page="" asp-all-route-data="@Model.GetRouteValues(Model.PageData.PageCount - 1)"
                    class="page-link">
-                    Last
+                    @SharedResources.Pagination_Last
                 </a>
             </li>
         </ul>

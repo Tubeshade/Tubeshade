@@ -5,7 +5,6 @@ using Asp.Versioning.Conventions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -80,12 +79,6 @@ internal static class Program
         builder.Services
             .AddMvc(options => options.ModelBinderProviders.Insert(0, new NodaTimeBindingProvider()))
             .AddXmlSerializerFormatters()
-            .AddViewOptions(options =>
-            {
-                // This removed an extra input for each form parameter to specify the culture of that input
-                // https://github.com/dotnet/aspnetcore/issues/47593
-                options.HtmlHelperOptions.FormInputRenderMode = FormInputRenderMode.AlwaysUseCurrentCulture;
-            })
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
@@ -115,7 +108,13 @@ internal static class Program
 
         builder.Services.AddRequestLocalization(options =>
         {
-            var cultures = new CultureInfo[] { new("en-US"), new("en") };
+            var cultures = new CultureInfo[]
+            {
+                new("en-US"),
+                new("en"),
+                new("lv-lv"),
+                new("lv"),
+            };
 
             options.SupportedCultures = cultures;
             options.SupportedUICultures = cultures;

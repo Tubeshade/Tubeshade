@@ -1,0 +1,188 @@
+﻿<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="HomePage" xml:space="preserve">
+        <value>Sākums</value>
+    </data>
+    <data name="Libraries" xml:space="preserve">
+        <value>Bibliotēka</value>
+    </data>
+    <data name="AllLibraries" xml:space="preserve">
+        <value>Visas</value>
+    </data>
+    <data name="Channels" xml:space="preserve">
+        <value>Kanāli</value>
+    </data>
+    <data name="Downloads" xml:space="preserve">
+        <value>Lejupielādes</value>
+    </data>
+    <data name="Error" xml:space="preserve">
+        <value>Kļūda</value>
+    </data>
+    <data name="Register" xml:space="preserve">
+        <value>Reģistrēties</value>
+    </data>
+    <data name="Login" xml:space="preserve">
+        <value>Pieslēgties</value>
+    </data>
+    <data name="Logout" xml:space="preserve">
+        <value>Atslēgties</value>
+    </data>
+    <data name="Account" xml:space="preserve">
+        <value>Profils</value>
+    </data>
+    <data name="Tasks" xml:space="preserve">
+        <value>Uzdevumi</value>
+    </data>
+    <data name="Filters_Viewed" xml:space="preserve">
+        <value>Skatīts</value>
+    </data>
+    <data name="Filters_Viewed_All" xml:space="preserve">
+        <value>Visi</value>
+    </data>
+    <data name="Filters_Viewed_Viewed" xml:space="preserve">
+        <value>Skatīts</value>
+    </data>
+    <data name="Filters_Viewed_NotViewed" xml:space="preserve">
+        <value>Neskatīts</value>
+    </data>
+    <data name="Filters_VideoType" xml:space="preserve">
+        <value>Video veids</value>
+    </data>
+    <data name="Filters_VideoType_All" xml:space="preserve">
+        <value>Visi</value>
+    </data>
+    <data name="Filters_Files_All" xml:space="preserve">
+        <value>Visi</value>
+    </data>
+    <data name="Filters_Files_With" xml:space="preserve">
+        <value>Ar failiem</value>
+    </data>
+    <data name="Filters_Files_Without" xml:space="preserve">
+        <value>Bez failiem</value>
+    </data>
+    <data name="Filters_Files" xml:space="preserve">
+        <value>Ar failiem</value>
+    </data>
+    <data name="Filters_Availability" xml:space="preserve">
+        <value>Pieejamība</value>
+    </data>
+    <data name="Filters_Availability_public" xml:space="preserve">
+        <value>Publiski</value>
+    </data>
+    <data name="Filters_Availability_private" xml:space="preserve">
+        <value>Privāti</value>
+    </data>
+    <data name="Filters_Availability_not_available" xml:space="preserve">
+        <value>Nepieejami</value>
+    </data>
+    <data name="Filters_Availability_Any" xml:space="preserve">
+        <value>Visi</value>
+    </data>
+    <data name="Filters_SortVideoBy_created_at" xml:space="preserve">
+        <value>Izveidots</value>
+    </data>
+    <data name="Filters_SortVideoBy_modified_at" xml:space="preserve">
+        <value>Labots</value>
+    </data>
+    <data name="Filters_SortVideoBy_published_at" xml:space="preserve">
+        <value>Publicēts</value>
+    </data>
+    <data name="Filters_SortVideoBy_refreshed_at" xml:space="preserve">
+        <value>Atjaunots</value>
+    </data>
+    <data name="Filters_SortVideoBy" xml:space="preserve">
+        <value>Kārtot pēc</value>
+    </data>
+    <data name="Filters_SortDirection" xml:space="preserve">
+        <value>Kārtošanas virziens</value>
+    </data>
+    <data name="Filters_SortDirection_ASC" xml:space="preserve">
+        <value>Augoši</value>
+    </data>
+    <data name="Filters_SortDirection_DESC" xml:space="preserve">
+        <value>Dilstoši</value>
+    </data>
+    <data name="Filters_SortVideoBy_random" xml:space="preserve">
+        <value>Haotiski</value>
+    </data>
+    <data name="Filters_VideoType_livestream" xml:space="preserve">
+        <value>Tiešraides</value>
+    </data>
+    <data name="Settings" xml:space="preserve">
+        <value>Iestatījumi</value>
+    </data>
+    <data name="Filters_PageSize" xml:space="preserve">
+        <value>Lapas izmērs</value>
+    </data>
+    <data name="Pagination_First" xml:space="preserve">
+        <value>Pirmā</value>
+    </data>
+    <data name="Pagination_Last" xml:space="preserve">
+        <value>Pēdējā</value>
+    </data>
+    <data name="Pagination_PageSummary" xml:space="preserve">
+        <value>Redzams {0} - {1} no {2}</value>
+    </data>
+    <data name="Button_Delete" xml:space="preserve">
+        <value>Dzēst</value>
+    </data>
+    <data name="Button_Download" xml:space="preserve">
+        <value>Lejupielādēt</value>
+    </data>
+    <data name="Button_Edit" xml:space="preserve">
+        <value>Labot</value>
+    </data>
+    <data name="Button_Ignore" xml:space="preserve">
+        <value>Ignorēt</value>
+    </data>
+    <data name="Button_Rescan" xml:space="preserve">
+        <value>Pārskanēt</value>
+    </data>
+    <data name="Preferences" xml:space="preserve">
+        <value>Iestatījumi</value>
+    </data>
+    <data name="Videos" xml:space="preserve">
+        <value>Video</value>
+    </data>
+    <data name="Video_Speed" xml:space="preserve">
+        <value>Ātrums</value>
+    </data>
+    <data name="Video_Chapter" xml:space="preserve">
+        <value>Nodaļa</value>
+    </data>
+    <data name="Original" xml:space="preserve">
+        <value>Oriģināls</value>
+    </data>
+    <data name="Video_Views" xml:space="preserve">
+        <value>{0} skatījumi</value>
+    </data>
+    <data name="Video_Likes" xml:space="preserve">
+        <value>{0} patīk</value>
+    </data>
+    <data name="Filters_VideoType_video" xml:space="preserve">
+        <value>Video</value>
+    </data>
+    <data name="Filters_VideoType_short" xml:space="preserve">
+        <value>Shorts</value>
+    </data>
+    <data name="Filters_Search" xml:space="preserve">
+        <value>Meklēt</value>
+    </data>
+    <data name="Filters_Channel" xml:space="preserve">
+        <value>Kanāls</value>
+    </data>
+    <data name="Filters_Channels_All" xml:space="preserve">
+        <value>Visi kanāli</value>
+    </data>
+</root>

@@ -1,4 +1,5 @@
-﻿@using NodaTime.Text
+﻿@using System.Globalization
+@using NodaTime.Text
 @using Tubeshade.Server.Pages.Shared
 @model Tubeshade.Server.Pages.Shared.PaginatedData<VideoModel>
 
@@ -8,7 +9,7 @@
         <div class="card m-1">
             <div class="position-relative">
                 <a asp-page="@(Model.LibraryId is not null ? "/Libraries/Videos/Video" : "/Videos/Video")"
-                   asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@video.Video.Id" >
+                   asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@video.Video.Id">
                     <img src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Video.Id })"
                          loading="lazy" alt="@video.Video.Name" title="@video.Video.Name"
                          class="card-img-top" style="aspect-ratio: calc(16 / 9);"/>
@@ -17,7 +18,8 @@
                      Math.Abs(video.DurationInSeconds - position) > Defaults.PlaybackEpsilon &&
                      position > Defaults.PlaybackEpsilon)
                 {
-                    <progress max="@video.DurationInSeconds" value="@position"
+                    <progress max="@video.DurationInSeconds.ToString(CultureInfo.InvariantCulture)"
+                              value="@position.ToString(CultureInfo.InvariantCulture)"
                               class="position-absolute w-100" style="transform: translate(0,-50%)">
                     </progress>
                 }
@@ -38,7 +40,7 @@
                                    type="checkbox" role="switch" switch title="Viewed" class="form-check-input"
                                    hx-post="" hx-page-handler="Viewed" hx-swap="none"/>
                             <label for="viewed@(video.Video.Id.ToString("N"))" class="form-check-label" hidden>
-                                Viewed
+                                @SharedResources.Filters_Viewed_Viewed
                             </label>
                         </div>
                     </form>

@@ -4,14 +4,14 @@
 
 <nav class="text-center">
     <span>
-        Showing @Model.PageData.StartIndex - @Model.PageData.EndIndex from @Model.PageData.TotalCount
+        @(string.Format(SharedResources.Pagination_PageSummary, Model.PageData.StartIndex, Model.PageData.EndIndex, Model.PageData.TotalCount))
     </span>
 
     <ul class="pagination justify-content-center">
         <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
             <a asp-page="" asp-all-route-data="@(Model.GetRouteValues(0))"
                class="page-link">
-                First
+                @SharedResources.Pagination_First
             </a>
         </li>
 
@@ -28,7 +28,7 @@
         <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
             <a asp-page="" asp-all-route-data="@(Model.GetRouteValues(Model.PageData.PageCount - 1))"
                class="page-link">
-                Last
+                @SharedResources.Pagination_Last
             </a>
         </li>
     </ul>

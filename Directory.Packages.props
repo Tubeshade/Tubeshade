@@ -53,7 +53,7 @@
         <PackageVersion Include="Polly.Contrib.WaitAndRetry" Version="1.1.1"/>
         <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.9.0"/>
         <PackageVersion Include="Testcontainers.PostgreSql" Version="4.8.1"/>
-        <PackageVersion Include="Verify.NUnit" Version="30.3.1"/>
+        <PackageVersion Include="Verify.NUnit" Version="31.7.2"/>
         <PackageVersion Include="YoutubeDLSharp" Version="1.1.2"/>
     </ItemGroup>
 </Project>

@@ -20,4 +20,5 @@ dotnet test \
 	--configuration "$configuration" \
 	--collect:"XPlat Code Coverage" \
 	--logger:"junit;LogFilePath=TestResults/test-result.junit.xml" \
+	--settings ./tests/coverlet.runsettings \
 	--no-build

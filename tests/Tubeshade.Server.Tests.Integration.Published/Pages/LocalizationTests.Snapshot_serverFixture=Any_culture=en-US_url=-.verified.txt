@@ -1,0 +1,63 @@
+﻿- banner:
+  - navigation:
+    - link "Tubeshade":
+      - /url: /
+    - list:
+      - listitem:
+        - button "Libraries"
+      - listitem:
+        - link "Channels":
+          - /url: /Channels
+      - listitem:
+        - link "Downloads":
+          - /url: /Downloads
+      - listitem:
+        - link "Tasks":
+          - /url: /Tasks
+    - list:
+      - listitem:
+        - link "Account":
+          - /url: /Identity/Account/Manage
+      - listitem:
+        - button "Logout"
+- main:
+  - searchbox "Search"
+  - combobox "Viewed":
+    - option "All"
+    - option "Viewed"
+    - option "Not viewed" [selected]
+  - combobox "Video type":
+    - option "All" [selected]
+    - option "Livestreams"
+    - option "Shorts"
+    - option "Videos"
+  - combobox "With files":
+    - option "All"
+    - option "With files" [selected]
+    - option "Without files"
+  - combobox "Availability":
+    - option "Any availability" [selected]
+    - option "Not available"
+    - option "Private"
+    - option "Public"
+  - combobox "Sort by":
+    - option "Created"
+    - option "Modified"
+    - option "Published" [selected]
+    - option "Random"
+    - option "Refreshed"
+  - combobox "Sort direction":
+    - option "Ascending"
+    - option "Descending" [selected]
+  - spinbutton "Page size"
+  - button "🔎︎"
+  - navigation:
+    - text: Showing 1 - 0 from 0
+    - list:
+      - listitem:
+        - link "First":
+          - /url: /?Viewed=False&WithFiles=True&SortBy=published_at&SortDirection=DESC&PageIndex=0
+      - listitem:
+        - link "Last":
+          - /url: /?Viewed=False&WithFiles=True&SortBy=published_at&SortDirection=DESC&PageIndex=-1
+- contentinfo: © 2025 - Tubeshade

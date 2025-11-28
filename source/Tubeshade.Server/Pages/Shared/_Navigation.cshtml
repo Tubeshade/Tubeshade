@@ -3,7 +3,7 @@
 <li class="nav-item dropdown d-inline-flex">
     <a class="nav-link dropdown-toggle" href="#"
        id="libraries-menu-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        Libraries
+        @SharedResources.Libraries
     </a>
 
     <ul class="dropdown-menu" aria-labelledby="libraries-menu-link">
@@ -15,26 +15,28 @@
                 </a>
             </li>
         }
-        <li><hr class="dropdown-divider"/></li>
+        <li>
+            <hr class="dropdown-divider"/>
+        </li>
         <li>
             <a class="dropdown-item" asp-page="/Libraries/Index">
-                All
+                @SharedResources.AllLibraries
             </a>
         </li>
     </ul>
 </li>
 <li class="nav-item">
     <a class="nav-link" asp-page="/Channels/Index">
-        Channels
+        @SharedResources.Channels
     </a>
 </li>
 <li class="nav-item">
     <a class="nav-link" asp-page="/Downloads/Index">
-        Downloads
+        @SharedResources.Downloads
     </a>
 </li>
 <li class="nav-item">
     <a class="nav-link" asp-page="/Tasks/Index">
-        Tasks
+        @SharedResources.Tasks
     </a>
 </li>

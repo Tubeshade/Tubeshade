@@ -23,6 +23,21 @@
         <PackageReference Include="YoutubeDLSharp"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Update="Resources\SharedResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>SharedResources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Resources\SharedResources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>SharedResources.resx</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
     <Target Name="JavascriptLibraries" BeforeTargets="Build;Publish">
         <Exec WorkingDirectory="./" Command="npm install" Condition="'$(ContinuousIntegrationBuild)' != 'true'"/>
         <Exec WorkingDirectory="./" Command="npm ci" Condition="'$(ContinuousIntegrationBuild)' == 'true'"/>

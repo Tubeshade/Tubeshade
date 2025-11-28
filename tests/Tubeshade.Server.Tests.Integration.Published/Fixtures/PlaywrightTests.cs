@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.Net.Http.Headers;
 using Microsoft.Playwright;
 using NUnit.Framework;
 using Tubeshade.Server.Services.Background;
@@ -15,6 +16,8 @@ namespace Tubeshade.Server.Tests.Integration.Published.Fixtures;
 [Parallelizable(ParallelScope.None)]
 public abstract class PlaywrightTests
 {
+    public const string DefaultCulture = "en-US";
+
     private const string Username = "test@example.org";
     private static readonly string Password = Guid.NewGuid().ToString("N");
     private static readonly SemaphoreSlim RegistrationLock = new(1);
@@ -29,6 +32,8 @@ public abstract class PlaywrightTests
 
     private IBrowserContext? _browserContext;
     private IPage? _page;
+
+    protected string Culture { get; }
 
     protected virtual bool LogIn => true;
 
@@ -46,11 +51,18 @@ public abstract class PlaywrightTests
             Fixture.Name.Replace(' ', '_'),
             _browserType,
             _device,
+            Culture,
             TestContext.CurrentContext.Test.Name
         }.Where(part => !string.IsNullOrWhiteSpace(part)));
 
     protected PlaywrightTests(IServerFixture serverFixture)
+        : this(serverFixture, DefaultCulture)
     {
+    }
+
+    protected PlaywrightTests(IServerFixture serverFixture, string culture)
+    {
+        Culture = culture;
         Fixture = serverFixture;
         _browserType = BrowserType.Firefox;
         _device = null;
@@ -75,20 +87,27 @@ public abstract class PlaywrightTests
         {
             BaseURL = Fixture.BaseAddress.AbsoluteUri,
             ColorScheme = ColorScheme.Dark,
-            Locale = "en-US",
+            Locale = Culture,
+            ExtraHTTPHeaders = [new(HeaderNames.AcceptLanguage, Culture)],
         });
 
         var page = await browserContext.NewPageAsync();
 
         await page.GotoAsync("/Identity/Account/Register");
-        (await page.TitleAsync()).Should().Be("Register - Tubeshade");
+        if (Culture is DefaultCulture)
+        {
+            (await page.TitleAsync()).Should().Be("Register - Tubeshade");
+        }
 
         await page.GetByLabel("Username").FillAsync(Username);
         await page.GetByLabel("Password", new PageGetByLabelOptions { Exact = true }).FillAsync(Password);
         await page.GetByLabel("Confirm Password").FillAsync(Password);
         await page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Register" }).ClickAsync();
 
-        (await page.TitleAsync()).Should().Be("Home page - Tubeshade");
+        if (Culture is DefaultCulture)
+        {
+            (await page.TitleAsync()).Should().Be("Home page - Tubeshade");
+        }
 
         Registered[Fixture] = true;
     }
@@ -108,7 +127,8 @@ public abstract class PlaywrightTests
         {
             BaseURL = Fixture.BaseAddress.AbsoluteUri,
             ColorScheme = ColorScheme.Dark,
-            Locale = "en-US",
+            Locale = Culture,
+            ExtraHTTPHeaders = [new(HeaderNames.AcceptLanguage, Culture)],
         });
 
         _page = await _browserContext.NewPageAsync();
@@ -128,13 +148,19 @@ public abstract class PlaywrightTests
         {
             await Page.GotoAsync("/Identity/Account/Login");
 
-            (await Page.TitleAsync()).Should().Be("Log in - Tubeshade");
+            if (Culture is DefaultCulture)
+            {
+                (await Page.TitleAsync()).Should().Be("Log in - Tubeshade");
+            }
 
             await Page.GetByLabel("Username").FillAsync(Username);
             await Page.GetByLabel("Password").FillAsync(Password);
             await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Log in" }).ClickAsync();
 
-            (await Page.TitleAsync()).Should().Be("Home page - Tubeshade");
+            if (Culture is DefaultCulture)
+            {
+                (await Page.TitleAsync()).Should().Be("Home page - Tubeshade");
+            }
         }
     }
 

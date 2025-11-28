@@ -18,11 +18,15 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
         await Page.GotoAsync("/Libraries");
         (await Page.TitleAsync()).Should().Be("Libraries - Tubeshade");
 
-        await Page.GetByLabel("Name").FillAsync(name);
-        await Page.GetByLabel("Storage path").FillAsync(ServerFixture.TestDirectory);
+        await Page.GetByText("Libraries").ClickAsync();
+        if (await Page.GetByRole(AriaRole.Link).GetByText(name).IsHiddenAsync())
+        {
+            await Page.GetByLabel("Name").FillAsync(name);
+            await Page.GetByLabel("Storage path").FillAsync(ServerFixture.TestDirectory);
 
-        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Create library" }).ClickAsync();
-        (await Page.TitleAsync()).Should().Be($"{name} - Tubeshade");
+            await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Create library" }).ClickAsync();
+            (await Page.TitleAsync()).Should().Be($"{name} - Tubeshade");
+        }
 
         await Page.GotoAsync("/");
         (await Page.TitleAsync()).Should().Be("Home page - Tubeshade");
@@ -83,7 +87,9 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
             .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Cancel" })
             .WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden });
 
-        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Retry" }).ClickAsync();
+        await Page
+            .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Retry" })
+            .ClickAsync(new LocatorClickOptions { Timeout = 5_000 });
 
         await Page
             .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Cancel" })

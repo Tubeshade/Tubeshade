@@ -7,71 +7,80 @@
       hx-trigger="input changed delay:100ms" hx-target="#videos">
 
     <div class="col-12 col-md">
-        <input asp-for="Query" class="form-control" type="search" placeholder="Search"/>
+        <label asp-for="Query" hidden="hidden">@SharedResources.Filters_Search</label>
+        <input asp-for="Query" class="form-control" type="search" placeholder="@SharedResources.Filters_Search"/>
     </div>
 
     <div class="col-12">
-        <label asp-for="Viewed" hidden="hidden">Viewed</label>
+        <label asp-for="Viewed" hidden="hidden">@SharedResources.Filters_Viewed</label>
         <select asp-for="Viewed" class="form-select">
-            <option value="">All</option>
-            <option value="@true">Viewed</option>
-            <option value="@false">Not viewed</option>
+            <option value="">@SharedResources.Filters_Viewed_All</option>
+            <option value="@true">@SharedResources.Filters_Viewed_Viewed</option>
+            <option value="@false">@SharedResources.Filters_Viewed_NotViewed</option>
         </select>
     </div>
 
     <div class="col-12">
-        <label asp-for="Type" hidden="hidden">Video type</label>
+        <label asp-for="Type" hidden="hidden">@SharedResources.Filters_VideoType</label>
         <select asp-for="Type" class="form-select">
-            <option value="">All types</option>
+            <option value="">@SharedResources.Filters_VideoType_All</option>
             @foreach (var type in VideoType.List)
             {
-                <option value="@type.Name">@type.Name</option>
+                <option value="@type.Name">
+                    @SharedResources.ResourceManager.GetString($"Filters_VideoType_{type.Name}")
+                </option>
             }
         </select>
     </div>
 
     <div class="col-12">
-        <label asp-for="WithFiles" hidden="hidden">With files</label>
+        <label asp-for="WithFiles" hidden="hidden">@SharedResources.Filters_Files</label>
         <select asp-for="WithFiles" class="form-select">
-            <option value="">All</option>
-            <option value="@true">With files</option>
-            <option value="@false">Without files</option>
+            <option value="">@SharedResources.Filters_Files_All</option>
+            <option value="@true">@SharedResources.Filters_Files_With</option>
+            <option value="@false">@SharedResources.Filters_Files_Without</option>
         </select>
     </div>
 
     <div class="col-12">
-        <label asp-for="Availability" hidden="hidden">Availability</label>
+        <label asp-for="Availability" hidden="hidden">@SharedResources.Filters_Availability</label>
         <select asp-for="Availability" class="form-select">
-            <option value="">Any availability</option>
+            <option value="">@SharedResources.Filters_Availability_Any</option>
             @foreach (var availability in ExternalAvailability.List)
             {
-                <option value="@availability.Name">@availability.Name</option>
+                <option value="@availability.Name">
+                    @SharedResources.ResourceManager.GetString($"Filters_Availability_{availability.Name}")
+                </option>
             }
         </select>
     </div>
 
     <div class="col-12">
-        <label asp-for="SortBy" hidden="hidden">Sort by</label>
+        <label asp-for="SortBy" hidden="hidden">@SharedResources.Filters_SortVideoBy</label>
         <select asp-for="SortBy" class="form-select">
-            @foreach (var order in SortVideoBy.List)
+            @foreach (var sortBy in SortVideoBy.List)
             {
-                <option value="@order.Name" selected="@(Model.SortBy == order)">@order.Name</option>
+                <option value="@sortBy.Name" selected="@(Model.SortBy == sortBy)">
+                    @SharedResources.ResourceManager.GetString($"Filters_SortVideoBy_{sortBy.Name}")
+                </option>
             }
         </select>
     </div>
 
     <div class="col-12">
-        <label asp-for="SortDirection" hidden="hidden">Sort direction</label>
+        <label asp-for="SortDirection" hidden="hidden">@SharedResources.Filters_SortDirection</label>
         <select asp-for="SortDirection" class="form-select">
             @foreach (var direction in SortDirection.List)
             {
-                <option value="@direction.Name" selected="@(Model.SortDirection == direction)">@direction.Name</option>
+                <option value="@direction.Name" selected="@(Model.SortDirection == direction)">
+                    @SharedResources.ResourceManager.GetString($"Filters_SortDirection_{direction.Name}")
+                </option>
             }
         </select>
     </div>
 
     <div class="col-12">
-        <label asp-for="PageSize" hidden="hidden">Page size</label>
+        <label asp-for="PageSize" hidden="hidden">@SharedResources.Filters_PageSize</label>
         <input asp-for="PageSize" class="form-control" type="number" placeholder="Page size"
                value="@(Model.PageSize is null or Defaults.PageSize ? null : Model.PageSize)"/>
     </div>
@@ -86,7 +95,7 @@
     {
         <div class="col-auto">
             <a asp-page-handler="Settings" class="btn btn-secondary">
-                Settings
+                @SharedResources.Settings
             </a>
         </div>
     }

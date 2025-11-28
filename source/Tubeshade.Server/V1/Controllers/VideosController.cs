@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
 using Htmx;
@@ -68,8 +67,7 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpPost("PlaybackPosition")]
-    [Consumes(MediaTypeNames.Application.FormUrlEncoded)]
-    public async Task<NoContentResult> UpdatePlaybackPosition(Guid id, [Required, FromForm] double? position)
+    public async Task<NoContentResult> UpdatePlaybackPosition(Guid id, [Required, FromBody] double? position)
     {
         await _connection.ExecuteWithinTransaction(
             _logger,

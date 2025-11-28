@@ -64,14 +64,14 @@
             </div>
 
             <div class="col-6 col-lg-12 mb-3">
-                <label for="playback-rate-input" class="form-label">Speed</label>
+                <label for="playback-rate-input" class="form-label">@SharedResources.Video_Speed</label>
                 <input id="playback-rate-input" class="form-control" type="number" min="0" step="0.25"
                        value="@Model.PlaybackSpeed"/>
             </div>
         </div>
 
         <div id="chapter-marker-div" hidden class="mb-3">
-            <label for="chapter-markers" class="form-label">Chapter</label>
+            <label for="chapter-markers" class="form-label">@SharedResources.Video_Chapter</label>
             <select id="chapter-markers" class="form-control form-select"></select>
         </div>
     </section>
@@ -87,7 +87,7 @@
         </a>
     </div>
     <div class="col-auto">
-        <a href="@Model.Entity.ExternalUrl">Original</a>
+        <a href="@Model.Entity.ExternalUrl">@SharedResources.Original</a>
     </div>
     <form class="col-auto">
         <input value="@(Model.VideoId)" name="videoId" hidden/>
@@ -96,18 +96,18 @@
                    type="checkbox" role="switch" switch title="Viewed" class="form-check-input"
                    hx-post="" hx-page-handler="Viewed" hx-swap="none"/>
             <label for="viewed" class="form-check-label">
-                Viewed
+                @SharedResources.Filters_Viewed_Viewed
             </label>
         </div>
     </form>
     <div class="col-auto">
-        Published at
+        @SharedResources.Filters_SortVideoBy_published_at
         <time datetime="@InstantPattern.General.Format(Model.Entity.PublishedAt)">
             @LocalDatePattern.Iso.Format(Model.Entity.PublishedAt.InUtc().Date)
         </time>
     </div>
     <div class="col-auto">
-        Refreshed at
+        @SharedResources.Filters_SortVideoBy_refreshed_at
         <time datetime="@InstantPattern.General.Format(Model.Entity.RefreshedAt)">
             @LocalDatePattern.Iso.Format(Model.Entity.RefreshedAt.InUtc().Date)
         </time>
@@ -115,13 +115,13 @@
     @if (Model.Entity.ViewCount is { } viewCount)
     {
         <div class="col-auto">
-            @viewCount views
+            @(string.Format(SharedResources.Video_Views, viewCount))
         </div>
     }
     @if (Model.Entity.LikeCount is { } likeCount)
     {
         <div class="col-auto">
-            @likeCount likes
+            @(string.Format(SharedResources.Video_Likes, likeCount))
         </div>
     }
 </div>
@@ -146,7 +146,7 @@
 <div class="row mb-2">
     <div class="col-auto">
         <button hx-post="" hx-page-handler="Scan" class="btn btn-primary btn-sm">
-            Rescan
+            @SharedResources.Button_Rescan
         </button>
     </div>
 
@@ -154,7 +154,7 @@
     {
         <div class="col-auto">
             <button hx-post="" hx-page-handler="Download" class="btn btn-primary btn-sm">
-                Download
+                @SharedResources.Button_Download
             </button>
         </div>
     }
@@ -162,14 +162,14 @@
     <div class="col-auto">
         <a asp-page="/Libraries/Videos/Edit" asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@Model.VideoId"
            class="btn btn-primary btn-sm">
-            Edit
+            @SharedResources.Button_Edit
         </a>
     </div>
 
     <div class="col-auto">
         <button hx-post="" hx-page-handler="Delete" hx-confirm="Are you sure you want to delete this video?"
                 class="btn btn-danger btn-sm">
-            Delete
+            @SharedResources.Button_Delete
         </button>
     </div>
 </div>
@@ -211,7 +211,7 @@
 
             navigator.sendBeacon(
                 "@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))",
-                new URLSearchParams({"position": position}));
+                new Blob([JSON.stringify(position)], {type: "application/json"}));
         }
 
         if ("mediaSession" in navigator) {

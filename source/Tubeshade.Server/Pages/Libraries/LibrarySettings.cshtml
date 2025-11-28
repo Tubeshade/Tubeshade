@@ -1,7 +1,7 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Preferences/{handler?}"
 @model LibrarySettings
 @{
-    ViewData["Title"] = $"Preferences - {Model.Entity.Name}";
+    ViewData["Title"] = $"{SharedResources.Preferences} - {Model.Entity.Name}";
 }
 
 @section Navigation

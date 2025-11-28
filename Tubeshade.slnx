@@ -17,6 +17,7 @@
     <Project Path="tests\Tubeshade.Server.Tests.Integration.Published\Tubeshade.Server.Tests.Integration.Published.csproj" />
     <Project Path="tests\Tubeshade.Server.Tests.Integration\Tubeshade.Server.Tests.Integration.csproj" />
     <Project Path="tests\Tubeshade.Server.Tests\Tubeshade.Server.Tests.csproj" />
+    <File Path="tests/coverlet.runsettings" />
     <File Path="tests/Directory.Build.props" />
     <File Path="tests\.editorconfig" />
   </Folder>
