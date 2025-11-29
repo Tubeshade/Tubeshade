@@ -67,7 +67,7 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
         (await Page.TitleAsync()).Should().Be($"Channels - {name} - Tubeshade");
 
         await Page.GetByText("Computerphile").ClickAsync();
-        (await Page.TitleAsync()).Should().Be("Computerphile - Tubeshade");
+        (await Page.TitleAsync()).Should().Be($"Computerphile - {name} - Tubeshade");
 
         await Page.GetByText("Settings").ClickAsync();
         (await Page.TitleAsync()).Should().Be("Preferences - Computerphile - Tubeshade");

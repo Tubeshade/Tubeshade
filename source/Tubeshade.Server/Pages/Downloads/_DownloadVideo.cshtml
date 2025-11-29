@@ -2,8 +2,10 @@
 
 <form method="post">
     <div class="input-group">
-        <input class="form-control" asp-for="Url" type="url" placeholder="Video or channel URL"/>
-        <button class="btn btn-primary" type="submit">Scan</button>
+        <input class="form-control" asp-for="Url" type="url" placeholder="@SharedResources.Scan_Url_Placeholder"/>
+        <button class="btn btn-primary" type="submit">
+            @SharedResources.Button_Scan
+        </button>
     </div>
 
     <span asp-validation-for="Url" class="text-danger"></span>

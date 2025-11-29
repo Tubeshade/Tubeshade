@@ -8,11 +8,11 @@ namespace Tubeshade.Server.Pages.Tasks;
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public sealed class TaskStatus : SmartEnum<TaskStatus>
 {
-    public static readonly TaskStatus Queued = new("Queued", 1);
-    public static readonly TaskStatus InProgress = new("In progress", 2);
-    public static readonly TaskStatus Completed = new("Completed", 3);
-    public static readonly TaskStatus Failed = new("Failed", 4);
-    public static readonly TaskStatus Cancelled = new("Cancelled", 5);
+    public static readonly TaskStatus Queued = new("queued", 1);
+    public static readonly TaskStatus InProgress = new("in_progress", 2);
+    public static readonly TaskStatus Completed = new("completed", 3);
+    public static readonly TaskStatus Failed = new("failed", 4);
+    public static readonly TaskStatus Cancelled = new("cancelled", 5);
 
     private TaskStatus(string name, int value)
         : base(name, value)

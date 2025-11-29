@@ -13,7 +13,7 @@ dotnet reportgenerator \
 	-reporttypes:Cobertura \
 	-targetdir:/reports/ \
 	"-assemblyfilters:-dbup-core;-dbup-postgresql;-Dapper" \
-	"-filefilters:-*.g.cs;-*.Designer.cs"
+	"-filefilters:-*.g.cs"
 
 rm /reports/report.xml
 mv /reports/Cobertura.xml /reports/coverage.cobertura.xml

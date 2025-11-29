@@ -1,7 +1,7 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Channels/{channelId:guid}/{handler?}"
 @model Channel
 @{
-    ViewData["Title"] = Model.Entity.Name;
+    ViewData["Title"] = $"{Model.Entity.Name} - {Model.Library.Name}";
 }
 
 @section Navigation

@@ -6,9 +6,9 @@
     <table class="table">
         <thead>
         <tr>
-            <th>Task</th>
-            <th>Status</th>
-            <th>Action</th>
+            <th>@SharedResources.Tasks_Task</th>
+            <th>@SharedResources.Tasks_Status_queued</th>
+            <th>@SharedResources.Tasks_Action</th>
         </tr>
         </thead>
 
@@ -69,7 +69,7 @@
                     <td>
                         @if (run.State == RunState.Queued)
                         {
-                            <span>Queued</span>
+                            <span>@SharedResources.Tasks_Queued</span>
                         }
                         else if (run.HasProgress)
                         {
@@ -91,7 +91,7 @@
                         }
                         else
                         {
-                            @run.Status.Name
+                            @(SharedResources.ResourceManager.GetString($"Tasks_Status_{run.Status.Name}"))
                             @if (run.Message is not null)
                             {
                                 <span> - @run.Message</span>
@@ -106,7 +106,7 @@
                                 <button
                                     hx-post="" hx-page-handler="Retry" hx-route-taskId="@task.Id" hx-swap="none"
                                     type="button" class="btn btn-primary w-100">
-                                    Retry
+                                    @SharedResources.Button_Retry
                                 </button>
                             }
                             else if (run.Status == TaskStatus.InProgress || run.Status == TaskStatus.Queued)
@@ -114,7 +114,7 @@
                                 <button
                                     hx-post="" hx-page-handler="Cancel" hx-route-taskRunId="@run.Id" hx-swap="none"
                                     type="button" class="btn btn-danger w-100">
-                                    Cancel
+                                    @SharedResources.Button_Cancel
                                 </button>
                             }
                         }
@@ -126,15 +126,15 @@
     </table>
 
     <nav class="text-center">
-    <span>
-        Showing @Model.PageData.StartIndex - @Model.PageData.EndIndex from @Model.PageData.TotalCount
-    </span>
+        <span>
+            @(string.Format(SharedResources.Pagination_PageSummary, Model.PageData.StartIndex, Model.PageData.EndIndex, Model.PageData.TotalCount))
+        </span>
 
         <ul class="pagination justify-content-center">
             <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
                 <a asp-page="" asp-all-route-data="@(Model.GetRouteValues(0))"
                    class="page-link">
-                    First
+                    @SharedResources.Pagination_First
                 </a>
             </li>
 
@@ -151,7 +151,7 @@
             <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
                 <a asp-page="" asp-all-route-data="@(Model.GetRouteValues(Model.PageData.PageCount - 1))"
                    class="page-link">
-                    Last
+                    @SharedResources.Pagination_Last
                 </a>
             </li>
         </ul>

@@ -1,5 +1,6 @@
 ﻿using System;
 using Tubeshade.Data.Tasks;
+using Tubeshade.Server.Resources;
 
 namespace Tubeshade.Server.Pages.Tasks;
 
@@ -20,14 +21,5 @@ public sealed class TaskModel
 
     public required int TotalCount { get; init; }
 
-    public string TypeDisplay => Type.Name switch
-    {
-        TaskType.Names.Index => "Index",
-        TaskType.Names.DownloadVideo => "Download video",
-        TaskType.Names.ScanChannel => "Scan channel",
-        TaskType.Names.ScanSubscriptions => "Scan subscriptions",
-        TaskType.Names.ScanSponsorBlockSegments => "Scan Sponsor Block segments",
-        TaskType.Names.ReindexVideos => "Reindex videos",
-        _ => throw new ArgumentOutOfRangeException(),
-    };
+    public string? TypeDisplay => SharedResources.ResourceManager.GetString($"Tasks_Type_{Type.Name}") ?? Type.Name;
 }

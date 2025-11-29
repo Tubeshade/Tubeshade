@@ -1,7 +1,7 @@
 ﻿@page "~/Tasks/{handler?}"
 @model Index
 @{
-    ViewData["Title"] = "Tasks";
+    ViewData["Title"] = SharedResources.Tasks;
 }
 
 @section Navigation
@@ -11,10 +11,10 @@
 
 <div class="btn-group">
     <button hx-post="" hx-page-handler="ScanSubscriptions" class="btn btn-primary" type="button">
-        Scan subscriptions
+        @SharedResources.Button_ScanSubscriptions
     </button>
     <button hx-post="" hx-page-handler="ScanSegments" class="btn btn-primary" type="button">
-        Scan Sponsor Block segments
+        @SharedResources.Button_ScanSponsorBlock
     </button>
 </div>
 

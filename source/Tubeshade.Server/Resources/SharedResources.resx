@@ -3,7 +3,7 @@
 <root>
     <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
         <xsd:element name="root" msdata:IsDataSet="true">
-            
+
         </xsd:element>
     </xsd:schema>
     <resheader name="resmimetype">
@@ -191,5 +191,149 @@
     </data>
     <data name="Filters_Channels_All" xml:space="preserve">
         <value>All channels</value>
+    </data>
+    <data name="Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Subscribed" xml:space="preserve">
+        <value>Subscribed</value>
+    </data>
+    <data name="Button_Scan" xml:space="preserve">
+        <value>Scan</value>
+    </data>
+    <data name="Scan_Url_Placeholder" xml:space="preserve">
+        <value>Video or channel URL</value>
+    </data>
+    <data name="Button_Subscribe" xml:space="preserve">
+        <value>Subscribe</value>
+    </data>
+    <data name="Button_Unsubscribe" xml:space="preserve">
+        <value>Unsubscribe</value>
+    </data>
+    <data name="Button_ScanAll" xml:space="preserve">
+        <value>Scan all videos</value>
+    </data>
+    <data name="Original_NotAvailable" xml:space="preserve">
+        <value>Original no longer available</value>
+    </data>
+    <data name="Preferences_PlaybackSpeed" xml:space="preserve">
+        <value>Playback speed</value>
+    </data>
+    <data name="Preferences_VideoCount" xml:space="preserve">
+        <value>Video count</value>
+    </data>
+    <data name="Preferences_LivestreamCount" xml:space="preserve">
+        <value>Livestream count</value>
+    </data>
+    <data name="Preferences_ShortCount" xml:space="preserve">
+        <value>Short count</value>
+    </data>
+    <data name="Preferences_PlayerClient" xml:space="preserve">
+        <value>Player client</value>
+    </data>
+    <data name="Preferences_DownloadAutomatically" xml:space="preserve">
+        <value>Download automatically</value>
+    </data>
+    <data name="Preferences_DownloadFormats" xml:space="preserve">
+        <value>Download formats</value>
+    </data>
+    <data name="Button_UpdatePreferences" xml:space="preserve">
+        <value>Update preferences</value>
+    </data>
+    <data name="Yes" xml:space="preserve">
+        <value>Yes</value>
+    </data>
+    <data name="No" xml:space="preserve">
+        <value>No</value>
+    </data>
+    <data name="Default" xml:space="preserve">
+        <value>Default</value>
+    </data>
+    <data name="Button_ScanSubscriptions" xml:space="preserve">
+        <value>Scan subscriptions</value>
+    </data>
+    <data name="Button_ScanSponsorBlock" xml:space="preserve">
+        <value>Scan Sponsor Block segments</value>
+    </data>
+    <data name="Tasks_RefreshAutomatically" xml:space="preserve">
+        <value>Refresh automatically</value>
+    </data>
+    <data name="Tasks_Task" xml:space="preserve">
+        <value>Task</value>
+    </data>
+    <data name="Tasks_Status_queued" xml:space="preserve">
+        <value>Status</value>
+    </data>
+    <data name="Tasks_Action" xml:space="preserve">
+        <value>Action</value>
+    </data>
+    <data name="Button_Retry" xml:space="preserve">
+        <value>Retry</value>
+    </data>
+    <data name="Button_Cancel" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
+    <data name="Tasks_Queued" xml:space="preserve">
+        <value>Queued</value>
+    </data>
+    <data name="Video_Resolution" xml:space="preserve">
+        <value>Resolution</value>
+    </data>
+    <data name="Tasks_Type_index" xml:space="preserve">
+        <value>Index</value>
+    </data>
+    <data name="Tasks_Type_download_video" xml:space="preserve">
+        <value>Download video</value>
+    </data>
+    <data name="Tasks_Type_scan_channel" xml:space="preserve">
+        <value>Scan channel</value>
+    </data>
+    <data name="Tasks_Type_scan_subscriptions" xml:space="preserve">
+        <value>Scan subscriptions</value>
+    </data>
+    <data name="Tasks_Type_scan_sponsor_block_segments" xml:space="preserve">
+        <value>Scan Sponsor Block segments</value>
+    </data>
+    <data name="Tasks_Type_refresh_subscriptions" xml:space="preserve">
+        <value>Refresh subscriptions</value>
+    </data>
+    <data name="Tasks_Type_reindex_videos" xml:space="preserve">
+        <value>Reindex videos</value>
+    </data>
+    <data name="Tasks_Status_in_progress" xml:space="preserve">
+        <value>In progress</value>
+    </data>
+    <data name="Tasks_Status_completed" xml:space="preserve">
+        <value>Completed</value>
+    </data>
+    <data name="Tasks_Status_failed" xml:space="preserve">
+        <value>Failed</value>
+    </data>
+    <data name="Tasks_Status_cancelled" xml:space="preserve">
+        <value>Cancelled</value>
+    </data>
+    <data name="Video_ExternalAvailability_public" xml:space="preserve">
+        <value>Public</value>
+    </data>
+    <data name="Video_ExternalAvailability_private" xml:space="preserve">
+        <value>Private</value>
+    </data>
+    <data name="Video_ExternalAvailability_not_available" xml:space="preserve">
+        <value>Not available</value>
+    </data>
+    <data name="Libraries_StoragePath" xml:space="preserve">
+        <value>Storage path</value>
+    </data>
+    <data name="Libraries_SubscriptionSchedule" xml:space="preserve">
+        <value>Subscription schedule</value>
+    </data>
+    <data name="Libraries_SubscriptionTimeZone" xml:space="preserve">
+        <value>Subscription schedule time zone</value>
+    </data>
+    <data name="Button_CreateLibrary" xml:space="preserve">
+        <value>Create library</value>
+    </data>
+    <data name="Library" xml:space="preserve">
+        <value>Library</value>
     </data>
 </root>

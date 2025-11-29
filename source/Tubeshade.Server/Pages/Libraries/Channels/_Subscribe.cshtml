@@ -5,26 +5,28 @@
     {
         <button hx-post="" hx-page-handler="Unsubscribe" hx-target="closest div" hx-swap="outerHTML"
                 type="button" class="btn btn-primary">
-            Unsubscribe
+            @SharedResources.Button_Unsubscribe
         </button>
     }
     else
     {
         <button hx-post="" hx-page-handler="Subscribe" hx-target="closest div" hx-swap="outerHTML"
                 type="button" class="btn btn-primary">
-            Subscribe
+            @SharedResources.Button_Subscribe
         </button>
     }
 
     <button hx-post="" hx-page-handler="Scan" hx-swap="none"
             type="button" class="btn btn-primary">
-        Scan
+        @SharedResources.Button_Scan
     </button>
 
     <button hx-post="" hx-page-handler="Scan" hx-route-all="true" hx-swap="none"
             type="button" class="btn btn-primary">
-        Scan all videos
+        @SharedResources.Button_ScanAll
     </button>
 
-    <button type="button" class="btn btn-danger">Delete</button>
+    <button type="button" class="btn btn-danger">
+        @SharedResources.Button_Delete
+    </button>
 </div>

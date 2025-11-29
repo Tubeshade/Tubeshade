@@ -7,14 +7,17 @@
       id="filter">
 
     <div class="col-12">
-        <input asp-for="PageSize" class="form-control" type="number" placeholder="Page size"
+        <label asp-for="PageSize" hidden="hidden">@SharedResources.Filters_PageSize</label>
+        <input asp-for="PageSize" class="form-control" type="number" placeholder="@SharedResources.Filters_PageSize"
                value="@(Model.PageSize is null or Defaults.PageSize ? null : Model.PageSize)"/>
     </div>
 
     <div class="col-12">
         <div class="form-check">
             <input id="task-polling" type="checkbox" hx-on:change="onPollingChanged()" checked="checked" class="form-check-input"/>
-            <label for="task-polling" class="form-check-label">Automatically refresh</label>
+            <label for="task-polling" class="form-check-label">
+                @SharedResources.Tasks_RefreshAutomatically
+            </label>
         </div>
     </div>
 

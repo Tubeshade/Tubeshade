@@ -51,7 +51,7 @@
     <section id="video-controls" class="col-md-12 col-lg-auto">
         <div class="row" hidden="@(Model.PlayableFiles is [])">
             <div class="col-6 col-lg-12 mb-3">
-                <label for="sources" class="form-label">Resolution</label>
+                <label for="sources" class="form-label">@SharedResources.Video_Resolution</label>
                 <select id="sources" class="form-control form-select" disabled="@(Model.PlayableFiles.Count < 2)">
                     @foreach (var file in Model.PlayableFiles)
                     {

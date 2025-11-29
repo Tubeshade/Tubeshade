@@ -15,7 +15,7 @@
         <value>Sākums</value>
     </data>
     <data name="Libraries" xml:space="preserve">
-        <value>Bibliotēka</value>
+        <value>Bibliotēkas</value>
     </data>
     <data name="AllLibraries" xml:space="preserve">
         <value>Visas</value>
@@ -184,5 +184,149 @@
     </data>
     <data name="Filters_Channels_All" xml:space="preserve">
         <value>Visi kanāli</value>
+    </data>
+    <data name="Name" xml:space="preserve">
+        <value>Nosaukums</value>
+    </data>
+    <data name="Subscribed" xml:space="preserve">
+        <value>Abonēts</value>
+    </data>
+    <data name="Button_Scan" xml:space="preserve">
+        <value>Skanēt</value>
+    </data>
+    <data name="Scan_Url_Placeholder" xml:space="preserve">
+        <value>Video vai kanāla saite</value>
+    </data>
+    <data name="Button_ScanAll" xml:space="preserve">
+        <value>Skanēt visus video</value>
+    </data>
+    <data name="Button_Subscribe" xml:space="preserve">
+        <value>Abonēt</value>
+    </data>
+    <data name="Button_Unsubscribe" xml:space="preserve">
+        <value>Pārtraukt abonēšanu</value>
+    </data>
+    <data name="Original_NotAvailable" xml:space="preserve">
+        <value>Oriģināls vairs nav pieejams</value>
+    </data>
+    <data name="Button_UpdatePreferences" xml:space="preserve">
+        <value>Atjaunināt iestatījumus</value>
+    </data>
+    <data name="Preferences_DownloadAutomatically" xml:space="preserve">
+        <value>Automātiski lejupielādēt</value>
+    </data>
+    <data name="Preferences_DownloadFormats" xml:space="preserve">
+        <value>Lejupielādes formāti</value>
+    </data>
+    <data name="Preferences_VideoCount" xml:space="preserve">
+        <value>Video skaits</value>
+    </data>
+    <data name="Preferences_LivestreamCount" xml:space="preserve">
+        <value>Tiešraižu skaits</value>
+    </data>
+    <data name="Preferences_PlaybackSpeed" xml:space="preserve">
+        <value>Atskaņošanas ātrums</value>
+    </data>
+    <data name="Preferences_ShortCount" xml:space="preserve">
+        <value>Short skaits</value>
+    </data>
+    <data name="Preferences_PlayerClient" xml:space="preserve">
+        <value>Atskaņotāja klients (player client)</value>
+    </data>
+    <data name="Yes" xml:space="preserve">
+        <value>Jā</value>
+    </data>
+    <data name="No" xml:space="preserve">
+        <value>Nē</value>
+    </data>
+    <data name="Default" xml:space="preserve">
+        <value>Noklusējuma</value>
+    </data>
+    <data name="Tasks_Action" xml:space="preserve">
+        <value>Darbības</value>
+    </data>
+    <data name="Tasks_Status_queued" xml:space="preserve">
+        <value>Statuss</value>
+    </data>
+    <data name="Tasks_Task" xml:space="preserve">
+        <value>Uzdevums</value>
+    </data>
+    <data name="Button_Cancel" xml:space="preserve">
+        <value>Atcelt</value>
+    </data>
+    <data name="Button_Retry" xml:space="preserve">
+        <value>Atkārtot</value>
+    </data>
+    <data name="Tasks_RefreshAutomatically" xml:space="preserve">
+        <value>Atjaunināt automātiski</value>
+    </data>
+    <data name="Tasks_Queued" xml:space="preserve">
+        <value>Gaida rindā</value>
+    </data>
+    <data name="Button_ScanSubscriptions" xml:space="preserve">
+        <value>Skenēt abonementus</value>
+    </data>
+    <data name="Button_ScanSponsorBlock" xml:space="preserve">
+        <value>Skanēt Sponsor Block segmentus</value>
+    </data>
+    <data name="Video_Resolution" xml:space="preserve">
+        <value>Izšķirtspēja</value>
+    </data>
+    <data name="Tasks_Type_download_video" xml:space="preserve">
+        <value>Lejupielādēt video</value>
+    </data>
+    <data name="Tasks_Type_index" xml:space="preserve">
+        <value>Indeksēt</value>
+    </data>
+    <data name="Tasks_Type_refresh_subscriptions" xml:space="preserve">
+        <value>Atjaunot abonementus</value>
+    </data>
+    <data name="Tasks_Type_reindex_videos" xml:space="preserve">
+        <value>Pārskanēt video</value>
+    </data>
+    <data name="Tasks_Type_scan_channel" xml:space="preserve">
+        <value>Skanēt kanālu</value>
+    </data>
+    <data name="Tasks_Type_scan_sponsor_block_segments" xml:space="preserve">
+        <value>Skanēt Sponsor Block segmentus</value>
+    </data>
+    <data name="Tasks_Type_scan_subscriptions" xml:space="preserve">
+        <value>Skanēt abonementus</value>
+    </data>
+    <data name="Tasks_Status_cancelled" xml:space="preserve">
+        <value>Atcelts</value>
+    </data>
+    <data name="Tasks_Status_completed" xml:space="preserve">
+        <value>Pabeigts</value>
+    </data>
+    <data name="Tasks_Status_in_progress" xml:space="preserve">
+        <value>Tiek apstrādāts</value>
+    </data>
+    <data name="Tasks_Status_failed" xml:space="preserve">
+        <value>Neizdevies</value>
+    </data>
+    <data name="Video_ExternalAvailability_public" xml:space="preserve">
+        <value>Publisks</value>
+    </data>
+    <data name="Video_ExternalAvailability_private" xml:space="preserve">
+        <value>Privāts</value>
+    </data>
+    <data name="Video_ExternalAvailability_not_available" xml:space="preserve">
+        <value>Nav pieejams</value>
+    </data>
+    <data name="Libraries_StoragePath" xml:space="preserve">
+        <value>Uzglabāšanas vieta</value>
+    </data>
+    <data name="Button_CreateLibrary" xml:space="preserve">
+        <value>Izveidot bibliotēku</value>
+    </data>
+    <data name="Libraries_SubscriptionSchedule" xml:space="preserve">
+        <value>Abonementa grafiks</value>
+    </data>
+    <data name="Libraries_SubscriptionTimeZone" xml:space="preserve">
+        <value>Abonementa grafika laika zona</value>
+    </data>
+    <data name="Library" xml:space="preserve">
+        <value>Bibliotēka</value>
     </data>
 </root>

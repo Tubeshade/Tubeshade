@@ -14,11 +14,11 @@
 
 @if (Model.Entity.Availability == ExternalAvailability.NotAvailable)
 {
-    <p>Original no longer available</p>
+    <p>@SharedResources.Original_NotAvailable</p>
 }
 else
 {
-    <a href="@Model.Entity.ExternalUrl">Original</a>
+    <a href="@Model.Entity.ExternalUrl">@SharedResources.Original</a>
 }
 
 <section id="channel-preferences">

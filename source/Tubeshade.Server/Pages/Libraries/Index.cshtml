@@ -1,7 +1,7 @@
 ﻿@page "~/Libraries/{handler?}"
 @model Index
 @{
-    ViewData["Title"] = "Libraries";
+    ViewData["Title"] = SharedResources.Libraries;
 }
 
 @section Navigation
@@ -17,7 +17,7 @@
         <thead>
         <tr>
             <td>
-                Library
+                @SharedResources.Library
             </td>
         </tr>
         </thead>

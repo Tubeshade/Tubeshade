@@ -2,7 +2,7 @@
 @using NodaTime.Text
 @model Index
 @{
-    ViewData["Title"] = $"Channels - {Model.Library.Name}";
+    ViewData["Title"] = $"{SharedResources.Channels} - {Model.Library.Name}";
 }
 
 @section Navigation
@@ -13,10 +13,9 @@
 <table class="table">
     <thead>
     <tr>
-        <th>Name</th>
-        <th>Subscribed</th>
-        <th>Availability</th>
-        <th>Original</th>
+        <th>@SharedResources.Name</th>
+        <th>@SharedResources.Subscribed</th>
+        <th>@SharedResources.Filters_Availability</th>
     </tr>
     </thead>
     <tbody>
@@ -42,10 +41,9 @@
                 }
             </td>
             <td>
-                @channel.Availability.Name
-            </td>
-            <td>
-                <a href="@channel.ExternalUrl">@channel.ExternalUrl</a>
+                <a href="@channel.ExternalUrl">
+                    @SharedResources.ResourceManager.GetString($"Video_ExternalAvailability_{channel.Availability.Name}")
+                </a>
             </td>
         </tr>
     }

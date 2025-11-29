@@ -2,25 +2,25 @@
 
 <form method="post">
     <div>
-        <label asp-for="Name">Name</label>
+        <label asp-for="Name">@SharedResources.Name</label>
         <input class="form-control" asp-for="Name" type="text" autofocus/>
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
 
     <div>
-        <label asp-for="StoragePath">Storage path</label>
+        <label asp-for="StoragePath">@SharedResources.Libraries_StoragePath</label>
         <input class="form-control" asp-for="StoragePath" type="text" placeholder="/path/to/library"/>
         <span asp-validation-for="StoragePath" class="text-danger"></span>
     </div>
 
     <div>
-        <label asp-for="CronExpression">Subscription schedule</label>
+        <label asp-for="CronExpression">@SharedResources.Libraries_SubscriptionSchedule</label>
         <input class="form-control" asp-for="CronExpression" type="text"/>
         <span asp-validation-for="CronExpression" class="text-danger"></span>
     </div>
 
     <div>
-        <label asp-for="TimeZoneId">Subscription schedule time zone</label>
+        <label asp-for="TimeZoneId">@SharedResources.Libraries_SubscriptionTimeZone</label>
         <select class="form-control form-select" asp-for="TimeZoneId">
             @foreach (var id in Model.TimeZoneIds)
             {
@@ -30,5 +30,7 @@
         <span asp-validation-for="TimeZoneId" class="text-danger"></span>
     </div>
 
-    <button class="btn btn-primary" type="submit">Create library</button>
+    <button class="btn btn-primary" type="submit">
+        @SharedResources.Button_CreateLibrary
+    </button>
 </form>
