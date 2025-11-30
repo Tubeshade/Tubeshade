@@ -35,44 +35,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var taskRepository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
-            var taskId = await taskRepository.AddAsync(
-                new()
-                {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
-                    Type = TaskType.RefreshSubscriptions,
-                    UserId = _userId,
-                },
-                transaction);
-
-            var scheduleRepository = scope.ServiceProvider.GetRequiredService<ScheduleRepository>();
-            var scheduleId = await scheduleRepository.AddAsync(
-                new()
-                {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
-                    TaskId = taskId!.Value,
-                    CronExpression = "* * * * *",
-                    TimeZoneId = "Etc/UTC",
-                },
-                transaction);
-
-            var libraryRepository = scope.ServiceProvider.GetRequiredService<LibraryRepository>();
-            _libraryId = (await libraryRepository.AddAsync(
-                new()
-                {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
-                    Name = Guid.NewGuid().ToString("N"),
-                    StoragePath = string.Empty,
-                    SubscriptionsScheduleId = scheduleId!.Value,
-                },
-                transaction))!.Value;
-
+            _libraryId = await CreateLibrary(_userId, scope.ServiceProvider, transaction);
             await transaction.CommitAsync();
         }
     }

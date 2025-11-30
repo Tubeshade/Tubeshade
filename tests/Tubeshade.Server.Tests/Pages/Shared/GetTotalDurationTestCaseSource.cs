@@ -27,6 +27,7 @@ public sealed class GetTotalDurationTestCaseSource : IEnumerable
                         EndTime = 10.0m,
                         Category = SegmentCategory.Interaction,
                         Action = SegmentAction.Skip,
+                        Locked = true,
                     },
                 },
                 Period.FromSeconds(5))
@@ -43,6 +44,7 @@ public sealed class GetTotalDurationTestCaseSource : IEnumerable
                         EndTime = 0.0m,
                         Category = SegmentCategory.Sponsor,
                         Action = SegmentAction.Full,
+                        Locked = true,
                     },
                 },
                 Period.Zero)
@@ -59,6 +61,7 @@ public sealed class GetTotalDurationTestCaseSource : IEnumerable
                         EndTime = 10.0m,
                         Category = SegmentCategory.Interaction,
                         Action = SegmentAction.Skip,
+                        Locked = true,
                     },
                     new()
                     {
@@ -68,6 +71,7 @@ public sealed class GetTotalDurationTestCaseSource : IEnumerable
                         EndTime = 20.0m,
                         Category = SegmentCategory.Interaction,
                         Action = SegmentAction.Skip,
+                        Locked = true,
                     },
                 },
                 Period.FromSeconds(10))
@@ -84,6 +88,7 @@ public sealed class GetTotalDurationTestCaseSource : IEnumerable
                         EndTime = 20.0m,
                         Category = SegmentCategory.Interaction,
                         Action = SegmentAction.Skip,
+                        Locked = true,
                     },
                     new()
                     {
@@ -93,6 +98,7 @@ public sealed class GetTotalDurationTestCaseSource : IEnumerable
                         EndTime = 19.0m,
                         Category = SegmentCategory.Interaction,
                         Action = SegmentAction.Skip,
+                        Locked = true,
                     },
                 },
                 Period.FromSeconds(15))
@@ -109,6 +115,7 @@ public sealed class GetTotalDurationTestCaseSource : IEnumerable
                         EndTime = 20.0m,
                         Category = SegmentCategory.Interaction,
                         Action = SegmentAction.Skip,
+                        Locked = true,
                     },
                     new()
                     {
@@ -118,6 +125,7 @@ public sealed class GetTotalDurationTestCaseSource : IEnumerable
                         EndTime = 25.0m,
                         Category = SegmentCategory.Interaction,
                         Action = SegmentAction.Skip,
+                        Locked = true,
                     },
                 },
                 Period.FromSeconds(20))

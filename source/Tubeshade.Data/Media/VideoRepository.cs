@@ -201,7 +201,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return enumerable as List<VideoEntity> ?? enumerable.ToList();
     }
 
-    public async ValueTask<List<(Guid VideoId, Guid ChannelId, string VideoUrl)>> GetForReindex(Guid libraryId, NpgsqlTransaction transaction)
+    public async ValueTask<List<(Guid VideoId, Guid ChannelId, string VideoUrl)>> GetForReindex(
+        Guid libraryId,
+        NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             // lang=sql
@@ -383,6 +385,29 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                       LEFT OUTER JOIN media.sponsorblock_segments ON videos.id = sponsorblock_segments.video_id
              WHERE library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
                AND sponsorblock_segments.video_id IS NULL;
+             """,
+            new GetFromLibraryParameters(userId, libraryId, Access.Read),
+            transaction);
+
+        return enumerable as List<EntityId> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<List<EntityId>> GetWithUnlockedSegments(
+        Guid userId,
+        Guid libraryId,
+        NpgsqlTransaction transaction)
+    {
+        var enumerable = await Connection.QueryAsync<EntityId>(
+            $"""
+             SELECT videos.id AS Id,
+                    videos.external_id AS ExternalId
+             FROM media.videos
+                      INNER JOIN media.channels ON videos.channel_id = channels.id
+                      INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
+                      INNER JOIN media.sponsorblock_segments ON videos.id = sponsorblock_segments.video_id
+             WHERE library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
+             GROUP BY videos.id, videos.external_id
+             HAVING bool_and(sponsorblock_segments.locked) IS NOT TRUE;
              """,
             new GetFromLibraryParameters(userId, libraryId, Access.Read),
             transaction);

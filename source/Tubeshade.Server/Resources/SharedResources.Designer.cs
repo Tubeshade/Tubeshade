@@ -177,7 +177,7 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Scan Sponsor Block segments.
+        ///   Looks up a localized string similar to Scan sponsor segments.
         /// </summary>
         public static string Button_ScanSponsorBlock {
             get {
@@ -218,6 +218,15 @@ namespace Tubeshade.Server.Resources {
         public static string Button_UpdatePreferences {
             get {
                 return ResourceManager.GetString("Button_UpdatePreferences", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update sponsor segments.
+        /// </summary>
+        public static string Button_UpdateSponsorBlock {
+            get {
+                return ResourceManager.GetString("Button_UpdateSponsorBlock", resourceCulture);
             }
         }
         
@@ -947,6 +956,15 @@ namespace Tubeshade.Server.Resources {
         public static string Tasks_Type_scan_subscriptions {
             get {
                 return ResourceManager.GetString("Tasks_Type_scan_subscriptions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update Sponsor Block segments.
+        /// </summary>
+        public static string Tasks_Type_update_sponsor_block_segments {
+            get {
+                return ResourceManager.GetString("Tasks_Type_update_sponsor_block_segments", resourceCulture);
             }
         }
         

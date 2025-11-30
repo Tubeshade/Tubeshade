@@ -9,15 +9,6 @@
     <partial name="Libraries/_LibraryNavigation" for="Library"/>
 }
 
-<div class="btn-group">
-    <button hx-post="" hx-page-handler="ScanSubscriptions" class="btn btn-primary" type="button">
-        @SharedResources.Button_ScanSubscriptions
-    </button>
-    <button hx-post="" hx-page-handler="ScanSegments" class="btn btn-primary" type="button">
-        @SharedResources.Button_ScanSponsorBlock
-    </button>
-</div>
-
 <partial name="Tasks/_FilteredTasks" model="@Model"/>
 
 @section Scripts

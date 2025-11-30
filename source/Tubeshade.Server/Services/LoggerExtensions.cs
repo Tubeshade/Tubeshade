@@ -104,4 +104,16 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(29, Information, "Not indexing video of type {VideoType} due to preferences")]
     internal static partial void FeedUpdatedIgnored(this ILogger logger, string videoType);
+
+    [LoggerMessage(30, Trace, "Not updating existing locked segment {SegmentId} {SegmentExternalId}")]
+    internal static partial void LockedSponsorBlockSegment(this ILogger logger, Guid segmentId, string segmentExternalId);
+
+    [LoggerMessage(31, Debug, "Updating existing segment {SegmentId} {SegmentExternalId}")]
+    internal static partial void UpdatingSponsorBlockSegment(this ILogger logger, Guid segmentId, string segmentExternalId);
+
+    [LoggerMessage(32, Debug, "Adding new segment {SegmentExternalId}")]
+    internal static partial void AddingSponsorBlockSegment(this ILogger logger, string segmentExternalId);
+
+    [LoggerMessage(33, Debug, "Deleting existing segment {SegmentId} {SegmentExternalId}")]
+    internal static partial void DeletingSponsorBlockSegment(this ILogger logger, Guid segmentId, string segmentExternalId);
 }

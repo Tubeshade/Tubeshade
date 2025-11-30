@@ -253,7 +253,7 @@
         <value>Scan subscriptions</value>
     </data>
     <data name="Button_ScanSponsorBlock" xml:space="preserve">
-        <value>Scan Sponsor Block segments</value>
+        <value>Scan sponsor segments</value>
     </data>
     <data name="Tasks_RefreshAutomatically" xml:space="preserve">
         <value>Refresh automatically</value>
@@ -344,5 +344,11 @@
     </data>
     <data name="Preferences_CurrentLibrary" xml:space="preserve">
         <value>Current</value>
+    </data>
+    <data name="Tasks_Type_update_sponsor_block_segments" xml:space="preserve">
+        <value>Update Sponsor Block segments</value>
+    </data>
+    <data name="Button_UpdateSponsorBlock" xml:space="preserve">
+        <value>Update sponsor segments</value>
     </data>
 </root>

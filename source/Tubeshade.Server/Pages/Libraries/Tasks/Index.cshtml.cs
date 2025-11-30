@@ -73,24 +73,35 @@ public sealed class Index : LibraryPageBase, ITaskPage
             : Page();
     }
 
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostScanSubscriptions()
     {
         await _taskService.ScanSubscriptions(User.GetUserId(), [LibraryId]);
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostScanSegments()
     {
         await _taskService.ScanSegments(User.GetUserId(), [LibraryId]);
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
+    /// <inheritdoc />
+    public async Task<IActionResult> OnPostUpdateSegments()
+    {
+        await _taskService.UpdateSegments(User.GetUserId(), [LibraryId]);
+        return StatusCode(StatusCodes.Status204NoContent);
+    }
+
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostRetry(Guid taskId)
     {
         await _taskService.RetryTask(User.GetUserId(), taskId);
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostCancel(Guid taskRunId)
     {
         await _taskService.CancelTaskRun(User.GetUserId(), taskRunId);

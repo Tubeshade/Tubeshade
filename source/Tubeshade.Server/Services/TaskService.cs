@@ -66,6 +66,22 @@ public sealed class TaskService
         }
     }
 
+    public async ValueTask UpdateSegments(Guid userId, IEnumerable<Guid> libraryIds)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        await UpdateSegments(userId, libraryIds, transaction);
+        await transaction.CommitAsync();
+    }
+
+    public async ValueTask UpdateSegments(Guid userId, IEnumerable<Guid> libraryIds, NpgsqlTransaction transaction)
+    {
+        foreach (var id in libraryIds)
+        {
+            var taskId = await _taskRepository.AddUpdateSegmentsTask(id, userId, transaction);
+            await _taskRepository.TriggerTask(taskId, userId, transaction);
+        }
+    }
+
     public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();

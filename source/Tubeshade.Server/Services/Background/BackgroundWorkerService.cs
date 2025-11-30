@@ -207,8 +207,8 @@ public sealed class BackgroundWorkerService : BackgroundService
         else if (task.Type == TaskType.ScanSponsorBlockSegments)
         {
             using var scope = await LockAsync(_sponsorBlockLock, taskRepository, taskRunId, cancellationToken);
-            var service = provider.GetRequiredService<YoutubeService>();
-            await service.ScanSponsorBlockSegments(
+            var service = provider.GetRequiredService<SponsorBlockService>();
+            await service.ScanVideoSegments(
                 task.LibraryId!.Value,
                 task.UserId!.Value,
                 taskRepository,
@@ -228,6 +228,17 @@ public sealed class BackgroundWorkerService : BackgroundService
             await service.Reindex(
                 task.LibraryId!.Value,
                 task.UserId!.Value,
+                cancellationToken);
+        }
+        else if (task.Type == TaskType.UpdateSponsorBlockSegments)
+        {
+            using var scope = await LockAsync(_sponsorBlockLock, taskRepository, taskRunId, cancellationToken);
+            var service = provider.GetRequiredService<SponsorBlockService>();
+            await service.UpdateVideoSegments(
+                task.LibraryId!.Value,
+                task.UserId!.Value,
+                taskRepository,
+                taskRunId,
                 cancellationToken);
         }
     }

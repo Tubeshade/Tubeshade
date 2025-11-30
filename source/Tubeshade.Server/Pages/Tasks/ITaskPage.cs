@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -15,4 +16,14 @@ public interface ITaskPage : IPaginatedDataPage<TaskModel>
     };
 
     Task<IActionResult> OnGet(CancellationToken cancellationToken);
+
+    Task<IActionResult> OnPostScanSubscriptions();
+
+    Task<IActionResult> OnPostScanSegments();
+
+    Task<IActionResult> OnPostUpdateSegments();
+
+    Task<IActionResult> OnPostRetry(Guid taskId);
+
+    Task<IActionResult> OnPostCancel(Guid taskRunId);
 }

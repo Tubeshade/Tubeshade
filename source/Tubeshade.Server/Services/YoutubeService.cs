@@ -12,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
 using Npgsql;
-using SponsorBlock;
 using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
@@ -45,11 +44,10 @@ public sealed class YoutubeService
     private readonly PreferencesRepository _preferencesRepository;
     private readonly IClock _clock;
     private readonly NpgsqlConnection _connection;
-    private readonly ISponsorBlockClient _sponsorBlockClient;
-    private readonly SponsorBlockSegmentRepository _segmentRepository;
     private readonly IYtdlpWrapper _ytdlpWrapper;
     private readonly WebVideoTextTracksService _webVideoTextTracksService;
     private readonly TaskService _taskService;
+    private readonly SponsorBlockService _sponsorBlockService;
 
     public YoutubeService(
         ILogger<YoutubeService> logger,
@@ -62,11 +60,10 @@ public sealed class YoutubeService
         LibraryRepository libraryRepository,
         NpgsqlConnection connection,
         PreferencesRepository preferencesRepository,
-        ISponsorBlockClient sponsorBlockClient,
-        SponsorBlockSegmentRepository segmentRepository,
         IYtdlpWrapper ytdlpWrapper,
         WebVideoTextTracksService webVideoTextTracksService,
-        TaskService taskService)
+        TaskService taskService,
+        SponsorBlockService sponsorBlockService)
     {
         _logger = logger;
         _options = optionsMonitor.CurrentValue;
@@ -76,11 +73,10 @@ public sealed class YoutubeService
         _libraryRepository = libraryRepository;
         _connection = connection;
         _preferencesRepository = preferencesRepository;
-        _sponsorBlockClient = sponsorBlockClient;
-        _segmentRepository = segmentRepository;
         _ytdlpWrapper = ytdlpWrapper;
         _webVideoTextTracksService = webVideoTextTracksService;
         _taskService = taskService;
+        _sponsorBlockService = sponsorBlockService;
         _imageFileRepository = imageFileRepository;
         _videoFileRepository = videoFileRepository;
     }
@@ -297,30 +293,7 @@ public sealed class YoutubeService
             await _videoRepository.UpdateAsync(video, transaction);
         }
 
-        var segments = await _sponsorBlockClient.GetSegmentsPrivacy(video.ExternalId, cancellationToken);
-        var existingSegments = await _segmentRepository.GetForVideo(video.Id, userId, transaction);
-        foreach (var segment in segments)
-        {
-            var existingSegment = existingSegments.SingleOrDefault(entity => entity.ExternalId == segment.Id);
-            if (existingSegment is not null)
-            {
-                continue;
-            }
-
-            await _segmentRepository.AddAsync(
-                new SponsorBlockSegmentEntity
-                {
-                    CreatedByUserId = userId,
-                    VideoId = video.Id,
-                    ExternalId = segment.Id,
-                    StartTime = segment.StartTime,
-                    EndTime = segment.EndTime,
-                    Category = segment.Category,
-                    Action = segment.Action,
-                    Description = segment.Description
-                },
-                transaction);
-        }
+        await _sponsorBlockService.UpdateVideoSegments(video, userId, transaction, cancellationToken);
 
         var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channel.Id, userId, cancellationToken);
 
@@ -528,43 +501,6 @@ public sealed class YoutubeService
         foreach (var (index, channel) in channels.Index())
         {
             await ScanChannelCore(libraryId, channel.Id, false, true, userId, taskRepository, taskRunId, transaction, tempDirectory, cancellationToken, false);
-            await taskRepository.UpdateProgress(taskRunId, index + 1);
-        }
-
-        await transaction.CommitAsync(cancellationToken);
-    }
-
-    public async ValueTask ScanSponsorBlockSegments(
-        Guid libraryId,
-        Guid userId,
-        TaskRepository taskRepository,
-        Guid taskRunId,
-        CancellationToken cancellationToken)
-    {
-        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var videosWithoutSegments = await _videoRepository.GetWithoutSegments(userId, libraryId, transaction);
-        await taskRepository.InitializeTaskProgress(taskRunId, videosWithoutSegments.Count);
-
-        foreach (var (index, videoId) in videosWithoutSegments.Index())
-        {
-            var segments = await _sponsorBlockClient.GetSegmentsPrivacy(videoId.ExternalId, cancellationToken);
-            foreach (var segment in segments)
-            {
-                await _segmentRepository.AddAsync(
-                    new SponsorBlockSegmentEntity
-                    {
-                        CreatedByUserId = userId,
-                        VideoId = videoId.Id,
-                        ExternalId = segment.Id,
-                        StartTime = segment.StartTime,
-                        EndTime = segment.EndTime,
-                        Category = segment.Category,
-                        Action = segment.Action,
-                        Description = segment.Description
-                    },
-                    transaction);
-            }
-
             await taskRepository.UpdateProgress(taskRunId, index + 1);
         }
 

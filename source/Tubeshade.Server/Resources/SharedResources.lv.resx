@@ -267,7 +267,7 @@
         <value>Skenēt abonementus</value>
     </data>
     <data name="Button_ScanSponsorBlock" xml:space="preserve">
-        <value>Skanēt Sponsor Block segmentus</value>
+        <value>Skanēt sponsoru segmentus</value>
     </data>
     <data name="Video_Resolution" xml:space="preserve">
         <value>Izšķirtspēja</value>
@@ -337,5 +337,11 @@
     </data>
     <data name="Preferences_CurrentLibrary" xml:space="preserve">
         <value>Pašreizējā</value>
+    </data>
+    <data name="Tasks_Type_update_sponsor_block_segments" xml:space="preserve">
+        <value>Atjaunot Sponsor Block segmentus</value>
+    </data>
+    <data name="Button_UpdateSponsorBlock" xml:space="preserve">
+        <value>Atjaunināt sponsoru segmentus</value>
     </data>
 </root>

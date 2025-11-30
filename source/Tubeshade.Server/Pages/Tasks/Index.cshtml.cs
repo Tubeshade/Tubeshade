@@ -82,6 +82,7 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
             : Page();
     }
 
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostScanSubscriptions()
     {
         var userId = User.GetUserId();
@@ -94,6 +95,7 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostScanSegments()
     {
         var userId = User.GetUserId();
@@ -106,12 +108,27 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
+    /// <inheritdoc />
+    public async Task<IActionResult> OnPostUpdateSegments()
+    {
+        var userId = User.GetUserId();
+
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var libraries = await _libraryRepository.GetAsync(userId, transaction);
+        await _taskService.UpdateSegments(userId, libraries.Select(library => library.Id), transaction);
+        await transaction.CommitAsync();
+
+        return StatusCode(StatusCodes.Status204NoContent);
+    }
+
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostRetry(Guid taskId)
     {
         await _taskService.RetryTask(User.GetUserId(), taskId);
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostCancel(Guid taskRunId)
     {
         await _taskService.CancelTaskRun(User.GetUserId(), taskRunId);

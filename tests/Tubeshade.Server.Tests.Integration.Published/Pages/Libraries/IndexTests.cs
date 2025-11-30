@@ -92,6 +92,14 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
             .ClickAsync(new LocatorClickOptions { Timeout = 5_000 });
 
         await Page
+            .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Scan sponsor segments" })
+            .ClickAsync(new LocatorClickOptions { Timeout = 5_000 });
+
+        await Page
+            .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Update sponsor segments" })
+            .ClickAsync(new LocatorClickOptions { Timeout = 5_000 });
+
+        await Page
             .GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Cancel" })
             .WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Hidden });
 

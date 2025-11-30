@@ -477,6 +477,24 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             transaction);
     }
 
+    public ValueTask<Guid> AddUpdateSegmentsTask(Guid libraryId, Guid userId, NpgsqlTransaction transaction)
+    {
+        return AddTask(new TaskEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = userId,
+                Type = TaskType.UpdateSponsorBlockSegments,
+                UserId = userId,
+                LibraryId = libraryId,
+                ChannelId = null,
+                VideoId = null,
+                Url = null,
+                AllVideos = false,
+            },
+            transaction);
+    }
+
     public async ValueTask<int> UpdateAsync(TaskEntity task)
     {
         var command = new CommandDefinition(UpdateSql, task);

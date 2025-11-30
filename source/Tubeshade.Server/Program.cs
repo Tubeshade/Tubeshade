@@ -141,6 +141,7 @@ internal static class Program
             .AddHostedService<BackgroundWorkerService>(provider => provider.GetRequiredService<BackgroundWorkerService>())
             .AddHostedService<SchedulerService>()
             .AddScoped<TaskService>()
+            .AddScoped<SponsorBlockService>()
             .AddScoped<WebVideoTextTracksService>()
             .AddScoped<IYtdlpWrapper, YtdlpWrapper>()
             .AddScoped<YoutubeService>()

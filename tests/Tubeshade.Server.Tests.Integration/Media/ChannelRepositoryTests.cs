@@ -7,7 +7,6 @@ using NUnit.Framework;
 using Tubeshade.Data;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
-using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Tests.Integration.Fixtures;
 
 namespace Tubeshade.Server.Tests.Integration.Media;
@@ -34,43 +33,8 @@ public sealed class ChannelRepositoryTests(ServerFixture fixture) : ServerTests(
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var taskRepository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
-            var taskId = await taskRepository.AddAsync(
-                new()
-                {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
-                    Type = TaskType.RefreshSubscriptions,
-                    UserId = _userId,
-                },
-                transaction);
-
-            var scheduleRepository = scope.ServiceProvider.GetRequiredService<ScheduleRepository>();
-            var scheduleId = await scheduleRepository.AddAsync(
-                new()
-                {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
-                    TaskId = taskId!.Value,
-                    CronExpression = "* * * * *",
-                    TimeZoneId = "Etc/UTC",
-                },
-                transaction);
-
-            var libraryRepository = scope.ServiceProvider.GetRequiredService<LibraryRepository>();
-            _libraryId = (await libraryRepository.AddAsync(
-                new()
-                {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
-                    Name = Guid.NewGuid().ToString("N"),
-                    StoragePath = string.Empty,
-                    SubscriptionsScheduleId = scheduleId!.Value,
-                },
-                transaction))!.Value;
+            _libraryId = await CreateLibrary(_userId, scope.ServiceProvider, transaction);
+            _libraryId2 = await CreateLibrary(_userId, scope.ServiceProvider, transaction);
 
             var channelRepository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
             _channelId = (await channelRepository.AddAsync(
@@ -88,41 +52,6 @@ public sealed class ChannelRepositoryTests(ServerFixture fixture) : ServerTests(
                 transaction))!.Value;
 
             await channelRepository.AddToLibrary(_libraryId, _channelId, transaction);
-
-            var taskId2 = await taskRepository.AddAsync(
-                new()
-                {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
-                    Type = TaskType.RefreshSubscriptions,
-                    UserId = _userId,
-                },
-                transaction);
-
-            var scheduleId2 = await scheduleRepository.AddAsync(
-                new()
-                {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
-                    TaskId = taskId2!.Value,
-                    CronExpression = "* * * * *",
-                    TimeZoneId = "Etc/UTC",
-                },
-                transaction);
-
-            _libraryId2 = (await libraryRepository.AddAsync(
-                new()
-                {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
-                    Name = Guid.NewGuid().ToString("N"),
-                    StoragePath = string.Empty,
-                    SubscriptionsScheduleId = scheduleId2!.Value,
-                },
-                transaction))!.Value;
 
             await transaction.CommitAsync();
         }
