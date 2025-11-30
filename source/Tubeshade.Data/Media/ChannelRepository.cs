@@ -51,13 +51,16 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
          subscribed_at = @SubscribedAt
          """;
 
-    public async ValueTask<List<ChannelEntity>> GetSubscribedForLibrary(Guid libraryId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<List<ChannelEntity>> GetSubscribedForLibrary(
+        Guid libraryId,
+        Guid userId,
+        NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             // lang=sql
             $"""
              {AccessCte}
-             
+
              SELECT id AS Id,
                     created_at AS CreatedAt,
                     created_by_user_id AS CreatedByUserId,
@@ -87,7 +90,10 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
         return enumerable as List<ChannelEntity> ?? enumerable.ToList();
     }
 
-    public async ValueTask<List<ChannelEntity>> GetForLibrary(Guid libraryId, Guid userId, CancellationToken cancellationToken = default)
+    public async ValueTask<List<ChannelEntity>> GetForLibrary(
+        Guid libraryId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
             // lang=sql
@@ -122,7 +128,11 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
         return enumerable as List<ChannelEntity> ?? enumerable.ToList();
     }
 
-    public async ValueTask<ChannelEntity?> FindByExternalId(string externalId, Guid userId, Access access, NpgsqlTransaction transaction)
+    public async ValueTask<ChannelEntity?> FindByExternalId(
+        string externalId,
+        Guid userId,
+        Access access,
+        NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             $"""
@@ -135,28 +145,46 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
         return await Connection.QuerySingleOrDefaultAsync<ChannelEntity>(command);
     }
 
-    public async ValueTask<ChannelEntity?> FindByExternalId(string externalId, NpgsqlTransaction transaction)
-    {
-        var command = new CommandDefinition(
-            $"""
-             {SelectSql}
-             WHERE {TableName}.external_id = @{nameof(externalId)};
-             """,
-            new { externalId },
-            transaction);
-
-        return await Connection.QuerySingleOrDefaultAsync<ChannelEntity>(command);
-    }
-
     public async ValueTask<int> AddToLibrary(Guid libraryId, Guid channelId, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
             $"""
-            INSERT INTO media.library_channels (library_id, channel_id, "primary")
-            VALUES (@{nameof(libraryId)}, @{nameof(channelId)}, true);
-            """,
+             INSERT INTO media.library_channels (library_id, channel_id, "primary")
+             VALUES (@{nameof(libraryId)}, @{nameof(channelId)}, true);
+             """,
             new { libraryId, channelId },
             transaction);
+    }
+
+    public async ValueTask<int> MoveToLibrary(
+        Guid newLibraryId,
+        Guid channelId,
+        Guid userId,
+        NpgsqlTransaction transaction)
+    {
+        var access = Access.Modify;
+        return await Connection.ExecuteAsync(
+            new CommandDefinition(
+                // lang=sql
+                $"""
+                 WITH accessible AS
+                     (SELECT media.libraries.id
+                      FROM media.libraries
+                          INNER JOIN identity.owners ON owners.id = media.libraries.owner_id
+                          INNER JOIN identity.ownerships ON
+                              ownerships.owner_id = owners.id AND
+                              ownerships.user_id = @{nameof(userId)} AND
+                              (ownerships.access = @{nameof(access)} OR ownerships.access = 'owner'))             
+
+                 UPDATE media.library_channels
+                 SET library_id = @{nameof(newLibraryId)}
+                 WHERE channel_id = @{nameof(channelId)} AND
+                       "primary" AND
+                       EXISTS(SELECT 1 FROM accessible WHERE accessible.id = library_id) AND
+                       EXISTS(SELECT 1 FROM accessible WHERE accessible.id = @{nameof(newLibraryId)});
+                 """,
+                new { newLibraryId, channelId, userId, access },
+                transaction));
     }
 
     public async ValueTask<Guid> GetPrimaryLibraryId(Guid id, CancellationToken cancellationToken = default)

@@ -329,4 +329,13 @@
     <data name="Library" xml:space="preserve">
         <value>Bibliotēka</value>
     </data>
+    <data name="Button_MoveToLibrary" xml:space="preserve">
+        <value>Pārvietot uz bibliotēku</value>
+    </data>
+    <data name="Preferences_NewLibrary" xml:space="preserve">
+        <value>Jaunā bibliotēka</value>
+    </data>
+    <data name="Preferences_CurrentLibrary" xml:space="preserve">
+        <value>Pašreizējā</value>
+    </data>
 </root>

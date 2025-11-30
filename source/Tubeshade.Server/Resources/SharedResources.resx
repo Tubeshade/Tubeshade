@@ -336,4 +336,13 @@
     <data name="Library" xml:space="preserve">
         <value>Library</value>
     </data>
+    <data name="Button_MoveToLibrary" xml:space="preserve">
+        <value>Move to library</value>
+    </data>
+    <data name="Preferences_NewLibrary" xml:space="preserve">
+        <value>New library</value>
+    </data>
+    <data name="Preferences_CurrentLibrary" xml:space="preserve">
+        <value>Current</value>
+    </data>
 </root>

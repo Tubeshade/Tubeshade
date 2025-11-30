@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -11,6 +13,7 @@ using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Resources;
 using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Libraries.Channels;
@@ -50,11 +53,21 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
     [BindProperty]
     public UpdatePreferencesModel UpdatePreferencesModel { get; set; } = new();
 
+    [BindProperty]
+    public Guid? NewLibraryId { get; set; }
+
+    public List<LibraryEntity> Libraries { get; set; } = [];
+
+    public List<LibraryEntity> OtherLibraries { get; set; } = [];
+
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
 
-        Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
+        Libraries = await _libraryRepository.GetAsync(userId, cancellationToken);
+        Library = Libraries.Single(library => library.Id == LibraryId);
+        OtherLibraries = Libraries.Except([Library]).ToList();
+
         Entity = await _channelRepository.GetAsync(ChannelId, userId, cancellationToken);
 
         var preferences = await _preferencesRepository.FindForChannel(ChannelId, userId, cancellationToken);
@@ -63,6 +76,7 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
         return Page();
     }
 
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostUpdatePreferences()
     {
         if (!ModelState.IsValid)
@@ -129,5 +143,29 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
         await transaction.CommitAsync(cancellationToken);
 
         return StatusCode(StatusCodes.Status204NoContent);
+    }
+
+    public async Task<IActionResult> OnPostChangeLibrary()
+    {
+        var userId = User.GetUserId();
+        var cancellationToken = CancellationToken.None;
+
+        if (NewLibraryId is not { } targetLibraryId)
+        {
+            ModelState.AddModelError(nameof(NewLibraryId), ValidationMessages.RequiredField);
+            return await OnGet(cancellationToken);
+        }
+
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var count = await _channelRepository.MoveToLibrary(targetLibraryId, ChannelId, userId, transaction);
+        await transaction.CommitAsync(cancellationToken);
+
+        if (count is not 0)
+        {
+            return RedirectToPage(nameof(ChannelSettings), new { libraryId = NewLibraryId, ChannelId });
+        }
+
+        ModelState.AddModelError(nameof(NewLibraryId), ValidationMessages.MissingModifyAccess);
+        return await OnGet(cancellationToken);
     }
 }

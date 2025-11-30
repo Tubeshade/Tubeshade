@@ -21,7 +21,7 @@ namespace Tubeshade.Server.Resources {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class SharedResources {
+    public class SharedResources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -35,7 +35,7 @@ namespace Tubeshade.Server.Resources {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Tubeshade.Server.Resources.SharedResources", typeof(SharedResources).Assembly);
@@ -50,7 +50,7 @@ namespace Tubeshade.Server.Resources {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -62,7 +62,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Account.
         /// </summary>
-        internal static string Account {
+        public static string Account {
             get {
                 return ResourceManager.GetString("Account", resourceCulture);
             }
@@ -71,7 +71,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to All.
         /// </summary>
-        internal static string AllLibraries {
+        public static string AllLibraries {
             get {
                 return ResourceManager.GetString("AllLibraries", resourceCulture);
             }
@@ -80,7 +80,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
-        internal static string Button_Cancel {
+        public static string Button_Cancel {
             get {
                 return ResourceManager.GetString("Button_Cancel", resourceCulture);
             }
@@ -89,7 +89,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Create library.
         /// </summary>
-        internal static string Button_CreateLibrary {
+        public static string Button_CreateLibrary {
             get {
                 return ResourceManager.GetString("Button_CreateLibrary", resourceCulture);
             }
@@ -98,7 +98,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Delete.
         /// </summary>
-        internal static string Button_Delete {
+        public static string Button_Delete {
             get {
                 return ResourceManager.GetString("Button_Delete", resourceCulture);
             }
@@ -107,7 +107,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Download.
         /// </summary>
-        internal static string Button_Download {
+        public static string Button_Download {
             get {
                 return ResourceManager.GetString("Button_Download", resourceCulture);
             }
@@ -116,7 +116,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Edit.
         /// </summary>
-        internal static string Button_Edit {
+        public static string Button_Edit {
             get {
                 return ResourceManager.GetString("Button_Edit", resourceCulture);
             }
@@ -125,16 +125,25 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Ignore.
         /// </summary>
-        internal static string Button_Ignore {
+        public static string Button_Ignore {
             get {
                 return ResourceManager.GetString("Button_Ignore", resourceCulture);
             }
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Move to library.
+        /// </summary>
+        public static string Button_MoveToLibrary {
+            get {
+                return ResourceManager.GetString("Button_MoveToLibrary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Rescan.
         /// </summary>
-        internal static string Button_Rescan {
+        public static string Button_Rescan {
             get {
                 return ResourceManager.GetString("Button_Rescan", resourceCulture);
             }
@@ -143,7 +152,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Retry.
         /// </summary>
-        internal static string Button_Retry {
+        public static string Button_Retry {
             get {
                 return ResourceManager.GetString("Button_Retry", resourceCulture);
             }
@@ -152,7 +161,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Scan.
         /// </summary>
-        internal static string Button_Scan {
+        public static string Button_Scan {
             get {
                 return ResourceManager.GetString("Button_Scan", resourceCulture);
             }
@@ -161,7 +170,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Scan all videos.
         /// </summary>
-        internal static string Button_ScanAll {
+        public static string Button_ScanAll {
             get {
                 return ResourceManager.GetString("Button_ScanAll", resourceCulture);
             }
@@ -170,7 +179,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Scan Sponsor Block segments.
         /// </summary>
-        internal static string Button_ScanSponsorBlock {
+        public static string Button_ScanSponsorBlock {
             get {
                 return ResourceManager.GetString("Button_ScanSponsorBlock", resourceCulture);
             }
@@ -179,7 +188,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Scan subscriptions.
         /// </summary>
-        internal static string Button_ScanSubscriptions {
+        public static string Button_ScanSubscriptions {
             get {
                 return ResourceManager.GetString("Button_ScanSubscriptions", resourceCulture);
             }
@@ -188,7 +197,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Subscribe.
         /// </summary>
-        internal static string Button_Subscribe {
+        public static string Button_Subscribe {
             get {
                 return ResourceManager.GetString("Button_Subscribe", resourceCulture);
             }
@@ -197,7 +206,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unsubscribe.
         /// </summary>
-        internal static string Button_Unsubscribe {
+        public static string Button_Unsubscribe {
             get {
                 return ResourceManager.GetString("Button_Unsubscribe", resourceCulture);
             }
@@ -206,7 +215,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Update preferences.
         /// </summary>
-        internal static string Button_UpdatePreferences {
+        public static string Button_UpdatePreferences {
             get {
                 return ResourceManager.GetString("Button_UpdatePreferences", resourceCulture);
             }
@@ -215,7 +224,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Channels.
         /// </summary>
-        internal static string Channels {
+        public static string Channels {
             get {
                 return ResourceManager.GetString("Channels", resourceCulture);
             }
@@ -224,7 +233,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Default.
         /// </summary>
-        internal static string Default {
+        public static string Default {
             get {
                 return ResourceManager.GetString("Default", resourceCulture);
             }
@@ -233,7 +242,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Downloads.
         /// </summary>
-        internal static string Downloads {
+        public static string Downloads {
             get {
                 return ResourceManager.GetString("Downloads", resourceCulture);
             }
@@ -242,7 +251,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Error.
         /// </summary>
-        internal static string Error {
+        public static string Error {
             get {
                 return ResourceManager.GetString("Error", resourceCulture);
             }
@@ -251,7 +260,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Availability.
         /// </summary>
-        internal static string Filters_Availability {
+        public static string Filters_Availability {
             get {
                 return ResourceManager.GetString("Filters_Availability", resourceCulture);
             }
@@ -260,7 +269,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Any availability.
         /// </summary>
-        internal static string Filters_Availability_Any {
+        public static string Filters_Availability_Any {
             get {
                 return ResourceManager.GetString("Filters_Availability_Any", resourceCulture);
             }
@@ -269,7 +278,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Not available.
         /// </summary>
-        internal static string Filters_Availability_not_available {
+        public static string Filters_Availability_not_available {
             get {
                 return ResourceManager.GetString("Filters_Availability_not_available", resourceCulture);
             }
@@ -278,7 +287,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Private.
         /// </summary>
-        internal static string Filters_Availability_private {
+        public static string Filters_Availability_private {
             get {
                 return ResourceManager.GetString("Filters_Availability_private", resourceCulture);
             }
@@ -287,7 +296,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Public.
         /// </summary>
-        internal static string Filters_Availability_public {
+        public static string Filters_Availability_public {
             get {
                 return ResourceManager.GetString("Filters_Availability_public", resourceCulture);
             }
@@ -296,7 +305,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Channel.
         /// </summary>
-        internal static string Filters_Channel {
+        public static string Filters_Channel {
             get {
                 return ResourceManager.GetString("Filters_Channel", resourceCulture);
             }
@@ -305,7 +314,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to All channels.
         /// </summary>
-        internal static string Filters_Channels_All {
+        public static string Filters_Channels_All {
             get {
                 return ResourceManager.GetString("Filters_Channels_All", resourceCulture);
             }
@@ -314,7 +323,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to With files.
         /// </summary>
-        internal static string Filters_Files {
+        public static string Filters_Files {
             get {
                 return ResourceManager.GetString("Filters_Files", resourceCulture);
             }
@@ -323,7 +332,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to All.
         /// </summary>
-        internal static string Filters_Files_All {
+        public static string Filters_Files_All {
             get {
                 return ResourceManager.GetString("Filters_Files_All", resourceCulture);
             }
@@ -332,7 +341,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to With files.
         /// </summary>
-        internal static string Filters_Files_With {
+        public static string Filters_Files_With {
             get {
                 return ResourceManager.GetString("Filters_Files_With", resourceCulture);
             }
@@ -341,7 +350,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Without files.
         /// </summary>
-        internal static string Filters_Files_Without {
+        public static string Filters_Files_Without {
             get {
                 return ResourceManager.GetString("Filters_Files_Without", resourceCulture);
             }
@@ -350,7 +359,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Page size.
         /// </summary>
-        internal static string Filters_PageSize {
+        public static string Filters_PageSize {
             get {
                 return ResourceManager.GetString("Filters_PageSize", resourceCulture);
             }
@@ -359,7 +368,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Search.
         /// </summary>
-        internal static string Filters_Search {
+        public static string Filters_Search {
             get {
                 return ResourceManager.GetString("Filters_Search", resourceCulture);
             }
@@ -368,7 +377,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Sort direction.
         /// </summary>
-        internal static string Filters_SortDirection {
+        public static string Filters_SortDirection {
             get {
                 return ResourceManager.GetString("Filters_SortDirection", resourceCulture);
             }
@@ -377,7 +386,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Ascending.
         /// </summary>
-        internal static string Filters_SortDirection_ASC {
+        public static string Filters_SortDirection_ASC {
             get {
                 return ResourceManager.GetString("Filters_SortDirection_ASC", resourceCulture);
             }
@@ -386,7 +395,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Descending.
         /// </summary>
-        internal static string Filters_SortDirection_DESC {
+        public static string Filters_SortDirection_DESC {
             get {
                 return ResourceManager.GetString("Filters_SortDirection_DESC", resourceCulture);
             }
@@ -395,7 +404,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Sort by.
         /// </summary>
-        internal static string Filters_SortVideoBy {
+        public static string Filters_SortVideoBy {
             get {
                 return ResourceManager.GetString("Filters_SortVideoBy", resourceCulture);
             }
@@ -404,7 +413,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Created.
         /// </summary>
-        internal static string Filters_SortVideoBy_created_at {
+        public static string Filters_SortVideoBy_created_at {
             get {
                 return ResourceManager.GetString("Filters_SortVideoBy_created_at", resourceCulture);
             }
@@ -413,7 +422,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Modified.
         /// </summary>
-        internal static string Filters_SortVideoBy_modified_at {
+        public static string Filters_SortVideoBy_modified_at {
             get {
                 return ResourceManager.GetString("Filters_SortVideoBy_modified_at", resourceCulture);
             }
@@ -422,7 +431,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Published.
         /// </summary>
-        internal static string Filters_SortVideoBy_published_at {
+        public static string Filters_SortVideoBy_published_at {
             get {
                 return ResourceManager.GetString("Filters_SortVideoBy_published_at", resourceCulture);
             }
@@ -431,7 +440,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Random.
         /// </summary>
-        internal static string Filters_SortVideoBy_random {
+        public static string Filters_SortVideoBy_random {
             get {
                 return ResourceManager.GetString("Filters_SortVideoBy_random", resourceCulture);
             }
@@ -440,7 +449,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Refreshed.
         /// </summary>
-        internal static string Filters_SortVideoBy_refreshed_at {
+        public static string Filters_SortVideoBy_refreshed_at {
             get {
                 return ResourceManager.GetString("Filters_SortVideoBy_refreshed_at", resourceCulture);
             }
@@ -449,7 +458,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Video type.
         /// </summary>
-        internal static string Filters_VideoType {
+        public static string Filters_VideoType {
             get {
                 return ResourceManager.GetString("Filters_VideoType", resourceCulture);
             }
@@ -458,7 +467,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to All.
         /// </summary>
-        internal static string Filters_VideoType_All {
+        public static string Filters_VideoType_All {
             get {
                 return ResourceManager.GetString("Filters_VideoType_All", resourceCulture);
             }
@@ -467,7 +476,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Livestreams.
         /// </summary>
-        internal static string Filters_VideoType_livestream {
+        public static string Filters_VideoType_livestream {
             get {
                 return ResourceManager.GetString("Filters_VideoType_livestream", resourceCulture);
             }
@@ -476,7 +485,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Shorts.
         /// </summary>
-        internal static string Filters_VideoType_short {
+        public static string Filters_VideoType_short {
             get {
                 return ResourceManager.GetString("Filters_VideoType_short", resourceCulture);
             }
@@ -485,7 +494,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Videos.
         /// </summary>
-        internal static string Filters_VideoType_video {
+        public static string Filters_VideoType_video {
             get {
                 return ResourceManager.GetString("Filters_VideoType_video", resourceCulture);
             }
@@ -494,7 +503,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Viewed.
         /// </summary>
-        internal static string Filters_Viewed {
+        public static string Filters_Viewed {
             get {
                 return ResourceManager.GetString("Filters_Viewed", resourceCulture);
             }
@@ -503,7 +512,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to All.
         /// </summary>
-        internal static string Filters_Viewed_All {
+        public static string Filters_Viewed_All {
             get {
                 return ResourceManager.GetString("Filters_Viewed_All", resourceCulture);
             }
@@ -512,7 +521,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Not viewed.
         /// </summary>
-        internal static string Filters_Viewed_NotViewed {
+        public static string Filters_Viewed_NotViewed {
             get {
                 return ResourceManager.GetString("Filters_Viewed_NotViewed", resourceCulture);
             }
@@ -521,7 +530,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Viewed.
         /// </summary>
-        internal static string Filters_Viewed_Viewed {
+        public static string Filters_Viewed_Viewed {
             get {
                 return ResourceManager.GetString("Filters_Viewed_Viewed", resourceCulture);
             }
@@ -530,7 +539,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Home page.
         /// </summary>
-        internal static string HomePage {
+        public static string HomePage {
             get {
                 return ResourceManager.GetString("HomePage", resourceCulture);
             }
@@ -539,7 +548,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Libraries.
         /// </summary>
-        internal static string Libraries {
+        public static string Libraries {
             get {
                 return ResourceManager.GetString("Libraries", resourceCulture);
             }
@@ -548,7 +557,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Storage path.
         /// </summary>
-        internal static string Libraries_StoragePath {
+        public static string Libraries_StoragePath {
             get {
                 return ResourceManager.GetString("Libraries_StoragePath", resourceCulture);
             }
@@ -557,7 +566,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Subscription schedule.
         /// </summary>
-        internal static string Libraries_SubscriptionSchedule {
+        public static string Libraries_SubscriptionSchedule {
             get {
                 return ResourceManager.GetString("Libraries_SubscriptionSchedule", resourceCulture);
             }
@@ -566,7 +575,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Subscription schedule time zone.
         /// </summary>
-        internal static string Libraries_SubscriptionTimeZone {
+        public static string Libraries_SubscriptionTimeZone {
             get {
                 return ResourceManager.GetString("Libraries_SubscriptionTimeZone", resourceCulture);
             }
@@ -575,7 +584,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Library.
         /// </summary>
-        internal static string Library {
+        public static string Library {
             get {
                 return ResourceManager.GetString("Library", resourceCulture);
             }
@@ -584,7 +593,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Login.
         /// </summary>
-        internal static string Login {
+        public static string Login {
             get {
                 return ResourceManager.GetString("Login", resourceCulture);
             }
@@ -593,7 +602,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Logout.
         /// </summary>
-        internal static string Logout {
+        public static string Logout {
             get {
                 return ResourceManager.GetString("Logout", resourceCulture);
             }
@@ -602,7 +611,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Name.
         /// </summary>
-        internal static string Name {
+        public static string Name {
             get {
                 return ResourceManager.GetString("Name", resourceCulture);
             }
@@ -611,7 +620,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to No.
         /// </summary>
-        internal static string No {
+        public static string No {
             get {
                 return ResourceManager.GetString("No", resourceCulture);
             }
@@ -620,7 +629,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Original.
         /// </summary>
-        internal static string Original {
+        public static string Original {
             get {
                 return ResourceManager.GetString("Original", resourceCulture);
             }
@@ -629,7 +638,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Original no longer available.
         /// </summary>
-        internal static string Original_NotAvailable {
+        public static string Original_NotAvailable {
             get {
                 return ResourceManager.GetString("Original_NotAvailable", resourceCulture);
             }
@@ -638,7 +647,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to First.
         /// </summary>
-        internal static string Pagination_First {
+        public static string Pagination_First {
             get {
                 return ResourceManager.GetString("Pagination_First", resourceCulture);
             }
@@ -647,7 +656,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Last.
         /// </summary>
-        internal static string Pagination_Last {
+        public static string Pagination_Last {
             get {
                 return ResourceManager.GetString("Pagination_Last", resourceCulture);
             }
@@ -656,7 +665,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Showing {0} - {1} from {2}.
         /// </summary>
-        internal static string Pagination_PageSummary {
+        public static string Pagination_PageSummary {
             get {
                 return ResourceManager.GetString("Pagination_PageSummary", resourceCulture);
             }
@@ -665,16 +674,25 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Preferences.
         /// </summary>
-        internal static string Preferences {
+        public static string Preferences {
             get {
                 return ResourceManager.GetString("Preferences", resourceCulture);
             }
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Current.
+        /// </summary>
+        public static string Preferences_CurrentLibrary {
+            get {
+                return ResourceManager.GetString("Preferences_CurrentLibrary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Download automatically.
         /// </summary>
-        internal static string Preferences_DownloadAutomatically {
+        public static string Preferences_DownloadAutomatically {
             get {
                 return ResourceManager.GetString("Preferences_DownloadAutomatically", resourceCulture);
             }
@@ -683,7 +701,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Download formats.
         /// </summary>
-        internal static string Preferences_DownloadFormats {
+        public static string Preferences_DownloadFormats {
             get {
                 return ResourceManager.GetString("Preferences_DownloadFormats", resourceCulture);
             }
@@ -692,16 +710,25 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Livestream count.
         /// </summary>
-        internal static string Preferences_LivestreamCount {
+        public static string Preferences_LivestreamCount {
             get {
                 return ResourceManager.GetString("Preferences_LivestreamCount", resourceCulture);
             }
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to New library.
+        /// </summary>
+        public static string Preferences_NewLibrary {
+            get {
+                return ResourceManager.GetString("Preferences_NewLibrary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Playback speed.
         /// </summary>
-        internal static string Preferences_PlaybackSpeed {
+        public static string Preferences_PlaybackSpeed {
             get {
                 return ResourceManager.GetString("Preferences_PlaybackSpeed", resourceCulture);
             }
@@ -710,7 +737,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Player client.
         /// </summary>
-        internal static string Preferences_PlayerClient {
+        public static string Preferences_PlayerClient {
             get {
                 return ResourceManager.GetString("Preferences_PlayerClient", resourceCulture);
             }
@@ -719,7 +746,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Short count.
         /// </summary>
-        internal static string Preferences_ShortCount {
+        public static string Preferences_ShortCount {
             get {
                 return ResourceManager.GetString("Preferences_ShortCount", resourceCulture);
             }
@@ -728,7 +755,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Video count.
         /// </summary>
-        internal static string Preferences_VideoCount {
+        public static string Preferences_VideoCount {
             get {
                 return ResourceManager.GetString("Preferences_VideoCount", resourceCulture);
             }
@@ -737,7 +764,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Register.
         /// </summary>
-        internal static string Register {
+        public static string Register {
             get {
                 return ResourceManager.GetString("Register", resourceCulture);
             }
@@ -746,7 +773,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Video or channel URL.
         /// </summary>
-        internal static string Scan_Url_Placeholder {
+        public static string Scan_Url_Placeholder {
             get {
                 return ResourceManager.GetString("Scan_Url_Placeholder", resourceCulture);
             }
@@ -755,7 +782,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Settings.
         /// </summary>
-        internal static string Settings {
+        public static string Settings {
             get {
                 return ResourceManager.GetString("Settings", resourceCulture);
             }
@@ -764,7 +791,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Subscribed.
         /// </summary>
-        internal static string Subscribed {
+        public static string Subscribed {
             get {
                 return ResourceManager.GetString("Subscribed", resourceCulture);
             }
@@ -773,7 +800,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Tasks.
         /// </summary>
-        internal static string Tasks {
+        public static string Tasks {
             get {
                 return ResourceManager.GetString("Tasks", resourceCulture);
             }
@@ -782,7 +809,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Action.
         /// </summary>
-        internal static string Tasks_Action {
+        public static string Tasks_Action {
             get {
                 return ResourceManager.GetString("Tasks_Action", resourceCulture);
             }
@@ -791,7 +818,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Queued.
         /// </summary>
-        internal static string Tasks_Queued {
+        public static string Tasks_Queued {
             get {
                 return ResourceManager.GetString("Tasks_Queued", resourceCulture);
             }
@@ -800,7 +827,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Refresh automatically.
         /// </summary>
-        internal static string Tasks_RefreshAutomatically {
+        public static string Tasks_RefreshAutomatically {
             get {
                 return ResourceManager.GetString("Tasks_RefreshAutomatically", resourceCulture);
             }
@@ -809,7 +836,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Cancelled.
         /// </summary>
-        internal static string Tasks_Status_cancelled {
+        public static string Tasks_Status_cancelled {
             get {
                 return ResourceManager.GetString("Tasks_Status_cancelled", resourceCulture);
             }
@@ -818,7 +845,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Completed.
         /// </summary>
-        internal static string Tasks_Status_completed {
+        public static string Tasks_Status_completed {
             get {
                 return ResourceManager.GetString("Tasks_Status_completed", resourceCulture);
             }
@@ -827,7 +854,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Failed.
         /// </summary>
-        internal static string Tasks_Status_failed {
+        public static string Tasks_Status_failed {
             get {
                 return ResourceManager.GetString("Tasks_Status_failed", resourceCulture);
             }
@@ -836,7 +863,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to In progress.
         /// </summary>
-        internal static string Tasks_Status_in_progress {
+        public static string Tasks_Status_in_progress {
             get {
                 return ResourceManager.GetString("Tasks_Status_in_progress", resourceCulture);
             }
@@ -845,7 +872,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Status.
         /// </summary>
-        internal static string Tasks_Status_queued {
+        public static string Tasks_Status_queued {
             get {
                 return ResourceManager.GetString("Tasks_Status_queued", resourceCulture);
             }
@@ -854,7 +881,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Task.
         /// </summary>
-        internal static string Tasks_Task {
+        public static string Tasks_Task {
             get {
                 return ResourceManager.GetString("Tasks_Task", resourceCulture);
             }
@@ -863,7 +890,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Download video.
         /// </summary>
-        internal static string Tasks_Type_download_video {
+        public static string Tasks_Type_download_video {
             get {
                 return ResourceManager.GetString("Tasks_Type_download_video", resourceCulture);
             }
@@ -872,7 +899,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Index.
         /// </summary>
-        internal static string Tasks_Type_index {
+        public static string Tasks_Type_index {
             get {
                 return ResourceManager.GetString("Tasks_Type_index", resourceCulture);
             }
@@ -881,7 +908,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Refresh subscriptions.
         /// </summary>
-        internal static string Tasks_Type_refresh_subscriptions {
+        public static string Tasks_Type_refresh_subscriptions {
             get {
                 return ResourceManager.GetString("Tasks_Type_refresh_subscriptions", resourceCulture);
             }
@@ -890,7 +917,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Reindex videos.
         /// </summary>
-        internal static string Tasks_Type_reindex_videos {
+        public static string Tasks_Type_reindex_videos {
             get {
                 return ResourceManager.GetString("Tasks_Type_reindex_videos", resourceCulture);
             }
@@ -899,7 +926,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Scan channel.
         /// </summary>
-        internal static string Tasks_Type_scan_channel {
+        public static string Tasks_Type_scan_channel {
             get {
                 return ResourceManager.GetString("Tasks_Type_scan_channel", resourceCulture);
             }
@@ -908,7 +935,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Scan Sponsor Block segments.
         /// </summary>
-        internal static string Tasks_Type_scan_sponsor_block_segments {
+        public static string Tasks_Type_scan_sponsor_block_segments {
             get {
                 return ResourceManager.GetString("Tasks_Type_scan_sponsor_block_segments", resourceCulture);
             }
@@ -917,7 +944,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Scan subscriptions.
         /// </summary>
-        internal static string Tasks_Type_scan_subscriptions {
+        public static string Tasks_Type_scan_subscriptions {
             get {
                 return ResourceManager.GetString("Tasks_Type_scan_subscriptions", resourceCulture);
             }
@@ -926,7 +953,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Chapter.
         /// </summary>
-        internal static string Video_Chapter {
+        public static string Video_Chapter {
             get {
                 return ResourceManager.GetString("Video_Chapter", resourceCulture);
             }
@@ -935,7 +962,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Not available.
         /// </summary>
-        internal static string Video_ExternalAvailability_not_available {
+        public static string Video_ExternalAvailability_not_available {
             get {
                 return ResourceManager.GetString("Video_ExternalAvailability_not_available", resourceCulture);
             }
@@ -944,7 +971,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Private.
         /// </summary>
-        internal static string Video_ExternalAvailability_private {
+        public static string Video_ExternalAvailability_private {
             get {
                 return ResourceManager.GetString("Video_ExternalAvailability_private", resourceCulture);
             }
@@ -953,7 +980,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Public.
         /// </summary>
-        internal static string Video_ExternalAvailability_public {
+        public static string Video_ExternalAvailability_public {
             get {
                 return ResourceManager.GetString("Video_ExternalAvailability_public", resourceCulture);
             }
@@ -962,7 +989,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to {0} likes.
         /// </summary>
-        internal static string Video_Likes {
+        public static string Video_Likes {
             get {
                 return ResourceManager.GetString("Video_Likes", resourceCulture);
             }
@@ -971,7 +998,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Resolution.
         /// </summary>
-        internal static string Video_Resolution {
+        public static string Video_Resolution {
             get {
                 return ResourceManager.GetString("Video_Resolution", resourceCulture);
             }
@@ -980,7 +1007,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Speed.
         /// </summary>
-        internal static string Video_Speed {
+        public static string Video_Speed {
             get {
                 return ResourceManager.GetString("Video_Speed", resourceCulture);
             }
@@ -989,7 +1016,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to {0} views.
         /// </summary>
-        internal static string Video_Views {
+        public static string Video_Views {
             get {
                 return ResourceManager.GetString("Video_Views", resourceCulture);
             }
@@ -998,7 +1025,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Videos.
         /// </summary>
-        internal static string Videos {
+        public static string Videos {
             get {
                 return ResourceManager.GetString("Videos", resourceCulture);
             }
@@ -1007,7 +1034,7 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Yes.
         /// </summary>
-        internal static string Yes {
+        public static string Yes {
             get {
                 return ResourceManager.GetString("Yes", resourceCulture);
             }

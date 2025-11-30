@@ -1,5 +1,4 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Channels/{channelId:guid}/Preferences/{handler?}"
-@using Tubeshade.Data.Media
 @model ChannelSettings
 @{
     ViewData["Title"] = $"{SharedResources.Preferences} - {Model.Entity.Name}";
@@ -12,17 +11,48 @@
 
 <h2>@Model.Entity.Name</h2>
 
-@if (Model.Entity.Availability == ExternalAvailability.NotAvailable)
-{
-    <p>@SharedResources.Original_NotAvailable</p>
-}
-else
-{
+<div>
     <a href="@Model.Entity.ExternalUrl">@SharedResources.Original</a>
-}
+    (@(SharedResources.ResourceManager.GetString($"Video_ExternalAvailability_{Model.Entity.Availability.Name}")))
+</div>
 
-<section id="channel-preferences">
+<hr/>
+
+<section id="channel-preferences" class="mb-2">
     <partial name="Libraries/_UpdatePreferences" for="UpdatePreferencesModel"/>
 </section>
 
-<partial name="_Subscribe" for="Entity"/>
+<hr/>
+
+@if (Model.OtherLibraries.Count > 0)
+{
+    <section class="mb-2">
+        <form asp-page-handler="ChangeLibrary">
+            <div class="input-group mb-3">
+                <label class="input-group-text" asp-for="NewLibraryId">
+                    @SharedResources.Preferences_NewLibrary
+                </label>
+                <select class="form-control form-select" asp-for="NewLibraryId">
+                    <option value="@Model.Library.Id" disabled>
+                        @Model.Library.Name (@(SharedResources.Preferences_CurrentLibrary))
+                    </option>
+                    @foreach (var library in Model.OtherLibraries)
+                    {
+                        <option value="@library.Id">@library.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="NewLibraryId" class="text-danger"></span>
+            </div>
+
+            <button class="btn btn-primary" type="submit">
+                @SharedResources.Button_MoveToLibrary
+            </button>
+        </form>
+    </section>
+
+    <hr/>
+}
+
+<section>
+    <partial name="_Subscribe" for="Entity"/>
+</section>
