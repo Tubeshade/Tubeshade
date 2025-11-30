@@ -303,7 +303,7 @@
 
             navigator.sendBeacon(
                 "@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))",
-                new URLSearchParams({"position": 0}));
+                new Blob([JSON.stringify(0)], {type: "application/json"}));
 
             viewedInput.checked = true;
             viewedInput.dispatchEvent(new Event("change"));
