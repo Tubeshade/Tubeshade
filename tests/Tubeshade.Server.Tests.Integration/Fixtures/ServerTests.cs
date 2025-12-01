@@ -18,7 +18,12 @@ public abstract class ServerTests
         Fixture = fixture;
     }
 
-    protected async ValueTask<Guid> CreateLibrary(Guid userId, IServiceProvider services, NpgsqlTransaction transaction)
+    protected ValueTask<Guid> CreateLibrary(Guid userId, IServiceProvider services, NpgsqlTransaction transaction)
+    {
+        return CreateLibrary(string.Empty, userId, services, transaction);
+    }
+
+    protected async ValueTask<Guid> CreateLibrary(string storagePath, Guid userId, IServiceProvider services, NpgsqlTransaction transaction)
     {
         var taskRepository = services.GetRequiredService<TaskRepository>();
         var taskId = await taskRepository.AddAsync(
@@ -53,7 +58,7 @@ public abstract class ServerTests
                 ModifiedByUserId = userId,
                 OwnerId = userId,
                 Name = Guid.NewGuid().ToString("N"),
-                StoragePath = string.Empty,
+                StoragePath = storagePath,
                 SubscriptionsScheduleId = scheduleId!.Value,
             },
             transaction))!.Value;

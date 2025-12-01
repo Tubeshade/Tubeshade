@@ -16,6 +16,7 @@ public sealed class ChannelRepositoryTests(ServerFixture fixture) : ServerTests(
     private Guid _userId;
     private Guid _libraryId;
     private Guid _libraryId2;
+    private Guid _libraryId3;
     private Guid _channelId;
 
     [OneTimeSetUp]
@@ -35,6 +36,7 @@ public sealed class ChannelRepositoryTests(ServerFixture fixture) : ServerTests(
         {
             _libraryId = await CreateLibrary(_userId, scope.ServiceProvider, transaction);
             _libraryId2 = await CreateLibrary(_userId, scope.ServiceProvider, transaction);
+            _libraryId3 = await CreateLibrary(Guid.NewGuid().ToString(), _userId, scope.ServiceProvider, transaction);
 
             var channelRepository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
             _channelId = (await channelRepository.AddAsync(
@@ -64,8 +66,7 @@ public sealed class ChannelRepositoryTests(ServerFixture fixture) : ServerTests(
         var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
         var repository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
 
-        var primaryLibraryId = await repository.GetPrimaryLibraryId(_channelId);
-        primaryLibraryId.Should().Be(_libraryId);
+        (await repository.GetPrimaryLibraryId(_channelId)).Should().Be(_libraryId);
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
@@ -75,7 +76,36 @@ public sealed class ChannelRepositoryTests(ServerFixture fixture) : ServerTests(
             count.Should().Be(1);
         }
 
-        primaryLibraryId = await repository.GetPrimaryLibraryId(_channelId);
-        primaryLibraryId.Should().Be(_libraryId2);
+        (await repository.GetPrimaryLibraryId(_channelId)).Should().Be(_libraryId2);
+
+        await using (var transaction = await connection.OpenAndBeginTransaction())
+        {
+            var count = await repository.MoveToLibrary(_libraryId, _channelId, _userId, transaction);
+            await transaction.CommitAsync();
+
+            count.Should().Be(1);
+        }
+
+        (await repository.GetPrimaryLibraryId(_channelId)).Should().Be(_libraryId);
+    }
+
+    [Test]
+    public async Task MoveOnlyIfStoragePathMatches()
+    {
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
+
+        var currentId = await repository.GetPrimaryLibraryId(_channelId);
+
+        await using (var transaction = await connection.OpenAndBeginTransaction())
+        {
+            var count = await repository.MoveToLibrary(_libraryId3, _channelId, _userId, transaction);
+            await transaction.CommitAsync();
+
+            count.Should().Be(0);
+        }
+
+        (await repository.GetPrimaryLibraryId(_channelId)).Should().Be(currentId);
     }
 }

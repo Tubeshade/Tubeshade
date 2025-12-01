@@ -168,13 +168,14 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
                 // lang=sql
                 $"""
                  WITH accessible AS
-                     (SELECT media.libraries.id
+                     (SELECT libraries.id
                       FROM media.libraries
                           INNER JOIN identity.owners ON owners.id = media.libraries.owner_id
                           INNER JOIN identity.ownerships ON
                               ownerships.owner_id = owners.id AND
                               ownerships.user_id = @{nameof(userId)} AND
-                              (ownerships.access = @{nameof(access)} OR ownerships.access = 'owner'))             
+                              (ownerships.access = @{nameof(access)} OR ownerships.access = 'owner')
+                      WHERE storage_path IN (SELECT storage_path FROM media.libraries WHERE id = @{nameof(newLibraryId)}))
 
                  UPDATE media.library_channels
                  SET library_id = @{nameof(newLibraryId)}
