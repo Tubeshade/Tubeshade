@@ -197,7 +197,7 @@ public sealed class YoutubeService
 
         var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
         var youtubeVideoId = videoData.ID;
-        _logger.LogDebug("Indexing video {VideoExternalId}", youtubeVideoId);
+        _logger.IndexingVideo(youtubeVideoId);
 
         var video = await _videoRepository.FindByExternalId(youtubeVideoId, userId, Access.Read, transaction);
         var isNewVideo = video is null;
@@ -216,18 +216,18 @@ public sealed class YoutubeService
 
         if (availability == ExternalAvailability.NotAvailable)
         {
-            if (video is not null)
+            if (video is null)
             {
-                video.ModifiedAt = currentTime;
-                video.ModifiedByUserId = userId;
-                video.RefreshedAt = currentTime;
-                video.Availability = availability;
-
-                await _videoRepository.UpdateAsync(video, transaction);
-                return video.Id;
+                throw new InvalidOperationException("Video is not available");
             }
 
-            throw new InvalidOperationException("Video is not available");
+            video.ModifiedAt = currentTime;
+            video.ModifiedByUserId = userId;
+            video.RefreshedAt = currentTime;
+            video.Availability = availability;
+
+            await _videoRepository.UpdateAsync(video, transaction);
+            return video.Id;
         }
 
         // todo: livestreams, as well as videos from some sites besides YouTube, don't have duration
@@ -302,7 +302,7 @@ public sealed class YoutubeService
         var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction);
         foreach (var file in files.Where(file => file.DownloadedAt is null).ToArray())
         {
-            _logger.LogDebug("Deleting indexed but not downloaded video file {VideoFileId}", file.Id);
+            _logger.DeletingNotDownloadedFile(file.Id);
             await _videoFileRepository.DeleteAsync(file, transaction);
             files.Remove(file);
         }
@@ -324,7 +324,7 @@ public sealed class YoutubeService
 
             if (data.Formats is null or [])
             {
-                _logger.LogDebug("No formats found for {FormatFilter}", format);
+                _logger.NoFormats(format);
                 continue;
             }
 
@@ -338,26 +338,28 @@ public sealed class YoutubeService
         }
 
         var distinctFormats = videoFormats.DistinctBy(pair => pair.Value.FormatId).ToArray();
-        _logger.LogDebug("Selected {DistinctCount} distinct video formats from {Count}", distinctFormats.Length, videoFormats.Count);
+        _logger.SelectedFormats(distinctFormats.Length, videoFormats.Count);
         foreach (var format in videoFormats.Keys.Except(distinctFormats.Select(pair => pair.Key)))
         {
-            _logger.LogDebug("Skipped format filter {FormatFilter}", format);
+            _logger.SkippedFormat(format);
         }
 
         foreach (var (format, videoFormat) in distinctFormats)
         {
             using var scope = _logger.BeginScope("{FormatId}", videoFormat.FormatId);
-            _logger.LogDebug("Selected format filter {FormatFilter}", format);
+            _logger.SelectedFormat(format);
 
             var containerType = VideoContainerType.FromName(videoFormat.Extension);
 
-            var file = files.SingleOrDefault(file =>
-                file.Width == videoFormat.Width &&
-                Math.Round(file.Framerate) == (decimal)Math.Round(videoFormat.FrameRate!.Value));
+            var matchingFiles = files
+                .Where(file =>
+                    file.Width == videoFormat.Width &&
+                    Math.Round(file.Framerate) == (decimal)Math.Round(videoFormat.FrameRate!.Value))
+                .ToArray();
 
-            if (file is null)
+            if (matchingFiles is [])
             {
-                _logger.LogDebug("Could not find existing file for filter {FormatFilter}", format);
+                _logger.CreatingFileForFormat(format);
 
                 var fileId = await _videoFileRepository.AddAsync(
                     new VideoFileEntity
@@ -374,14 +376,16 @@ public sealed class YoutubeService
                     },
                     transaction);
 
-                file = await _videoFileRepository.GetAsync(fileId!.Value, userId, transaction);
+                _ = fileId ?? throw new InvalidOperationException("Failed to create file");
+            }
+            else if (matchingFiles is [var file])
+            {
+                _logger.ExistingFileForFormat(file.Id, format);
             }
             else
             {
-                _logger.LogDebug("Found existing file {FileId} for filter {FormatFilter}", file.Id, format);
+                _logger.ExistingFilesForFormat(format);
             }
-
-            _logger.LogDebug("Video file {VideoFile}", file);
         }
 
         var youtubeChapters = videoData.Chapters?.Select(TextTrackCue.FromYouTubeChapter).ToArray();
@@ -402,7 +406,7 @@ public sealed class YoutubeService
         if (chapterCues is { Length: > 0 })
         {
             var chaptersFilePath = video.GetChaptersFilePath();
-            _logger.LogDebug("Writing video chapters to {ChaptersFilePath}", chaptersFilePath);
+            _logger.WritingVideoChapters(chaptersFilePath);
 
             await using var chapterFile = File.Create(chaptersFilePath);
             await _webVideoTextTracksService.Write(chapterFile, chapterCues, cancellationToken);

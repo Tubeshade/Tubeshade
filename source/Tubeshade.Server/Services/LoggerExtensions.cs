@@ -116,4 +116,34 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(33, Debug, "Deleting existing segment {SegmentId} {SegmentExternalId}")]
     internal static partial void DeletingSponsorBlockSegment(this ILogger logger, Guid segmentId, string segmentExternalId);
+
+    [LoggerMessage(34, Debug, "Indexing video {VideoExternalId}")]
+    internal static partial void IndexingVideo(this ILogger logger, string videoExternalId);
+
+    [LoggerMessage(35, Debug, "Deleting indexed but not downloaded video file {VideoFileId}")]
+    internal static partial void DeletingNotDownloadedFile(this ILogger logger, Guid videoFileId);
+
+    [LoggerMessage(36, Debug, "No formats found for {FormatFilter}")]
+    internal static partial void NoFormats(this ILogger logger, string formatFilter);
+
+    [LoggerMessage(37, Debug, "Selected {DistinctCount} distinct video formats from {Count}")]
+    internal static partial void SelectedFormats(this ILogger logger, int distinctCount, int count);
+
+    [LoggerMessage(38, Debug, "Skipped format filter {FormatFilter}")]
+    internal static partial void SkippedFormat(this ILogger logger, string formatFilter);
+
+    [LoggerMessage(39, Debug, "Selected format filter {FormatFilter}")]
+    internal static partial void SelectedFormat(this ILogger logger, string formatFilter);
+
+    [LoggerMessage(40, Debug, "Creating new file for format {FormatFilter}")]
+    internal static partial void CreatingFileForFormat(this ILogger logger, string formatFilter);
+
+    [LoggerMessage(41, Debug, "Found existing file {FileId} for filter {FormatFilter}")]
+    internal static partial void ExistingFileForFormat(this ILogger logger, Guid fileId, string formatFilter);
+
+    [LoggerMessage(42, Debug, "Found existing files for filter {FormatFilter}")]
+    internal static partial void ExistingFilesForFormat(this ILogger logger, string formatFilter);
+
+    [LoggerMessage(43, Debug, "Writing video chapters to {Path}")]
+    internal static partial void WritingVideoChapters(this ILogger logger, string path);
 }
