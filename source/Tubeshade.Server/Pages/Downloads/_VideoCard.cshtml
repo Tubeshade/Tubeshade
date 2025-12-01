@@ -15,7 +15,7 @@
 
             <div class="col-sm-7 col-md-8 col-xl-6">
                 <div class="card-body p-2 d-flex flex-column h-100">
-                    <h5 class="card-title text-truncate">@Model.Video.Name</h5>
+                    <h5 class="card-title text-truncate" title="@Model.Video.Name">@Model.Video.Name</h5>
 
                     <a asp-page="/Channels/Channel" asp-route-channelId="@Model.Video.ChannelId">
                         <h6 class="text-truncate" title="@Model.Channel.Name">@Model.Channel.Name</h6>
