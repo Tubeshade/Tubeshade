@@ -15,3 +15,8 @@ img:-moz-loading {
 video {
     max-height: 80vh;
 }
+
+.tubeshade-paragraph {
+    white-space: pre-line;
+    text-align: justify;
+}

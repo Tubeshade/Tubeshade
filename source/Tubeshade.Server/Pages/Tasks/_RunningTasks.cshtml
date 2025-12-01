@@ -1,4 +1,5 @@
 ﻿@using Tubeshade.Data.Tasks
+@using Tubeshade.Server.Pages.Shared
 @model ITaskPage
 
 <section hx-get="" hx-page-handler="" hx-trigger="every 2s" hx-swap="outerHTML" id="tasks"
@@ -94,7 +95,10 @@
                             @(SharedResources.ResourceManager.GetString($"Tasks_Status_{run.Status.Name}"))
                             @if (run.Message is not null)
                             {
-                                <span> - @run.Message</span>
+                                foreach (var paragraph in run.Message.ToParagraphs())
+                                {
+                                    <p class="tubeshade-paragraph">@paragraph</p>
+                                }
                             }
                         }
                     </td>

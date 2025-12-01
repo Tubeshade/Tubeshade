@@ -176,9 +176,9 @@
 </div>
 
 <section id="video-description">
-    @foreach (var paragraph in Model.Entity.Description.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    @foreach (var paragraph in Model.Entity.Description.ToParagraphs())
     {
-        <p style="white-space: pre-line; text-align: justify">@paragraph</p>
+        <p class="tubeshade-paragraph">@paragraph</p>
     }
 </section>
 
