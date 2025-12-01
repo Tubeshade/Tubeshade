@@ -167,6 +167,17 @@ public sealed class ChaptersTestCaseSource : IEnumerable<TestCaseData<string?, P
         {
             TestName = "Must have multiple chapters"
         };
+
+        yield return new TestCaseData<string?, Period, TextTrackCue[]?>(
+            """
+            0:00 intro
+            21:80 invalid
+            """,
+            new PeriodBuilder { Minutes = 22, Seconds = 36 }.Build(),
+            null)
+        {
+            TestName = "Chapters timestamps must be a valid duration"
+        };
     }
 
     /// <inheritdoc />

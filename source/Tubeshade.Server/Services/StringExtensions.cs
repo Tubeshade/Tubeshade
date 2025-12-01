@@ -20,9 +20,10 @@ public static partial class StringExtensions
         Period videoDuration,
         [MaybeNullWhen(false)] out TextTrackCue[] chapters)
     {
+        chapters = null;
+
         if (string.IsNullOrWhiteSpace(description))
         {
-            chapters = null;
             return false;
         }
 
@@ -34,7 +35,14 @@ public static partial class StringExtensions
             var match = regex.Match(line);
             if (match.Success)
             {
-                timestamps.Add((Pattern.Parse(match.Groups[1].Value).Value, match.Groups[2].Value));
+                if (Pattern.Parse(match.Groups[1].Value).TryGetValue(default, out var timestamp))
+                {
+                    timestamps.Add((timestamp, match.Groups[2].Value));
+                }
+                else
+                {
+                    return false;
+                }
             }
             else if (timestamps.Count is 1)
             {
@@ -48,7 +56,6 @@ public static partial class StringExtensions
 
         if (timestamps.Count <= 1)
         {
-            chapters = null;
             return false;
         }
 
