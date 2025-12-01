@@ -224,9 +224,11 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     channel_id,
                     external_url
              FROM stale_videos
-             WHERE from_publish <= 'PT1H'
-               AND from_now >= 'PT15M'
-               AND NOT EXISTS(SELECT 1 FROM media.sponsorblock_segments WHERE sponsorblock_segments.video_id = stale_videos.id)
+             WHERE ((from_publish <= 'PT1H' AND from_now >= 'PT30M') OR
+                    (from_publish <= 'P2D' AND from_now >= 'P1D') OR
+                    (from_publish <= 'P2M' AND from_now >= 'P1M') OR
+                    from_now >= 'P6M') AND
+                   NOT EXISTS(SELECT 1 FROM media.sponsorblock_segments WHERE sponsorblock_segments.video_id = stale_videos.id)
              ORDER BY stale_videos.published_at DESC
              LIMIT 5;
              """,

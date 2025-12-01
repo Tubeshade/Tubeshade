@@ -15,3 +15,17 @@ ALTER TABLE media.sponsorblock_segments
     ALTER COLUMN modified_at SET DEFAULT CURRENT_TIMESTAMP,
     ALTER COLUMN modified_by_user_id SET NOT NULL,
     ALTER COLUMN locked DROP DEFAULT;
+
+WITH system AS (SELECT id FROM identity.users WHERE normalized_name = 'SYSTEM'),
+     reindex_tasks AS (SELECT id FROM tasks.tasks WHERE tasks.type = 'reindex_videos'),
+     reindex_schedules AS (SELECT schedules.id
+                           FROM tasks.schedules
+                                    INNER JOIN reindex_tasks ON task_id = reindex_tasks.id)
+
+UPDATE tasks.schedules
+SET cron_expression     = '*/15 * * * *',
+    modified_at         = CURRENT_TIMESTAMP,
+    modified_by_user_id = system.id
+FROM reindex_schedules
+         CROSS JOIN system
+WHERE schedules.id IN (SELECT id FROM reindex_schedules);

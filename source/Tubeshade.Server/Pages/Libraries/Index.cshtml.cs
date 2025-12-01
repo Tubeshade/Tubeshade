@@ -155,7 +155,7 @@ public sealed class Index : PageModel, INonLibraryPage
                 ModifiedByUserId = userId,
                 OwnerId = userId,
                 TaskId = rescanTaskId!.Value,
-                CronExpression = "* * * * *",
+                CronExpression = "*/15 * * * *",
                 TimeZoneId = model.TimeZoneId
             },
             transaction);
