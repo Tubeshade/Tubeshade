@@ -28,10 +28,12 @@ namespace Tubeshade.Server.Services;
 
 public sealed class YoutubeService
 {
+    private const string UpscalingFilter = "[url!*='xtags=sr%3D1']";
+
     private static readonly string[] DefaultVideoFormats =
     [
-        "bv[url!*='xtags=sr%3D1']+(ba[format_note*=original]/ba)/best[url!*='xtags=sr%3D1']",
-        "bv*[height<=720]+(ba[format_note*=original]/ba)"
+        $"bv{UpscalingFilter}+(ba[format_note*=original]/ba)/best{UpscalingFilter}",
+        $"bv*[height<=720]{UpscalingFilter}+(ba[format_note*=original]/ba)"
     ];
 
     private readonly ILogger<YoutubeService> _logger;
