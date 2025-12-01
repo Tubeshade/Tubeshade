@@ -1,0 +1,65 @@
+﻿@using NodaTime.Text
+@model Tubeshade.Server.Pages.Videos.VideoModel
+
+<div class="col" id="card-@(Model.Video.Id)">
+    <div class="card">
+        <div class="row g-0">
+            <div class="col-sm">
+                <a asp-page="/Videos/Video" asp-route-videoId="@Model.Video.Id">
+                    <img
+                        src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.Video.Id })"
+                        loading="lazy" alt="@Model.Video.Name" title="@Model.Video.Name"
+                        class="img-fluid card-img w-100" style="aspect-ratio: 16 / 9"/>
+                </a>
+            </div>
+
+            <div class="col-sm-7 col-md-8 col-xl-6">
+                <div class="card-body p-2 d-flex flex-column h-100">
+                    <h5 class="card-title text-truncate">@Model.Video.Name</h5>
+
+                    <a asp-page="/Channels/Channel" asp-route-channelId="@Model.Video.ChannelId">
+                        <h6 class="text-truncate" title="@Model.Channel.Name">@Model.Channel.Name</h6>
+                    </a>
+
+                    <div class="card-text">
+                        <time datetime="@InstantPattern.General.Format(Model.Video.PublishedAt)">
+                            @LocalDatePattern.Iso.Format(Model.Video.PublishedAt.InUtc().Date)
+                        </time>
+                        <span> - </span>
+                        <span>@(HumanReadablePeriodPattern.Instance.Format(Model.Video.Duration))</span>
+                        @if (Model.Video.Duration != Model.ActualDuration)
+                        {
+                            <span>(@(HumanReadablePeriodPattern.Instance.Format(Model.ActualDuration)))</span>
+                        }
+                    </div>
+
+                    <div class="flex-fill"></div>
+
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <button hx-post="" hx-page-handler="StartDownload" hx-route-videoId="@Model.Video.Id"
+                                hx-swap="delete" hx-target="#card-@Model.Video.Id"
+                                class="btn btn-success" type="button">
+                            @SharedResources.Button_Download
+                        </button>
+
+                        <button hx-post="" hx-page-handler="Scan" hx-route-videoId="@Model.Video.Id"
+                                hx-swap="none" class="btn btn-primary" type="button">
+                            @SharedResources.Button_Rescan
+                        </button>
+
+                        <a asp-page="/Videos/Edit" asp-route-videoId="@Model.Video.Id"
+                           class="btn btn-primary" type="button">
+                            @SharedResources.Button_Edit
+                        </a>
+
+                        <button hx-post="" hx-page-handler="Ignore" hx-route-videoId="@Model.Video.Id"
+                                hx-swap="delete" hx-target="#card-@Model.Video.Id"
+                                class="btn btn-secondary" type="button">
+                            @SharedResources.Button_Ignore
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
