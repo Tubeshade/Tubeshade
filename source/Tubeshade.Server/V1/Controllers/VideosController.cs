@@ -34,6 +34,7 @@ public sealed class VideosController : ControllerBase
     private readonly SponsorBlockSegmentRepository _segmentRepository;
     private readonly WebVideoTextTracksService _webVideoTextTracksService;
     private readonly FileUploadService _fileUploadService;
+    private readonly SponsorBlockService _sponsorBlockService;
 
     public VideosController(
         ILogger<VideosController> logger,
@@ -41,7 +42,8 @@ public sealed class VideosController : ControllerBase
         VideoRepository repository,
         SponsorBlockSegmentRepository segmentRepository,
         WebVideoTextTracksService webVideoTextTracksService,
-        FileUploadService fileUploadService)
+        FileUploadService fileUploadService,
+        SponsorBlockService sponsorBlockService)
     {
         _logger = logger;
         _connection = connection;
@@ -49,6 +51,7 @@ public sealed class VideosController : ControllerBase
         _segmentRepository = segmentRepository;
         _webVideoTextTracksService = webVideoTextTracksService;
         _fileUploadService = fileUploadService;
+        _sponsorBlockService = sponsorBlockService;
     }
 
     [HttpGet]
@@ -203,7 +206,22 @@ public sealed class VideosController : ControllerBase
     [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> GetSponsorBlockSegments(Guid id, CancellationToken cancellationToken)
     {
-        var segments = await _segmentRepository.GetForVideo(id, User.GetUserId(), cancellationToken);
+        var userId = User.GetUserId();
+        List<SponsorBlockSegmentEntity> segments;
+
+        await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
+        {
+            segments = await _segmentRepository.GetForVideo(id, userId, transaction);
+            if (segments.Any(segment => !segment.Locked))
+            {
+                var video = await _repository.GetAsync(id, userId, transaction);
+                await _sponsorBlockService.UpdateVideoSegments(video, userId, transaction, cancellationToken);
+                segments = await _segmentRepository.GetForVideo(id, userId, transaction);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+
         if (segments is [])
         {
             return NoContent();
@@ -215,11 +233,12 @@ public sealed class VideosController : ControllerBase
         await _webVideoTextTracksService.Write(memoryStream, cues, cancellationToken);
         memoryStream.Position = 0;
 
-        var modifiedAt = segments.Select(segment => segment.CreatedAt).OrderDescending().First();
+        var modifiedAt = segments.Select(segment => segment.ModifiedAt).Max();
         return File(
             memoryStream,
             "text/vtt",
             modifiedAt.ToDateTimeOffset(),
-            new EntityTagHeaderValue(new StringSegment($"\"sponsorblock_{id}_{InstantPattern.ExtendedIso.Format(modifiedAt)}\"")));
+            new EntityTagHeaderValue(
+                new StringSegment($"\"sponsorblock_{id}_{InstantPattern.ExtendedIso.Format(modifiedAt)}\"")));
     }
 }
