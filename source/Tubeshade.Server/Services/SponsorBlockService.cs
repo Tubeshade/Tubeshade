@@ -151,6 +151,7 @@ public sealed class SponsorBlockService
                     new SponsorBlockSegmentEntity
                     {
                         CreatedByUserId = userId,
+                        ModifiedByUserId = userId,
                         VideoId = videoId,
                         ExternalId = segment.Id,
                         StartTime = segment.StartTime,

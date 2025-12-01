@@ -48,7 +48,7 @@ public sealed class SponsorBlockSegmentRepository(NpgsqlConnection connection)
         $"""
          UPDATE media.sponsorblock_segments
          SET modified_at = CURRENT_TIMESTAMP,
-             modified_by_user_id = @{nameof(IModifiableEntity.ModifiedByUserId)},
+             modified_by_user_id = @{nameof(SponsorBlockSegmentEntity.ModifiedByUserId)},
              start_time = @StartTime,
              end_time = @EndTime,
              category = @Category,
