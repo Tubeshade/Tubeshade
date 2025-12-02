@@ -222,6 +222,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Update schedule.
+        /// </summary>
+        public static string Button_UpdateSchedule {
+            get {
+                return ResourceManager.GetString("Button_UpdateSchedule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Update sponsor segments.
         /// </summary>
         public static string Button_UpdateSponsorBlock {
@@ -564,6 +573,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Schedule.
+        /// </summary>
+        public static string Libraries_Schedule {
+            get {
+                return ResourceManager.GetString("Libraries_Schedule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Storage path.
         /// </summary>
         public static string Libraries_StoragePath {
@@ -587,6 +605,15 @@ namespace Tubeshade.Server.Resources {
         public static string Libraries_SubscriptionTimeZone {
             get {
                 return ResourceManager.GetString("Libraries_SubscriptionTimeZone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Time zone.
+        /// </summary>
+        public static string Libraries_TimeZone {
+            get {
+                return ResourceManager.GetString("Libraries_TimeZone", resourceCulture);
             }
         }
         

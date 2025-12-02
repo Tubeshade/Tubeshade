@@ -1,0 +1,33 @@
+﻿@model UpdateScheduleModel
+
+<form asp-page-handler="UpdateSchedule" class="row g-3">
+
+    <input class="form-control" asp-for="Id" hidden="hidden"/>
+
+    <div class="col-sm-6">
+        <label class="form-label" asp-for="CronExpression">
+            @SharedResources.Libraries_Schedule
+        </label>
+        <input class="form-control" asp-for="CronExpression" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="CronExpression"></span>
+    </div>
+
+    <div class="col-sm-6">
+        <label class="form-label" asp-for="TimeZoneId">
+            @SharedResources.Libraries_TimeZone
+        </label>
+        <select class="form-control form-select" asp-for="TimeZoneId">
+            @foreach (var id in Model.TimeZoneIds)
+            {
+                <option value="@id">@id</option>
+            }
+        </select>
+        <span class="form-text text-danger" asp-validation-for="TimeZoneId"></span>
+    </div>
+
+    <div class="col-12 col-sm-4 col-lg-3 col-xxl-2">
+        <button class="btn btn-primary w-100" type="submit">
+            @SharedResources.Button_UpdateSchedule
+        </button>
+    </div>
+</form>

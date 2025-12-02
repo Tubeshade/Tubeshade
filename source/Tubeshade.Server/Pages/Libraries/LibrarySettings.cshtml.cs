@@ -1,11 +1,17 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using NodaTime;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
+using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
 
@@ -16,21 +22,31 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _repository;
     private readonly PreferencesRepository _preferencesRepository;
+    private readonly ScheduleRepository _scheduleRepository;
+    private readonly IDateTimeZoneProvider _timeZoneProvider;
 
     public LibrarySettings(
-        LibraryRepository repository,
         NpgsqlConnection connection,
-        PreferencesRepository preferencesRepository)
+        LibraryRepository repository,
+        PreferencesRepository preferencesRepository,
+        ScheduleRepository scheduleRepository,
+        IDateTimeZoneProvider timeZoneProvider)
     {
         _repository = repository;
         _connection = connection;
         _preferencesRepository = preferencesRepository;
+        _scheduleRepository = scheduleRepository;
+        _timeZoneProvider = timeZoneProvider;
     }
 
     public LibraryEntity Entity { get; set; } = null!;
 
+    /// <inheritdoc />
     [BindProperty]
     public UpdatePreferencesModel UpdatePreferencesModel { get; set; } = new();
+
+    [BindProperty]
+    public SchedulesModel Schedules { get; set; } = new();
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
@@ -41,9 +57,19 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
         var preferences = await _preferencesRepository.FindForLibrary(LibraryId, userId, cancellationToken);
         UpdatePreferencesModel = new UpdatePreferencesModel(preferences);
 
+        var subscriptionSchedule = await _scheduleRepository.GetForTask(userId, LibraryId, TaskType.ScanSubscriptions, Access.Modify, cancellationToken);
+        var reindexSchedule = await _scheduleRepository.GetForTask(userId, LibraryId, TaskType.ReindexVideos, Access.Modify, cancellationToken);
+
+        Schedules.Subscription ??= new UpdateScheduleModel(subscriptionSchedule);
+        Schedules.Reindex ??= new UpdateScheduleModel(reindexSchedule);
+
+        Schedules.Subscription.TimeZoneIds = _timeZoneProvider.Ids;
+        Schedules.Reindex.TimeZoneIds = _timeZoneProvider.Ids;
+
         return Page();
     }
 
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostUpdatePreferences()
     {
         if (!ModelState.IsValid)
@@ -84,5 +110,64 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostUpdateSchedule()
+    {
+        if (!ModelState.IsValid)
+        {
+            await OnGet(CancellationToken.None);
+            return Page();
+        }
+
+        var model = Schedules.GetModel();
+        var userId = User.GetUserId();
+
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var schedule = await _scheduleRepository.GetAsync(model.Id!.Value, userId, transaction);
+        schedule.ModifiedByUserId = userId;
+        schedule.CronExpression = model.CronExpression;
+        schedule.TimeZoneId = model.TimeZoneId;
+
+        var count = await _scheduleRepository.UpdateAsync(schedule, transaction);
+        if (count is not 1)
+        {
+            throw new InvalidOperationException("Failed to update schedule");
+        }
+
+        await transaction.CommitAsync();
+        return RedirectToPage();
+    }
+
+    public sealed class SchedulesModel : IValidatableObject
+    {
+        public UpdateScheduleModel? Subscription { get; set; }
+
+        public UpdateScheduleModel? Reindex { get; set; }
+
+        /// <inheritdoc />
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) => this switch
+        {
+            { Subscription: not null, Reindex: not null } =>
+            [
+                new ValidationResult(
+                    "Only one schedule can be provided",
+                    [nameof(Subscription), nameof(Reindex)])
+            ],
+            { Subscription: null, Reindex: null } =>
+            [
+                new ValidationResult(
+                    "One of the schedules must be provided",
+                    [nameof(Subscription), nameof(Reindex)])
+            ],
+            _ => [],
+        };
+
+        public UpdateScheduleModel GetModel() => this switch
+        {
+            { Subscription: { } model, Reindex: null } => model,
+            { Subscription: null, Reindex: { } model } => model,
+            _ => throw new InvalidOperationException("Model is not valid"),
+        };
     }
 }

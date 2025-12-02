@@ -351,4 +351,13 @@
     <data name="Button_UpdateSponsorBlock" xml:space="preserve">
         <value>Update sponsor segments</value>
     </data>
+    <data name="Libraries_Schedule" xml:space="preserve">
+        <value>Schedule</value>
+    </data>
+    <data name="Libraries_TimeZone" xml:space="preserve">
+        <value>Time zone</value>
+    </data>
+    <data name="Button_UpdateSchedule" xml:space="preserve">
+        <value>Update schedule</value>
+    </data>
 </root>

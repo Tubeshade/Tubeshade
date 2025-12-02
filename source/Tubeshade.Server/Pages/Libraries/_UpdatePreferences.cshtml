@@ -1,41 +1,34 @@
 ﻿@using Tubeshade.Data.Preferences
 @model UpdatePreferencesModel
 
-<form asp-page-handler="UpdatePreferences" class="mb-3">
-    <div class="input-group mb-3">
-        <label class="input-group-text" asp-for="PlaybackSpeed">
-            @SharedResources.Preferences_PlaybackSpeed
-        </label>
-        <input class="form-control" asp-for="PlaybackSpeed" type="number" min="0" step="0.25"/>
-        <span asp-validation-for="PlaybackSpeed" class="text-danger"></span>
-    </div>
+<form asp-page-handler="UpdatePreferences" class="row g-3 mb-3">
 
-    <div class="input-group mb-3">
-        <label class="input-group-text" asp-for="VideosCount">
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="VideosCount">
             @SharedResources.Preferences_VideoCount
         </label>
         <input class="form-control" asp-for="VideosCount" type="number" min="0" step="1"/>
-        <span asp-validation-for="VideosCount" class="text-danger"></span>
+        <span class="form-text text-danger" asp-validation-for="VideosCount"></span>
     </div>
 
-    <div class="input-group mb-3">
-        <label class="input-group-text" asp-for="LiveStreamsCount">
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="LiveStreamsCount">
             @SharedResources.Preferences_LivestreamCount
         </label>
         <input class="form-control" asp-for="LiveStreamsCount" type="number" min="0" step="1"/>
-        <span asp-validation-for="LiveStreamsCount" class="text-danger"></span>
+        <span class="form-text text-danger" asp-validation-for="LiveStreamsCount"></span>
     </div>
 
-    <div class="input-group mb-3">
-        <label class="input-group-text" asp-for="ShortsCount">
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="ShortsCount">
             @SharedResources.Preferences_ShortCount
         </label>
         <input class="form-control" asp-for="ShortsCount" type="number" min="0" step="1"/>
-        <span asp-validation-for="ShortsCount" class="text-danger"></span>
+        <span class="form-text text-danger" asp-validation-for="ShortsCount"></span>
     </div>
 
-    <div class="input-group mb-3">
-        <label class="input-group-text" asp-for="PlayerClient">
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="PlayerClient">
             @SharedResources.Preferences_PlayerClient
         </label>
         <select class="form-control form-select" asp-for="PlayerClient">
@@ -47,11 +40,11 @@
                 <option value="@client.Name" selected="@(client.Name == Model.PlayerClient)">@client.Name</option>
             }
         </select>
-        <span asp-validation-for="PlayerClient" class="text-danger"></span>
+        <span class="form-text text-danger" asp-validation-for="PlayerClient"></span>
     </div>
 
-    <div class="input-group mb-3">
-        <label class="input-group-text" asp-for="DownloadAutomatically">
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="DownloadAutomatically">
             @SharedResources.Preferences_DownloadAutomatically
         </label>
         <select class="form-control form-select" asp-for="DownloadAutomatically">
@@ -65,18 +58,28 @@
                 @SharedResources.No
             </option>
         </select>
-        <span asp-validation-for="DownloadAutomatically" class="text-danger"></span>
+        <span class="form-text text-danger" asp-validation-for="DownloadAutomatically"></span>
     </div>
 
-    <div class="input-group mb-3">
-        <label class="input-group-text" asp-for="Formats">
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="PlaybackSpeed">
+            @SharedResources.Preferences_PlaybackSpeed
+        </label>
+        <input class="form-control" asp-for="PlaybackSpeed" type="number" min="0" step="0.25"/>
+        <span class="form-text text-danger" asp-validation-for="PlaybackSpeed"></span>
+    </div>
+
+    <div class="col-sm-12">
+        <label class="form-label" asp-for="Formats">
             @SharedResources.Preferences_DownloadFormats
         </label>
         <input class="form-control" asp-for="Formats" type="text"/>
-        <span asp-validation-for="Formats" class="text-danger"></span>
+        <span class="form-text text-danger" asp-validation-for="Formats"></span>
     </div>
 
-    <button class="btn btn-primary" type="submit">
-        @SharedResources.Button_UpdatePreferences
-    </button>
+    <div class="col-12 col-sm-4 col-lg-3 col-xxl-2">
+        <button class="btn btn-primary w-100" type="submit">
+            @SharedResources.Button_UpdatePreferences
+        </button>
+    </div>
 </form>

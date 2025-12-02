@@ -4,7 +4,7 @@ using Tubeshade.Server.Pages.Libraries;
 
 namespace Tubeshade.Server.Pages.Shared;
 
-public interface ISettingsPage
+public interface ISettingsPage : IFormLayout
 {
     UpdatePreferencesModel UpdatePreferencesModel { get; }
 

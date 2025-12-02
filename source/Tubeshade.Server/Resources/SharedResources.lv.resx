@@ -231,7 +231,7 @@
         <value>Short skaits</value>
     </data>
     <data name="Preferences_PlayerClient" xml:space="preserve">
-        <value>Atskaņotāja klients (player client)</value>
+        <value>Atskaņotāja klients</value>
     </data>
     <data name="Yes" xml:space="preserve">
         <value>Jā</value>
@@ -343,5 +343,14 @@
     </data>
     <data name="Button_UpdateSponsorBlock" xml:space="preserve">
         <value>Atjaunināt sponsoru segmentus</value>
+    </data>
+    <data name="Libraries_Schedule" xml:space="preserve">
+        <value>Grafiks</value>
+    </data>
+    <data name="Libraries_TimeZone" xml:space="preserve">
+        <value>Laika zona</value>
+    </data>
+    <data name="Button_UpdateSchedule" xml:space="preserve">
+        <value>Atjaunināt grafiku</value>
     </data>
 </root>

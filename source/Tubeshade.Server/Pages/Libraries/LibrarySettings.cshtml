@@ -9,6 +9,23 @@
     <partial name="_LibraryNavigation" for="Entity"/>
 }
 
+<h2>@Model.Entity.Name</h2>
+<hr/>
+
 <section id="channel-preferences">
     <partial name="Libraries/_UpdatePreferences" for="UpdatePreferencesModel"/>
+</section>
+
+<hr/>
+
+<section>
+    <h5>Subscriptions</h5>
+    <partial name="Libraries/_UpdateSchedule" for="Schedules.Subscription"/>
+</section>
+
+<hr/>
+
+<section>
+    <h5>Reindex</h5>
+    <partial name="Libraries/_UpdateSchedule" for="Schedules.Reindex"/>
 </section>

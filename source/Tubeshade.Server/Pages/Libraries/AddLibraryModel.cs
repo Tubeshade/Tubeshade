@@ -13,9 +13,11 @@ public sealed class AddLibraryModel
     public string StoragePath { get; set; } = null!;
 
     [Required]
+    [CronExpression]
     public string CronExpression { get; set; } = "0 5 * * *";
 
     [Required]
+    [TimeZone]
     public string TimeZoneId { get; set; } = "Etc/UTC";
 
     [Browsable(false)]

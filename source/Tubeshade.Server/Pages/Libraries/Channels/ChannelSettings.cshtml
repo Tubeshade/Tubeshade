@@ -27,13 +27,13 @@
 @if (Model.OtherLibraries.Count > 0)
 {
     <section class="mb-2">
-        <form asp-page-handler="ChangeLibrary">
-            <div class="input-group mb-3">
-                <label class="input-group-text" asp-for="NewLibraryId">
+        <form asp-page-handler="ChangeLibrary" class="row g-3">
+            <div class="col-sm-12">
+                <label class="form-label" asp-for="NewLibraryId">
                     @SharedResources.Preferences_NewLibrary
                 </label>
                 <select class="form-control form-select" asp-for="NewLibraryId">
-                    <option value="@Model.Library.Id" disabled>
+                    <option value="@Model.Library.Id" selected disabled>
                         @Model.Library.Name (@(SharedResources.Preferences_CurrentLibrary))
                     </option>
                     @foreach (var library in Model.OtherLibraries)
@@ -41,12 +41,14 @@
                         <option value="@library.Id">@library.Name</option>
                     }
                 </select>
-                <span asp-validation-for="NewLibraryId" class="text-danger"></span>
+                <span class="form-text text-danger" asp-validation-for="NewLibraryId"></span>
             </div>
 
-            <button class="btn btn-primary" type="submit">
-                @SharedResources.Button_MoveToLibrary
-            </button>
+            <div class="col-12 col-sm-4 col-lg-3 col-xxl-2">
+                <button class="btn btn-primary w-100" type="submit">
+                    @SharedResources.Button_MoveToLibrary
+                </button>
+            </div>
         </form>
     </section>
 

@@ -1,32 +1,36 @@
 ﻿@model Tubeshade.Data.Media.ChannelEntity
 
-<div class="btn-group">
-    @if (Model.SubscribedAt.HasValue)
-    {
-        <button hx-post="" hx-page-handler="Unsubscribe" hx-target="closest div" hx-swap="outerHTML"
-                type="button" class="btn btn-primary">
-            @SharedResources.Button_Unsubscribe
-        </button>
-    }
-    else
-    {
-        <button hx-post="" hx-page-handler="Subscribe" hx-target="closest div" hx-swap="outerHTML"
-                type="button" class="btn btn-primary">
-            @SharedResources.Button_Subscribe
-        </button>
-    }
+<div class="row">
+    <div class="col-12 col-sm-8 col-lg-6 col-xxl-4">
+        <div class="btn-group w-100">
+            @if (Model.SubscribedAt.HasValue)
+            {
+                <button hx-post="" hx-page-handler="Unsubscribe" hx-target="closest div" hx-swap="outerHTML"
+                        type="button" class="btn btn-primary">
+                    @SharedResources.Button_Unsubscribe
+                </button>
+            }
+            else
+            {
+                <button hx-post="" hx-page-handler="Subscribe" hx-target="closest div" hx-swap="outerHTML"
+                        type="button" class="btn btn-primary">
+                    @SharedResources.Button_Subscribe
+                </button>
+            }
 
-    <button hx-post="" hx-page-handler="Scan" hx-swap="none"
-            type="button" class="btn btn-primary">
-        @SharedResources.Button_Scan
-    </button>
+            <button hx-post="" hx-page-handler="Scan" hx-swap="none"
+                    type="button" class="btn btn-primary">
+                @SharedResources.Button_Scan
+            </button>
 
-    <button hx-post="" hx-page-handler="Scan" hx-route-all="true" hx-swap="none"
-            type="button" class="btn btn-primary">
-        @SharedResources.Button_ScanAll
-    </button>
+            <button hx-post="" hx-page-handler="Scan" hx-route-all="true" hx-swap="none"
+                    type="button" class="btn btn-primary">
+                @SharedResources.Button_ScanAll
+            </button>
 
-    <button type="button" class="btn btn-danger">
-        @SharedResources.Button_Delete
-    </button>
+            <button type="button" class="btn btn-danger">
+                @SharedResources.Button_Delete
+            </button>
+        </div>
+    </div>
 </div>

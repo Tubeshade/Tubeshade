@@ -48,24 +48,21 @@ public sealed class Index : PageModel, INonLibraryPage
 
     public IEnumerable<string> TimeZoneIds { get; set; } = [];
 
-    public async Task OnGet(CancellationToken cancellationToken)
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
 
         TimeZoneIds = _timeZoneProvider.Ids;
         Entities = await _repository.GetAsync(userId, cancellationToken);
+
+        return Page();
     }
 
     public async Task<IActionResult> OnPost(AddLibraryModel model, CancellationToken cancellationToken)
     {
-        if (!_timeZoneProvider.Ids.Contains(model.TimeZoneId))
-        {
-            ModelState.AddModelError(nameof(model.TimeZoneId), "Invalid time zone id");
-        }
-
         if (!ModelState.IsValid)
         {
-            return Page();
+            return await OnGet(cancellationToken);
         }
 
         var userId = User.GetUserId();
@@ -73,8 +70,7 @@ public sealed class Index : PageModel, INonLibraryPage
         if (!Directory.Exists(model.StoragePath))
         {
             ModelState.AddModelError(nameof(AddLibraryModel.StoragePath), "Directory does not exist");
-            await OnGet(cancellationToken);
-            return Page();
+            return await OnGet(cancellationToken);
         }
 
         try
@@ -90,8 +86,7 @@ public sealed class Index : PageModel, INonLibraryPage
         {
             _logger.LogWarning(exception, "Could not write to library storage path");
             ModelState.AddModelError(nameof(AddLibraryModel.StoragePath), "Could not create a file in directory");
-            await OnGet(cancellationToken);
-            return Page();
+            return await OnGet(cancellationToken);
         }
 
         // Once we know that the request is valid we don't want to stop while saving the data,

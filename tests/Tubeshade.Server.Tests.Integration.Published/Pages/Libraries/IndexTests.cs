@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Playwright;
@@ -38,22 +37,17 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
         await Page.GetByText(name).ClickAsync();
         (await Page.TitleAsync()).Should().Be($"{name} - Tubeshade");
 
-        var pages = new KeyValuePair<string, string>[]
-        {
-            new("Channels", $"Channels - {name} - Tubeshade"),
-            new("Downloads", $"Downloads - {name} - Tubeshade"),
-            new("Tasks", $"Tasks - {name} - Tubeshade"),
-            new("Settings", $"Preferences - {name} - Tubeshade"),
-        };
+        await Page.GetByText("Settings").ClickAsync();
+        (await Page.TitleAsync()).Should().Be($"Preferences - {name} - Tubeshade");
 
-        foreach (var (navigationLink, title) in pages)
-        {
-            await Page.GetByText(navigationLink).ClickAsync();
+        await Page.Locator("#Schedules_Subscription_CronExpression").FillAsync("0 10 * * * * *");
+        await Page.Locator("section").Filter(new() { HasText = "Subscriptions" }).GetByRole(AriaRole.Button).GetByText("Update schedule").ClickAsync();
+        await Page.GetByText("Not a valid cron expression").WaitForAsync(new() { Timeout = 5_000 });
 
-            (await Page.TitleAsync()).Should().Be(title);
-
-            await Page.GoBackAsync();
-        }
+        await Page.Locator("#Schedules_Subscription_CronExpression").FillAsync("0 10 * * *");
+        await Page.Locator("section").Filter(new() { HasText = "Subscriptions" }).GetByRole(AriaRole.Button).GetByText("Update schedule").ClickAsync();
+        await Page.ReloadAsync();
+        (await Page.Locator("#Schedules_Subscription_CronExpression").InputValueAsync()).Should().Be("0 10 * * *");
 
         await Page.GetByText("Downloads").ClickAsync();
         (await Page.TitleAsync()).Should().Be($"Downloads - {name} - Tubeshade");

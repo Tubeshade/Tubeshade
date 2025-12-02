@@ -48,14 +48,13 @@
         </div>
     </nav>
 </header>
-<div class="container-fluid">
-    <main role="main" class="pb-3">
-        @RenderBody()
-    </main>
-</div>
 
-<footer class="border-top footer text-muted">
-    <div class="container">
+<main role="main" class="@(Model is IFormLayout ? "container-md" : "container-fluid") pb-3">
+    @RenderBody()
+</main>
+
+<footer class="border-top footer text-muted text-center">
+    <div class="@(Model is IFormLayout ? "container-md" : "container-fluid")">
         &copy; 2025 - Tubeshade
     </div>
 </footer>
