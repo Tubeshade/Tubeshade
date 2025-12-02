@@ -128,7 +128,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(parameters.Query)}))
                AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
                AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
-             ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name}
+             ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name}, videos.id
              LIMIT @{nameof(parameters.Limit)}
              OFFSET @{nameof(parameters.Offset)};
              """,
@@ -190,7 +190,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                         OR (@{nameof(parameters.Viewed)} = TRUE AND video_viewed_by_users.viewed = TRUE)
                         OR (@{nameof(parameters.Viewed)} = FALSE AND (video_viewed_by_users.viewed IS NULL OR video_viewed_by_users.viewed = FALSE)))
                AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
-             ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name}
+             ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name}, videos.id
              LIMIT @{nameof(parameters.Limit)}
              OFFSET @{nameof(parameters.Offset)};
              """,
@@ -229,7 +229,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     (from_publish <= 'P2M' AND from_now >= 'P1M') OR
                     from_now >= 'P6M') AND
                    NOT EXISTS(SELECT 1 FROM media.sponsorblock_segments WHERE sponsorblock_segments.video_id = stale_videos.id)
-             ORDER BY stale_videos.published_at DESC
+             ORDER BY stale_videos.published_at DESC, stale_videos.id
              LIMIT 5;
              """,
             new { libraryId },
@@ -266,7 +266,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              FROM media.video_files
                 INNER JOIN media.videos ON video_files.video_id = videos.id
              WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
-             ORDER BY video_files.width DESC, video_files.framerate DESC;
+             ORDER BY video_files.width DESC, video_files.framerate DESC, video_files.id;
              """,
             new GetVideoParameters(videoId, userId, Access.Read),
             cancellationToken: cancellationToken);
