@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -29,6 +30,8 @@ public sealed class Index : PageModel, INonLibraryPage
         var userId = User.GetUserId();
 
         Libraries = await _libraryRepository.GetAsync(userId, cancellationToken);
-        Channels = await _channelRepository.GetAsync(userId, cancellationToken);
+        Channels = (await _channelRepository.GetAsync(userId, cancellationToken))
+            .OrderBy(channel => channel.Name)
+            .ToList();
     }
 }

@@ -159,7 +159,9 @@ public sealed class Index : LibraryPageBase, IDownloadPage
         var userId = User.GetUserId();
         var parameters = this.GetVideoParameters(userId, LibraryId, ChannelId);
 
-        Channels = await _channelRepository.GetForLibrary(LibraryId, userId, cancellationToken);
+        Channels = (await _channelRepository.GetForLibrary(LibraryId, userId, cancellationToken))
+            .OrderBy(channel => channel.Name)
+            .ToList();
 
         var videos = await _videoRepository.GetDownloadableVideos(parameters, cancellationToken);
 
