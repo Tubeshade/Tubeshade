@@ -10,6 +10,9 @@ namespace Tubeshade.Server.Tests.Integration.Published.Pages.Libraries;
 
 public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(serverFixture)
 {
+    /// <inheritdoc />
+    protected override string Username => "test2@example.org";
+
     [Test]
     public async Task CreateLibrary()
     {

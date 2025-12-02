@@ -24,7 +24,6 @@
   - searchbox "Meklēt"
   - combobox "Kanāls":
     - option "Visi kanāli" [selected]
-    - option "Computerphile"
   - combobox "Video veids":
     - option "Visi" [selected]
     - option "Tiešraides"

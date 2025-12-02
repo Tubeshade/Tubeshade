@@ -24,7 +24,6 @@
   - searchbox "Search"
   - combobox "Channel":
     - option "All channels" [selected]
-    - option "Computerphile"
   - combobox "Video type":
     - option "All" [selected]
     - option "Livestreams"
