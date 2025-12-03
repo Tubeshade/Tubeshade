@@ -16,10 +16,6 @@ video {
     max-height: 80vh;
 }
 
-video[poster] {
-    object-fit: cover;
-}
-
 .tubeshade-video-thumbnail {
     aspect-ratio: 16 / 9;
     object-fit: cover;
