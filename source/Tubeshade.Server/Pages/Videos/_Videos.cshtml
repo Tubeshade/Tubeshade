@@ -12,7 +12,7 @@
                    asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@video.Video.Id">
                     <img src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = video.Video.Id })"
                          loading="lazy" alt="@video.Video.Name" title="@video.Video.Name"
-                         class="card-img-top" style="aspect-ratio: calc(16 / 9);"/>
+                         class="card-img-top tubeshade-video-thumbnail"/>
                 </a>
                 @if (video.Video.Position is { } position &&
                      Math.Abs(video.DurationInSeconds - position) > Defaults.PlaybackEpsilon &&
