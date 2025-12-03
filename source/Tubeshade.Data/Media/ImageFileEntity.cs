@@ -2,7 +2,7 @@
 
 namespace Tubeshade.Data.Media;
 
-public sealed record ImageFileEntity : Entity
+public sealed record ImageFileEntity : ModifiableEntity
 {
     public required string StoragePath { get; set; }
 

@@ -164,4 +164,13 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(49, Information, "Updating scheduler period from {OldSchedulerPeriod} to {SchedulerPeriod}")]
     internal static partial void SchedulerPeriodChanged(this ILogger logger, TimeSpan oldSchedulerPeriod, TimeSpan schedulerPeriod);
+
+    [LoggerMessage(50, Debug, "Thumbnail already exists in the same or higher resolution")]
+    internal static partial void ExistingThumbnail(this ILogger logger);
+
+    [LoggerMessage(51, Debug, "Creating new thumbnail for video")]
+    internal static partial void CreatingThumbnail(this ILogger logger);
+
+    [LoggerMessage(52, Debug, "Updating existing thumbnail {ThumbnailId}")]
+    internal static partial void UpdatingExistingThumbnail(this ILogger logger, Guid thumbnailId);
 }

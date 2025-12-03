@@ -16,11 +16,6 @@ public static class VideoEntityExtensions
         return video.GetFilePath("chapters.vtt");
     }
 
-    public static string GetThumbnailFilePath(this VideoEntity video)
-    {
-        return video.GetFilePath("thumbnail.jpg");
-    }
-
     public static string GetDirectoryPath(this VideoEntity video)
     {
         var attributes = File.GetAttributes(video.StoragePath);
@@ -36,7 +31,7 @@ public static class VideoEntityExtensions
         return targetDirectory;
     }
 
-    private static string GetFilePath(this VideoEntity video, string fileName)
+    public static string GetFilePath(this VideoEntity video, string fileName)
     {
         var attributes = File.GetAttributes(video.StoragePath);
         return (attributes & FileAttributes.Directory) is FileAttributes.Directory

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
 using Htmx;
@@ -16,6 +17,7 @@ using Microsoft.Net.Http.Headers;
 using NodaTime.Text;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Videos;
@@ -35,6 +37,7 @@ public sealed class VideosController : ControllerBase
     private readonly WebVideoTextTracksService _webVideoTextTracksService;
     private readonly FileUploadService _fileUploadService;
     private readonly SponsorBlockService _sponsorBlockService;
+    private readonly ImageFileRepository _imageFileRepository;
 
     public VideosController(
         ILogger<VideosController> logger,
@@ -43,7 +46,8 @@ public sealed class VideosController : ControllerBase
         SponsorBlockSegmentRepository segmentRepository,
         WebVideoTextTracksService webVideoTextTracksService,
         FileUploadService fileUploadService,
-        SponsorBlockService sponsorBlockService)
+        SponsorBlockService sponsorBlockService,
+        ImageFileRepository imageFileRepository)
     {
         _logger = logger;
         _connection = connection;
@@ -52,6 +56,7 @@ public sealed class VideosController : ControllerBase
         _webVideoTextTracksService = webVideoTextTracksService;
         _fileUploadService = fileUploadService;
         _sponsorBlockService = sponsorBlockService;
+        _imageFileRepository = imageFileRepository;
     }
 
     [HttpGet]
@@ -143,19 +148,34 @@ public sealed class VideosController : ControllerBase
     [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> GetThumbnail(Guid id, CancellationToken cancellationToken)
     {
-        var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-        var path = video.GetThumbnailFilePath();
+        var userId = User.GetUserId();
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
+        var video = await _repository.GetAsync(id, userId, transaction);
+        var thumbnail = await _imageFileRepository.FindVideoThumbnail(id, userId, Access.Read, transaction);
+        if (thumbnail is null)
+        {
+            return NotFound();
+        }
+
+        var path = video.GetFilePath(thumbnail.StoragePath);
         if (!System.IO.File.Exists(path))
         {
             return NotFound();
         }
 
         var file = new FileInfo(path);
+        var contentType = file.Extension switch
+        {
+            ".jpg" or ".jpeg" => MediaTypeNames.Image.Jpeg,
+            ".webp" => MediaTypeNames.Image.Webp,
+            _ => throw new InvalidOperationException($"Unexpected thumbnail extension '{file.Extension}'"),
+        };
+
         var stream = file.OpenRead();
         return File(
             stream,
-            "image/jpeg",
+            contentType,
             file.LastWriteTimeUtc,
             new EntityTagHeaderValue(new StringSegment($"\"thumbnail_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")));
     }
