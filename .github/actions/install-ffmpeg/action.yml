@@ -1,0 +1,49 @@
+﻿name: install-ffmpeg
+description: Installs ffmpeg with caching and aggressive retries.
+
+runs:
+  using: composite
+
+  steps:
+    - id: restore-cache
+      uses: actions/cache@v4.3.0
+      with:
+        key: ffmpeg-${{ hashFiles('.github/actions/install-ffmpeg/action.yml') }}
+        path: ~/.ffmpeg
+
+    - if: steps.restore-cache.outputs.cache-hit != 'true'
+      name: download ffmpeg
+      shell: bash
+      run: |
+        URL="https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
+        MAX_RETRY_DELAY=30
+
+        mkdir -p "$HOME/.ffmpeg"
+
+        for i in {1..10}
+        do
+          echo "downloading ffmpeg (attempt: #$i)"
+
+          if curl --connect-timeout 10 -vL "$URL" -o ffmpeg.tar.xz \
+            && tar -xf ffmpeg.tar.xz --strip-components=1 -C "$HOME/.ffmpeg" \
+            && rm ffmpeg.tar.xz; then
+            echo "✅ ffmpeg installed successfully"
+            exit 0
+          fi
+
+          [[ $i -ge 10 ]] && break
+
+          retry_delay=$((2 ** i))
+          [[ $retry_delay -gt $MAX_RETRY_DELAY ]] && retry_delay=$MAX_RETRY_DELAY
+          echo "retrying in ${retry_delay}s..." && sleep $retry_delay
+        done
+
+        echo "❌ failed to install ffmpeg" >&2 \
+          && exit 1
+
+    - name: add ffmpeg to PATH
+      shell: bash
+      run: |
+        export PATH="$HOME/.ffmpeg:$PATH"
+        echo "$HOME/.ffmpeg" >> $GITHUB_PATH
+        ffmpeg -version

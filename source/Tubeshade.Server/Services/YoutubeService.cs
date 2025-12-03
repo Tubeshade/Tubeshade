@@ -19,6 +19,7 @@ using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Pages.Videos;
+using Tubeshade.Server.Services.Ffmpeg;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
 using YoutubeDLSharp.Options;
@@ -50,6 +51,7 @@ public sealed class YoutubeService
     private readonly WebVideoTextTracksService _webVideoTextTracksService;
     private readonly TaskService _taskService;
     private readonly SponsorBlockService _sponsorBlockService;
+    private readonly FfmpegService _ffmpegService;
 
     public YoutubeService(
         ILogger<YoutubeService> logger,
@@ -65,7 +67,8 @@ public sealed class YoutubeService
         IYtdlpWrapper ytdlpWrapper,
         WebVideoTextTracksService webVideoTextTracksService,
         TaskService taskService,
-        SponsorBlockService sponsorBlockService)
+        SponsorBlockService sponsorBlockService,
+        FfmpegService ffmpegService)
     {
         _logger = logger;
         _options = optionsMonitor.CurrentValue;
@@ -79,6 +82,7 @@ public sealed class YoutubeService
         _webVideoTextTracksService = webVideoTextTracksService;
         _taskService = taskService;
         _sponsorBlockService = sponsorBlockService;
+        _ffmpegService = ffmpegService;
         _imageFileRepository = imageFileRepository;
         _videoFileRepository = videoFileRepository;
     }
@@ -412,24 +416,29 @@ public sealed class YoutubeService
             await _webVideoTextTracksService.Write(chapterFile, chapterCues, cancellationToken);
         }
 
-        var thumbnail = videoData
-            .Thumbnails
-            .Where(data => new UriBuilder(data.Url).Query.StartsWith("?sqp") && data.Width.HasValue)
-            .OrderByDescending(data => data.Width)
-            .FirstOrDefault() ?? videoData.Thumbnails.OrderByDescending(data => data.Width).First();
-
-        await _ytdlpWrapper.DownloadThumbnail(thumbnail.Url, video.StoragePath, cookieFilepath, cancellationToken);
+        await _ytdlpWrapper.DownloadThumbnail(videoData.Thumbnail, video.StoragePath, cookieFilepath, cancellationToken);
         var thumbnails = Directory.EnumerateFiles(video.StoragePath, "thumbnail.*").ToArray();
         if (thumbnails is [var thumbnailPath])
         {
+            var response = await _ffmpegService.AnalyzeFile(thumbnailPath, cancellationToken);
+            if (response.Streams is not [var stream])
+            {
+                throw new InvalidOperationException("Unexpected image file format");
+            }
+
+            if (stream.Width is not { } width || stream.Height is not { } height)
+            {
+                throw new InvalidOperationException("Could not extract image resolution");
+            }
+
             var imageFileId = await _imageFileRepository.AddAsync(
                 new()
                 {
                     CreatedByUserId = userId,
                     StoragePath = Path.GetFileName(thumbnailPath),
                     Type = ImageType.Thumbnail,
-                    Width = thumbnail.Width!.Value,
-                    Height = thumbnail.Height!.Value
+                    Width = width,
+                    Height = height
                 },
                 transaction);
 

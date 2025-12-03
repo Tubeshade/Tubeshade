@@ -20,20 +20,20 @@ public sealed class Format
     public required string FormatLongName { get; set; }
 
     [JsonPropertyName("start_time")]
-    public required decimal StartTime { get; set; }
+    public decimal? StartTime { get; set; }
 
     [JsonPropertyName("duration")]
-    public required decimal Duration { get; set; }
+    public decimal? Duration { get; set; }
 
     [JsonPropertyName("size")]
     public required long Size { get; set; }
 
     [JsonPropertyName("bit_rate")]
-    public required long BitRate { get; set; }
+    public long? BitRate { get; set; }
 
     [JsonPropertyName("probe_score")]
     public required int ProbeScore { get; set; }
 
     [JsonPropertyName("tags")]
-    public required FormatTags Tags { get; set; }
+    public FormatTags? Tags { get; set; }
 }

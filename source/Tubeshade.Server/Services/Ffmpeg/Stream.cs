@@ -83,10 +83,10 @@ public sealed class Stream
     public string? TimeBase { get; set; }
 
     [JsonPropertyName("start_pts")]
-    public required int StartPts { get; set; }
+    public int? StartPts { get; set; }
 
     [JsonPropertyName("start_time")]
-    public required decimal StartTime { get; set; }
+    public decimal? StartTime { get; set; }
 
     [JsonPropertyName("duration_ts")]
     public int? DurationTs { get; set; }
@@ -107,7 +107,7 @@ public sealed class Stream
     public required Disposition Disposition { get; set; }
 
     [JsonPropertyName("tags")]
-    public required StreamTags Tags { get; set; }
+    public StreamTags? Tags { get; set; }
 
     [JsonPropertyName("sample_fmt")]
     public string? SampleFmt { get; set; }
