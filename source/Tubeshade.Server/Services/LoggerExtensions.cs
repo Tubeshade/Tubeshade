@@ -146,4 +146,22 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(43, Debug, "Writing video chapters to {Path}")]
     internal static partial void WritingVideoChapters(this ILogger logger, string path);
+
+    [LoggerMessage(44, Information, "Starting scheduler with period {SchedulerPeriod}")]
+    internal static partial void StartingScheduler(this ILogger logger, TimeSpan schedulerPeriod);
+
+    [LoggerMessage(45, Trace, "Scheduler tick")]
+    internal static partial void SchedulerTick(this ILogger logger);
+
+    [LoggerMessage(46, Trace, "Skipping schedule")]
+    internal static partial void SkippingSchedule(this ILogger logger);
+
+    [LoggerMessage(47, Debug, "Starting task {TaskId} based on schedule")]
+    internal static partial void StartingScheduledTask(this ILogger logger, Guid taskId);
+
+    [LoggerMessage(48, Trace, "Scheduler period has not changed")]
+    internal static partial void SchedulerPeriodUnchanged(this ILogger logger);
+
+    [LoggerMessage(49, Information, "Updating scheduler period from {OldSchedulerPeriod} to {SchedulerPeriod}")]
+    internal static partial void SchedulerPeriodChanged(this ILogger logger, TimeSpan oldSchedulerPeriod, TimeSpan schedulerPeriod);
 }

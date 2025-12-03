@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
+using NodaTime.Text;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
@@ -54,7 +55,7 @@ public sealed class SchedulerService : BackgroundService
 
         var beforeTick = _clock.GetCurrentInstant();
 
-        _logger.LogDebug("Starting scheduler with period {SchedulerPeriod}", timer.Period);
+        _logger.StartingScheduler(timer.Period);
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
             var afterTick = _clock.GetCurrentInstant();
@@ -62,7 +63,7 @@ public sealed class SchedulerService : BackgroundService
 
             using (SchedulerTickScope(_logger, interval.Start, interval.End, interval.Duration))
             {
-                _logger.LogDebug("Scheduler tick");
+                _logger.SchedulerTick();
             }
 
             await using var tickScope = _serviceProvider.CreateAsyncScope();
@@ -79,11 +80,11 @@ public sealed class SchedulerService : BackgroundService
                 var nextTime = GetNextTime(schedule.CronExpression, beforeTick);
                 if (!interval.Contains(nextTime))
                 {
-                    _logger.LogTrace("Skipping schedule");
+                    _logger.SkippingSchedule();
                     continue;
                 }
 
-                _logger.LogDebug("Starting task {TaskId} based on schedule", schedule.TaskId);
+                _logger.StartingScheduledTask(schedule.TaskId);
 
                 // we only use NOTIFY here, so transaction isolation does not matter
                 await using var transaction = await connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, stoppingToken);
@@ -98,8 +99,13 @@ public sealed class SchedulerService : BackgroundService
     public static Instant GetNextTime(string cron, Instant currentTime)
     {
         var expression = CronExpression.Parse(cron);
-        var next = expression.GetNextOccurrence(currentTime.ToDateTimeUtc());
-        return Instant.FromDateTimeUtc(next!.Value);
+        if (expression.GetNextOccurrence(currentTime.ToDateTimeUtc()) is { } nextTime)
+        {
+            return Instant.FromDateTimeUtc(nextTime);
+        }
+
+        var time = InstantPattern.ExtendedIso.Format(currentTime);
+        throw new InvalidOperationException($"Failed to find next occurrence for expression {cron} from {time}");
     }
 
     private void OnOptionsChange(SchedulerOptions options, PeriodicTimer timer)
@@ -107,11 +113,11 @@ public sealed class SchedulerService : BackgroundService
         var newPeriod = options.GetPeriodTimeSpan();
         if (timer.Period == newPeriod)
         {
-            _logger.LogDebug("Scheduler period has not changed");
+            _logger.SchedulerPeriodUnchanged();
             return;
         }
 
-        _logger.LogDebug("Updating scheduler period from {OldSchedulerPeriod} to {NewSchedulerPeriod}", timer.Period, newPeriod);
+        _logger.SchedulerPeriodChanged(timer.Period, newPeriod);
         timer.Period = newPeriod;
     }
 }
