@@ -1,0 +1,48 @@
+﻿name: Bug report
+description: Create a bug report.
+labels: [ "Triage" ]
+type: Bug
+
+body:
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please ensure you have completed all of the following.
+      options:
+        - label: I have searched for [existing issues](https://github.com/Tubeshade/Tubeshade/issues) that already report this problem, without success.
+          required: true
+
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current Behavior
+      description: A clear description of what the bug is and how it manifests.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: A clear description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Explain the steps required to reproduce this issue.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Observe: '...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional Information
+      description: List any other information that is relevant to your issue. Stack traces, logs, screenshots, related issues, suggestions on how to fix, etc.
