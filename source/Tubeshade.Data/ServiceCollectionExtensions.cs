@@ -33,6 +33,7 @@ public static class ServiceCollectionExtensions
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentCategory, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentAction, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<PlayerClient, int>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<DownloadVideos, int>());
         SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SubscriptionStatus, int>());
 
         SqlMapper.AddTypeHandler(new LocalDateTypeHandler());

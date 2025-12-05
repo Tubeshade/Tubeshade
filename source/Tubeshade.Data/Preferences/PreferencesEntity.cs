@@ -17,7 +17,7 @@ public sealed record PreferencesEntity : ModifiableEntity
 
     public PlayerClient? PlayerClient { get; set; }
 
-    public bool? DownloadAutomatically { get; set; }
+    public DownloadVideos? DownloadVideos { get; set; }
 
     public string[]? Formats { get; set; }
 }

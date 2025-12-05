@@ -173,4 +173,13 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(52, Debug, "Updating existing thumbnail {ThumbnailId}")]
     internal static partial void UpdatingExistingThumbnail(this ILogger logger, Guid thumbnailId);
+
+    [LoggerMessage(53, Trace, "Video already existed, not downloading")]
+    internal static partial void NotDownloadingExistingVideo(this ILogger logger);
+
+    [LoggerMessage(54, Trace, "Preferences set to not automatically download videos")]
+    internal static partial void NotDownloadingDueToPreferences(this ILogger logger);
+
+    [LoggerMessage(55, Debug, "Newer video {VideoId} is already downloaded, not downloading")]
+    internal static partial void NotDownloadingOldVideo(this ILogger logger, Guid videoId);
 }

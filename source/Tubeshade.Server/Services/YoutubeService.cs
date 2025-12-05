@@ -488,11 +488,33 @@ public sealed class YoutubeService
             }
         }
 
-        if (isNewVideo && (preferences?.DownloadAutomatically ?? false))
+        if (!isNewVideo)
         {
-            await _taskService.DownloadVideo(userId, libraryId, video.Id, transaction);
+            _logger.NotDownloadingExistingVideo();
+            return video.Id;
         }
 
+        if (preferences?.DownloadVideos is null || preferences.DownloadVideos == DownloadVideos.None)
+        {
+            _logger.NotDownloadingDueToPreferences();
+            return video.Id;
+        }
+
+        if (preferences.DownloadVideos == DownloadVideos.New)
+        {
+            var latest = await _videoRepository.GetLatestDownloadedVideo(userId, libraryId, channel.Id, transaction);
+            if (latest is not null && latest.PublishedAt >= video.PublishedAt)
+            {
+                _logger.NotDownloadingOldVideo(latest.Id);
+                return video.Id;
+            }
+        }
+        else if (preferences.DownloadVideos != DownloadVideos.All)
+        {
+            throw new InvalidOperationException($"Unexpected download videos value '{preferences.DownloadVideos}'");
+        }
+
+        await _taskService.DownloadVideo(userId, libraryId, video.Id, transaction);
         return video.Id;
     }
 

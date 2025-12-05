@@ -654,15 +654,6 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No.
-        /// </summary>
-        public static string No {
-            get {
-                return ResourceManager.GetString("No", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Original.
         /// </summary>
         public static string Original {
@@ -726,20 +717,47 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Download automatically.
-        /// </summary>
-        public static string Preferences_DownloadAutomatically {
-            get {
-                return ResourceManager.GetString("Preferences_DownloadAutomatically", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Download formats.
         /// </summary>
         public static string Preferences_DownloadFormats {
             get {
                 return ResourceManager.GetString("Preferences_DownloadFormats", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Download automatically.
+        /// </summary>
+        public static string Preferences_DownloadVideos {
+            get {
+                return ResourceManager.GetString("Preferences_DownloadVideos", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Yes.
+        /// </summary>
+        public static string Preferences_DownloadVideos_all {
+            get {
+                return ResourceManager.GetString("Preferences_DownloadVideos_all", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only new.
+        /// </summary>
+        public static string Preferences_DownloadVideos_new {
+            get {
+                return ResourceManager.GetString("Preferences_DownloadVideos_new", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No.
+        /// </summary>
+        public static string Preferences_DownloadVideos_none {
+            get {
+                return ResourceManager.GetString("Preferences_DownloadVideos_none", resourceCulture);
             }
         }
         
@@ -1073,15 +1091,6 @@ namespace Tubeshade.Server.Resources {
         public static string Videos {
             get {
                 return ResourceManager.GetString("Videos", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Yes.
-        /// </summary>
-        public static string Yes {
-            get {
-                return ResourceManager.GetString("Yes", resourceCulture);
             }
         }
     }

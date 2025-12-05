@@ -14,7 +14,7 @@ public sealed class UpdatePreferencesModel
 
     public string? PlayerClient { get; set; }
 
-    public bool? DownloadAutomatically { get; set; }
+    public DownloadVideos? DownloadVideos { get; set; }
 
     public string? Formats { get; set; }
 
@@ -29,7 +29,7 @@ public sealed class UpdatePreferencesModel
         LiveStreamsCount = preferences?.LiveStreamsCount;
         ShortsCount = preferences?.ShortsCount;
         PlayerClient = preferences?.PlayerClient?.Name;
-        DownloadAutomatically = preferences?.DownloadAutomatically;
+        DownloadVideos = preferences?.DownloadVideos;
         Formats = preferences?.Formats is { Length: > 0 } formats ? string.Join(',', formats) : null;
     }
 
@@ -47,7 +47,7 @@ public sealed class UpdatePreferencesModel
             ShortsCount = ShortsCount,
             SubscriptionScheduleId = null,
             PlayerClient = client,
-            DownloadAutomatically = DownloadAutomatically,
+            DownloadVideos = DownloadVideos,
             Formats = string.IsNullOrWhiteSpace(Formats) ? null : Formats.Split(','),
         };
     }
@@ -63,7 +63,7 @@ public sealed class UpdatePreferencesModel
         preferences.LiveStreamsCount = LiveStreamsCount;
         preferences.ShortsCount = ShortsCount;
         preferences.PlayerClient = client;
-        preferences.DownloadAutomatically = DownloadAutomatically;
+        preferences.DownloadVideos = DownloadVideos;
         preferences.Formats = string.IsNullOrWhiteSpace(Formats) ? null : Formats.Split(',');
     }
 }

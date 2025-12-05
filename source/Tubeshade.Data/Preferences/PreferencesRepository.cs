@@ -16,8 +16,8 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO media.preferences (created_by_user_id, modified_by_user_id, playback_speed, videos_count, live_streams_count, shorts_count, player_client, download_automatically)
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @PlaybackSpeed, @VideosCount, @LiveStreamsCount, @ShortsCount, @PlayerClient, @DownloadAutomatically)
+         INSERT INTO media.preferences (created_by_user_id, modified_by_user_id, playback_speed, videos_count, live_streams_count, shorts_count, player_client, download_videos)
+         VALUES (@CreatedByUserId, @ModifiedByUserId, @PlaybackSpeed, @VideosCount, @LiveStreamsCount, @ShortsCount, @PlayerClient, @DownloadVideos)
          RETURNING id;
          """;
 
@@ -34,7 +34,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                 preferences.live_streams_count AS {nameof(PreferencesEntity.LiveStreamsCount)},
                 preferences.shorts_count AS {nameof(PreferencesEntity.ShortsCount)},
                 preferences.player_client AS {nameof(PreferencesEntity.PlayerClient)},
-                preferences.download_automatically AS {nameof(PreferencesEntity.DownloadAutomatically)},
+                preferences.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
                 preferences.formats AS {nameof(PreferencesEntity.Formats)}
          FROM media.preferences
          """;
@@ -47,7 +47,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
          live_streams_count = @{nameof(PreferencesEntity.LiveStreamsCount)},
          shorts_count = @{nameof(PreferencesEntity.ShortsCount)},
          player_client = @{nameof(PreferencesEntity.PlayerClient)},
-         download_automatically = @{nameof(PreferencesEntity.DownloadAutomatically)},
+         download_videos = @{nameof(PreferencesEntity.DownloadVideos)},
          formats = @{nameof(PreferencesEntity.Formats)}
          """;
 
@@ -78,7 +78,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     preferences.live_streams_count AS {nameof(PreferencesEntity.LiveStreamsCount)},
                     preferences.shorts_count AS {nameof(PreferencesEntity.ShortsCount)},
                     preferences.player_client AS {nameof(PreferencesEntity.PlayerClient)},
-                    preferences.download_automatically AS {nameof(PreferencesEntity.DownloadAutomatically)},
+                    preferences.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
                     preferences.formats AS {nameof(PreferencesEntity.Formats)}
              FROM media.libraries
                 INNER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
@@ -107,7 +107,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     preferences.live_streams_count AS {nameof(PreferencesEntity.LiveStreamsCount)},
                     preferences.shorts_count AS {nameof(PreferencesEntity.ShortsCount)},
                     preferences.player_client AS {nameof(PreferencesEntity.PlayerClient)},
-                    preferences.download_automatically AS {nameof(PreferencesEntity.DownloadAutomatically)},
+                    preferences.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
                     preferences.formats AS {nameof(PreferencesEntity.Formats)}
              FROM media.libraries
                 INNER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
@@ -152,7 +152,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     library_p.live_streams_count AS LiveStreamsCount,
                     library_p.shorts_count AS ShortsCount,
                     library_p.player_client AS PlayerClient,
-                    library_p.download_automatically AS {nameof(PreferencesEntity.DownloadAutomatically)},
+                    library_p.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
                     library_p.formats AS {nameof(PreferencesEntity.Formats)}
              FROM media.libraries
                       LEFT OUTER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
@@ -181,7 +181,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     preferences.live_streams_count AS {nameof(PreferencesEntity.LiveStreamsCount)},
                     preferences.shorts_count AS {nameof(PreferencesEntity.ShortsCount)},
                     preferences.player_client AS {nameof(PreferencesEntity.PlayerClient)},
-                    preferences.download_automatically AS {nameof(PreferencesEntity.DownloadAutomatically)},
+                    preferences.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
                     preferences.formats AS {nameof(PreferencesEntity.Formats)}
              FROM media.channels
                 INNER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
@@ -210,7 +210,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     preferences.live_streams_count AS {nameof(PreferencesEntity.LiveStreamsCount)},
                     preferences.shorts_count AS {nameof(PreferencesEntity.ShortsCount)},
                     preferences.player_client AS {nameof(PreferencesEntity.PlayerClient)},
-                    preferences.download_automatically AS {nameof(PreferencesEntity.DownloadAutomatically)},
+                    preferences.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
                     preferences.formats AS {nameof(PreferencesEntity.Formats)}
              FROM media.channels
                 INNER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
@@ -256,7 +256,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     COALESCE(channel_p.live_streams_count, library_p.live_streams_count) AS LiveStreamsCount,
                     COALESCE(channel_p.shorts_count, library_p.shorts_count) AS ShortsCount,
                     COALESCE(channel_p.player_client, library_p.player_client) AS PlayerClient,
-                    COALESCE(channel_p.download_automatically, library_p.download_automatically) AS {nameof(PreferencesEntity.DownloadAutomatically)},
+                    COALESCE(channel_p.download_videos, library_p.download_videos) AS {nameof(PreferencesEntity.DownloadVideos)},
                     COALESCE(channel_p.formats, library_p.formats) AS {nameof(PreferencesEntity.Formats)}
              FROM media.channels
                       LEFT OUTER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
@@ -289,7 +289,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                     COALESCE(channel_p.live_streams_count, library_p.live_streams_count) AS LiveStreamsCount,
                     COALESCE(channel_p.shorts_count, library_p.shorts_count) AS ShortsCount,
                     COALESCE(channel_p.player_client, library_p.player_client) AS PlayerClient,
-                    COALESCE(channel_p.download_automatically, library_p.download_automatically) AS {nameof(PreferencesEntity.DownloadAutomatically)},
+                    COALESCE(channel_p.download_videos, library_p.download_videos) AS {nameof(PreferencesEntity.DownloadVideos)},
                     COALESCE(channel_p.formats, library_p.formats) AS {nameof(PreferencesEntity.Formats)}
              FROM media.videos
                       INNER JOIN media.channels ON videos.channel_id = channels.id

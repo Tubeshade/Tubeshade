@@ -231,20 +231,11 @@
     <data name="Preferences_PlayerClient" xml:space="preserve">
         <value>Player client</value>
     </data>
-    <data name="Preferences_DownloadAutomatically" xml:space="preserve">
-        <value>Download automatically</value>
-    </data>
     <data name="Preferences_DownloadFormats" xml:space="preserve">
         <value>Download formats</value>
     </data>
     <data name="Button_UpdatePreferences" xml:space="preserve">
         <value>Update preferences</value>
-    </data>
-    <data name="Yes" xml:space="preserve">
-        <value>Yes</value>
-    </data>
-    <data name="No" xml:space="preserve">
-        <value>No</value>
     </data>
     <data name="Default" xml:space="preserve">
         <value>Default</value>
@@ -359,5 +350,17 @@
     </data>
     <data name="Button_UpdateSchedule" xml:space="preserve">
         <value>Update schedule</value>
+    </data>
+    <data name="Preferences_DownloadVideos_all" xml:space="preserve">
+        <value>Yes</value>
+    </data>
+    <data name="Preferences_DownloadVideos_new" xml:space="preserve">
+        <value>Only new</value>
+    </data>
+    <data name="Preferences_DownloadVideos_none" xml:space="preserve">
+        <value>No</value>
+    </data>
+    <data name="Preferences_DownloadVideos" xml:space="preserve">
+        <value>Download automatically</value>
     </data>
 </root>

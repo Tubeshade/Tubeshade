@@ -44,21 +44,21 @@
     </div>
 
     <div class="col-sm-4">
-        <label class="form-label" asp-for="DownloadAutomatically">
-            @SharedResources.Preferences_DownloadAutomatically
+        <label class="form-label" asp-for="DownloadVideos">
+            @SharedResources.Preferences_DownloadVideos
         </label>
-        <select class="form-control form-select" asp-for="DownloadAutomatically">
-            <option value="@null" selected="@(Model.DownloadAutomatically is null)">
+        <select class="form-control form-select" asp-for="DownloadVideos">
+            <option value="" selected="@(Model.DownloadVideos is null)">
                 @SharedResources.Default
             </option>
-            <option value="@true" selected="@(Model.DownloadAutomatically)">
-                @SharedResources.Yes
-            </option>
-            <option value="@false" selected="@(!Model.DownloadAutomatically)">
-                @SharedResources.No
-            </option>
+            @foreach (var download in DownloadVideos.List)
+            {
+                <option value="@download.Name" selected="@(download == Model.DownloadVideos)">
+                    @SharedResources.ResourceManager.GetString($"Preferences_DownloadVideos_{download.Name}")
+                </option>
+            }
         </select>
-        <span class="form-text text-danger" asp-validation-for="DownloadAutomatically"></span>
+        <span class="form-text text-danger" asp-validation-for="DownloadVideos"></span>
     </div>
 
     <div class="col-sm-4">

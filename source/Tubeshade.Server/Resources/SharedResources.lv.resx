@@ -353,4 +353,16 @@
     <data name="Button_UpdateSchedule" xml:space="preserve">
         <value>Atjaunināt grafiku</value>
     </data>
+    <data name="Preferences_DownloadVideos" xml:space="preserve">
+        <value>Automātiski lejupielādēt</value>
+    </data>
+    <data name="Preferences_DownloadVideos_all" xml:space="preserve">
+        <value>Jā</value>
+    </data>
+    <data name="Preferences_DownloadVideos_new" xml:space="preserve">
+        <value>Tikai jaunus</value>
+    </data>
+    <data name="Preferences_DownloadVideos_none" xml:space="preserve">
+        <value>Nē</value>
+    </data>
 </root>
