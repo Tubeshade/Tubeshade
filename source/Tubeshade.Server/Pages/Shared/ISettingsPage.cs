@@ -6,7 +6,7 @@ namespace Tubeshade.Server.Pages.Shared;
 
 public interface ISettingsPage : IFormLayout
 {
-    UpdatePreferencesModel UpdatePreferencesModel { get; }
+    UpdatePreferencesModel? UpdatePreferencesModel { get; }
 
     Task<IActionResult> OnPostUpdatePreferences();
 }

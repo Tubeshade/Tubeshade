@@ -51,7 +51,7 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
     public ChannelEntity Entity { get; set; } = null!;
 
     [BindProperty]
-    public UpdatePreferencesModel UpdatePreferencesModel { get; set; } = new();
+    public UpdatePreferencesModel? UpdatePreferencesModel { get; set; }
 
     [BindProperty]
     public Guid? NewLibraryId { get; set; }
@@ -82,6 +82,7 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
     /// <inheritdoc />
     public async Task<IActionResult> OnPostUpdatePreferences()
     {
+        UpdatePreferencesModel ??= new();
         if (!ModelState.IsValid)
         {
             await OnGet(CancellationToken.None);

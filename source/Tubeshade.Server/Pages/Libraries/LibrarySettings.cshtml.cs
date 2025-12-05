@@ -43,7 +43,7 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
 
     /// <inheritdoc />
     [BindProperty]
-    public UpdatePreferencesModel UpdatePreferencesModel { get; set; } = new();
+    public UpdatePreferencesModel? UpdatePreferencesModel { get; set; }
 
     [BindProperty]
     public SchedulesModel Schedules { get; set; } = new();
@@ -72,6 +72,7 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
     /// <inheritdoc />
     public async Task<IActionResult> OnPostUpdatePreferences()
     {
+        UpdatePreferencesModel ??= new();
         if (!ModelState.IsValid)
         {
             await OnGet(CancellationToken.None);
@@ -152,12 +153,6 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
             [
                 new ValidationResult(
                     "Only one schedule can be provided",
-                    [nameof(Subscription), nameof(Reindex)])
-            ],
-            { Subscription: null, Reindex: null } =>
-            [
-                new ValidationResult(
-                    "One of the schedules must be provided",
                     [nameof(Subscription), nameof(Reindex)])
             ],
             _ => [],
