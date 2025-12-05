@@ -7,7 +7,8 @@
         <label class="form-label" asp-for="VideosCount">
             @SharedResources.Preferences_VideoCount
         </label>
-        <input class="form-control" asp-for="VideosCount" type="number" min="0" step="1"/>
+        <input class="form-control" asp-for="VideosCount" type="number" min="0" step="1"
+               placeholder="@Model.Effective?.VideosCount"/>
         <span class="form-text text-danger" asp-validation-for="VideosCount"></span>
     </div>
 
@@ -15,7 +16,8 @@
         <label class="form-label" asp-for="LiveStreamsCount">
             @SharedResources.Preferences_LivestreamCount
         </label>
-        <input class="form-control" asp-for="LiveStreamsCount" type="number" min="0" step="1"/>
+        <input class="form-control" asp-for="LiveStreamsCount" type="number" min="0" step="1"
+               placeholder="@Model.Effective?.LiveStreamsCount"/>
         <span class="form-text text-danger" asp-validation-for="LiveStreamsCount"></span>
     </div>
 
@@ -23,7 +25,8 @@
         <label class="form-label" asp-for="ShortsCount">
             @SharedResources.Preferences_ShortCount
         </label>
-        <input class="form-control" asp-for="ShortsCount" type="number" min="0" step="1"/>
+        <input class="form-control" asp-for="ShortsCount" type="number" min="0" step="1"
+               placeholder="@Model.Effective?.ShortsCount"/>
         <span class="form-text text-danger" asp-validation-for="ShortsCount"></span>
     </div>
 
@@ -33,7 +36,7 @@
         </label>
         <select class="form-control form-select" asp-for="PlayerClient">
             <option value="" selected="@(Model.PlayerClient is null)">
-                @SharedResources.Default
+                @SharedResources.Default @(Model.Effective?.PlayerClient is { } client ? $"({client.Name})" : null)
             </option>
             @foreach (var client in PlayerClient.List)
             {
@@ -49,7 +52,7 @@
         </label>
         <select class="form-control form-select" asp-for="DownloadVideos">
             <option value="" selected="@(Model.DownloadVideos is null)">
-                @SharedResources.Default
+                @SharedResources.Default @(Model.Effective?.DownloadVideos is { } download ? $"({download.Name})" : null)
             </option>
             @foreach (var download in DownloadVideos.List)
             {
@@ -65,7 +68,8 @@
         <label class="form-label" asp-for="PlaybackSpeed">
             @SharedResources.Preferences_PlaybackSpeed
         </label>
-        <input class="form-control" asp-for="PlaybackSpeed" type="number" min="0" step="0.25"/>
+        <input class="form-control" asp-for="PlaybackSpeed" type="number" min="0" step="0.25"
+               placeholder="@Model.Effective?.PlaybackSpeed"/>
         <span class="form-text text-danger" asp-validation-for="PlaybackSpeed"></span>
     </div>
 
@@ -73,7 +77,8 @@
         <label class="form-label" asp-for="Formats">
             @SharedResources.Preferences_DownloadFormats
         </label>
-        <input class="form-control" asp-for="Formats" type="text"/>
+        <input class="form-control" asp-for="Formats" type="text"
+               placeholder="@Model.Effective?.Formats"/>
         <span class="form-text text-danger" asp-validation-for="Formats"></span>
     </div>
 

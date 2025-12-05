@@ -1,4 +1,5 @@
-﻿using Tubeshade.Data.Preferences;
+﻿using System.ComponentModel;
+using Tubeshade.Data.Preferences;
 
 namespace Tubeshade.Server.Pages.Libraries;
 
@@ -17,6 +18,9 @@ public sealed class UpdatePreferencesModel
     public DownloadVideos? DownloadVideos { get; set; }
 
     public string? Formats { get; set; }
+
+    [Browsable(false)]
+    public PreferencesEntity? Effective { get; init; }
 
     public UpdatePreferencesModel()
     {
