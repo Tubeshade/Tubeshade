@@ -212,9 +212,6 @@
     <data name="Button_UpdatePreferences" xml:space="preserve">
         <value>Atjaunināt iestatījumus</value>
     </data>
-    <data name="Preferences_DownloadAutomatically" xml:space="preserve">
-        <value>Automātiski lejupielādēt</value>
-    </data>
     <data name="Preferences_DownloadFormats" xml:space="preserve">
         <value>Lejupielādes formāti</value>
     </data>
@@ -232,12 +229,6 @@
     </data>
     <data name="Preferences_PlayerClient" xml:space="preserve">
         <value>Atskaņotāja klients</value>
-    </data>
-    <data name="Yes" xml:space="preserve">
-        <value>Jā</value>
-    </data>
-    <data name="No" xml:space="preserve">
-        <value>Nē</value>
     </data>
     <data name="Default" xml:space="preserve">
         <value>Noklusējuma</value>
@@ -364,5 +355,11 @@
     </data>
     <data name="Preferences_DownloadVideos_none" xml:space="preserve">
         <value>Nē</value>
+    </data>
+    <data name="Libraries_Schedule_Subscriptions" xml:space="preserve">
+        <value>Abonementi</value>
+    </data>
+    <data name="Libraries_Schedule_Reindex" xml:space="preserve">
+        <value>Pārskanēšana</value>
     </data>
 </root>

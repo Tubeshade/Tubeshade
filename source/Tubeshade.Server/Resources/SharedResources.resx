@@ -363,4 +363,10 @@
     <data name="Preferences_DownloadVideos" xml:space="preserve">
         <value>Download automatically</value>
     </data>
+    <data name="Libraries_Schedule_Subscriptions" xml:space="preserve">
+        <value>Subscriptions</value>
+    </data>
+    <data name="Libraries_Schedule_Reindex" xml:space="preserve">
+        <value>Reindex</value>
+    </data>
 </root>

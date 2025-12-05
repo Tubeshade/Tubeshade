@@ -582,6 +582,24 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Reindex.
+        /// </summary>
+        public static string Libraries_Schedule_Reindex {
+            get {
+                return ResourceManager.GetString("Libraries_Schedule_Reindex", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Subscriptions.
+        /// </summary>
+        public static string Libraries_Schedule_Subscriptions {
+            get {
+                return ResourceManager.GetString("Libraries_Schedule_Subscriptions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Storage path.
         /// </summary>
         public static string Libraries_StoragePath {
