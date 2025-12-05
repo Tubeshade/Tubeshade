@@ -1,18 +1,18 @@
 ﻿@model Tubeshade.Data.Media.ChannelEntity
 
 <div class="row">
-    <div class="col-12 col-sm-8 col-lg-6 col-xxl-4">
+    <div class="col-12 col-sm-9 col-lg-7 col-xxl-6">
         <div class="btn-group w-100">
             @if (Model.SubscribedAt.HasValue)
             {
-                <button hx-post="" hx-page-handler="Unsubscribe" hx-target="closest div" hx-swap="outerHTML"
+                <button hx-post="" hx-page-handler="Unsubscribe" hx-target="closest div.row" hx-swap="outerHTML"
                         type="button" class="btn btn-primary">
                     @SharedResources.Button_Unsubscribe
                 </button>
             }
             else
             {
-                <button hx-post="" hx-page-handler="Subscribe" hx-target="closest div" hx-swap="outerHTML"
+                <button hx-post="" hx-page-handler="Subscribe" hx-target="closest div.row" hx-swap="outerHTML"
                         type="button" class="btn btn-primary">
                     @SharedResources.Button_Subscribe
                 </button>
