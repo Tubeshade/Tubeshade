@@ -375,4 +375,7 @@
     <data name="Libraries_CreateNew_LinkText" xml:space="preserve">
         <value>here</value>
     </data>
+    <data name="Video_Description" xml:space="preserve">
+        <value>Description</value>
+    </data>
 </root>

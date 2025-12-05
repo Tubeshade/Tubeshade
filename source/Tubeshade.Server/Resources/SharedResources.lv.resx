@@ -368,4 +368,7 @@
     <data name="Libraries_CreateNew_LinkText" xml:space="preserve">
         <value>šeit</value>
     </data>
+    <data name="Video_Description" xml:space="preserve">
+        <value>Apraksts</value>
+    </data>
 </root>

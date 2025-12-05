@@ -1059,6 +1059,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Description.
+        /// </summary>
+        public static string Video_Description {
+            get {
+                return ResourceManager.GetString("Video_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Not available.
         /// </summary>
         public static string Video_ExternalAvailability_not_available {
