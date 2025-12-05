@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using Tubeshade.Data.Identity;
+using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Configuration.Auth;
 
@@ -29,7 +30,7 @@ public sealed class UserHandler : AuthorizationHandler<UserRequirement>
     {
         if (context.User.GetLoginProvider() is { } loginProvider)
         {
-            _logger.LogDebug("Trying to find user by login provider key");
+            _logger.SearchingUserByProviderKey();
 
             var claims = context.User.FindAll(ClaimTypes.NameIdentifier).DistinctBy(claim => claim.Value).ToArray();
             if (claims is [var nameClaim])
@@ -44,11 +45,11 @@ public sealed class UserHandler : AuthorizationHandler<UserRequirement>
             }
             else
             {
-                _logger.LogDebug("Claims principal does not have a name identifier claim");
+                _logger.ProviderMissingNameClaim(loginProvider);
             }
         }
 
-        _logger.LogDebug("Trying to find user by id");
+        _logger.SearchingUserById();
 
         if (!context.User.TryGetUserId(out var id))
         {

@@ -182,4 +182,13 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(55, Debug, "Newer video {VideoId} is already downloaded, not downloading")]
     internal static partial void NotDownloadingOldVideo(this ILogger logger, Guid videoId);
+
+    [LoggerMessage(56, Trace, "Trying to find user by login provider key")]
+    internal static partial void SearchingUserByProviderKey(this ILogger logger);
+
+    [LoggerMessage(57, Warning, "Claims principal from {LoginProvider} does not have a name identifier claim")]
+    internal static partial void ProviderMissingNameClaim(this ILogger logger, string loginProvider);
+
+    [LoggerMessage(58, Trace, "Trying to find user by id")]
+    internal static partial void SearchingUserById(this ILogger logger);
 }
