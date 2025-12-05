@@ -21,34 +21,35 @@
       - listitem:
         - button "Logout"
 - main:
-  - searchbox "Search"
-  - combobox "Channel":
-    - option "All channels" [selected]
-  - combobox "Video type":
-    - option "All" [selected]
-    - option "Livestreams"
-    - option "Shorts"
-    - option "Videos"
-  - spinbutton "Page size"
-  - combobox "With files":
-    - option "All"
-    - option "With files" [selected]
-    - option "Without files"
-  - combobox "Availability":
-    - option "Any availability" [selected]
-    - option "Not available"
-    - option "Private"
-    - option "Public"
-  - combobox "Sort by":
-    - option "Created"
-    - option "Modified"
-    - option "Published" [selected]
-    - option "Random"
-    - option "Refreshed"
-  - combobox "Sort direction":
-    - option "Ascending"
-    - option "Descending" [selected]
-  - button "🔎︎"
+  - search:
+    - searchbox "Search"
+    - combobox "Channel":
+      - option "All channels" [selected]
+    - combobox "Video type":
+      - option "All" [selected]
+      - option "Livestreams"
+      - option "Shorts"
+      - option "Videos"
+    - spinbutton "Page size"
+    - combobox "With files":
+      - option "All"
+      - option "With files" [selected]
+      - option "Without files"
+    - combobox "Availability":
+      - option "Any availability" [selected]
+      - option "Not available"
+      - option "Private"
+      - option "Public"
+    - combobox "Sort by":
+      - option "Created"
+      - option "Modified"
+      - option "Published" [selected]
+      - option "Random"
+      - option "Refreshed"
+    - combobox "Sort direction":
+      - option "Ascending"
+      - option "Descending" [selected]
+    - button "🔎︎"
   - navigation:
     - text: Showing 1 - 0 from 0
     - list:
