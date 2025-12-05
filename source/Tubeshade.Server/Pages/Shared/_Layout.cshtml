@@ -1,4 +1,5 @@
 ﻿@using System.Globalization
+@using Tubeshade.Server.Configuration
 
 <!DOCTYPE html>
 <html lang="@CultureInfo.CurrentCulture.TwoLetterISOLanguageName" data-bs-theme="dark">
@@ -55,7 +56,7 @@
 
 <footer class="border-top footer text-muted text-center">
     <div class="@(Model is IFormLayout ? "container-md" : "container-fluid")">
-        &copy; 2025 - Tubeshade
+        &copy; 2025 - Tubeshade @ApplicationInfo.Version
     </div>
 </footer>
 
