@@ -5,6 +5,7 @@
     <File Path="LICENSE" />
     <File Path="global.json" />
     <File Path="nuget.config" />
+    <File Path="compose.yaml" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
     <File Path=".editorconfig" />

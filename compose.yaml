@@ -1,0 +1,43 @@
+﻿services:
+  tubeshade:
+    image: ghcr.io/tubeshade/tubeshade:nightly
+    ports:
+      - "80:8080"
+    networks:
+      - internal
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
+    environment:
+      ENVIRONMENT: Production
+      Database__ConnectionString: "Host=database; Port=5432; Username=${POSTGRES_USER:-postgres}; Password=${POSTGRES_PASSWORD:?error}; Database=${POSTGRES_DB:-tubeshade}"
+    volumes:
+      - app_data:/home/app
+      - libraries:/var/opt/tubeshade
+
+  database:
+    image: postgres:18.1-trixie
+    networks:
+      - internal
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tubeshade}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 10s
+      retries: 3
+      start_period: 10s
+      start_interval: 1s
+      timeout: 3s
+    volumes:
+      - database:/var/lib/postgresql
+
+networks:
+  internal: { }
+
+volumes:
+  database:
+  app_data:
+  libraries:

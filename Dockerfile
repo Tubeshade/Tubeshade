@@ -32,6 +32,9 @@ COPY --chmod=-w --from=build [ \
 
 COPY --chmod=-w --from=build /tubeshade/source/Tubeshade.Server/bin/Release/net${DOTNET_CHANNEL}/${DOTNET_RUNTIME}/publish/wwwroot/ ./wwwroot
 
+RUN mkdir /var/opt/tubeshade && chown app:app /var/opt/tubeshade
+VOLUME /var/opt/tubeshade
+
 ENV DOTNET_gcServer=0 \
     DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     LC_ALL=en_US.UTF-8 \
@@ -44,5 +47,6 @@ ENV DOTNET_gcServer=0 \
 USER app
 VOLUME /home/app
 EXPOSE 8080
+HEALTHCHECK CMD test $(wget -qO- http://localhost:8080/healthz) = "Healthy" || exit 1
 
 ENTRYPOINT ["./Tubeshade.Server"]
