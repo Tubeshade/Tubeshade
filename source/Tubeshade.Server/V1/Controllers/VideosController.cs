@@ -19,6 +19,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
+using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services;
@@ -59,21 +60,6 @@ public sealed class VideosController : ControllerBase
         _imageFileRepository = imageFileRepository;
     }
 
-    [HttpGet]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
-    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
-    {
-        var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-
-        var stream = System.IO.File.OpenRead(video.StoragePath);
-        return File(
-            stream,
-            $"video/{Path.GetExtension(video.StoragePath)}",
-            video.ModifiedAt.ToDateTimeOffset(),
-            new EntityTagHeaderValue(new StringSegment($"\"{id}\"")),
-            true);
-    }
-
     [HttpPost("PlaybackPosition")]
     public async Task<NoContentResult> UpdatePlaybackPosition(Guid id, [Required, FromBody] double? position)
     {
@@ -88,7 +74,6 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Files")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
     public async Task<List<VideoFileEntity>> GetFiles(Guid id, CancellationToken cancellationToken)
     {
         return await _repository.GetFilesAsync(id, User.GetUserId(), cancellationToken);
@@ -123,7 +108,7 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Files/{fileId:guid}")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
+    [ResponseCache(CacheProfileName = CacheProfiles.Static)]
     public async Task<IActionResult> GetFile(Guid id, Guid fileId, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
@@ -145,7 +130,7 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Thumbnail")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
+    [ResponseCache(CacheProfileName = CacheProfiles.Static)]
     public async Task<IActionResult> GetThumbnail(Guid id, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
@@ -181,7 +166,6 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Subtitles")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> GetSubtitles(Guid id, CancellationToken cancellationToken)
     {
         var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
@@ -202,7 +186,6 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Chapters")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> GetChapters(Guid id, CancellationToken cancellationToken)
     {
         var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
@@ -223,7 +206,7 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("SponsorBlock")]
-    [ResponseCache(Duration = 604800, Location = ResponseCacheLocation.Client)]
+    [ResponseCache(CacheProfileName = CacheProfiles.Static)]
     public async Task<IActionResult> GetSponsorBlockSegments(Guid id, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
@@ -245,6 +228,11 @@ public sealed class VideosController : ControllerBase
         if (segments is [])
         {
             return NoContent();
+        }
+
+        if (segments.Any(segment => !segment.Locked))
+        {
+            Response.GetTypedHeaders().CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true };
         }
 
         var memoryStream = new MemoryStream();

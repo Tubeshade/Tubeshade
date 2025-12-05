@@ -77,7 +77,11 @@ internal static class Program
             .AddSingleton(DateTimeZoneProviders.Tzdb);
 
         builder.Services
-            .AddMvc(options => options.ModelBinderProviders.Insert(0, new NodaTimeBindingProvider()))
+            .AddMvc(options =>
+            {
+                options.ModelBinderProviders.Insert(0, new NodaTimeBindingProvider());
+                options.CacheProfiles.AddTubeshadeProfiles();
+            })
             .AddXmlSerializerFormatters()
             .AddJsonOptions(options =>
             {
