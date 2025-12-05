@@ -9,8 +9,19 @@
     <partial name="Shared/_Navigation" model="@Model"/>
 }
 
-<partial name="Videos/_VideoFilters" model="@Model"/>
+@if (Model.Libraries is [])
+{
+    <p class="text-center">
+        @SharedResources.Libraries_CreateNew <a asp-page="/Libraries/Index">
+            @SharedResources.Libraries_CreateNew_LinkText
+        </a>
+    </p>
+}
+else
+{
+    <partial name="Videos/_VideoFilters" model="@Model"/>
 
-<section id="videos">
-    <partial name="Videos/_FilteredVideos" model="@Model"/>
-</section>
+    <section id="videos">
+        <partial name="Videos/_FilteredVideos" model="@Model"/>
+    </section>
+}

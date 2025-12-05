@@ -41,14 +41,8 @@
         const timeZoneSelect = document.getElementById("@nameof(AddLibraryModel.TimeZoneId)");
         if (timeZoneSelect !== null) {
             const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone.trim();
-            console.log(userTimeZone);
-
             if (userTimeZone !== null) {
-                const option = timeZoneSelect.namedItem(userTimeZone);
-                console.log(option);
-                if (option !== null) {
-                    timeZoneSelect.selectedIndex = option.index;
-                }
+                timeZoneSelect.value = userTimeZone;
             }
         }
     </script>

@@ -369,4 +369,10 @@
     <data name="Libraries_Schedule_Reindex" xml:space="preserve">
         <value>Reindex</value>
     </data>
+    <data name="Libraries_CreateNew" xml:space="preserve">
+        <value>You don't have any libraries, create a new one</value>
+    </data>
+    <data name="Libraries_CreateNew_LinkText" xml:space="preserve">
+        <value>here</value>
+    </data>
 </root>

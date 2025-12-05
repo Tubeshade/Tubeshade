@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 using NodaTime;
 using Npgsql;
 using Tubeshade.Data;
@@ -16,9 +13,8 @@ using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Libraries;
 
-public sealed class Index : PageModel, INonLibraryPage
+public sealed class Index : PageModel, INonLibraryPage, IFormLayout
 {
-    private readonly ILogger<Index> _logger;
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _repository;
     private readonly TaskRepository _taskRepository;
@@ -26,7 +22,6 @@ public sealed class Index : PageModel, INonLibraryPage
     private readonly IDateTimeZoneProvider _timeZoneProvider;
 
     public Index(
-        ILogger<Index> logger,
         NpgsqlConnection connection,
         LibraryRepository repository,
         TaskRepository taskRepository,
@@ -35,14 +30,13 @@ public sealed class Index : PageModel, INonLibraryPage
     {
         _repository = repository;
         _connection = connection;
-        _logger = logger;
         _taskRepository = taskRepository;
         _scheduleRepository = scheduleRepository;
         _timeZoneProvider = timeZoneProvider;
     }
 
     /// <inheritdoc />
-    public IEnumerable<LibraryEntity> Libraries => Entities;
+    public List<LibraryEntity> Libraries => Entities;
 
     public List<LibraryEntity> Entities { get; set; } = [];
 
@@ -66,28 +60,6 @@ public sealed class Index : PageModel, INonLibraryPage
         }
 
         var userId = User.GetUserId();
-
-        if (!Directory.Exists(model.StoragePath))
-        {
-            ModelState.AddModelError(nameof(AddLibraryModel.StoragePath), "Directory does not exist");
-            return await OnGet(cancellationToken);
-        }
-
-        try
-        {
-            var testFilePath = Path.Combine(model.StoragePath, Guid.NewGuid().ToString("D"));
-            await using (System.IO.File.Create(testFilePath))
-            {
-            }
-
-            System.IO.File.Delete(testFilePath);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(exception, "Could not write to library storage path");
-            ModelState.AddModelError(nameof(AddLibraryModel.StoragePath), "Could not create a file in directory");
-            return await OnGet(cancellationToken);
-        }
 
         // Once we know that the request is valid we don't want to stop while saving the data,
         // even if the client has disconnected

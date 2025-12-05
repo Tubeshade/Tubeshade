@@ -1,36 +1,39 @@
 ﻿@model AddLibraryModel
 
-<form method="post">
-    <div>
-        <label asp-for="Name">@SharedResources.Name</label>
+<form method="post" class="row g-3 mb-3">
+
+    <div class="col-sm-12">
+        <label class="form-label" asp-for="Name">@SharedResources.Name</label>
         <input class="form-control" asp-for="Name" type="text" autofocus/>
-        <span asp-validation-for="Name" class="text-danger"></span>
+        <span class="form-text text-danger" asp-validation-for="Name"></span>
     </div>
 
-    <div>
-        <label asp-for="StoragePath">@SharedResources.Libraries_StoragePath</label>
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="StoragePath">@SharedResources.Libraries_StoragePath</label>
         <input class="form-control" asp-for="StoragePath" type="text" value="/var/opt/tubeshade"/>
-        <span asp-validation-for="StoragePath" class="text-danger"></span>
+        <span class="form-text text-danger" asp-validation-for="StoragePath"></span>
     </div>
 
-    <div>
-        <label asp-for="CronExpression">@SharedResources.Libraries_SubscriptionSchedule</label>
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="CronExpression">@SharedResources.Libraries_SubscriptionSchedule</label>
         <input class="form-control" asp-for="CronExpression" type="text"/>
-        <span asp-validation-for="CronExpression" class="text-danger"></span>
+        <span class="form-text text-danger" asp-validation-for="CronExpression"></span>
     </div>
 
-    <div>
-        <label asp-for="TimeZoneId">@SharedResources.Libraries_SubscriptionTimeZone</label>
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="TimeZoneId">@SharedResources.Libraries_SubscriptionTimeZone</label>
         <select class="form-control form-select" asp-for="TimeZoneId">
             @foreach (var id in Model.TimeZoneIds)
             {
                 <option value="@id">@id</option>
             }
         </select>
-        <span asp-validation-for="TimeZoneId" class="text-danger"></span>
+        <span class="form-text text-danger" asp-validation-for="TimeZoneId"></span>
     </div>
 
-    <button class="btn btn-primary" type="submit">
-        @SharedResources.Button_CreateLibrary
-    </button>
+    <div class="col-12 col-sm-4 col-lg-3 col-xxl-2">
+        <button class="btn btn-success w-100" type="submit">
+            @SharedResources.Button_CreateLibrary
+        </button>
+    </div>
 </form>

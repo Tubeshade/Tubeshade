@@ -573,6 +573,24 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You don&apos;t have any libraries, create a new one.
+        /// </summary>
+        public static string Libraries_CreateNew {
+            get {
+                return ResourceManager.GetString("Libraries_CreateNew", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to here.
+        /// </summary>
+        public static string Libraries_CreateNew_LinkText {
+            get {
+                return ResourceManager.GetString("Libraries_CreateNew_LinkText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Schedule.
         /// </summary>
         public static string Libraries_Schedule {

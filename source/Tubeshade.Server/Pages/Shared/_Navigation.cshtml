@@ -7,17 +7,21 @@
     </a>
 
     <ul class="dropdown-menu" aria-labelledby="libraries-menu-link">
-        @foreach (var library in Model.Libraries)
+        @if (Model.Libraries is not [])
         {
+            @foreach (var library in Model.Libraries)
+            {
+                <li>
+                    <a class="dropdown-item" asp-page="/Libraries/Library" asp-route-libraryId="@library.Id">
+                        @library.Name
+                    </a>
+                </li>
+            }
+
             <li>
-                <a class="dropdown-item" asp-page="/Libraries/Library" asp-route-libraryId="@library.Id">
-                    @library.Name
-                </a>
+                <hr class="dropdown-divider"/>
             </li>
         }
-        <li>
-            <hr class="dropdown-divider"/>
-        </li>
         <li>
             <a class="dropdown-item" asp-page="/Libraries/Index">
                 @SharedResources.AllLibraries

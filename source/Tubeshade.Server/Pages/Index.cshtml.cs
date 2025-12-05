@@ -79,7 +79,7 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
     public PaginatedData<VideoModel> PageData { get; set; } = null!;
 
     /// <inheritdoc />
-    public IEnumerable<LibraryEntity> Libraries { get; private set; } = null!;
+    public List<LibraryEntity> Libraries { get; private set; } = null!;
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {

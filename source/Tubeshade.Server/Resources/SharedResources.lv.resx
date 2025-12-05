@@ -362,4 +362,10 @@
     <data name="Libraries_Schedule_Reindex" xml:space="preserve">
         <value>Pārskanēšana</value>
     </data>
+    <data name="Libraries_CreateNew" xml:space="preserve">
+        <value>Nav nevienas bibliotēkas, izveidojiet jaunu</value>
+    </data>
+    <data name="Libraries_CreateNew_LinkText" xml:space="preserve">
+        <value>šeit</value>
+    </data>
 </root>

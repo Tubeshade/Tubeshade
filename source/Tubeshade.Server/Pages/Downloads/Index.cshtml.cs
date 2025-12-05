@@ -89,7 +89,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
     public Guid? ChannelId { get; set; }
 
     /// <inheritdoc />
-    public IEnumerable<LibraryEntity> Libraries { get; private set; } = [];
+    public List<LibraryEntity> Libraries { get; private set; } = [];
 
     public List<ChannelEntity> Channels { get; set; } = [];
 

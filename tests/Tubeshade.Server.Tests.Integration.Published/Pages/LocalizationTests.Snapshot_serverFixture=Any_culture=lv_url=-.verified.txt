@@ -21,43 +21,8 @@
       - listitem:
         - button "Atslēgties"
 - main:
-  - searchbox "Meklēt"
-  - combobox "Skatīts":
-    - option "Visi"
-    - option "Skatīts"
-    - option "Neskatīts" [selected]
-  - combobox "Video veids":
-    - option "Visi" [selected]
-    - option "Tiešraides"
-    - option "Shorts"
-    - option "Video"
-  - combobox "Ar failiem":
-    - option "Visi"
-    - option "Ar failiem" [selected]
-    - option "Bez failiem"
-  - combobox "Pieejamība":
-    - option "Visi" [selected]
-    - option "Nepieejami"
-    - option "Privāti"
-    - option "Publiski"
-  - combobox "Kārtot pēc":
-    - option "Izveidots"
-    - option "Labots"
-    - option "Publicēts" [selected]
-    - option "Haotiski"
-    - option "Atjaunots"
-  - combobox "Kārtošanas virziens":
-    - option "Augoši"
-    - option "Dilstoši" [selected]
-  - spinbutton "Lapas izmērs"
-  - button "🔎︎"
-  - navigation:
-    - text: Redzams 1 - 0 no 0
-    - list:
-      - listitem:
-        - link "Pirmā":
-          - /url: /?Viewed=False&WithFiles=True&SortBy=published_at&SortDirection=DESC&PageIndex=0
-      - listitem:
-        - link "Pēdējā":
-          - /url: /?Viewed=False&WithFiles=True&SortBy=published_at&SortDirection=DESC&PageIndex=-1
+  - paragraph:
+    - text: Nav nevienas bibliotēkas, izveidojiet jaunu
+    - link "šeit":
+      - /url: /Libraries
 - contentinfo: © 2025 - Tubeshade

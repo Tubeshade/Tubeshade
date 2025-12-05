@@ -21,7 +21,7 @@ public sealed class Index : PageModel, INonLibraryPage
     }
 
     /// <inheritdoc />
-    public IEnumerable<LibraryEntity> Libraries { get; private set; } = [];
+    public List<LibraryEntity> Libraries { get; private set; } = [];
 
     public List<ChannelEntity> Channels { get; private set; } = [];
 
