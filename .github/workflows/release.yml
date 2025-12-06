@@ -106,7 +106,6 @@ jobs:
           files: |
             ${{ steps.download.outputs.download-path }}/**/*.zip
             ${{ steps.download.outputs.download-path }}/**/*.deb
-            ${{ steps.download.outputs.download-path }}/**/*.msi
 
       - name: Create release
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
@@ -120,7 +119,6 @@ jobs:
           files: |
             ${{ steps.download.outputs.download-path }}/**/*.zip
             ${{ steps.download.outputs.download-path }}/**/*.deb
-            ${{ steps.download.outputs.download-path }}/**/*.msi
 
   docker:
     name: Docker image

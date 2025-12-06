@@ -19,5 +19,5 @@ docker build \
 docker push	"$version_tag"
 
 if [ "$tag" = "$version" ]; then
-	docker push	"latest_tag"
+	docker push	"$latest_tag"
 fi
