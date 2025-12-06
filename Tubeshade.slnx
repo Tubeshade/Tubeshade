@@ -11,6 +11,7 @@
     <File Path=".editorconfig" />
     <File Path=".dockerignore" />
     <File Path="Dockerfile" />
+    <File Path="version" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="tests\PubSubHubbub.Tests\PubSubHubbub.Tests.csproj" />

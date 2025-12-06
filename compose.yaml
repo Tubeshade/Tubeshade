@@ -1,6 +1,6 @@
 ﻿services:
   tubeshade:
-    image: ghcr.io/tubeshade/tubeshade:nightly
+    image: ghcr.io/tubeshade/tubeshade:v0.1.0
     ports:
       - "80:8080"
     networks:
