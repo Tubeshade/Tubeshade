@@ -152,7 +152,7 @@ public sealed class YoutubeService
         NpgsqlTransaction transaction)
     {
         var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
-        var youtubeChannelId = data.ChannelID;
+        var youtubeChannelId = data.ChannelID ?? throw new InvalidOperationException("Missing channel id");
 
         var channel = await _channelRepository.FindByExternalId(youtubeChannelId, userId, Access.Read, transaction);
         if (channel is null)
@@ -165,10 +165,10 @@ public sealed class YoutubeService
                     CreatedByUserId = userId,
                     ModifiedByUserId = userId,
                     OwnerId = library.OwnerId,
-                    Name = data.Channel,
+                    Name = data.Channel ?? throw new InvalidOperationException("Missing channel name"),
                     StoragePath = library.StoragePath,
                     ExternalId = youtubeChannelId,
-                    ExternalUrl = data.ChannelUrl,
+                    ExternalUrl = data.ChannelUrl ?? throw new InvalidOperationException("Missing channel Url"),
                     Availability = ExternalAvailability.Public,
                 },
                 transaction);
@@ -266,7 +266,7 @@ public sealed class YoutubeService
                     ChannelId = channel.Id,
                     StoragePath = channel.StoragePath,
                     ExternalId = youtubeVideoId,
-                    ExternalUrl = videoData.WebpageUrl,
+                    ExternalUrl = videoData.WebpageUrl ?? throw new InvalidOperationException("Missing video url"),
                     PublishedAt = publishedInstant,
                     RefreshedAt = currentTime,
                     Availability = availability,
@@ -332,7 +332,7 @@ public sealed class YoutubeService
                 continue;
             }
 
-            var formatIds = data.FormatID.Split('+');
+            var formatIds = data.FormatID!.Split('+');
             var formats = formatIds
                 .Select(formatId => data.Formats.Single(formatData => formatData.FormatId == formatId))
                 .ToArray();
@@ -417,7 +417,7 @@ public sealed class YoutubeService
         }
 
         var existingThumbnail = await _imageFileRepository.FindVideoThumbnail(video.Id, userId, Access.Modify, transaction);
-        var thumbnail = videoData.Thumbnails.Single(thumbnail => thumbnail.Url == videoData.Thumbnail);
+        var thumbnail = videoData.Thumbnails!.Single(thumbnail => thumbnail.Url == videoData.Thumbnail);
         if (existingThumbnail is not null && existingThumbnail.Width >= thumbnail.Width)
         {
             _logger.ExistingThumbnail();
@@ -529,7 +529,7 @@ public sealed class YoutubeService
 
         _logger.LogDebug("Downloading thumbnails for channel {ChannelId}", channel.Id);
         await youtube.RunWithOptions(
-            videoData.ChannelUrl,
+            videoData.ChannelUrl ?? throw new InvalidOperationException("Missing channel Url"),
             new OptionSet
             {
                 Output = "thumbnail:thumbnail.%(ext)s",
@@ -636,12 +636,17 @@ public sealed class YoutubeService
 
         if (reportProgress)
         {
-            await taskRepository.InitializeTaskProgress(taskRunId, playlists.SelectMany(pair => pair.Value.Entries).Count());
+            await taskRepository.InitializeTaskProgress(taskRunId, playlists.SelectMany(pair => pair.Value.Entries ?? []).Count());
         }
 
         var indexOffset = 0;
         foreach (var (type, playlistData) in playlists)
         {
+            if (playlistData.Entries is null)
+            {
+                throw new InvalidOperationException("Playlist is missing entries");
+            }
+
             foreach (var (index, video) in playlistData.Entries.Index())
             {
                 var existing = await _videoRepository.FindByExternalUrl(video.Url, userId, Access.Read, transaction);
@@ -770,7 +775,7 @@ public sealed class YoutubeService
                 _logger.LogDebug("Selected format {FormatData}", formatData);
             }
 
-            var videoFormat = formats.Single(format => !format.Resolution.Contains("audio only", StringComparison.OrdinalIgnoreCase));
+            var videoFormat = formats.Single(format => !format.Resolution!.Contains("audio only", StringComparison.OrdinalIgnoreCase));
             var containerType = VideoContainerType.FromName(videoFormat.Extension);
             var videoFile = files.Single(file => file.Type == containerType && file.Height == videoFormat.Height!.Value);
 
