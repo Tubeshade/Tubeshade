@@ -104,7 +104,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 CustomOptions = customOptions.ToArray(),
             });
 
-        if (!fetchResult.Success)
+        if (!fetchResult.Success || fetchResult.Data?.Entries is null)
         {
             throw new(string.Join(Environment.NewLine, fetchResult.ErrorOutput));
         }
@@ -255,7 +255,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             throw new Exception(string.Join(Environment.NewLine, failedResults.SelectMany(lines => lines)));
         }
 
-        if (results.Any(tuple => tuple.result.Data.ResultType is not MetadataType.Video))
+        if (results.Any(tuple => tuple.result.Data!.ResultType is not MetadataType.Video))
         {
             throw new InvalidOperationException("Unexpected metadata type when downloading video");
         }
@@ -263,9 +263,9 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         return results
             .Select(tuple =>
             {
-                var formatIds = tuple.result.Data.FormatID.Split('+');
+                var formatIds = tuple.result.Data!.FormatID!.Split('+');
                 var videoFormats = formatIds
-                    .Select(formatId => tuple.result.Data.Formats.Single(format => format.FormatId == formatId))
+                    .Select(formatId => tuple.result.Data.Formats!.Single(format => format.FormatId == formatId))
                     .ToArray();
 
                 return (tuple.format, videoFormats);

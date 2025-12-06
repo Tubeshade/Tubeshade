@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <ProjectReference Include="..\YoutubeDLSharp\YoutubeDLSharp.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="NodaTime"/>
+        <PackageReference Include="NodaTime.Serialization.SystemTextJson"/>
+    </ItemGroup>
+
+</Project>
