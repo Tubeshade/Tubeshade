@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace YoutubeDLSharp.Metadata;
@@ -12,6 +11,7 @@ namespace YoutubeDLSharp.Metadata;
 public sealed class VideoData
 {
     [JsonPropertyName("_type")]
+    [JsonConverter(typeof(JsonStringEnumConverter<MetadataType>))]
     public MetadataType ResultType { get; set; }
 
     [JsonPropertyName("extractor")]
@@ -34,10 +34,10 @@ public sealed class VideoData
     public FormatData[]? Formats { get; set; }
 
     [JsonPropertyName("url")]
-    public required string Url { get; set; }
+    public string? Url { get; set; }
 
     [JsonPropertyName("ext")]
-    public required string Extension { get; set; }
+    public string? Extension { get; set; }
 
     [JsonPropertyName("format")]
     public string? Format { get; set; }
@@ -77,22 +77,22 @@ public sealed class VideoData
     public string? Creator { get; set; }
 
     [JsonPropertyName("release_timestamp")] // date as unix timestamp
-    public DateTime? ReleaseTimestamp { get; set; }
+    public long? ReleaseTimestamp { get; set; }
 
-    [JsonPropertyName("release_date")] // date in UTC (YYYYMMDD).
-    public DateTime? ReleaseDate { get; set; }
+    // [JsonPropertyName("release_date")] // date in UTC (YYYYMMDD).
+    // public DateTime? ReleaseDate { get; set; }
 
     [JsonPropertyName("timestamp")] // date as unix timestamp
-    public DateTime? Timestamp { get; set; }
+    public long? Timestamp { get; set; }
 
-    [JsonPropertyName("upload_date")] // date in UTC (YYYYMMDD).
-    public DateTime? UploadDate { get; set; }
+    // [JsonPropertyName("upload_date")] // date in UTC (YYYYMMDD).
+    // public DateTime? UploadDate { get; set; }
 
     [JsonPropertyName("modified_timestemp")] // date as unix timestamp
-    public DateTime? ModifiedTimestamp { get; set; }
+    public long? ModifiedTimestamp { get; set; }
 
-    [JsonPropertyName("modified_date")] // date in UTC (YYYYMMDD).
-    public DateTime? ModifiedDate { get; set; }
+    // [JsonPropertyName("modified_date")] // date in UTC (YYYYMMDD).
+    // public DateTime? ModifiedDate { get; set; }
 
     [JsonPropertyName("uploader_id")]
     public string? UploaderID { get; set; }
@@ -170,6 +170,7 @@ public sealed class VideoData
     public bool? WasLive { get; set; }
 
     [JsonPropertyName("live_status")]
+    [JsonConverter(typeof(JsonStringEnumConverter<LiveStatus>))]
     public LiveStatus? LiveStatus { get; set; }
 
     [JsonPropertyName("start_time")]
@@ -179,9 +180,10 @@ public sealed class VideoData
     public float? EndTime { get; set; }
 
     [JsonPropertyName("playable_in_embed")]
-    public string? PlayableInEmbed { get; set; }
+    public bool? PlayableInEmbed { get; set; }
 
     [JsonPropertyName("availability")]
+    [JsonConverter(typeof(JsonStringEnumConverter<Availability>))]
     public Availability? Availability { get; set; }
 
     [JsonPropertyName("chapters")]

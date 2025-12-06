@@ -242,7 +242,7 @@ public sealed class YoutubeService
         {
             var publishedAt = videoData.ReleaseTimestamp ?? videoData.Timestamp
                 ?? throw new InvalidOperationException("Video is missing publish date");
-            var publishedInstant = Instant.FromDateTimeUtc(publishedAt);
+            var publishedInstant = Instant.FromUnixTimeSeconds(publishedAt);
 
             type ??= videoData switch
             {
@@ -649,6 +649,11 @@ public sealed class YoutubeService
 
             foreach (var (index, video) in playlistData.Entries.Index())
             {
+                if (video.Url is null)
+                {
+                    throw new InvalidOperationException("Playlist entry is missing the Url");
+                }
+
                 var existing = await _videoRepository.FindByExternalUrl(video.Url, userId, Access.Read, transaction);
                 if (existing is not null && breakOnExisting)
                 {

@@ -1,5 +1,4 @@
-﻿
-using System.Runtime.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace YoutubeDLSharp.Metadata;
 //https://github.com/yt-dlp/yt-dlp/blob/9c53b9a1b6b8914e4322263c97c26999f2e5832e/yt_dlp/extractor/common.py#L105-L403
@@ -9,56 +8,40 @@ namespace YoutubeDLSharp.Metadata;
 /// </summary>
 public enum MetadataType
 {
-    [EnumMember(Value = "video")]
-    Video,
-    [EnumMember(Value = "playlist")]
-    Playlist,
-    [EnumMember(Value = "multi_video")]
-    MultiVideo,
-    [EnumMember(Value = "url")]
-    Url,
-    [EnumMember(Value = "url_transparent")]
+    [JsonStringEnumMemberName("video")] Video,
+    [JsonStringEnumMemberName("playlist")] Playlist,
+    [JsonStringEnumMemberName("multi_video")] MultiVideo,
+    [JsonStringEnumMemberName("url")] Url,
+
+    [JsonStringEnumMemberName("url_transparent")]
     UrlTransparent
 }
 
 public enum LiveStatus
 {
-    [EnumMember(Value = "unknown")]
-    None,
-    [EnumMember(Value = "is_live")]
-    IsLive,
-    [EnumMember(Value = "is_upcoming")]
-    IsUpcoming,
-    [EnumMember(Value = "was_live")]
-    WasLive,
-    [EnumMember(Value = "not_live")]
-    NotLive,
-    [EnumMember(Value = "post_live")]
-    PostLive
+    [JsonStringEnumMemberName("unknown")] None,
+    [JsonStringEnumMemberName("is_live")] IsLive,
+    [JsonStringEnumMemberName("is_upcoming")] IsUpcoming,
+    [JsonStringEnumMemberName("was_live")] WasLive,
+    [JsonStringEnumMemberName("not_live")] NotLive,
+    [JsonStringEnumMemberName("post_live")] PostLive
 }
 
 public enum Availability
 {
-    [EnumMember(Value = "private")]
-    Private,
-    [EnumMember(Value = "premium_only")]
-    PremiumOnly,
-    [EnumMember(Value = "subscriber_only")]
+    [JsonStringEnumMemberName("private")] Private,
+    [JsonStringEnumMemberName("premium_only")] PremiumOnly,
+
+    [JsonStringEnumMemberName("subscriber_only")]
     SubscriberOnly,
-    [EnumMember(Value = "needs_auth")]
-    NeedsAuth,
-    [EnumMember(Value = "unlisted")]
-    Unlisted,
-    [EnumMember(Value = "public")]
-    Public
+    [JsonStringEnumMemberName("needs_auth")] NeedsAuth,
+    [JsonStringEnumMemberName("unlisted")] Unlisted,
+    [JsonStringEnumMemberName("public")] Public
 }
 
 public enum MaybeBool
 {
-    [EnumMember(Value = "False")]
-    False,
-    [EnumMember(Value = "maybe")]
-    Maybe,
-    [EnumMember(Value = "True")]
-    True
+    [JsonStringEnumMemberName("False")] False,
+    [JsonStringEnumMemberName("maybe")] Maybe,
+    [JsonStringEnumMemberName("True")] True
 }

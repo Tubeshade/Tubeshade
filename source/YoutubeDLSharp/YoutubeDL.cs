@@ -17,10 +17,21 @@ namespace YoutubeDLSharp;
 /// </summary>
 public sealed class YoutubeDL
 {
+    private static readonly JsonSerializerOptions Options;
     private static readonly Regex RgxFile = new(@"^outfile:\s\""?(.*)\""?", RegexOptions.Compiled);
 
     private static readonly Regex RgxFilePostProc =
         new(@"\[download\] Destination: [a-zA-Z]:\\\S+\.\S{3,}", RegexOptions.Compiled);
+
+    static YoutubeDL()
+    {
+        Options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        };
+
+        Options.MakeReadOnly(true);
+    }
 
     private readonly ProcessRunner _runner;
 
@@ -187,7 +198,7 @@ public sealed class YoutubeDL
 
             try
             {
-                videoData = JsonSerializer.Deserialize<VideoData>(args.Data);
+                videoData = JsonSerializer.Deserialize<VideoData>(args.Data, Options);
             }
             catch (JsonException)
             {
