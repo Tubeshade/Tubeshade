@@ -10,6 +10,7 @@
     <ItemGroup>
         <ProjectReference Include="..\PubSubHubbub\PubSubHubbub.csproj"/>
         <ProjectReference Include="..\Tubeshade.Data\Tubeshade.Data.csproj"/>
+        <ProjectReference Include="..\YoutubeDLSharp\YoutubeDLSharp.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -20,7 +21,6 @@
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer"/>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect"/>
         <PackageReference Include="NodaTime.Serialization.SystemTextJson"/>
-        <PackageReference Include="YoutubeDLSharp"/>
     </ItemGroup>
 
     <ItemGroup>

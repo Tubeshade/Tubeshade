@@ -80,15 +80,6 @@
           "NodaTime": "[3.0.0, 4.0.0)"
         }
       },
-      "YoutubeDLSharp": {
-        "type": "Direct",
-        "requested": "[1.1.2, )",
-        "resolved": "1.1.2",
-        "contentHash": "PYcZLUqayicAHsi9k0Uprkd0I54hCTZ41pbwslT4QE7CwlceXv+gZr5nMKsifPOeYXwzgOvf1YmQF4W4uklzeA==",
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.3"
-        }
-      },
       "Asp.Versioning.Abstractions": {
         "type": "Transitive",
         "resolved": "8.1.0",
@@ -156,11 +147,6 @@
           "Microsoft.IdentityModel.Logging": "8.0.1"
         }
       },
-      "Newtonsoft.Json": {
-        "type": "Transitive",
-        "resolved": "13.0.3",
-        "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
-      },
       "Npgsql": {
         "type": "Transitive",
         "resolved": "10.0.0",
@@ -220,6 +206,17 @@
           "SponsorBlock": "[1.0.0, )",
           "dbup-core": "[6.0.15, )",
           "dbup-postgresql": "[6.1.5, )"
+        }
+      },
+      "youtubedlsharp": {
+        "type": "Project"
+      },
+      "ytdlp": {
+        "type": "Project",
+        "dependencies": {
+          "NodaTime": "[3.2.2, )",
+          "NodaTime.Serialization.SystemTextJson": "[1.3.0, )",
+          "YoutubeDLSharp": "[1.0.0, )"
         }
       },
       "Ardalis.SmartEnum": {

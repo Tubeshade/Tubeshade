@@ -12,7 +12,7 @@ dotnet reportgenerator \
 	-reports:/reports/report.xml \
 	-reporttypes:Cobertura \
 	-targetdir:/reports/ \
-	"-assemblyfilters:-dbup-core;-dbup-postgresql;-Dapper" \
+	"-assemblyfilters:-dbup-core;-dbup-postgresql;-Dapper;-YoutubeDLSharp" \
 	"-filefilters:-*.g.cs"
 
 rm /reports/report.xml

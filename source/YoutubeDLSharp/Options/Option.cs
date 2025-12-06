@@ -1,0 +1,96 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using static System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes;
+
+namespace YoutubeDLSharp.Options;
+
+/// <summary>
+/// Represents one yt-dlp option.
+/// </summary>
+/// <typeparam name="T">The type of the option.</typeparam>
+[DynamicallyAccessedMembers(All)]
+public sealed class Option<[DynamicallyAccessedMembers(All)] T> : IOption
+{
+    private T? _value;
+
+    /// <summary>
+    /// The default string representation of the option flag.
+    /// </summary>
+    public string DefaultOptionString => OptionStrings.First();
+
+    /// <summary>
+    /// An array of all possible string representations of the option flag.
+    /// </summary>
+    public string[] OptionStrings { get; }
+
+    /// <summary>
+    /// True if the option flag is set; false otherwise.
+    /// </summary>
+    [MemberNotNullWhen(true, nameof(Value))]
+    public bool IsSet { get; private set; }
+
+    /// <summary>
+    /// The option value.
+    /// </summary>
+    public T? Value
+    {
+        get => _value;
+        set
+        {
+            IsSet = !Equals(value, default(T));
+            _value = value;
+        }
+    }
+
+    /// <summary>
+    /// True if this option is custom.
+    /// </summary>
+    public bool IsCustom { get; }
+
+    /// <summary>
+    /// Creates a new instance of class Option.
+    /// </summary>
+    public Option(params string[] optionStrings)
+    {
+        OptionStrings = optionStrings;
+        IsSet = false;
+    }
+
+    public Option(bool isCustom, params string[] optionStrings)
+    {
+        OptionStrings = optionStrings;
+        IsSet = false;
+        IsCustom = isCustom;
+    }
+
+    /// <summary>
+    /// Sets the option value from a given string representation.
+    /// </summary>
+    /// <param name="s">The string (including the option flag).</param>
+    public void SetFromString(string s)
+    {
+        var split = s.Split(' ');
+        var stringValue = s.Substring(split[0].Length).Trim().Trim('"');
+        if (!OptionStrings.Contains(split[0]))
+        {
+            throw new ArgumentException("Given string does not match required format.");
+        }
+
+        Value = Utils.OptionValueFromString<T>(stringValue);
+    }
+
+    public override string ToString()
+    {
+        if (!IsSet)
+        {
+            return string.Empty;
+        }
+
+        var val = Utils.OptionValueToString(Value);
+        return DefaultOptionString + val;
+    }
+
+    public IEnumerable<string> ToStringCollection() => [ToString()];
+}
