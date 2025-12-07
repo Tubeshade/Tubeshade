@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Replace [YoutubeDLSharp](https://github.com/Bluegrams/YoutubeDLSharp) with internal implementation
+  ([#190](https://github.com/Tubeshade/Tubeshade/issues/190))
 - Vendor [YoutubeDLSharp](https://github.com/Bluegrams/YoutubeDLSharp)
   ([#190](https://github.com/Tubeshade/Tubeshade/issues/190))
 - Update .NET SDK from 10.0.100 to 10.0.101, and runtime from 10.0.0 to 10.0.1
