@@ -9,7 +9,7 @@
 
     <ul class="pagination justify-content-center">
         <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
-            <a asp-page="" asp-all-route-data="@(Model.GetRouteValues(0))"
+            <a asp-all-route-data="@(Model.GetRouteValues(0))"
                class="page-link">
                 @SharedResources.Pagination_First
             </a>
@@ -18,7 +18,7 @@
         @foreach (var index in Model.PageData.DisplayedPages)
         {
             <li class="page-item @(index - 1 == Model.PageData.Page ? "active" : string.Empty)">
-                <a asp-page="" asp-all-route-data="@(Model.GetRouteValues(index - 1))"
+                <a asp-all-route-data="@(Model.GetRouteValues(index - 1))"
                    class="page-link" aria-current="page">
                     @index
                 </a>
@@ -26,7 +26,7 @@
         }
 
         <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
-            <a asp-page="" asp-all-route-data="@(Model.GetRouteValues(Model.PageData.PageCount - 1))"
+            <a asp-all-route-data="@(Model.GetRouteValues(Model.PageData.PageCount - 1))"
                class="page-link">
                 @SharedResources.Pagination_Last
             </a>
