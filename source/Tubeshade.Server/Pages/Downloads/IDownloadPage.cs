@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Pages.Videos;
@@ -31,13 +32,32 @@ public interface IDownloadPage : IPaginatedDataPage<VideoModel>
         { nameof(Query), Query },
         { nameof(ChannelId), ChannelId?.ToString() },
         { nameof(Type), Type?.Name },
-        { nameof(WithFiles), WithFiles?.ToString() },
+        { nameof(WithFiles), WithFiles?.ToString() ?? " " },
         { nameof(Availability), Availability?.Name },
-        { nameof(SortBy), SortBy?.Name },
-        { nameof(SortDirection), SortDirection?.Name },
+        { nameof(SortBy), SortBy?.Name ?? " " },
+        { nameof(SortDirection), SortDirection?.Name ?? " " },
         { nameof(PageSize), PageSize?.ToString() },
         { nameof(PageIndex), pageIndex.ToString() },
     };
+
+    void ApplyDefaultFilters<TPage>(TPage page)
+        where TPage : PageModel, IDownloadPage
+    {
+        if (page.WithFiles is null && !page.Request.Query.ContainsKey(nameof(page.WithFiles)))
+        {
+            page.WithFiles = true;
+        }
+
+        if (page.SortBy is null && !page.Request.Query.ContainsKey(nameof(page.SortBy)))
+        {
+            page.SortBy = Defaults.VideoOrder;
+        }
+
+        if (page.SortDirection is null && !page.Request.Query.ContainsKey(nameof(page.SortDirection)))
+        {
+            page.SortDirection = Defaults.SortDirection;
+        }
+    }
 
     Task<IActionResult> OnPostStartDownload(Guid videoId);
 
