@@ -933,6 +933,19 @@ public sealed class YoutubeService
             tempFile.MoveTo(targetFilePath);
         }
 
+        if (video is not { IgnoredAt: null, IgnoredByUserId: null })
+        {
+            video.ModifiedByUserId = userId;
+            video.IgnoredAt = null;
+            video.IgnoredByUserId = null;
+
+            var count = await _videoRepository.UpdateAsync(video, transaction);
+            if (count < 1)
+            {
+                throw new InvalidOperationException("Failed to remove ignored status from video");
+            }
+        }
+
         await transaction.CommitAsync(cancellationToken);
     }
 
