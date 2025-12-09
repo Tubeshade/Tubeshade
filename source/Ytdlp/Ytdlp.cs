@@ -30,14 +30,15 @@ public sealed class Ytdlp
             NoPlaylist = true,
             Downloader = "m3u8:native",
             DownloaderArgs = "ffmpeg:-nostats -loglevel 0",
-            // Output = Path.Combine(OutputFolder, OutputFileTemplate),
             RestrictFilenames = false,
             ForceOverwrites = true,
             NoOverwrites = false,
             NoPart = true,
             FfmpegLocation = _ffmpegPath,
             Print = "after_move:outfile: %(filepath)s",
-            DumpJson = true,
+            DumpSingleJson = true,
+            FlatPlaylist = true,
+            WriteComments = false,
         };
 
         options.OverrideOptions(overrideOptions);
