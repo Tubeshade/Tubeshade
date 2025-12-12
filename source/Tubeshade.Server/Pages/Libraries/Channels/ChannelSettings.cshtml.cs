@@ -74,7 +74,9 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
         Entity = await _channelRepository.GetAsync(ChannelId, userId, cancellationToken);
 
         var preferences = await _preferencesRepository.FindForChannel(ChannelId, userId, cancellationToken);
-        var effective = await _preferencesRepository.GetEffectiveForChannel(LibraryId, ChannelId, userId, cancellationToken);
+        var effective = await _preferencesRepository.GetEffectiveForChannel(LibraryId, ChannelId, userId, cancellationToken) ?? new();
+        effective.ApplyDefaults();
+
         UpdatePreferencesModel ??= new UpdatePreferencesModel(preferences) { Effective = effective };
 
         return Page();

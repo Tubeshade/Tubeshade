@@ -52,12 +52,12 @@
         </label>
         <select class="form-control form-select" asp-for="DownloadVideos">
             <option value="" selected="@(Model.DownloadVideos is null)">
-                @SharedResources.Default @(Model.Effective?.DownloadVideos is { } download ? $"({download.Name})" : null)
+                @SharedResources.Default @(Model.Effective?.DownloadVideos is { } download ? $"({download.LocalizedName})" : null)
             </option>
             @foreach (var download in DownloadVideos.List)
             {
                 <option value="@download.Name" selected="@(download == Model.DownloadVideos)">
-                    @SharedResources.ResourceManager.GetString($"Preferences_DownloadVideos_{download.Name}")
+                    @download.LocalizedName
                 </option>
             }
         </select>
@@ -78,7 +78,7 @@
             @SharedResources.Preferences_DownloadFormats
         </label>
         <input class="form-control" asp-for="Formats" type="text"
-               placeholder="@Model.Effective?.Formats"/>
+               placeholder="@(Model.Effective?.Formats is null or [] ? string.Empty : string.Join(",", Model.Effective.Formats))"/>
         <span class="form-text text-danger" asp-validation-for="Formats"></span>
     </div>
 

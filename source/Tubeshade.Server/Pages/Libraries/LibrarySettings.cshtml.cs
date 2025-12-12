@@ -14,6 +14,7 @@ using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
+using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Libraries;
 
@@ -55,7 +56,9 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
         Entity = await _repository.GetAsync(LibraryId, userId, cancellationToken);
 
         var preferences = await _preferencesRepository.FindForLibrary(LibraryId, userId, cancellationToken);
-        var effective = await _preferencesRepository.GetEffectiveForLibrary(LibraryId, userId, cancellationToken);
+        var effective = await _preferencesRepository.GetEffectiveForLibrary(LibraryId, userId, cancellationToken) ?? new();
+        effective.ApplyDefaults();
+
         UpdatePreferencesModel ??= new UpdatePreferencesModel(preferences) { Effective = effective };
 
         var subscriptionSchedule = await _scheduleRepository.GetForTask(userId, LibraryId, TaskType.ScanSubscriptions, Access.Modify, cancellationToken);

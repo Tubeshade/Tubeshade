@@ -31,7 +31,8 @@ public sealed class YoutubeService
 {
     private const string UpscalingFilter = "[url!*='xtags=sr%3D1']";
 
-    private static readonly string[] DefaultVideoFormats =
+    internal const int DefaultVideoCount = 5;
+    internal static readonly string[] DefaultVideoFormats =
     [
         $"bv{UpscalingFilter}+(ba[format_note*=original]/ba)/best{UpscalingFilter}",
         $"bv*[height<=720]{UpscalingFilter}+(ba[format_note*=original]/ba)"
@@ -301,7 +302,8 @@ public sealed class YoutubeService
 
         await _sponsorBlockService.UpdateVideoSegments(video, userId, transaction, cancellationToken);
 
-        var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channel.Id, userId, cancellationToken);
+        var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channel.Id, userId, cancellationToken) ?? new();
+        preferences.ApplyDefaults();
 
         var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction);
         foreach (var file in files.Where(file => file.DownloadedAt is null).ToArray())
@@ -312,7 +314,7 @@ public sealed class YoutubeService
         }
 
         var videoFormats = new Dictionary<string, FormatData>();
-        var formatSelectors = preferences?.Formats is { Length: > 0 } preferredFormats
+        var formatSelectors = preferences.Formats is { Length: > 0 } preferredFormats
             ? preferredFormats
             : DefaultVideoFormats;
 
@@ -322,7 +324,7 @@ public sealed class YoutubeService
                 url,
                 format,
                 cookieFilepath,
-                preferences?.PlayerClient,
+                preferences.PlayerClient,
                 availability != ExternalAvailability.Public,
                 cancellationToken);
 
@@ -494,7 +496,7 @@ public sealed class YoutubeService
             return video.Id;
         }
 
-        if (preferences?.DownloadVideos is null || preferences.DownloadVideos == DownloadVideos.None)
+        if (preferences.DownloadVideos is null || preferences.DownloadVideos == DownloadVideos.None)
         {
             _logger.NotDownloadingDueToPreferences();
             return video.Id;
@@ -599,25 +601,26 @@ public sealed class YoutubeService
         var cookiesFilepath = await CreateCookieFile(libraryId, directory, cancellationToken);
 
         var channel = await _channelRepository.GetAsync(channelId, userId, transaction);
-        var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channelId, userId, cancellationToken);
+        var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channelId, userId, cancellationToken) ?? new();
+        preferences.ApplyDefaults();
 
         var types = new List<(int Count, VideoType Type)>();
 
-        if (preferences is null)
+        if (preferences.VideosCount is null)
         {
-            types.Add((5, VideoType.Video));
+            types.Add((DefaultVideoCount, VideoType.Video));
         }
         else if (preferences.VideosCount is { } videosCount and not 0)
         {
             types.Add((videosCount, VideoType.Video));
         }
 
-        if (preferences?.LiveStreamsCount is { } liveStreamsCount and not 0)
+        if (preferences.LiveStreamsCount is { } liveStreamsCount and not 0)
         {
             types.Add((liveStreamsCount, VideoType.Livestream));
         }
 
-        if (preferences?.ShortsCount is { } shortsCount and not 0)
+        if (preferences.ShortsCount is { } shortsCount and not 0)
         {
             types.Add((shortsCount, VideoType.Short));
         }
@@ -688,12 +691,14 @@ public sealed class YoutubeService
         var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
 
         var video = await _videoRepository.GetAsync(videoId, userId, transaction);
-        var preferences = await _preferencesRepository.GetEffectiveForVideo(libraryId, videoId, userId, cancellationToken);
-        var formatSelectors = preferences?.Formats is { Length: > 0 } preferredFormats
+        var preferences = await _preferencesRepository.GetEffectiveForVideo(libraryId, videoId, userId, cancellationToken) ?? new();
+        preferences.ApplyDefaults();
+
+        var formatSelectors = preferences.Formats is { Length: > 0 } preferredFormats
             ? preferredFormats
             : DefaultVideoFormats;
 
-        var youtubeClient = preferences?.PlayerClient is { } client
+        var youtubeClient = preferences.PlayerClient is { } client
             ? new MultiValue<string>($"youtube:player_client={client.Name}")
             : null;
 
@@ -746,7 +751,7 @@ public sealed class YoutubeService
             video.ExternalUrl,
             formatSelectors,
             cookieFilepath,
-            preferences?.PlayerClient,
+            preferences.PlayerClient,
             cancellationToken);
 
         var totalSize = selectedFormats

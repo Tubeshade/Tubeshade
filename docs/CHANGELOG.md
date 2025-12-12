@@ -11,6 +11,8 @@
 
 ### Fixed
 
+- Correctly display all default values for preferences
+  ([#212](https://github.com/Tubeshade/Tubeshade/pull/212))
 - Include user selected filters in pagination links
   ([#204](https://github.com/Tubeshade/Tubeshade/issues/204))
 - Remove ignored status from video after download
