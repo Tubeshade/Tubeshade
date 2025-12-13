@@ -191,4 +191,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(58, Trace, "Trying to find user by id")]
     internal static partial void SearchingUserById(this ILogger logger);
+
+    [LoggerMessage(59, Debug, "Creating new channel {ChannelName} ({ExternalId})")]
+    internal static partial void CreatingChannel(this ILogger logger, string channelName, string externalId);
 }

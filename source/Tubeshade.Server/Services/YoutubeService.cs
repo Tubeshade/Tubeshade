@@ -152,36 +152,48 @@ public sealed class YoutubeService
         VideoData data,
         NpgsqlTransaction transaction)
     {
-        var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
-        var youtubeChannelId = data.ChannelID ?? throw new InvalidOperationException("Missing channel id");
+        if (data.ChannelID is not { } youtubeChannelId ||
+            data.Channel is not { } channelName ||
+            data.ChannelUrl is not { } channelUrl)
+        {
+            if (data.Availability is null)
+            {
+                throw new InvalidOperationException("Cannot create a channel from an unavailable video");
+            }
+
+            throw new InvalidOperationException("Missing channel details");
+        }
 
         var channel = await _channelRepository.FindByExternalId(youtubeChannelId, userId, Access.Read, transaction);
-        if (channel is null)
+        if (channel is not null)
         {
-            _logger.LogDebug("Creating new channel {ChannelName} ({ChannelExternalId})", data.Channel, youtubeChannelId);
-
-            var channelId = await _channelRepository.AddAsync(
-                new ChannelEntity
-                {
-                    CreatedByUserId = userId,
-                    ModifiedByUserId = userId,
-                    OwnerId = library.OwnerId,
-                    Name = data.Channel ?? throw new InvalidOperationException("Missing channel name"),
-                    StoragePath = library.StoragePath,
-                    ExternalId = youtubeChannelId,
-                    ExternalUrl = data.ChannelUrl ?? throw new InvalidOperationException("Missing channel Url"),
-                    Availability = ExternalAvailability.Public,
-                },
-                transaction);
-
-            channel = await _channelRepository.GetAsync(channelId!.Value, userId, transaction);
-
-            channel.StoragePath = Path.Combine(library.StoragePath, $"channel_{channel.Id}");
-            await _channelRepository.UpdateAsync(channel, transaction);
-            await _channelRepository.AddToLibrary(libraryId, channel.Id, transaction);
-
-            Directory.CreateDirectory(channel.StoragePath);
+            return channel;
         }
+
+        var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
+        _logger.CreatingChannel(channelName, youtubeChannelId);
+
+        var channelId = await _channelRepository.AddAsync(
+            new ChannelEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                OwnerId = library.OwnerId,
+                Name = channelName,
+                StoragePath = library.StoragePath,
+                ExternalId = youtubeChannelId,
+                ExternalUrl = channelUrl,
+                Availability = ExternalAvailability.Public,
+            },
+            transaction);
+
+        channel = await _channelRepository.GetAsync(channelId!.Value, userId, transaction);
+
+        channel.StoragePath = Path.Combine(library.StoragePath, $"channel_{channel.Id}");
+        await _channelRepository.UpdateAsync(channel, transaction);
+        await _channelRepository.AddToLibrary(libraryId, channel.Id, transaction);
+
+        Directory.CreateDirectory(channel.StoragePath);
 
         return channel;
     }
