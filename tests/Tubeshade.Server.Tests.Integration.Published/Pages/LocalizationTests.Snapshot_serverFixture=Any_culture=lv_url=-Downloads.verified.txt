@@ -59,4 +59,4 @@
       - listitem:
         - link "Pēdējā":
           - /url: /Downloads?WithFiles=True&SortBy=published_at&SortDirection=DESC&PageIndex=-1
-- contentinfo: © 2025 - Tubeshade v0.1.0
+- contentinfo: © 2025 - Tubeshade v0.1.1

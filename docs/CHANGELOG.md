@@ -2,6 +2,10 @@
 
 ## [Nightly]
 
+_Latest build from master branch._
+
+## [0.1.1] - 2025-12-13
+
 ### Changed
 
 - Vendor [YoutubeDLSharp](https://github.com/Bluegrams/YoutubeDLSharp)
@@ -23,6 +27,8 @@
 ## [0.1.0] - 2025-12-06
 
 _Initial release._
+
+[0.1.1]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.1
 
 [0.1.0]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.0
 
