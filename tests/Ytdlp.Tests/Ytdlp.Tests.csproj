@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\source\Ytdlp\Ytdlp.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Videos\njX2bu-_Vw4.info.json" />
+    </ItemGroup>
+
+</Project>

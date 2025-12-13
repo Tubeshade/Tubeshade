@@ -696,11 +696,19 @@
           "NodaTime.Serialization.SystemTextJson": "[1.3.0, )",
           "PubSubHubbub": "[1.0.0, )",
           "Tubeshade.Data": "[1.0.0, )",
-          "YoutubeDLSharp": "[1.0.0, )"
+          "Ytdlp": "[1.0.0, )"
         }
       },
       "youtubedlsharp": {
         "type": "Project"
+      },
+      "ytdlp": {
+        "type": "Project",
+        "dependencies": {
+          "NodaTime": "[3.2.2, )",
+          "NodaTime.Serialization.SystemTextJson": "[1.3.0, )",
+          "YoutubeDLSharp": "[1.0.0, )"
+        }
       },
       "Ardalis.SmartEnum": {
         "type": "CentralTransitive",
