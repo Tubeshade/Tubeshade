@@ -817,7 +817,6 @@ public sealed class YoutubeService
             youtube.OutputFolder = tempDirectory.FullName;
             youtube.OutputFileTemplate = $"{Path.GetFileNameWithoutExtension(fileName)}.%(ext)s";
 
-            var outputProgress = new Progress<string>(s => _logger.LogDebug("yt-dlp output: {Output}", s));
             var mergeFormat = videoFile.Type.Name switch
             {
                 VideoContainerType.Names.Mp4 => DownloadMergeFormat.Mp4,
@@ -848,12 +847,9 @@ public sealed class YoutubeService
             _logger.LogInformation("Downloading video {VideoUrl} to {Directory}", video.ExternalUrl, tempDirectory.FullName);
             var downloadTask = youtube.RunVideoDownload(
                 video.ExternalUrl,
-                format: selectedFormat,
+                selectedFormat,
                 mergeFormat,
                 VideoRecodeFormat.None,
-                cancellationToken,
-                null,
-                outputProgress,
                 new OptionSet
                 {
                     LimitRate = limitRate,
@@ -867,7 +863,8 @@ public sealed class YoutubeService
                     EmbedChapters = true,
                     ExtractorArgs = youtubeClient,
                     CustomOptions = customOptions.ToArray(),
-                });
+                },
+                cancellationToken);
 
             var timestamp = Stopwatch.GetTimestamp();
             var fileSize = 0L;

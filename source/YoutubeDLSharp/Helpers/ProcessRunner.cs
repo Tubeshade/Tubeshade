@@ -1,27 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using YoutubeDLSharp.Options;
 
 namespace YoutubeDLSharp.Helpers;
 
-/// <summary>
-/// Provides methods for throttled execution of processes.
-/// </summary>
-public sealed class ProcessRunner
+internal static class ProcessRunner
 {
-    public async Task<(int, string?[])> RunThrottled(
+    internal static async Task<(int, string?[])> RunThrottled(
         YoutubeDLProcess process,
         string[] urls,
         OptionSet options,
-        CancellationToken ct,
-        IProgress<DownloadProgress>? progress = null)
+        CancellationToken cancellationToken)
     {
         var errors = new List<string?>();
         process.ErrorReceived += (_, args) => errors.Add(args.Data);
 
-        var exitCode = await process.RunAsync(urls, options, ct, progress);
+        var exitCode = await process.RunAsync(urls, options, cancellationToken);
         return (exitCode, errors.ToArray());
     }
 }
