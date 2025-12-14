@@ -155,10 +155,16 @@ public sealed class FfmpegService
             await process.WaitForExitAsync(cancellationToken);
         }
 
-        error = string.IsNullOrWhiteSpace(error) ? null : error;
-        output = string.IsNullOrWhiteSpace(output) ? null : output;
+        if (!string.IsNullOrWhiteSpace(error))
+        {
+            _logger.StandardError(processInfo.FileName, error);
+        }
 
-        _logger.FfmpegOutput(output, error);
+        if (!string.IsNullOrWhiteSpace(output))
+        {
+            _logger.StandardOutput(processInfo.FileName, output);
+        }
+
         if (process.ExitCode is not 0 && !string.IsNullOrWhiteSpace(error))
         {
             throw new(error);

@@ -31,7 +31,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         string? cookieFilepath,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting metadata for {Url}", url);
+        _logger.UnknownUrlMetadata(url);
 
         var options = _optionsMonitor.CurrentValue;
         var youtube = new YoutubeDL
@@ -59,7 +59,13 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 IgnoreErrors = true,
                 IgnoreNoFormatsError = true,
                 CustomOptions = customOptions.ToArray(),
+                Verbose = true,
             });
+
+        if (result.ErrorOutput is { Length: > 0 } errorOutput)
+        {
+            _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+        }
 
         if (!result.Success)
         {
@@ -102,7 +108,13 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 YesPlaylist = false,
                 FlatPlaylist = true,
                 CustomOptions = customOptions.ToArray(),
+                Verbose = true,
             });
+
+        if (fetchResult.ErrorOutput is { Length: > 0 } errorOutput)
+        {
+            _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+        }
 
         if (!fetchResult.Success || fetchResult.Data?.Entries is null)
         {
@@ -136,7 +148,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
         }
 
-        return await youtube.RunVideoDataFetch(
+        var result = await youtube.RunVideoDataFetch(
             videoUrl,
             cancellationToken,
             true,
@@ -148,7 +160,15 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 PlaylistItems = "0",
                 IgnoreNoFormatsError = true,
                 CustomOptions = customOptions.ToArray(),
+                Verbose = true,
             });
+
+        if (result.ErrorOutput is { Length: > 0 } errorOutput)
+        {
+            _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+        }
+
+        return result;
     }
 
     /// <inheritdoc />
@@ -192,7 +212,13 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 ExtractorArgs = youtubeClient,
                 IgnoreNoFormatsError = ignoreNoFormatsError,
                 CustomOptions = customOptions.ToArray(),
+                Verbose = true,
             });
+
+        if (result.ErrorOutput is { Length: > 0 } errorOutput)
+        {
+            _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+        }
 
         if (!result.Success)
         {
@@ -243,7 +269,13 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                     EmbedChapters = true,
                     ExtractorArgs = youtubeClient,
                     CustomOptions = customOptions.ToArray(),
+                    Verbose = true,
                 });
+
+            if (result.ErrorOutput is { Length: > 0 } errorOutput)
+            {
+                _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+            }
 
             return (result, format);
         });
@@ -302,8 +334,14 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 Cookies = cookieFilepath,
                 CookiesFromBrowser = options.CookiesFromBrowser,
                 CustomOptions = customOptions.ToArray(),
+                Verbose = true,
             },
             cancellationToken);
+
+        if (result.ErrorOutput is { Length: > 0 } errorOutput)
+        {
+            _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+        }
 
         if (!result.Success)
         {
