@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Changed
+
+- Rewrite vendored code for calling yt-dlp
+  ([#190](https://github.com/Tubeshade/Tubeshade/issues/190))
+
 ## [0.1.2] - 2025-12-14
 
 ### Added

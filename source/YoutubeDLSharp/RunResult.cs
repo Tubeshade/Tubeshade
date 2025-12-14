@@ -7,6 +7,7 @@ namespace YoutubeDLSharp;
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public sealed class RunResult<T>
+    where T : class
 {
     [MemberNotNullWhen(true, nameof(Data))]
     public bool Success { get; }
@@ -15,13 +16,14 @@ public sealed class RunResult<T>
 
     public T? Data { get; }
 
-    /// <summary>
-    /// Creates a new instance of class RunResult.
-    /// </summary>
-    public RunResult(bool success, string?[] error, T result)
+    private RunResult(bool success, string?[] error, T? result)
     {
         Success = success;
         ErrorOutput = error;
         Data = result;
     }
+
+    public static RunResult<T> Successful(T result, string[] error) => new(true, error, result);
+
+    public static RunResult<T> Failed(string[] error) => new(false, error, null);
 }

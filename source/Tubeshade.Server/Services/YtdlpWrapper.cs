@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Server.Configuration;
 using YoutubeDLSharp;
@@ -18,11 +20,13 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
 {
     private readonly ILogger<YtdlpWrapper> _logger;
     private readonly IOptionsMonitor<YtdlpOptions> _optionsMonitor;
+    private readonly Ytdlp.Ytdlp _ytdlp;
 
-    public YtdlpWrapper(ILogger<YtdlpWrapper> logger, IOptionsMonitor<YtdlpOptions> optionsMonitor)
+    public YtdlpWrapper(ILogger<YtdlpWrapper> logger, IOptionsMonitor<YtdlpOptions> optionsMonitor, Ytdlp.Ytdlp ytdlp)
     {
         _logger = logger;
         _optionsMonitor = optionsMonitor;
+        _ytdlp = ytdlp;
     }
 
     /// <inheritdoc />
@@ -33,38 +37,15 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
     {
         _logger.UnknownUrlMetadata(url);
 
-        var options = _optionsMonitor.CurrentValue;
-        var youtube = new YoutubeDL
-        {
-            YoutubeDLPath = options.YtdlpPath,
-            FFmpegPath = options.FfmpegPath,
-        };
+        var optionSet = GetDefaultOptions(cookieFilepath);
+        optionSet.PlaylistItems = "0";
+        optionSet.IgnoreNoFormatsError = true;
+        optionSet.DumpSingleJson = true;
 
-        var customOptions = new List<IOption>();
-        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
-        {
-            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
-        }
-
-        var result = await youtube.RunVideoDataFetch(
-            url,
-            cancellationToken,
-            true,
-            false,
-            new OptionSet
-            {
-                Cookies = cookieFilepath,
-                CookiesFromBrowser = options.CookiesFromBrowser,
-                PlaylistItems = "0",
-                IgnoreErrors = true,
-                IgnoreNoFormatsError = true,
-                CustomOptions = customOptions.ToArray(),
-                Verbose = true,
-            });
-
+        var result = await _ytdlp.FetchAsync(url, optionSet, cancellationToken);
         if (result.ErrorOutput is { Length: > 0 } errorOutput)
         {
-            _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+            _logger.StandardError(_ytdlp.Path, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
         }
 
         if (!result.Success)
@@ -82,38 +63,17 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         string? cookieFilepath,
         CancellationToken cancellationToken)
     {
-        var options = _optionsMonitor.CurrentValue;
-        var youtube = new YoutubeDL
-        {
-            YoutubeDLPath = options.YtdlpPath,
-            FFmpegPath = options.FfmpegPath,
-        };
+        var optionSet = GetDefaultOptions(cookieFilepath);
+        optionSet.PlaylistItems = count.HasValue ? $"1:{count}" : null;
+        optionSet.YesPlaylist = false;
+        optionSet.DumpSingleJson = true;
 
-        var customOptions = new List<IOption>();
-        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
-        {
-            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
-        }
-
-        var fetchResult = await youtube.RunVideoDataFetch(
-            playlistUrl,
-            cancellationToken,
-            false,
-            false,
-            new OptionSet
-            {
-                Cookies = cookieFilepath,
-                CookiesFromBrowser = options.CookiesFromBrowser,
-                PlaylistItems = count.HasValue ? $"1:{count}" : null,
-                YesPlaylist = false,
-                FlatPlaylist = true,
-                CustomOptions = customOptions.ToArray(),
-                Verbose = true,
-            });
-
+        var fetchResult = await _ytdlp.FetchAsync(playlistUrl, optionSet, cancellationToken);
         if (fetchResult.ErrorOutput is { Length: > 0 } errorOutput)
         {
-            _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+            _logger.StandardError(
+                _ytdlp.Path,
+                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
         }
 
         if (!fetchResult.Success || fetchResult.Data?.Entries is null)
@@ -135,37 +95,18 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         string? cookieFilepath,
         CancellationToken cancellationToken)
     {
-        var options = _optionsMonitor.CurrentValue;
-        var youtube = new YoutubeDL
-        {
-            YoutubeDLPath = options.YtdlpPath,
-            FFmpegPath = options.FfmpegPath,
-        };
+        var optionSet = GetDefaultOptions(cookieFilepath);
+        optionSet.PlaylistItems = "0";
+        optionSet.IgnoreNoFormatsError = true;
+        optionSet.DumpSingleJson = true;
 
-        var customOptions = new List<IOption>();
-        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
-        {
-            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
-        }
-
-        var result = await youtube.RunVideoDataFetch(
-            videoUrl,
-            cancellationToken,
-            true,
-            false,
-            new OptionSet
-            {
-                Cookies = cookieFilepath,
-                CookiesFromBrowser = options.CookiesFromBrowser,
-                PlaylistItems = "0",
-                IgnoreNoFormatsError = true,
-                CustomOptions = customOptions.ToArray(),
-                Verbose = true,
-            });
+        var result = await _ytdlp.FetchAsync(videoUrl, optionSet, cancellationToken);
 
         if (result.ErrorOutput is { Length: > 0 } errorOutput)
         {
-            _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+            _logger.StandardError(
+                _ytdlp.Path,
+                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
         }
 
         return result;
@@ -180,44 +121,22 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         bool ignoreNoFormatsError,
         CancellationToken cancellationToken)
     {
-        var options = _optionsMonitor.CurrentValue;
-        var youtube = new YoutubeDL
-        {
-            YoutubeDLPath = options.YtdlpPath,
-            FFmpegPath = options.FfmpegPath,
-        };
-
-        var youtubeClient = client is not null
+        var optionSet = GetDefaultOptions(cookieFilepath);
+        optionSet.Format = format;
+        optionSet.EmbedChapters = true;
+        optionSet.IgnoreNoFormatsError = ignoreNoFormatsError;
+        optionSet.DumpSingleJson = true;
+        optionSet.ExtractorArgs = client is not null
             ? new MultiValue<string>($"youtube:player_client={client.Name}")
             : null;
 
-        var customOptions = new List<IOption>();
-        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
-        {
-            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
-        }
-
-        var result = await youtube.RunVideoDataFetch(
-            videoUrl,
-            cancellationToken,
-            true,
-            false,
-            new OptionSet
-            {
-                Cookies = cookieFilepath,
-                CookiesFromBrowser = options.CookiesFromBrowser,
-                Format = format,
-                NoPart = true,
-                EmbedChapters = true,
-                ExtractorArgs = youtubeClient,
-                IgnoreNoFormatsError = ignoreNoFormatsError,
-                CustomOptions = customOptions.ToArray(),
-                Verbose = true,
-            });
+        var result = await _ytdlp.FetchAsync(videoUrl, optionSet, cancellationToken);
 
         if (result.ErrorOutput is { Length: > 0 } errorOutput)
         {
-            _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+            _logger.StandardError(
+                _ytdlp.Path,
+                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
         }
 
         if (!result.Success)
@@ -236,45 +155,24 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         PlayerClient? client,
         CancellationToken cancellationToken)
     {
-        var options = _optionsMonitor.CurrentValue;
-        var youtube = new YoutubeDL
-        {
-            YoutubeDLPath = options.YtdlpPath,
-            FFmpegPath = options.FfmpegPath,
-        };
-
         var youtubeClient = client is not null
             ? new MultiValue<string>($"youtube:player_client={client.Name}")
             : null;
 
-        var customOptions = new List<IOption>();
-        if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
-        {
-            customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
-        }
-
         var tasks = formats.Select(async format =>
         {
-            var result = await youtube.RunVideoDataFetch(
-                videoUrl,
-                cancellationToken,
-                true,
-                false,
-                new OptionSet
-                {
-                    Cookies = cookieFilepath,
-                    CookiesFromBrowser = options.CookiesFromBrowser,
-                    Format = format,
-                    NoPart = true,
-                    EmbedChapters = true,
-                    ExtractorArgs = youtubeClient,
-                    CustomOptions = customOptions.ToArray(),
-                    Verbose = true,
-                });
+            var optionSet = GetDefaultOptions(cookieFilepath);
+            optionSet.EmbedChapters = true;
+            optionSet.Format = format;
+            optionSet.ExtractorArgs = youtubeClient;
+            optionSet.DumpSingleJson = true;
 
+            var result = await _ytdlp.FetchAsync(videoUrl, optionSet, cancellationToken);
             if (result.ErrorOutput is { Length: > 0 } errorOutput)
             {
-                _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+                _logger.StandardError(
+                    _ytdlp.Path,
+                    string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
             }
 
             return (result, format);
@@ -312,12 +210,110 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         string? cookieFilepath,
         CancellationToken cancellationToken)
     {
-        var options = _optionsMonitor.CurrentValue;
-        var youtube = new YoutubeDL
+        var optionSet = GetDefaultOptions(cookieFilepath);
+        optionSet.Output = "thumbnail.%(ext)s";
+        optionSet.Paths = path;
+
+        var result = await _ytdlp.RunAsync(thumbnailUrl, optionSet, cancellationToken);
+
+        if (result.ErrorOutput is { Length: > 0 } errorOutput)
         {
-            YoutubeDLPath = options.YtdlpPath,
-            FFmpegPath = options.FfmpegPath,
+            _logger.StandardError(
+                _ytdlp.Path,
+                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+        }
+
+        if (!result.Success)
+        {
+            throw new(string.Join(Environment.NewLine, result.ErrorOutput));
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DownloadChannelThumbnails(
+        string channelUrl,
+        string path,
+        string? cookieFilepath,
+        CancellationToken cancellationToken)
+    {
+        var optionSet = GetDefaultOptions(cookieFilepath);
+        optionSet.Output = "thumbnail:thumbnail.%(ext)s";
+        optionSet.Paths = path;
+        optionSet.SkipDownload = true;
+        optionSet.WriteAllThumbnails = true;
+        optionSet.PlaylistItems = "0";
+
+        var result = await _ytdlp.RunAsync(channelUrl, optionSet, cancellationToken);
+
+        if (result.ErrorOutput is { Length: > 0 } errorOutput)
+        {
+            _logger.StandardError(
+                _ytdlp.Path,
+                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+        }
+
+        if (!result.Success)
+        {
+            throw new(string.Join(Environment.NewLine, result.ErrorOutput));
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<RunResult<string>> DownloadVideo(
+        string videoUrl,
+        string format,
+        VideoContainerType containerType,
+        string outputFolder,
+        string outputTemplate,
+        string? cookieFilepath,
+        long? limitRate,
+        PlayerClient? client,
+        CancellationToken cancellationToken)
+    {
+        var mergeFormat = containerType.Name switch
+        {
+            VideoContainerType.Names.Mp4 => DownloadMergeFormat.Mp4,
+            VideoContainerType.Names.WebM => DownloadMergeFormat.Webm,
+            _ => DownloadMergeFormat.Unspecified,
         };
+
+        var subtitleOption = new Option<string>("-o")
+        {
+            Value = $"subtitle:{Path.Combine(outputFolder, "subtitles.%(ext)s")}"
+        };
+
+        var youtubeClient = client is not null
+            ? new MultiValue<string>($"youtube:player_client={client.Name}")
+            : null;
+
+        var optionSet = GetDefaultOptions(cookieFilepath, subtitleOption);
+        optionSet.Format = format;
+        optionSet.Output = Path.Combine(outputFolder, outputTemplate);
+        optionSet.LimitRate = limitRate;
+        optionSet.WriteSubs = true;
+        optionSet.NoWriteAutoSubs = true;
+        optionSet.SubFormat = "vtt";
+        optionSet.SubLangs = "all,-live_chat";
+        optionSet.EmbedChapters = true;
+        optionSet.ExtractorArgs = youtubeClient;
+        optionSet.MergeOutputFormat = mergeFormat;
+        optionSet.RecodeVideo = VideoRecodeFormat.None;
+
+        var result = await _ytdlp.RunAsync(videoUrl, optionSet, cancellationToken);
+
+        if (result.ErrorOutput is { Length: > 0 } errorOutput)
+        {
+            _logger.StandardError(
+                _ytdlp.Path,
+                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+        }
+
+        return result;
+    }
+
+    private OptionSet GetDefaultOptions(string? cookieFilepath, params ReadOnlySpan<IOption> additionalOptions)
+    {
+        var options = _optionsMonitor.CurrentValue;
 
         var customOptions = new List<IOption>();
         if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
@@ -325,27 +321,26 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
         }
 
-        var result = await youtube.RunWithOptions(
-            thumbnailUrl,
-            new OptionSet
-            {
-                Output = "thumbnail.%(ext)s",
-                Paths = path,
-                Cookies = cookieFilepath,
-                CookiesFromBrowser = options.CookiesFromBrowser,
-                CustomOptions = customOptions.ToArray(),
-                Verbose = true,
-            },
-            cancellationToken);
+        customOptions.AddRange(additionalOptions);
 
-        if (result.ErrorOutput is { Length: > 0 } errorOutput)
+        return new OptionSet
         {
-            _logger.StandardError(options.YtdlpPath, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
-        }
-
-        if (!result.Success)
-        {
-            throw new(string.Join(Environment.NewLine, result.ErrorOutput));
-        }
+            IgnoreErrors = true,
+            IgnoreConfig = true,
+            NoPlaylist = true,
+            FlatPlaylist = true,
+            Downloader = "m3u8:native",
+            DownloaderArgs = "ffmpeg:-nostats -loglevel 0",
+            RestrictFilenames = false,
+            ForceOverwrites = true,
+            NoOverwrites = false,
+            NoPart = true,
+            FfmpegLocation = options.FfmpegPath,
+            Verbose = true,
+            CustomOptions = customOptions.ToArray(),
+            Cookies = cookieFilepath,
+            CookiesFromBrowser = options.CookiesFromBrowser,
+            WriteComments = false,
+        };
     }
 }

@@ -1,0 +1,48 @@
+﻿name: install-yt-dlp
+description: Installs yt-dlp with caching and aggressive retries.
+
+runs:
+  using: composite
+
+  steps:
+    - id: restore-cache
+      uses: actions/cache@v4.3.0
+      with:
+        key: yt-dlp-${{ hashFiles('.github/actions/install-yt-dlp/action.yml') }}
+        path: ~/.yt-dlp
+
+    - if: steps.restore-cache.outputs.cache-hit != 'true'
+      name: download yt-dlp
+      shell: bash
+      run: |
+        URL="https://github.com/yt-dlp/yt-dlp/releases/download/2025.11.12/yt-dlp_linux"
+        MAX_RETRY_DELAY=30
+
+        mkdir -p "$HOME/.yt-dlp"
+
+        for i in {1..10}
+        do
+          echo "downloading yt-dlp (attempt: #$i)"
+
+          if curl --connect-timeout 10 -vL "$URL" -o "$HOME/.yt-dlp/yt-dlp"; then
+            chmod +x "$HOME/.yt-dlp/yt-dlp"
+            echo "✅ yt-dlp installed successfully"
+            exit 0
+          fi
+
+          [[ $i -ge 10 ]] && break
+
+          retry_delay=$((2 ** i))
+          [[ $retry_delay -gt $MAX_RETRY_DELAY ]] && retry_delay=$MAX_RETRY_DELAY
+          echo "retrying in ${retry_delay}s..." && sleep $retry_delay
+        done
+
+        echo "❌ failed to install yt-dlp" >&2 \
+          && exit 1
+
+    - name: add yt-dlp to PATH
+      shell: bash
+      run: |
+        export PATH="$HOME/.yt-dlp:$PATH"
+        echo "$HOME/.yt-dlp" >> $GITHUB_PATH
+        yt-dlp --version

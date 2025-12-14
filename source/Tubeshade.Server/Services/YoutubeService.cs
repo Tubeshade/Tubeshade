@@ -20,9 +20,7 @@ using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services.Ffmpeg;
-using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
-using YoutubeDLSharp.Options;
 using static YoutubeDLSharp.Metadata.Availability;
 
 namespace Tubeshade.Server.Services;
@@ -100,12 +98,6 @@ public sealed class YoutubeService
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
 
-        var youtube = new YoutubeDL
-        {
-            YoutubeDLPath = _options.YtdlpPath,
-            FFmpegPath = _options.FfmpegPath,
-        };
-
         var data = await _ytdlpWrapper.FetchUnknownUrlData(url, cookieFilepath, cancellationToken);
 
         var channel = videoId is not null && channelId is not null
@@ -129,12 +121,7 @@ public sealed class YoutubeService
         }
         else if (data.ResultType is MetadataType.Playlist)
         {
-            await IndexChannel(
-                channel,
-                data,
-                youtube,
-                cookieFilepath,
-                cancellationToken);
+            await IndexChannel(channel, data, cookieFilepath, cancellationToken);
         }
         else
         {
@@ -535,25 +522,17 @@ public sealed class YoutubeService
     private async ValueTask IndexChannel(
         ChannelEntity channel,
         VideoData videoData,
-        YoutubeDL youtube,
         string? cookieFilepath,
         CancellationToken cancellationToken)
     {
         _logger.LogDebug("Indexing channel");
 
         _logger.LogDebug("Downloading thumbnails for channel {ChannelId}", channel.Id);
-        await youtube.RunWithOptions(
+
+        await _ytdlpWrapper.DownloadChannelThumbnails(
             videoData.ChannelUrl ?? throw new InvalidOperationException("Missing channel Url"),
-            new OptionSet
-            {
-                Output = "thumbnail:thumbnail.%(ext)s",
-                Paths = $"{channel.StoragePath}",
-                SkipDownload = true,
-                Cookies = cookieFilepath,
-                CookiesFromBrowser = _options.CookiesFromBrowser,
-                WriteAllThumbnails = true,
-                PlaylistItems = "0",
-            },
+            channel.StoragePath,
+            cookieFilepath,
             cancellationToken);
     }
 
@@ -720,53 +699,6 @@ public sealed class YoutubeService
             ? preferredFormats
             : DefaultVideoFormats;
 
-        var youtubeClient = preferences.PlayerClient is { } client
-            ? new MultiValue<string>($"youtube:player_client={client.Name}")
-            : null;
-
-        var youtube = new YoutubeDL
-        {
-            YoutubeDLPath = _options.YtdlpPath,
-            FFmpegPath = _options.FfmpegPath,
-        };
-
-        var formatCustomOptions = new List<IOption>
-        {
-            new Option<string>("-t") { Value = "mp4" },
-        };
-
-        if (_options.JavascriptRuntimePath is { } formatJavascriptRuntimePath)
-        {
-            formatCustomOptions.Add(new Option<string>("--js-runtimes") { Value = formatJavascriptRuntimePath });
-        }
-
-        _logger.LogInformation("Getting video metadata for {VideoUrl}", video.ExternalUrl);
-
-        var videoData = await youtube.RunVideoDataFetch(
-            video.ExternalUrl,
-            cancellationToken,
-            true,
-            false,
-            new OptionSet
-            {
-                Cookies = cookieFilepath,
-                CookiesFromBrowser = _options.CookiesFromBrowser,
-                Format = string.Join(',', formatSelectors),
-                ExtractorArgs = youtubeClient,
-                CustomOptions = formatCustomOptions.ToArray(),
-            });
-
-        if (!videoData.Success)
-        {
-            throw new Exception(string.Join(Environment.NewLine, videoData.ErrorOutput));
-        }
-
-        if (videoData.Data.ResultType is not MetadataType.Video)
-        {
-            throw new InvalidOperationException(
-                $"Unexpected metadata type when downloading video: {videoData.Data.ResultType}");
-        }
-
         var files = await _videoRepository.GetFilesAsync(videoId, userId, transaction);
 
         var selectedFormats = await _ytdlpWrapper.SelectFormats(
@@ -814,56 +746,28 @@ public sealed class YoutubeService
                 size.HasValue ? Math.Round(size.Value / 1024 / 1024, 2) : null);
 
             var fileName = videoFile.StoragePath;
-            youtube.OutputFolder = tempDirectory.FullName;
-            youtube.OutputFileTemplate = $"{Path.GetFileNameWithoutExtension(fileName)}.%(ext)s";
-
-            var mergeFormat = videoFile.Type.Name switch
-            {
-                VideoContainerType.Names.Mp4 => DownloadMergeFormat.Mp4,
-                VideoContainerType.Names.WebM => DownloadMergeFormat.Webm,
-                _ => DownloadMergeFormat.Unspecified,
-            };
 
             var limitRate = _options.LimitRate;
-            if (size.HasValue && videoData.Data.Duration is { } duration && _options.LimitMultiplier is { } multiplier)
+            if (size.HasValue && _options.LimitMultiplier is { } multiplier)
             {
-                var bitrate = (long)Math.Round(size.Value * 8 * multiplier / (decimal)duration, 0);
+                var duration = (decimal)video.Duration.ToDuration().TotalSeconds;
+                var bitrate = (long)Math.Round(size.Value * 8 * multiplier / duration, 0);
                 if (limitRate is null || limitRate.Value > bitrate)
                 {
                     limitRate = bitrate;
                 }
             }
 
-            var customOptions = new List<IOption>
-            {
-                new Option<string>("-o") { Value = $"subtitle:{Path.Combine(tempDirectory.FullName, "subtitles.%(ext)s")}" },
-            };
-
-            if (_options.JavascriptRuntimePath is { } javascriptRuntimePath)
-            {
-                customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
-            }
-
             _logger.LogInformation("Downloading video {VideoUrl} to {Directory}", video.ExternalUrl, tempDirectory.FullName);
-            var downloadTask = youtube.RunVideoDownload(
+            var downloadTask = _ytdlpWrapper.DownloadVideo(
                 video.ExternalUrl,
                 selectedFormat,
-                mergeFormat,
-                VideoRecodeFormat.None,
-                new OptionSet
-                {
-                    LimitRate = limitRate,
-                    Cookies = cookieFilepath,
-                    CookiesFromBrowser = _options.CookiesFromBrowser,
-                    WriteSubs = true,
-                    NoWriteAutoSubs = true,
-                    SubFormat = "vtt",
-                    SubLangs = "all,-live_chat",
-                    NoPart = true,
-                    EmbedChapters = true,
-                    ExtractorArgs = youtubeClient,
-                    CustomOptions = customOptions.ToArray(),
-                },
+                videoFile.Type,
+                tempDirectory.FullName,
+                $"{Path.GetFileNameWithoutExtension(fileName)}.%(ext)s",
+                cookieFilepath,
+                limitRate,
+                preferences.PlayerClient,
                 cancellationToken);
 
             var timestamp = Stopwatch.GetTimestamp();

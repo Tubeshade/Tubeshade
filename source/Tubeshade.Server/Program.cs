@@ -147,6 +147,11 @@ internal static class Program
             .AddScoped<TaskService>()
             .AddScoped<SponsorBlockService>()
             .AddScoped<WebVideoTextTracksService>()
+            .AddScoped<Ytdlp.Ytdlp>(provider =>
+            {
+                var options = provider.GetRequiredService<IOptionsMonitor<YtdlpOptions>>().CurrentValue;
+                return new(options.YtdlpPath);
+            })
             .AddScoped<IYtdlpWrapper, YtdlpWrapper>()
             .AddScoped<YoutubeService>()
             .AddSponsorBlockClient()
