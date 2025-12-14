@@ -295,7 +295,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         return results
             .Select(tuple =>
             {
-                var formatIds = tuple.result.Data!.FormatID!.Split('+');
+                var formatIds = tuple.result.Data!.FormatId!.Split('+');
                 var videoFormats = formatIds
                     .Select(formatId => tuple.result.Data.Formats!.Single(format => format.FormatId == formatId))
                     .ToArray();

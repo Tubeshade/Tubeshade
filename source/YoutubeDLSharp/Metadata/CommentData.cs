@@ -7,13 +7,13 @@ namespace YoutubeDLSharp.Metadata;
 public sealed class CommentData
 {
     [JsonPropertyName("id")]
-    public string? ID { get; set; }
+    public string? Id { get; set; }
 
     [JsonPropertyName("author")]
     public string? Author { get; set; }
 
     [JsonPropertyName("author_id")]
-    public string? AuthorID { get; set; }
+    public string? AuthorId { get; set; }
 
     [JsonPropertyName("author_thumbnail")]
     public string? AuthorThumbnail { get; set; }

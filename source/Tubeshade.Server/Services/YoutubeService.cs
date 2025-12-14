@@ -152,7 +152,7 @@ public sealed class YoutubeService
         VideoData data,
         NpgsqlTransaction transaction)
     {
-        if (data.ChannelID is not { } youtubeChannelId ||
+        if (data.ChannelId is not { } youtubeChannelId ||
             data.Channel is not { } channelName ||
             data.ChannelUrl is not { } channelUrl)
         {
@@ -213,7 +213,7 @@ public sealed class YoutubeService
         var cookieFilepath = await CreateCookieFile(libraryId, directory, cancellationToken);
 
         var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
-        var youtubeVideoId = videoData.ID;
+        var youtubeVideoId = videoData.Id;
         _logger.IndexingVideo(youtubeVideoId);
 
         var video = await _videoRepository.FindByExternalId(youtubeVideoId, userId, Access.Read, transaction);
@@ -346,7 +346,7 @@ public sealed class YoutubeService
                 continue;
             }
 
-            var formatIds = data.FormatID!.Split('+');
+            var formatIds = data.FormatId!.Split('+');
             var formats = formatIds
                 .Select(formatId => data.Formats.Single(formatData => formatData.FormatId == formatId))
                 .ToArray();

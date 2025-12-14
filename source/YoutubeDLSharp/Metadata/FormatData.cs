@@ -106,7 +106,7 @@ public class FormatData
 
     [JsonPropertyName("has_drm")]
     // [JsonConverter(typeof(JsonStringEnumConverter<MaybeBool>))]
-    public bool? HasDRM { get; set; }
+    public bool? HasDrm { get; set; }
 
     public override string ToString() => $"[{Extension}] {Format}";
 

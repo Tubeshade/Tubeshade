@@ -25,7 +25,7 @@ public sealed class VideoData
     public VideoData[]? Entries { get; set; }
 
     [JsonPropertyName("id")]
-    public required string ID { get; set; }
+    public required string Id { get; set; }
 
     [JsonPropertyName("title")]
     public required string Title { get; set; }
@@ -43,7 +43,7 @@ public sealed class VideoData
     public string? Format { get; set; }
 
     [JsonPropertyName("format_id")]
-    public string? FormatID { get; set; }
+    public string? FormatId { get; set; }
 
     [JsonPropertyName("player_url")]
     public string? PlayerUrl { get; set; }
@@ -56,7 +56,7 @@ public sealed class VideoData
     public string? AltTitle { get; set; }
 
     [JsonPropertyName("display_id")]
-    public string? DisplayID { get; set; }
+    public string? DisplayId { get; set; }
 
     [JsonPropertyName("thumbnails")]
     public ThumbnailData[]? Thumbnails { get; set; }
@@ -95,7 +95,7 @@ public sealed class VideoData
     // public DateTime? ModifiedDate { get; set; }
 
     [JsonPropertyName("uploader_id")]
-    public string? UploaderID { get; set; }
+    public string? UploaderId { get; set; }
 
     [JsonPropertyName("uploader_url")]
     public string? UploaderUrl { get; set; }
@@ -104,7 +104,7 @@ public sealed class VideoData
     public string? Channel { get; set; }
 
     [JsonPropertyName("channel_id")]
-    public string? ChannelID { get; set; }
+    public string? ChannelId { get; set; }
 
     [JsonPropertyName("channel_url")]
     public string? ChannelUrl { get; set; }
