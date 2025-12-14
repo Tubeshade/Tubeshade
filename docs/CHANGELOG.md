@@ -4,6 +4,8 @@
 
 _Latest build from master branch._
 
+## [0.1.2] - 2025-12-14
+
 ### Added
 
 - yt-dlp verbose output logs at trace level
@@ -37,6 +39,8 @@ _Latest build from master branch._
 ## [0.1.0] - 2025-12-06
 
 _Initial release._
+
+[0.1.2]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.2
 
 [0.1.1]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.1
 
