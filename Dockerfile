@@ -42,7 +42,7 @@ ENV DOTNET_gcServer=0 \
     Ytdlp__YtdlpPath=/usr/bin/yt-dlp \
     Ytdlp__FfmpegPath=/usr/bin/ffmpeg \
     Ytdlp__FfprobePath=/usr/bin/ffprobe \
-    Ytdlp__JavascriptRuntimePath=/usr/bin/deno
+    Ytdlp__JavascriptRuntimePath=deno:/usr/bin/deno
 
 USER app
 VOLUME /home/app

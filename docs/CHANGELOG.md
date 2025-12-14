@@ -9,6 +9,11 @@ _Latest build from master branch._
 - Rewrite vendored code for calling yt-dlp
   ([#190](https://github.com/Tubeshade/Tubeshade/issues/190))
 
+### Fixed
+
+- Fixed default JS runtime parameter in docker image 
+  ([#219](https://github.com/Tubeshade/Tubeshade/pull/219))
+
 ## [0.1.2] - 2025-12-14
 
 ### Added
