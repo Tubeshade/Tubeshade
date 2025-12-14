@@ -9,6 +9,11 @@ _Latest build from master branch._
 - yt-dlp verbose output logs at trace level
   ([#215](https://github.com/Tubeshade/Tubeshade/pull/215))
 
+### Fixed
+
+- Correctly handle yt-dlp data parsing errors
+  ([#216](https://github.com/Tubeshade/Tubeshade/pull/216))
+
 ## [0.1.1] - 2025-12-13
 
 ### Changed

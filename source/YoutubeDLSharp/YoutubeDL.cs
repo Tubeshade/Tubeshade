@@ -185,17 +185,11 @@ public sealed class YoutubeDL
                 return;
             }
 
-            try
-            {
-                videoData = JsonSerializer.Deserialize(args.Data, YouTubeSerializerContext.Default.VideoData);
-            }
-            catch (JsonException)
-            {
-                process.RedirectToError(args);
-            }
+            videoData = JsonSerializer.Deserialize(args.Data, YouTubeSerializerContext.Default.VideoData)
+                        ?? throw new JsonException("Deserialized yt-dlp data to null");
         };
         var (code, errors) = await _runner.RunThrottled(process, [url], opts, ct);
-        return new RunResult<VideoData>(code == 0, errors, videoData!);
+        return new RunResult<VideoData>(code == 0 && videoData is not null, errors, videoData!);
     }
 
     /// <summary>

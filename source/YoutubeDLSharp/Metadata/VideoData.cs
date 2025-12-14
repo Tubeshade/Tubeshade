@@ -250,7 +250,7 @@ public sealed class VideoData
     public int? DiscNumber { get; set; }
 
     [JsonPropertyName("release_year")]
-    public string? ReleaseYear { get; set; }
+    public int? ReleaseYear { get; set; }
 
     [JsonPropertyName("composer")]
     public string? Composer { get; set; }
