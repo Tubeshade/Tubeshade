@@ -207,11 +207,12 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
     public async ValueTask DownloadThumbnail(
         string thumbnailUrl,
         string path,
+        string fileNameWithoutExtension,
         string? cookieFilepath,
         CancellationToken cancellationToken)
     {
         var optionSet = GetDefaultOptions(cookieFilepath);
-        optionSet.Output = "thumbnail.%(ext)s";
+        optionSet.Output = $"{fileNameWithoutExtension}.%(ext)s";
         optionSet.Paths = path;
 
         var result = await _ytdlp.RunAsync(thumbnailUrl, optionSet, cancellationToken);

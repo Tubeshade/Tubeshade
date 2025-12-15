@@ -44,6 +44,7 @@ public interface IYtdlpWrapper
     ValueTask DownloadThumbnail(
         string thumbnailUrl,
         string path,
+        string fileNameWithoutExtension,
         string? cookieFilepath,
         CancellationToken cancellationToken);
 

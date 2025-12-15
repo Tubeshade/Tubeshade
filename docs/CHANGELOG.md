@@ -11,6 +11,8 @@ _Latest build from master branch._
 
 ### Fixed
 
+- Correctly select video thumbnail when scanning a channel
+  ([#220](https://github.com/Tubeshade/Tubeshade/issues/220))
 - Fixed default JS runtime parameter in docker image 
   ([#219](https://github.com/Tubeshade/Tubeshade/pull/219))
 

@@ -425,68 +425,21 @@ public sealed class YoutubeService
         }
         else
         {
-            await _ytdlpWrapper.DownloadThumbnail(thumbnail.Url, directory.FullName, cookieFilepath, cancellationToken);
-            var thumbnails = directory.EnumerateFiles("thumbnail.*").ToArray();
-            if (thumbnails is [var thumbnailFile])
+            var fileName = $"thumbnail_{video.Id:N}";
+            await _ytdlpWrapper.DownloadThumbnail(thumbnail.Url, directory.FullName, fileName, cookieFilepath, cancellationToken);
+
+            var thumbnails = directory.EnumerateFiles($"{fileName}.*").ToArray();
+            if (thumbnails is [])
             {
-                var response = await _ffmpegService.AnalyzeFile(thumbnailFile.FullName, cancellationToken);
-                if (response.Streams is not [var stream])
-                {
-                    throw new InvalidOperationException("Unexpected image file format");
-                }
-
-                if (stream.Width is not { } width || stream.Height is not { } height)
-                {
-                    throw new InvalidOperationException("Could not extract image resolution");
-                }
-
-                var destinationFileName = Path.Combine(video.StoragePath, thumbnailFile.Name);
-                if (existingThumbnail is not null && existingThumbnail.Width >= width)
-                {
-                    _logger.ExistingThumbnail();
-                }
-                else if (existingThumbnail is null)
-                {
-                    _logger.CreatingThumbnail();
-
-                    var imageFileId = await _imageFileRepository.AddAsync(
-                        new()
-                        {
-                            CreatedByUserId = userId,
-                            ModifiedByUserId = userId,
-                            StoragePath = thumbnailFile.Name,
-                            Type = ImageType.Thumbnail,
-                            Width = width,
-                            Height = height
-                        },
-                        transaction);
-
-                    await _imageFileRepository.LinkToVideoAsync(imageFileId!.Value, video.Id, userId, transaction);
-                    thumbnailFile.MoveTo(destinationFileName, true);
-                }
-                else
-                {
-                    _logger.UpdatingExistingThumbnail(existingThumbnail.Id);
-
-                    existingThumbnail.ModifiedByUserId = userId;
-                    existingThumbnail.StoragePath = thumbnailFile.Name;
-                    existingThumbnail.Type = ImageType.Thumbnail;
-                    existingThumbnail.Width = width;
-                    existingThumbnail.Height = height;
-
-                    var count = await _imageFileRepository.UpdateAsync(existingThumbnail, transaction);
-                    if (count is 0)
-                    {
-                        throw new InvalidOperationException("Failed to update existing thumbnail");
-                    }
-
-                    thumbnailFile.MoveTo(destinationFileName, true);
-                }
+                throw new Exception("Could not find downloaded thumbnail");
             }
-            else if (thumbnails is not [])
+
+            if (thumbnails is not [var thumbnailFile])
             {
                 throw new Exception("Multiple thumbnails");
             }
+
+            await CreateOrUpdateThumbnail(userId, video, thumbnailFile, existingThumbnail, transaction, cancellationToken);
         }
 
         if (!isNewVideo)
@@ -517,6 +470,70 @@ public sealed class YoutubeService
 
         await _taskService.DownloadVideo(userId, libraryId, video.Id, transaction);
         return video.Id;
+    }
+
+    private async ValueTask CreateOrUpdateThumbnail(
+        Guid userId,
+        VideoEntity video,
+        FileInfo file,
+        ImageFileEntity? existing,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var response = await _ffmpegService.AnalyzeFile(file.FullName, cancellationToken);
+        if (response.Streams is not [var stream])
+        {
+            throw new InvalidOperationException("Unexpected image file format");
+        }
+
+        if (stream is not { Width: { } width, Height: { } height })
+        {
+            throw new InvalidOperationException("Could not extract image resolution");
+        }
+
+        var destinationFileName = Path.Combine(video.StoragePath, file.Name);
+        if (existing is not null && existing.Width >= width)
+        {
+            _logger.ExistingThumbnail();
+            return;
+        }
+
+        if (existing is null)
+        {
+            _logger.CreatingThumbnail();
+
+            var imageFileId = await _imageFileRepository.AddAsync(
+                new()
+                {
+                    CreatedByUserId = userId,
+                    ModifiedByUserId = userId,
+                    StoragePath = file.Name,
+                    Type = ImageType.Thumbnail,
+                    Width = width,
+                    Height = height
+                },
+                transaction);
+
+            await _imageFileRepository.LinkToVideoAsync(imageFileId!.Value, video.Id, userId, transaction);
+        }
+        else
+        {
+            _logger.UpdatingExistingThumbnail(existing.Id);
+
+            existing.ModifiedByUserId = userId;
+            existing.StoragePath = file.Name;
+            existing.Type = ImageType.Thumbnail;
+            existing.Width = width;
+            existing.Height = height;
+
+            var count = await _imageFileRepository.UpdateAsync(existing, transaction);
+            if (count is 0)
+            {
+                throw new InvalidOperationException("Failed to update existing thumbnail");
+            }
+        }
+
+        file.MoveTo(destinationFileName, true);
     }
 
     private async ValueTask IndexChannel(
