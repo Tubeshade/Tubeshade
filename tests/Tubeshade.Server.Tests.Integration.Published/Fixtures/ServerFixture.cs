@@ -24,6 +24,7 @@ public sealed partial class ServerFixture : IServerFixture
 
     private readonly bool _shutdown;
     private readonly INetwork _network;
+    private readonly INetwork _hostNetwork;
     private readonly IContainer _serverContainer;
     private readonly List<IContainer> _containers;
 
@@ -47,6 +48,7 @@ public sealed partial class ServerFixture : IServerFixture
         Name = name;
 
         _network = new NetworkBuilder().Build();
+        _hostNetwork = new NetworkBuilder().WithDriver(NetworkDriver.Host).Build();
 
         var databaseContainer = new PostgreSqlBuilder()
             .WithImage($"postgres:{postgresqlVersion}")
@@ -69,6 +71,7 @@ public sealed partial class ServerFixture : IServerFixture
         _serverContainer = new ContainerBuilder()
             .WithImage(serverImageName)
             .WithNetwork(_network)
+            .WithNetwork(_hostNetwork)
             .WithBindMount(reportsDirectory, "/reports", AccessMode.ReadWrite)
             .WithTmpfsMount(TestDirectory)
             .WithEnvironment(
@@ -129,6 +132,7 @@ public sealed partial class ServerFixture : IServerFixture
 
         await Task.WhenAll(_containers.Select(container => container.StopAsync()));
         await _network.DeleteAsync();
+        await _hostNetwork.DeleteAsync();
     }
 
     [GeneratedRegex(".*Now listening on.*")]

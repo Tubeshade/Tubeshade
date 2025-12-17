@@ -5,8 +5,8 @@ configuration=${1:-"Release"}
 
 ./build/build.sh "$configuration"
 
-docker build --tag tubeshade-integration-tests ./
-docker build --tag tubeshade-cover-tests --file ./build/docker/test-image/Dockerfile ./
+docker build --network=host --tag tubeshade-integration-tests ./
+docker build --network=host --tag tubeshade-cover-tests --file ./build/docker/test-image/Dockerfile ./
 
 dotnet tool restore
 
