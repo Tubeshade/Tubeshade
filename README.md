@@ -26,3 +26,18 @@ Available configuration options can be found at
 [PubSubHubbubOptions](./source/PubSubHubbub/PubSubHubbubOptions.cs),
 [SponsorBlockOptions](./source/SponsorBlock/SponsorBlockOptions.cs).
 For the HTTP server configuration, see [Microsoft documentation](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel?view=aspnetcore-9.0).
+
+## Screenshots
+
+Library main page:
+![Library videos with filters](./docs/assets/library_filtered.png)
+Channel main page:
+![Channel videos](./docs/assets/channel.png)
+Video page:
+![Video](./docs/assets/video.png)
+Downloadable videos for a library:
+![Downloadable videos](./docs/assets/downloads.png)
+Library settings:
+![Library settings](./docs/assets/library_settings.png)
+Channel settings:
+![Channel settings](./docs/assets/channel_settings.png)
