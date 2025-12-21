@@ -11,6 +11,8 @@ _Latest build from master branch._
 
 ### Fixed
 
+- Don't log cancelled requests
+  ([#186](https://github.com/Tubeshade/Tubeshade/issues/186))
 - Correctly select video thumbnail when scanning a channel
   ([#220](https://github.com/Tubeshade/Tubeshade/issues/220))
 - Fixed default JS runtime parameter in docker image 

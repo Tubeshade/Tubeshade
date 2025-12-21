@@ -553,8 +553,8 @@
       },
       "Npgsql": {
         "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "xZAYhPOU2rUIFpV48xsqhCx9vXs6Y+0jX2LCoSEfDFYMw9jtAOUk3iQsCnDLrFIv9NT3JGMihn7nnuZsPKqJmA==",
+        "resolved": "10.0.1",
+        "contentHash": "XyUcxEfqlFomhNTG/ZdGlec+uSOQArKz0Mzz8jYKP/Jj9GM2YabU5CVZtp0yiC4f9hRp+tRZTnHMatJeJ3rwgw==",
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "10.0.0"
         }
@@ -717,9 +717,9 @@
           "Microsoft.Extensions.Identity.Core": "[10.0.1, )",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.1, )",
           "NodaTime": "[3.2.2, )",
-          "Npgsql.DependencyInjection": "[10.0.0, )",
-          "Npgsql.NodaTime": "[10.0.0, )",
-          "Npgsql.OpenTelemetry": "[10.0.0, )",
+          "Npgsql.DependencyInjection": "[10.0.1, )",
+          "Npgsql.NodaTime": "[10.0.1, )",
+          "Npgsql.OpenTelemetry": "[10.0.1, )",
           "SponsorBlock": "[1.0.0, )",
           "dbup-core": "[6.0.15, )",
           "dbup-postgresql": "[6.1.5, )"
@@ -982,31 +982,31 @@
       },
       "Npgsql.DependencyInjection": {
         "type": "CentralTransitive",
-        "requested": "[10.0.0, )",
-        "resolved": "10.0.0",
-        "contentHash": "htuxMDQ7nHgadPxoO6XXVvSgYcVierLrhzOoamyUchvC4oHnYdD05zZ0dYsq80DN0vco9t/Vp+ZxYvnfJxbhIg==",
+        "requested": "[10.0.1, )",
+        "resolved": "10.0.1",
+        "contentHash": "YHFa4vD27sNIfv6s5q8Zi1fLvKfmK1xcpMv0PUvXOxDFbRmuMRSHwpZTbPvsAlj97q1/o7DfyynLqfqrCm1VnA==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0",
-          "Npgsql": "10.0.0"
+          "Npgsql": "10.0.1"
         }
       },
       "Npgsql.NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[10.0.0, )",
-        "resolved": "10.0.0",
-        "contentHash": "wcP0/9bNqwR4DhNXG5aueanHIy65LdXunnDcErUrMk+iA94weAgjA7f3U+5w/LINR005v7pJOwjnlezlftOYbQ==",
+        "requested": "[10.0.1, )",
+        "resolved": "10.0.1",
+        "contentHash": "BGp2QsgAuMIZ2o2Od5sk9NkDB9EVMLcphVgr4s3wbh1S+ZvMXXY4RiyNTcHEhCvk42vyrcrUKEl3iNwNggy9vA==",
         "dependencies": {
           "NodaTime": "3.2.2",
-          "Npgsql": "10.0.0"
+          "Npgsql": "10.0.1"
         }
       },
       "Npgsql.OpenTelemetry": {
         "type": "CentralTransitive",
-        "requested": "[10.0.0, )",
-        "resolved": "10.0.0",
-        "contentHash": "eftmCZWng874x4iSfQyfF+PpnfA6hloHGQ3EzELVhRyPOEHcMygxSXhx4KI8HKu/Qg8uK1MF5tcwOVhwL7duJw==",
+        "requested": "[10.0.1, )",
+        "resolved": "10.0.1",
+        "contentHash": "G9fEIBaHggZXWfDSDnKLc0XwKcbuU6i2eXp7zDqpgYxbhCmIN9fRgaSOGyyMNHSo/yY1IB4G4CjW5VO/SKRR0g==",
         "dependencies": {
-          "Npgsql": "10.0.0",
+          "Npgsql": "10.0.1",
           "OpenTelemetry.API": "1.14.0"
         }
       },
