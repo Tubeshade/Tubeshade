@@ -195,16 +195,10 @@ internal static partial class LoggerExtensions
     [LoggerMessage(59, Debug, "Creating new channel {ChannelName} ({ExternalId})")]
     internal static partial void CreatingChannel(this ILogger logger, string channelName, string externalId);
 
-    [LoggerMessage(60, Trace, """
-                              {Executable} standard error:
-                              {StandardError}
-                              """)]
+    [LoggerMessage(60, Trace, "{Executable}: {StandardError}")]
     internal static partial void StandardError(this ILogger logger, string executable, string standardError);
 
-    [LoggerMessage(61, Trace, """
-                              {Executable} standard output:
-                              {standardOutput}
-                              """)]
+    [LoggerMessage(61, Trace, "{Executable}: {StandardOutput}")]
     internal static partial void StandardOutput(this ILogger logger, string executable, string standardOutput);
 
     [LoggerMessage(62, Information, "Getting metadata for unknown url {ExternalUrl}")]
