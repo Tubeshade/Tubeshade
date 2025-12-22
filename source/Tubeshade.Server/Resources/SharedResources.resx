@@ -378,4 +378,13 @@
     <data name="Video_Description" xml:space="preserve">
         <value>Description</value>
     </data>
+    <data name="Preferences_DownloadMethod" xml:space="preserve">
+        <value>Download method</value>
+    </data>
+    <data name="Preferences_DownloadMethod_standard" xml:space="preserve">
+        <value>Standard</value>
+    </data>
+    <data name="Preferences_DownloadMethod_streaming" xml:space="preserve">
+        <value>Streaming</value>
+    </data>
 </root>

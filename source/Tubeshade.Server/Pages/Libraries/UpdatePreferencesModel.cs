@@ -17,6 +17,8 @@ public sealed class UpdatePreferencesModel
 
     public DownloadVideos? DownloadVideos { get; set; }
 
+    public DownloadMethod? DownloadMethod { get; set; }
+
     public string? Formats { get; set; }
 
     [Browsable(false)]
@@ -34,6 +36,7 @@ public sealed class UpdatePreferencesModel
         ShortsCount = preferences?.ShortsCount;
         PlayerClient = preferences?.PlayerClient?.Name;
         DownloadVideos = preferences?.DownloadVideos;
+        DownloadMethod = preferences?.DownloadMethod;
         Formats = preferences?.Formats is { Length: > 0 } formats ? string.Join(',', formats) : null;
     }
 
@@ -52,6 +55,7 @@ public sealed class UpdatePreferencesModel
             SubscriptionScheduleId = null,
             PlayerClient = client,
             DownloadVideos = DownloadVideos,
+            DownloadMethod = DownloadMethod,
             Formats = string.IsNullOrWhiteSpace(Formats) ? null : Formats.Split(','),
         };
     }
@@ -68,6 +72,7 @@ public sealed class UpdatePreferencesModel
         preferences.ShortsCount = ShortsCount;
         preferences.PlayerClient = client;
         preferences.DownloadVideos = DownloadVideos;
+        preferences.DownloadMethod = DownloadMethod;
         preferences.Formats = string.IsNullOrWhiteSpace(Formats) ? null : Formats.Split(',');
     }
 }

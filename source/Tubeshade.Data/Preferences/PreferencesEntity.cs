@@ -19,5 +19,7 @@ public sealed record PreferencesEntity : ModifiableEntity
 
     public DownloadVideos? DownloadVideos { get; set; }
 
+    public DownloadMethod? DownloadMethod { get; set; }
+
     public string[]? Formats { get; set; }
 }

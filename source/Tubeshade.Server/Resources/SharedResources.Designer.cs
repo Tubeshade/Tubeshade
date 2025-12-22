@@ -762,6 +762,33 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Download method.
+        /// </summary>
+        public static string Preferences_DownloadMethod {
+            get {
+                return ResourceManager.GetString("Preferences_DownloadMethod", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Standard.
+        /// </summary>
+        public static string Preferences_DownloadMethod_standard {
+            get {
+                return ResourceManager.GetString("Preferences_DownloadMethod_standard", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Streaming.
+        /// </summary>
+        public static string Preferences_DownloadMethod_streaming {
+            get {
+                return ResourceManager.GetString("Preferences_DownloadMethod_streaming", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Download automatically.
         /// </summary>
         public static string Preferences_DownloadVideos {

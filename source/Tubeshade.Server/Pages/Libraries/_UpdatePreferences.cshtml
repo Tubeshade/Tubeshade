@@ -73,6 +73,24 @@
         <span class="form-text text-danger" asp-validation-for="PlaybackSpeed"></span>
     </div>
 
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="DownloadMethod">
+            @SharedResources.Preferences_DownloadMethod
+        </label>
+        <select class="form-control form-select" asp-for="DownloadMethod">
+            <option value="" selected="@(Model.DownloadMethod is null)">
+                @SharedResources.Default @(Model.Effective?.DownloadMethod is { } download ? $"({download.LocalizedName})" : null)
+            </option>
+            @foreach (var download in DownloadMethod.List)
+            {
+                <option value="@download.Name" selected="@(download == Model.DownloadMethod)">
+                    @download.LocalizedName
+                </option>
+            }
+        </select>
+        <span class="form-text text-danger" asp-validation-for="DownloadMethod"></span>
+    </div>
+
     <div class="col-sm-12">
         <label class="form-label" asp-for="Formats">
             @SharedResources.Preferences_DownloadFormats

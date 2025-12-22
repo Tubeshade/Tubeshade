@@ -8,6 +8,7 @@ internal static class PreferencesExtensions
     {
         preferences.Formats ??= YoutubeService.DefaultVideoFormats;
         preferences.DownloadVideos ??= DownloadVideos.None;
+        preferences.DownloadMethod ??= DownloadMethod.Default;
         preferences.VideosCount ??= YoutubeService.DefaultVideoCount;
         preferences.LiveStreamsCount ??= 0;
         preferences.ShortsCount ??= 0;
