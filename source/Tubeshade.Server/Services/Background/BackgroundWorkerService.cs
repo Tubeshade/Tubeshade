@@ -172,6 +172,7 @@ public sealed class BackgroundWorkerService : BackgroundService
                 taskRepository,
                 taskRunId,
                 scopedDirectory.Directory,
+                provider,
                 cancellationToken);
         }
         else if (task.Type == TaskType.ScanChannel)

@@ -23,4 +23,8 @@ public sealed record VideoFileEntity : ModifiableEntity
     public Instant? DownloadedAt { get; set; }
 
     public Guid? DownloadedByUserId { get; set; }
+
+    public Guid? TaskRunId { get; set; }
+
+    public string? TempPath { get; set; }
 }

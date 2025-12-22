@@ -113,19 +113,43 @@ public sealed class VideosController : ControllerBase
     {
         var userId = User.GetUserId();
         var videoFile = await _repository.FindFileAsync(fileId, userId, cancellationToken);
-        if (videoFile?.DownloadedAt is null)
+        if (videoFile is null)
         {
-            return NotFound();
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "Video file does not exist");
         }
 
-        var video = await _repository.GetAsync(videoFile.VideoId, userId, cancellationToken);
-        var file = new FileInfo(Path.Combine(video.StoragePath, videoFile.StoragePath));
-        var stream = file.OpenRead();
+        FileInfo file;
+
+        if (videoFile is { DownloadedAt: null, TempPath: { } tempPath } && System.IO.File.Exists(tempPath))
+        {
+            DisableResponseCaching();
+            file = new FileInfo(tempPath);
+        }
+        else if (videoFile.DownloadedAt is not null)
+        {
+            var video = await _repository.GetAsync(videoFile.VideoId, userId, cancellationToken);
+            var path = Path.Combine(video.StoragePath, videoFile.StoragePath);
+            if (!System.IO.File.Exists(path))
+            {
+                return Problem(statusCode: StatusCodes.Status404NotFound, detail: $"File {path} does not exist");
+            }
+
+            file = new FileInfo(Path.Combine(video.StoragePath, videoFile.StoragePath));
+        }
+        else
+        {
+            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "No file path found");
+        }
+
+        var stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        var lastWriteTime = file.LastWriteTimeUtc;
+        var etag = $"\"video_{id}_{lastWriteTime.ToString(CultureInfo.InvariantCulture)}\"";
+
         return File(
             stream,
             $"video/{videoFile.Type.Name}",
-            videoFile.CreatedAt.ToDateTimeOffset(),
-            new EntityTagHeaderValue(new StringSegment($"\"video_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")),
+            lastWriteTime,
+            new EntityTagHeaderValue(new StringSegment(etag)),
             true);
     }
 
@@ -232,7 +256,7 @@ public sealed class VideosController : ControllerBase
 
         if (segments.Any(segment => !segment.Locked))
         {
-            Response.GetTypedHeaders().CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true };
+            DisableResponseCaching();
         }
 
         var memoryStream = new MemoryStream();
@@ -248,5 +272,10 @@ public sealed class VideosController : ControllerBase
             modifiedAt.ToDateTimeOffset(),
             new EntityTagHeaderValue(
                 new StringSegment($"\"sponsorblock_{id}_{InstantPattern.ExtendedIso.Format(modifiedAt)}\"")));
+    }
+
+    private void DisableResponseCaching()
+    {
+        Response.GetTypedHeaders().CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true };
     }
 }

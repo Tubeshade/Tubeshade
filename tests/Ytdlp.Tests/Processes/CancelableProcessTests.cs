@@ -39,8 +39,8 @@ public sealed class CancelableProcessTests
         using var scope = new AssertionScope();
 
         result.Should().BeGreaterThan(0);
-        process.Output.Should().BeEmpty("standard output should only contain JSON info");
-        process.Error.Should()
+        process.OutputLines.Should().BeEmpty("standard output should only contain JSON info");
+        process.ErrorLines.Should()
             .Contain($"[debug] Command-line config: [{string.Join(", ", _args.Select(arg => $"'{arg}'"))}]");
     }
 
@@ -54,10 +54,10 @@ public sealed class CancelableProcessTests
         using var scope = new AssertionScope();
 
         result.Should().BeGreaterThan(0);
-        process.Output.Should().BeEmpty("standard output should only contain JSON info");
+        process.OutputLines.Should().BeEmpty("standard output should only contain JSON info");
         if (OperatingSystem.IsWindows())
         {
-            process.Error.Should().Contain(
+            process.ErrorLines.Should().Contain(
                 "ERROR: [youtube] njX2bu-_Vw4: Sign in to confirm you�re not a bot. " +
                 "Use --cookies-from-browser or --cookies for the authentication. " +
                 "See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. " +
@@ -65,7 +65,7 @@ public sealed class CancelableProcessTests
         }
         else
         {
-            process.Error.Should().Contain(
+            process.ErrorLines.Should().Contain(
                 "ERROR: [youtube] njX2bu-_Vw4: Sign in to confirm you’re not a bot. " +
                 "Use --cookies-from-browser or --cookies for the authentication. " +
                 "See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. " +

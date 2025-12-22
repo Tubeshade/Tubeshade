@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,18 +11,27 @@ namespace Ytdlp.Processes;
 
 public sealed class CancelableProcess : IDisposable
 {
+    private readonly bool _standardOutputEvents;
+    private readonly bool _standardErrorEvents;
     private readonly Process _process;
 
     private readonly TaskCompletionSource _exited = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly TaskCompletionSource _standardOutputCompleted = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly TaskCompletionSource _standardErrorCompleted = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private readonly ConcurrentQueue<string> _standardOutput = new();
-    private readonly ConcurrentQueue<string> _standardError = new();
+    private readonly ConcurrentQueue<string> _standardOutputLines = new();
+    private readonly ConcurrentQueue<string> _standardErrorLines = new();
 
     private bool _processStarted;
 
-    public CancelableProcess(string fileName, string arguments)
+    public CancelableProcess(
+        string fileName,
+        string arguments,
+        bool standardOutputEvents = true,
+        bool standardErrorEvents = true)
     {
+        _standardOutputEvents = standardOutputEvents;
+        _standardErrorEvents = standardErrorEvents;
+
         var processStartInfo = new ProcessStartInfo
         {
             FileName = fileName,
@@ -30,6 +40,7 @@ public sealed class CancelableProcess : IDisposable
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = true,
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8,
         };
@@ -40,8 +51,16 @@ public sealed class CancelableProcess : IDisposable
             EnableRaisingEvents = true,
         };
 
-        _process.OutputDataReceived += ProcessOnOutputDataReceived;
-        _process.ErrorDataReceived += ProcessOnErrorDataReceived;
+        if (_standardOutputEvents)
+        {
+            _process.OutputDataReceived += ProcessOnOutputDataReceived;
+        }
+
+        if (_standardErrorEvents)
+        {
+            _process.ErrorDataReceived += ProcessOnErrorDataReceived;
+        }
+
         _process.Exited += ProcessOnExited;
     }
 
@@ -49,9 +68,17 @@ public sealed class CancelableProcess : IDisposable
 
     public event ReceivedLineEventHandler? ErrorReceived;
 
-    public IReadOnlyCollection<string> Output => _standardOutput;
+    public string FileName => _process.StartInfo.FileName;
 
-    public IReadOnlyCollection<string> Error => _standardError;
+    public IReadOnlyCollection<string> OutputLines => _standardOutputLines;
+
+    public IReadOnlyCollection<string> ErrorLines => _standardErrorLines;
+
+    public Stream Input => _process.StandardInput.BaseStream;
+
+    public Stream Output => _process.StandardOutput.BaseStream;
+
+    public Stream Error => _process.StandardError.BaseStream;
 
     public async Task<int> Run(CancellationToken cancellationToken = default)
     {
@@ -67,16 +94,30 @@ public sealed class CancelableProcess : IDisposable
 
         _processStarted = true;
 
-        _process.BeginOutputReadLine();
-        _process.BeginErrorReadLine();
+        if (_standardOutputEvents)
+        {
+            _process.BeginOutputReadLine();
+        }
+
+        if (_standardErrorEvents)
+        {
+            _process.BeginErrorReadLine();
+        }
 
         if (!_process.HasExited)
         {
             await _exited.Task;
         }
 
-        await _standardOutputCompleted.Task;
-        await _standardErrorCompleted.Task;
+        if (_standardOutputEvents)
+        {
+            await _standardOutputCompleted.Task;
+        }
+
+        if (_standardErrorEvents)
+        {
+            await _standardErrorCompleted.Task;
+        }
 
         return _process.ExitCode;
     }
@@ -104,7 +145,7 @@ public sealed class CancelableProcess : IDisposable
             return;
         }
 
-        _standardOutput.Enqueue(args.Data);
+        _standardOutputLines.Enqueue(args.Data);
         OutputReceived?.Invoke(this, new(args.Data));
     }
 
@@ -116,7 +157,7 @@ public sealed class CancelableProcess : IDisposable
             return;
         }
 
-        _standardError.Enqueue(args.Data);
+        _standardErrorLines.Enqueue(args.Data);
         ErrorReceived?.Invoke(this, new(args.Data));
     }
 
@@ -143,8 +184,16 @@ public sealed class CancelableProcess : IDisposable
             return;
         }
 
-        _process.OutputDataReceived -= ProcessOnOutputDataReceived;
-        _process.ErrorDataReceived -= ProcessOnErrorDataReceived;
+        if (_standardOutputEvents)
+        {
+            _process.OutputDataReceived -= ProcessOnOutputDataReceived;
+        }
+
+        if (_standardErrorEvents)
+        {
+            _process.ErrorDataReceived -= ProcessOnErrorDataReceived;
+        }
+
         _process.Exited -= ProcessOnExited;
 
         _process.Dispose();

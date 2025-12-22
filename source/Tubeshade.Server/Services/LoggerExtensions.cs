@@ -203,4 +203,40 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(62, Information, "Getting metadata for unknown url {ExternalUrl}")]
     internal static partial void UnknownUrlMetadata(this ILogger logger, string externalUrl);
+
+    [LoggerMessage(63, Information, "Downloading file {FileId} with combined format {FormatId} in {ContainerType}")]
+    internal static partial void DownloadingCombinedVideoFile(this ILogger logger, Guid fileId, string formatId, string containerType);
+
+    [LoggerMessage(64, Information, "Downloading file {FileId} with video {VideoFormatId} and audio {AudioFormatId} in {ContainerType}")]
+    internal static partial void DownloadingSplitVideoFile(this ILogger logger, Guid fileId, string videoFormatId, string audioFormatId, string containerType);
+
+    [LoggerMessage(65, Information, "Video file {FileId} already exists")]
+    internal static partial void ExistingVideoFile(this ILogger logger, Guid fileId);
+
+    [LoggerMessage(66, Debug, "Downloading file {FileId} with audio rate {AudioLimitRate} and video rate {VideoLimitRate}")]
+    internal static partial void SplitFormatLimitRates(this ILogger logger, Guid fileId, long? audioLimitRate, long? videoLimitRate);
+
+    [LoggerMessage(67, Information, "Downloaded file {FileId}")]
+    internal static partial void DownloadedVideoFile(this ILogger logger, Guid fileId);
+
+    [LoggerMessage(68, Debug, "Moving file from {SourcePath} to {TargetPath}")]
+    internal static partial void MovingFile(this ILogger logger, string sourcePath, string targetPath);
+
+    [LoggerMessage(69, Debug, "Completed split downloads")]
+    internal static partial void CompletedDownloadTasks(this ILogger logger);
+
+    [LoggerMessage(70, Debug, "Finished copying split download data to FIFO streams")]
+    internal static partial void CompletedCopyTasks(this ILogger logger);
+
+    [LoggerMessage(71, Debug, "Flushed FIFO streams")]
+    internal static partial void FlushedFifoStreams(this ILogger logger);
+
+    [LoggerMessage(72, Debug, "Closed all FIFO streams used for split video streams")]
+    internal static partial void ClosedFifoStreams(this ILogger logger);
+
+    [LoggerMessage(73, Debug, "Finished combining split video streams")]
+    internal static partial void FinishedCombiningSplitFile(this ILogger logger);
+
+    [LoggerMessage(74, Debug, "Copying file from {SourcePath} to {TargetPath} with ffmpeg")]
+    internal static partial void MovingFileFfmpeg(this ILogger logger, string sourcePath, string targetPath);
 }

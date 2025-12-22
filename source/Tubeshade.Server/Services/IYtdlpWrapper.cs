@@ -5,6 +5,7 @@ using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
+using YoutubeDLSharp.Options;
 
 namespace Tubeshade.Server.Services;
 
@@ -34,8 +35,7 @@ public interface IYtdlpWrapper
         bool ignoreNoFormatsError,
         CancellationToken cancellationToken);
 
-    ValueTask<(string SelectedFormat, FormatData[] Formats)[]> SelectFormats(
-        string videoUrl,
+    ValueTask<FormatData[][]> SelectFormats(string videoUrl,
         IEnumerable<string> formats,
         string? cookieFilepath,
         PlayerClient? client,
@@ -64,4 +64,11 @@ public interface IYtdlpWrapper
         long? limitRate,
         PlayerClient? client,
         CancellationToken cancellationToken);
+
+    OptionSet GetDownloadFormatArgs(
+        string format,
+        string output,
+        string? cookieFilepath,
+        long? limitRate,
+        PlayerClient? client);
 }

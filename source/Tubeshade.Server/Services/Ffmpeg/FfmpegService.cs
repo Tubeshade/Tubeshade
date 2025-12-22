@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration;
+using Ytdlp.Processes;
 
 namespace Tubeshade.Server.Services.Ffmpeg;
 
@@ -24,7 +25,9 @@ public sealed class FfmpegService
         _options = options;
     }
 
-    public async ValueTask<ProbeResponse> AnalyzeFile(string filePath, CancellationToken cancellationToken)
+    public async ValueTask<ProbeResponse> AnalyzeFile(
+        string filePath,
+        CancellationToken cancellationToken)
     {
         var args = new[]
         {
@@ -172,5 +175,96 @@ public sealed class FfmpegService
 
         File.Delete(filePath);
         return outputFilePath;
+    }
+
+    public async Task CombineStreams(
+        string videoFilePath,
+        string audioFilePath,
+        string outputFilePath,
+        CancellationToken cancellationToken)
+    {
+        var args = new List<string>
+        {
+            "-nostdin",
+            "-y", // Overwrite output files without asking.
+            "-rw_timeout", // Maximum time to wait for (network) read/write operations to complete, in microseconds.
+            "5M",
+            "-follow", // If set to 1, the protocol will retry reading at the end of the file, allowing reading files that still are being written
+            "1",
+            "-i", // input file url
+            $"file:{videoFilePath}",
+            "-rw_timeout", // Maximum time to wait for (network) read/write operations to complete, in microseconds.
+            "5M",
+            "-follow", // If set to 1, the protocol will retry reading at the end of the file, allowing reading files that still are being written
+            "1",
+            "-i", // input file url
+            $"file:{audioFilePath}",
+            "-map",
+            "0:v:0",
+            "-map",
+            "1:a:0",
+            "-c",
+            "copy",
+        };
+
+        if (outputFilePath.EndsWith("mp4"))
+        {
+            args.AddRange(
+            [
+                "-movflags",
+                "+faststart+frag_keyframe+separate_moof+default_base_moof+delay_moov+empty_moov",
+                "-frag_duration",
+                "15M",
+            ]);
+        }
+
+        args.Add(outputFilePath);
+
+        using var ffmpegProcess = new CancelableProcess(_options.CurrentValue.FfmpegPath, string.Join(' ', args));
+        ffmpegProcess.OutputReceived += OnOutputReceived;
+        ffmpegProcess.ErrorReceived += OnErrorReceived;
+
+        var exitCode = await ffmpegProcess.Run(cancellationToken);
+
+        ffmpegProcess.OutputReceived -= OnOutputReceived;
+        ffmpegProcess.ErrorReceived -= OnErrorReceived;
+
+        if (exitCode is not 0)
+        {
+            throw new("Failed to combine video and audio streams");
+        }
+    }
+
+    /// <remarks>Defragments MP4 videos.</remarks>
+    public async Task Copy(
+        string inputFilePath,
+        string outputFilePath,
+        CancellationToken cancellationToken)
+    {
+        var args = new List<string> { "-nostdin", "-y", "-i", $"file:{inputFilePath}", "-c", "copy", outputFilePath };
+
+        using var ffmpegProcess = new CancelableProcess(_options.CurrentValue.FfmpegPath, string.Join(' ', args));
+        ffmpegProcess.OutputReceived += OnOutputReceived;
+        ffmpegProcess.ErrorReceived += OnErrorReceived;
+
+        var exitCode = await ffmpegProcess.Run(cancellationToken);
+
+        ffmpegProcess.OutputReceived -= OnOutputReceived;
+        ffmpegProcess.ErrorReceived -= OnErrorReceived;
+
+        if (exitCode is not 0)
+        {
+            throw new("Failed to copy streams");
+        }
+    }
+
+    private void OnErrorReceived(CancelableProcess process, ReceivedLineEventArgs eventArgs)
+    {
+        _logger.StandardError(process.FileName, eventArgs.Line);
+    }
+
+    private void OnOutputReceived(CancelableProcess process, ReceivedLineEventArgs eventArgs)
+    {
+        _logger.StandardOutput(process.FileName, eventArgs.Line);
     }
 }

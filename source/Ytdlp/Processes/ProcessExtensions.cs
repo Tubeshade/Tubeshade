@@ -10,7 +10,17 @@ internal static class ProcessExtensions
     {
         if (OperatingSystem.IsLinux())
         {
-            var returnCode = kill(process.Id, (int)Signals.SIGTERM);
+            var returnCode = -1;
+
+            for (var index = 0; index < 3; index++)
+            {
+                returnCode = kill(process.Id, (int)Signals.SIGTERM);
+                if (returnCode is not 0)
+                {
+                    return false;
+                }
+            }
+
             return returnCode is 0;
         }
 

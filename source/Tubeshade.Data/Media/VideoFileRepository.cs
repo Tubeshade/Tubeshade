@@ -1,4 +1,8 @@
-﻿using Npgsql;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Dapper;
+using Npgsql;
 using Tubeshade.Data.Abstractions;
 
 namespace Tubeshade.Data.Media;
@@ -49,4 +53,25 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
              downloaded_at = @{nameof(VideoFileEntity.DownloadedAt)},
              downloaded_by_user_id = @{nameof(VideoFileEntity.DownloadedByUserId)}
          """;
+
+    public async ValueTask CreateTemporaryFile(
+        Guid id,
+        Guid taskRunId,
+        string path,
+        CancellationToken cancellationToken)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             INSERT INTO media.video_files_downloading (file_id, task_run_id, path)
+             VALUES (@{nameof(id)}, @{nameof(taskRunId)}, @{nameof(path)})
+             ON CONFLICT (file_id) DO
+                 UPDATE SET task_run_id = @{nameof(taskRunId)},
+                            path = @{nameof(path)};
+             """,
+            new { id, taskRunId, path },
+            cancellationToken: cancellationToken);
+
+        await Connection.ExecuteAsync(command);
+    }
 }

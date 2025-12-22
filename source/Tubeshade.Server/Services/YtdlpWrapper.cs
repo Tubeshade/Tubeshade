@@ -148,7 +148,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
     }
 
     /// <inheritdoc />
-    public async ValueTask<(string SelectedFormat, FormatData[] Formats)[]> SelectFormats(
+    public async ValueTask<FormatData[][]> SelectFormats(
         string videoUrl,
         IEnumerable<string> formats,
         string? cookieFilepath,
@@ -175,30 +175,30 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                     string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
             }
 
-            return (result, format);
+            return result;
         });
 
         var results = await Task.WhenAll(tasks);
-        if (results.Any(tuple => !tuple.result.Success))
+        if (results.Any(tuple => !tuple.Success))
         {
-            var failedResults = results.Where(tuple => !tuple.result.Success).Select(tuple => tuple.result.ErrorOutput);
+            var failedResults = results.Where(tuple => !tuple.Success).Select(tuple => tuple.ErrorOutput);
             throw new Exception(string.Join(Environment.NewLine, failedResults.SelectMany(lines => lines)));
         }
 
-        if (results.Any(tuple => tuple.result.Data!.ResultType is not MetadataType.Video))
+        if (results.Any(tuple => tuple.Data!.ResultType is not MetadataType.Video))
         {
             throw new InvalidOperationException("Unexpected metadata type when downloading video");
         }
 
         return results
-            .Select(tuple =>
+            .Select(result =>
             {
-                var formatIds = tuple.result.Data!.FormatId!.Split('+');
+                var formatIds = result.Data!.FormatId!.Split('+');
                 var videoFormats = formatIds
-                    .Select(formatId => tuple.result.Data.Formats!.Single(format => format.FormatId == formatId))
+                    .Select(formatId => result.Data.Formats!.Single(format => format.FormatId == formatId))
                     .ToArray();
 
-                return (tuple.format, videoFormats);
+                return videoFormats;
             })
             .ToArray();
     }
@@ -310,6 +310,30 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         }
 
         return result;
+    }
+
+    /// <inheritdoc />
+    public OptionSet GetDownloadFormatArgs(string format, string output, string? cookieFilepath, long? limitRate,
+        PlayerClient? client)
+    {
+        // todo: subtitles
+        var youtubeClient = client is not null
+            ? new MultiValue<string>($"youtube:player_client={client.Name}")
+            : null;
+
+        var optionSet = GetDefaultOptions(cookieFilepath);
+        optionSet.Format = format;
+        optionSet.Output = output;
+        optionSet.LimitRate = limitRate;
+        optionSet.WriteSubs = true;
+        optionSet.NoWriteAutoSubs = true;
+        optionSet.SubFormat = "vtt";
+        optionSet.SubLangs = "all,-live_chat";
+        optionSet.EmbedChapters = true;
+        optionSet.ExtractorArgs = youtubeClient;
+        optionSet.RecodeVideo = VideoRecodeFormat.None;
+
+        return optionSet;
     }
 
     private OptionSet GetDefaultOptions(string? cookieFilepath, params ReadOnlySpan<IOption> additionalOptions)

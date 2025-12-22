@@ -4,10 +4,13 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
@@ -21,6 +24,8 @@ using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services.Ffmpeg;
 using YoutubeDLSharp.Metadata;
+using Ytdlp;
+using Ytdlp.Processes;
 using static YoutubeDLSharp.Metadata.Availability;
 
 namespace Tubeshade.Server.Services;
@@ -335,11 +340,32 @@ public sealed class YoutubeService
 
             var formatIds = data.FormatId!.Split('+');
             var formats = formatIds
-                .Select(formatId => data.Formats.Single(formatData => formatData.FormatId == formatId))
+                .Select(formatId =>
+                {
+                    var matching = data.Formats.Where(formatData => formatData.FormatId == formatId).ToArray();
+                    if (matching is [var single])
+                    {
+                        return single;
+                    }
+
+                    if (matching is [])
+                    {
+                        throw new InvalidOperationException($"Could not find format by id {formatId}");
+                    }
+
+                    throw new InvalidOperationException($"Found multiple formats by id {formatId}");
+                })
                 .ToArray();
 
-            var videoFormat = formats.Single(formatData => formatData.Resolution is not "audio only");
-            videoFormats.Add(format, videoFormat);
+            var nonAudioFormats = formats.Where(formatData => formatData.Resolution is not "audio only").ToArray();
+            if (nonAudioFormats is [var videoFormat])
+            {
+                videoFormats.Add(format, videoFormat);
+            }
+            else
+            {
+                throw new($"Unexpected formats {string.Join(", ", formats.Select(invalidFormat => invalidFormat.Format))}");
+            }
         }
 
         var distinctFormats = videoFormats.DistinctBy(pair => pair.Value.FormatId).ToArray();
@@ -703,6 +729,7 @@ public sealed class YoutubeService
         TaskRepository taskRepository,
         Guid taskRunId,
         DirectoryInfo tempDirectory,
+        IServiceProvider provider,
         CancellationToken cancellationToken)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
@@ -712,6 +739,34 @@ public sealed class YoutubeService
         var preferences = await _preferencesRepository.GetEffectiveForVideo(libraryId, videoId, userId, cancellationToken) ?? new();
         preferences.ApplyDefaults();
 
+        if (preferences.DownloadMethod?.Name is null or DownloadMethod.Names.Default)
+        {
+            await DownloadDefault(videoId, userId, taskRepository, taskRunId, tempDirectory, preferences, video, cookieFilepath, transaction, cancellationToken);
+        }
+        else if (preferences.DownloadMethod == DownloadMethod.Streaming)
+        {
+            await DownloadStreaming(videoId, userId, taskRepository, taskRunId, tempDirectory, preferences, video, cookieFilepath, transaction, provider, cancellationToken);
+        }
+        else
+        {
+            throw new InvalidOperationException($"Unexpected download method '{preferences.DownloadMethod}'");
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private async ValueTask DownloadDefault(
+        Guid videoId,
+        Guid userId,
+        TaskRepository taskRepository,
+        Guid taskRunId,
+        DirectoryInfo tempDirectory,
+        PreferencesEntity preferences,
+        VideoEntity video,
+        string? cookieFilepath,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
         var formatSelectors = preferences.Formats is { Length: > 0 } preferredFormats
             ? preferredFormats
             : DefaultVideoFormats;
@@ -726,7 +781,7 @@ public sealed class YoutubeService
             cancellationToken);
 
         var totalSize = selectedFormats
-            .SelectMany(tuple => tuple.Formats)
+            .SelectMany(formats => formats)
             .Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
 
         if (totalSize.HasValue)
@@ -739,7 +794,7 @@ public sealed class YoutubeService
 
         var sizeOffset = 0m;
 
-        foreach (var (selectedFormat, formats) in selectedFormats)
+        foreach (var formats in selectedFormats)
         {
             foreach (var formatData in formats)
             {
@@ -753,14 +808,10 @@ public sealed class YoutubeService
             var size = formats.Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
             if (videoFile.DownloadedAt is not null)
             {
-                _logger.LogInformation("Video file {VideoFileId} already exists", videoFile.Id);
+                _logger.ExistingVideoFile(videoFile.Id);
                 sizeOffset += size ?? 0;
                 continue;
             }
-
-            _logger.LogInformation(
-                "Selected format with size {VideoSize} MB",
-                size.HasValue ? Math.Round(size.Value / 1024 / 1024, 2) : null);
 
             var fileName = videoFile.StoragePath;
 
@@ -775,10 +826,9 @@ public sealed class YoutubeService
                 }
             }
 
-            _logger.LogInformation("Downloading video {VideoUrl} to {Directory}", video.ExternalUrl, tempDirectory.FullName);
             var downloadTask = _ytdlpWrapper.DownloadVideo(
                 video.ExternalUrl,
-                selectedFormat,
+                string.Join('+', formats.Select(format => format.FormatId)),
                 videoFile.Type,
                 tempDirectory.FullName,
                 $"{Path.GetFileNameWithoutExtension(fileName)}.%(ext)s",
@@ -849,7 +899,7 @@ public sealed class YoutubeService
 
             if (downloadResult.Success)
             {
-                _logger.LogInformation("Downloaded video {VideoUrl}", video.ExternalUrl);
+                _logger.DownloadedVideoFile(videoFile.Id);
 
                 videoFile.ModifiedAt = _clock.GetCurrentInstant();
                 videoFile.ModifiedByUserId = userId;
@@ -861,7 +911,6 @@ public sealed class YoutubeService
             }
             else
             {
-                _logger.LogWarning("Failed to download video {VideoUrl}", video.ExternalUrl);
                 throw new Exception(string.Join(Environment.NewLine, downloadResult.ErrorOutput));
             }
         }
@@ -874,7 +923,7 @@ public sealed class YoutubeService
         foreach (var tempFile in tempDirectory.EnumerateFiles())
         {
             var targetFilePath = Path.Combine(targetDirectory, tempFile.Name);
-            _logger.LogDebug("Moving file from {SourcePath} to {TargetPath}", tempFile.FullName, targetFilePath);
+            _logger.MovingFile(tempFile.FullName, targetFilePath);
             tempFile.MoveTo(targetFilePath);
         }
 
@@ -890,8 +939,500 @@ public sealed class YoutubeService
                 throw new InvalidOperationException("Failed to remove ignored status from video");
             }
         }
+    }
 
-        await transaction.CommitAsync(cancellationToken);
+    private async ValueTask DownloadStreaming(
+        Guid videoId,
+        Guid userId,
+        TaskRepository taskRepository,
+        Guid taskRunId,
+        DirectoryInfo tempDirectory,
+        PreferencesEntity preferences,
+        VideoEntity video,
+        string? cookieFilepath,
+        NpgsqlTransaction transaction,
+        IServiceProvider provider,
+        CancellationToken cancellationToken)
+    {
+        var formatSelectors = preferences.Formats is { Length: > 0 } preferredFormats
+            ? preferredFormats
+            : DefaultVideoFormats;
+
+        var files = await _videoRepository.GetFilesAsync(videoId, userId, transaction);
+
+        var selectedFormats = await _ytdlpWrapper.SelectFormats(
+            video.ExternalUrl,
+            formatSelectors,
+            cookieFilepath,
+            preferences.PlayerClient,
+            cancellationToken);
+
+        var totalSize = selectedFormats
+            .SelectMany(formats => formats)
+            .Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
+
+        if (totalSize.HasValue)
+        {
+            await taskRepository.InitializeTaskProgress(taskRunId, totalSize.Value);
+        }
+
+        var targetDirectory = video.GetDirectoryPath();
+        Directory.CreateDirectory(targetDirectory);
+
+        var sizeOffset = 0m;
+
+        foreach (var formats in selectedFormats)
+        {
+            sizeOffset += await DownloadVideoFile(
+                userId,
+                taskRepository,
+                taskRunId,
+                tempDirectory,
+                formats,
+                files,
+                video,
+                cookieFilepath,
+                preferences,
+                totalSize,
+                sizeOffset,
+                provider,
+                transaction,
+                cancellationToken);
+        }
+
+        if (cookieFilepath is not null && File.Exists(cookieFilepath))
+        {
+            File.Delete(cookieFilepath);
+        }
+
+        var videoExtensions = VideoContainerType.List.Select(type => $".{type.Name}").ToArray();
+        foreach (var tempFile in tempDirectory.EnumerateFiles())
+        {
+            var targetFilePath = Path.Combine(targetDirectory, tempFile.Name);
+
+            if (videoExtensions.Contains(tempFile.Extension, StringComparer.OrdinalIgnoreCase))
+            {
+                _logger.MovingFileFfmpeg(tempFile.FullName, targetFilePath);
+                await _ffmpegService.Copy(tempFile.FullName, targetFilePath, cancellationToken);
+            }
+            else
+            {
+                _logger.MovingFile(tempFile.FullName, targetFilePath);
+                tempFile.MoveTo(targetFilePath);
+            }
+        }
+
+        if (video is not { IgnoredAt: null, IgnoredByUserId: null })
+        {
+            video.ModifiedByUserId = userId;
+            video.IgnoredAt = null;
+            video.IgnoredByUserId = null;
+
+            var count = await _videoRepository.UpdateAsync(video, transaction);
+            if (count < 1)
+            {
+                throw new InvalidOperationException("Failed to remove ignored status from video");
+            }
+        }
+    }
+
+    private async ValueTask<decimal> DownloadVideoFile(
+        Guid userId,
+        TaskRepository taskRepository,
+        Guid taskRunId,
+        DirectoryInfo tempDirectory,
+        FormatData[] formats,
+        List<VideoFileEntity> files,
+        VideoEntity video,
+        string? cookieFilepath,
+        PreferencesEntity preferences,
+        decimal? totalSize,
+        decimal sizeOffset,
+        IServiceProvider provider,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        if (formats is [var combinedFormat])
+        {
+            var containerType = VideoContainerType.FromName(combinedFormat.Extension);
+            var videoFile = files.Single(file => file.Type == containerType && file.Height == combinedFormat.Height!.Value);
+
+            _logger.DownloadingCombinedVideoFile(videoFile.Id, combinedFormat.FormatId, containerType.Name);
+            return await DownloadCombinedVideoFormat(
+                userId,
+                taskRepository,
+                taskRunId,
+                tempDirectory,
+                combinedFormat,
+                videoFile,
+                video,
+                cookieFilepath,
+                preferences,
+                totalSize,
+                sizeOffset,
+                provider,
+                transaction,
+                cancellationToken);
+        }
+
+        if (formats is [var first, var second] && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            var (videoFormat, audioFormat) = (first, second) switch
+            {
+                { first.Resolution: "audio only" } => (second, first),
+                { second.Resolution: "audio only" } => (first, second),
+                _ => throw new ArgumentOutOfRangeException(nameof(formats), formats, "Could not identify video and audio formats")
+            };
+
+            var containerType = VideoContainerType.FromName(videoFormat.Extension);
+            var videoFile = files.Single(file => file.Type == containerType && file.Height == videoFormat.Height!.Value);
+
+            _logger.DownloadingSplitVideoFile(videoFile.Id, videoFormat.FormatId, audioFormat.FormatId, containerType.Name);
+            return await DownloadSplitVideoFormat(
+                userId,
+                taskRepository,
+                taskRunId,
+                tempDirectory,
+                videoFormat,
+                audioFormat,
+                videoFile,
+                video,
+                cookieFilepath,
+                preferences,
+                totalSize,
+                sizeOffset,
+                provider,
+                transaction,
+                cancellationToken);
+        }
+
+        throw new ArgumentOutOfRangeException(nameof(formats), formats, $"Unsupported format count {formats.Length}");
+    }
+
+    private async ValueTask<decimal> DownloadCombinedVideoFormat(
+        Guid userId,
+        TaskRepository taskRepository,
+        Guid taskRunId,
+        DirectoryInfo tempDirectory,
+        FormatData format,
+        VideoFileEntity videoFile,
+        VideoEntity video,
+        string? cookieFilepath,
+        PreferencesEntity preferences,
+        decimal? totalSize,
+        decimal sizeOffset,
+        IServiceProvider provider,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var size = (decimal)(format.FileSize ?? format.ApproximateFileSize ?? 0);
+        if (videoFile.DownloadedAt is not null)
+        {
+            _logger.ExistingVideoFile(videoFile.Id);
+            return size;
+        }
+
+        var fileName = videoFile.StoragePath;
+
+        var limitRate = _options.LimitRate;
+        if (size is not 0 && _options.LimitMultiplier is { } multiplier)
+        {
+            var duration = (decimal)video.Duration.ToDuration().TotalSeconds;
+            var bitrate = (long)Math.Round(size * 8 * multiplier / duration, 0);
+            if (limitRate is null || limitRate.Value > bitrate)
+            {
+                limitRate = bitrate;
+            }
+        }
+
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var fileRepository = scope.ServiceProvider.GetRequiredService<VideoFileRepository>();
+
+            var path = Path.Combine(tempDirectory.FullName, fileName);
+            await fileRepository.CreateTemporaryFile(videoFile.Id, taskRunId, path, cancellationToken);
+        }
+
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+        var downloadTask = _ytdlpWrapper.DownloadVideo(
+            video.ExternalUrl,
+            format.FormatId,
+            videoFile.Type,
+            tempDirectory.FullName,
+            $"{fileNameWithoutExtension}.%(ext)s",
+            cookieFilepath,
+            limitRate,
+            preferences.PlayerClient,
+            cancellationToken);
+
+        var timestamp = Stopwatch.GetTimestamp();
+        var fileSize = 0L;
+        var pollingDelay = TimeSpan.FromSeconds(2);
+
+        while (!downloadTask.IsCompleted)
+        {
+            var startTimestamp = Stopwatch.GetTimestamp();
+
+            var storagePath = tempDirectory
+                    .EnumerateFiles($"{fileNameWithoutExtension}*.*")
+                    .Where(file => file.Extension.ToLowerInvariant().TrimStart('.') is VideoContainerType.Names.Mp4 or VideoContainerType.Names.WebM)
+                    .ToArray() switch
+                {
+                    [var tempFile] => tempFile.FullName,
+                    _ => null,
+                };
+
+            if (storagePath is null)
+            {
+                var remaining = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
+                if (remaining < TimeSpan.Zero)
+                {
+                    continue;
+                }
+
+                await Task.Delay(remaining, cancellationToken);
+                continue;
+            }
+
+            var newTimestamp = Stopwatch.GetTimestamp();
+            var newFileSize = new FileInfo(storagePath).Length;
+
+            var elapsedSeconds = Stopwatch.GetElapsedTime(timestamp, newTimestamp).TotalSeconds;
+            var sizeDelta = newFileSize - fileSize;
+
+            timestamp = newTimestamp;
+            fileSize = newFileSize;
+
+            if (totalSize is { } total && size is not 0)
+            {
+                var rate = sizeDelta / (decimal)elapsedSeconds;
+                var remainingSize = total - (newFileSize + sizeOffset);
+                var remainingDuration = rate > 0
+                    ? Period.FromNanoseconds((long)(remainingSize / rate * 1_000_000_000)).Normalize()
+                    : null;
+
+                await taskRepository.UpdateProgress(taskRunId, fileSize + sizeOffset, rate, remainingDuration);
+            }
+
+            var remaining2 = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
+            if (remaining2 < TimeSpan.Zero)
+            {
+                continue;
+            }
+
+            await Task.Delay(remaining2, cancellationToken);
+        }
+
+        var downloadResult = await downloadTask;
+
+        if (downloadResult.Success)
+        {
+            _logger.DownloadedVideoFile(videoFile.Id);
+
+            videoFile.ModifiedAt = _clock.GetCurrentInstant();
+            videoFile.ModifiedByUserId = userId;
+            videoFile.DownloadedAt = _clock.GetCurrentInstant();
+            videoFile.DownloadedByUserId = userId;
+            var count = await _videoFileRepository.UpdateAsync(videoFile, transaction);
+            if (count is 0)
+            {
+                throw new("Failed to update video file after download");
+            }
+
+            return size;
+        }
+
+        _logger.LogWarning("Failed to download video {VideoUrl}", video.ExternalUrl);
+        throw new Exception(string.Join(Environment.NewLine, downloadResult.ErrorOutput));
+    }
+
+    [SupportedOSPlatform("linux")]
+    private async ValueTask<decimal> DownloadSplitVideoFormat(
+        Guid userId,
+        TaskRepository taskRepository,
+        Guid taskRunId,
+        DirectoryInfo tempDirectory,
+        FormatData videoFormat,
+        FormatData audioFormat,
+        VideoFileEntity videoFile,
+        VideoEntity video,
+        string? cookieFilepath,
+        PreferencesEntity preferences,
+        decimal? totalSize,
+        decimal sizeOffset,
+        IServiceProvider provider,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var size = new[] { audioFormat, videoFormat }
+            .Sum(format => (decimal)(format.FileSize ?? format.ApproximateFileSize ?? 0));
+
+        if (videoFile.DownloadedAt is not null)
+        {
+            _logger.ExistingVideoFile(videoFile.Id);
+            return size;
+        }
+
+        var audioFileName = $"{videoFile.Id}_{audioFormat.FormatId}";
+        var audioFilePath = Path.Combine(tempDirectory.FullName, audioFileName);
+
+        var videoFileName = $"{videoFile.Id}_{videoFormat.FormatId}";
+        var videoFilePath = Path.Combine(tempDirectory.FullName, videoFileName);
+
+        var fileName = videoFile.StoragePath;
+        var outputFilePath = Path.Combine(tempDirectory.FullName, fileName);
+
+        const libc.Mode mask = libc.Mode.S_IWUSR | libc.Mode.S_IRUSR | libc.Mode.S_IRGRP | libc.Mode.S_IROTH;
+        if (libc.mkfifo(videoFilePath, mask) is not 0)
+        {
+            throw new Exception($"Failed to create FIFO named pipe {videoFilePath}");
+        }
+
+        if (libc.mkfifo(audioFilePath, mask) is not 0)
+        {
+            throw new Exception($"Failed to create FIFO named pipe {audioFilePath}");
+        }
+
+        var audioLimitRate = _options.LimitRate;
+        var videoLimitRate = _options.LimitRate;
+        if (_options.LimitMultiplier is { } multiplier)
+        {
+            if ((audioFormat.FileSize ?? audioFormat.ApproximateFileSize) is { } audioFormatSize)
+            {
+                var duration = (decimal)video.Duration.ToDuration().TotalSeconds;
+                var bitrate = (long)Math.Round(audioFormatSize * 8 * multiplier / duration, 0);
+                if (audioLimitRate is null || audioLimitRate.Value > bitrate)
+                {
+                    audioLimitRate = bitrate;
+                }
+            }
+
+            if ((videoFormat.FileSize ?? videoFormat.ApproximateFileSize) is { } videoFormatSize)
+            {
+                var duration = (decimal)video.Duration.ToDuration().TotalSeconds;
+                var bitrate = (long)Math.Round(videoFormatSize * 8 * multiplier / duration, 0);
+                if (videoLimitRate is null || videoLimitRate.Value > bitrate)
+                {
+                    videoLimitRate = bitrate;
+                }
+            }
+        }
+
+        _logger.SplitFormatLimitRates(videoFile.Id, audioLimitRate, videoLimitRate);
+
+        var audioOptions = _ytdlpWrapper.GetDownloadFormatArgs(
+            audioFormat.FormatId,
+            "-",
+            cookieFilepath,
+            audioLimitRate,
+            preferences.PlayerClient);
+
+        var videoOptions = _ytdlpWrapper.GetDownloadFormatArgs(
+            videoFormat.FormatId,
+            "-",
+            cookieFilepath,
+            videoLimitRate,
+            preferences.PlayerClient);
+
+        using var audioProcess = new CancelableProcess(_options.YtdlpPath, audioOptions.ToArguments(video.ExternalUrl), false);
+        using var videoProcess = new CancelableProcess(_options.YtdlpPath, videoOptions.ToArguments(video.ExternalUrl), false);
+
+        var audioTask = audioProcess.Run(cancellationToken);
+        var videoTask = videoProcess.Run(cancellationToken);
+        var downloadTask = Task.WhenAll(audioTask, videoTask);
+
+        var combineTask = _ffmpegService.CombineStreams(videoFilePath, audioFilePath, outputFilePath, cancellationToken);
+
+        await using (var videoFileStream = File.Open(videoFilePath, FileMode.Open, FileAccess.Write, FileShare.Read))
+        {
+            var videoFileTask = videoProcess.Output.CopyToAsync(videoFileStream, cancellationToken);
+
+            await using (var audioFileStream = File.Open(audioFilePath, FileMode.Open, FileAccess.Write, FileShare.Read))
+            {
+                var audioFileTask = audioProcess.Output.CopyToAsync(audioFileStream, cancellationToken);
+                var copyTask = Task.WhenAll(videoFileTask, audioFileTask);
+
+                await using (var scope = provider.CreateAsyncScope())
+                {
+                    var fileRepository = scope.ServiceProvider.GetRequiredService<VideoFileRepository>();
+                    await fileRepository.CreateTemporaryFile(videoFile.Id, taskRunId, outputFilePath, cancellationToken);
+                }
+
+                var timestamp = Stopwatch.GetTimestamp();
+                var fileSize = 0L;
+                var pollingDelay = TimeSpan.FromSeconds(1);
+
+                while (!downloadTask.IsCompleted)
+                {
+                    var startTimestamp = Stopwatch.GetTimestamp();
+                    if (!File.Exists(outputFilePath))
+                    {
+                        await Task.Delay(pollingDelay, cancellationToken);
+                        continue;
+                    }
+
+                    var newTimestamp = Stopwatch.GetTimestamp();
+                    var newFileSize = new FileInfo(outputFilePath).Length;
+
+                    var elapsedSeconds = Stopwatch.GetElapsedTime(timestamp, newTimestamp).TotalSeconds;
+                    var sizeDelta = newFileSize - fileSize;
+
+                    timestamp = newTimestamp;
+                    fileSize = newFileSize;
+
+                    if (totalSize is { } total && size is not 0)
+                    {
+                        var rate = sizeDelta / (decimal)elapsedSeconds;
+                        var remainingSize = total - (newFileSize + sizeOffset);
+                        var remainingDuration = rate > 0
+                            ? Period.FromNanoseconds((long)(remainingSize / rate * 1_000_000_000)).Normalize()
+                            : null;
+
+                        await taskRepository.UpdateProgress(taskRunId, fileSize + sizeOffset, rate, remainingDuration);
+                    }
+
+                    var remaining = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
+                    if (remaining < TimeSpan.Zero)
+                    {
+                        continue;
+                    }
+
+                    await Task.Delay(remaining, cancellationToken);
+                }
+
+                await downloadTask;
+                _logger.CompletedDownloadTasks();
+
+                await copyTask;
+                _logger.CompletedCopyTasks();
+
+                await videoFileStream.FlushAsync(cancellationToken);
+                await audioFileStream.FlushAsync(cancellationToken);
+                _logger.FlushedFifoStreams();
+            }
+        }
+
+        _logger.ClosedFifoStreams();
+
+        await combineTask;
+        _logger.FinishedCombiningSplitFile();
+
+        _logger.DownloadedVideoFile(videoFile.Id);
+
+        videoFile.ModifiedAt = _clock.GetCurrentInstant();
+        videoFile.ModifiedByUserId = userId;
+        videoFile.DownloadedAt = _clock.GetCurrentInstant();
+        videoFile.DownloadedByUserId = userId;
+        var count = await _videoFileRepository.UpdateAsync(videoFile, transaction);
+        if (count is 0)
+        {
+            throw new("Failed to update video file after download");
+        }
+
+        File.Delete(audioFilePath);
+        File.Delete(videoFilePath);
+
+        return size;
     }
 
     public async ValueTask Reindex(Guid libraryId, Guid userId, CancellationToken cancellationToken)

@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Added
+
+- `streaming` download method for MP4 videos
+  ([#224](https://github.com/Tubeshade/Tubeshade/pull/224))
+
 ### Changed
 
 - Rewrite vendored code for calling yt-dlp

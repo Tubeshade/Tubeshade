@@ -21,19 +21,18 @@ public sealed class Ytdlp
 
     public async Task<RunResult<string>> RunAsync(string url, OptionSet options, CancellationToken cancellationToken)
     {
-        var args = string.Join(' ', options.GetOptionFlags().Append(url));
-        using var process = new CancelableProcess(Path, args);
+        using var process = new CancelableProcess(Path, options.ToArguments(url));
 
         try
         {
             var exitCode = await process.Run(cancellationToken);
             return exitCode is 0
-                ? RunResult<string>.Successful(string.Empty, process.Error.ToArray())
-                : RunResult<string>.Failed(process.Error.ToArray());
+                ? RunResult<string>.Successful(string.Empty, process.ErrorLines.ToArray())
+                : RunResult<string>.Failed(process.ErrorLines.ToArray());
         }
         catch (Exception)
         {
-            return RunResult<string>.Failed(process.Error.ToArray());
+            return RunResult<string>.Failed(process.ErrorLines.ToArray());
         }
     }
 
@@ -42,25 +41,24 @@ public sealed class Ytdlp
         OptionSet options,
         CancellationToken cancellationToken)
     {
-        var args = string.Join(' ', options.GetOptionFlags().Append(url));
-        using var process = new CancelableProcess(Path, args);
+        using var process = new CancelableProcess(Path, options.ToArguments(url));
 
         try
         {
             var exitCode = await process.Run(cancellationToken);
-            if (process.Output.ToArray() is not [var json] || exitCode is not 0)
+            if (process.OutputLines.ToArray() is not [var json] || exitCode is not 0)
             {
-                return RunResult<VideoData>.Failed(process.Error.ToArray());
+                return RunResult<VideoData>.Failed(process.ErrorLines.ToArray());
             }
 
             var videoData = JsonSerializer.Deserialize(json, YouTubeSerializerContext.Default.VideoData)
                             ?? throw new InvalidOperationException("Deserialized video data to null");
 
-            return RunResult<VideoData>.Successful(videoData, process.Error.ToArray());
+            return RunResult<VideoData>.Successful(videoData, process.ErrorLines.ToArray());
         }
         catch (Exception)
         {
-            return RunResult<VideoData>.Failed(process.Error.ToArray());
+            return RunResult<VideoData>.Failed(process.ErrorLines.ToArray());
         }
     }
 }

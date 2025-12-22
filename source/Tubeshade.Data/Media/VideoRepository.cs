@@ -230,9 +230,12 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     video_files.height AS Height,
                     video_files.framerate AS Framerate,
                     video_files.downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-                    video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
+                    video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)},
+                    downloading.task_run_id AS TaskRunId,
+                    downloading.path AS TempPath
              FROM media.video_files
                 INNER JOIN media.videos ON video_files.video_id = videos.id
+                LEFT OUTER JOIN media.video_files_downloading downloading ON video_files.id = downloading.file_id
              WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
              ORDER BY video_files.width DESC, video_files.framerate DESC, video_files.id;
              """,
@@ -301,9 +304,12 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     video_files.height AS Height,
                     video_files.framerate AS Framerate,
                     video_files.downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-                    video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
+                    video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)},
+                    downloading.task_run_id AS TaskRunId,
+                    downloading.path AS TempPath
              FROM media.video_files
                 INNER JOIN media.videos ON video_files.video_id = videos.id
+                LEFT OUTER JOIN media.video_files_downloading downloading ON video_files.id = downloading.file_id
              WHERE {AccessFilter} AND video_files.id = @{nameof(GetSingleParameters.Id)};
              """,
             new GetSingleParameters(id, userId, Access.Read),

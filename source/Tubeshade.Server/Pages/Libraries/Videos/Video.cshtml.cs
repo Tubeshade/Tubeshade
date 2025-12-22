@@ -91,8 +91,8 @@ public sealed class Video : LibraryPageBase
 
         Entity = await _videoRepository.GetAsync(VideoId, userId, cancellationToken);
         Files = await _videoRepository.GetFilesAsync(VideoId, userId, cancellationToken);
-        PlayableFiles = Files.Where(file => file.DownloadedAt is not null).ToList();
-        DownloadableFiles = Files.Where(file => file.DownloadedAt is null).ToList();
+        PlayableFiles = Files.Where(file => file.DownloadedAt is not null || file.TempPath is not null).ToList();
+        DownloadableFiles = Files.Where(file => file.DownloadedAt is null && file.TempPath is null).ToList();
 
         Channel = await _channelRepository.GetAsync(Entity.ChannelId, userId, cancellationToken);
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
