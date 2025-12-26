@@ -25,10 +25,14 @@ dotnet publish \
 	/warnAsError \
 	/nologo
 
+if [ -z "$DOTNET_RUNNING_IN_CONTAINER" ]; then
 (
 	cd "$publish_dir" || exit
 	zip -r -9 "$archive_name" .
 )
+else
+	echo "in container, not creating archive"
+fi
 
 echo "artifact=$publish_dir/$archive_name"
 
