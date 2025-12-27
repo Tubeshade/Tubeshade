@@ -8,6 +8,7 @@ using FluentAssertions;
 using Microsoft.Net.Http.Headers;
 using Microsoft.Playwright;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 using Tubeshade.Server.Services.Background;
 
 namespace Tubeshade.Server.Tests.Integration.Published.Fixtures;
@@ -156,6 +157,12 @@ public abstract class PlaywrightTests
     [TearDown]
     public async Task TearDown()
     {
+        if (TestContext.CurrentContext.Result.Outcome.Status is TestStatus.Failed)
+        {
+            var snapshot = await Page.Locator("body").AriaSnapshotAsync();
+            Console.WriteLine(snapshot);
+        }
+
         var elements = await Page.QuerySelectorAllAsync(".field-validation-error");
         foreach (var element in elements)
         {
