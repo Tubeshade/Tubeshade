@@ -1,0 +1,12 @@
+﻿@page "~/Libraries/{libraryId:guid}/Channels/Create/{handler?}"
+@model Create
+@{
+    ViewData["Title"] = $"{SharedResources.Channels_Create} - {Model.Library.Name}";
+}
+
+@section Navigation
+{
+    <partial name="Libraries/_LibraryNavigation" for="Library"/>
+}
+
+<partial name="Channels/_CreateChannel" for="CreateChannel"/>

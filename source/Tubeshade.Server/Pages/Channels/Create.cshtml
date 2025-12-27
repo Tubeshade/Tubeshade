@@ -1,0 +1,12 @@
+﻿@page "~/Channels/Create/{handler?}"
+@model Create
+@{
+    ViewData["Title"] = SharedResources.Channels_Create;
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="@Model"/>
+}
+
+<partial name="Channels/_CreateChannel" for="CreateChannel"/>

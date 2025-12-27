@@ -387,4 +387,22 @@
     <data name="Preferences_DownloadMethod_streaming" xml:space="preserve">
         <value>Streaming</value>
     </data>
+    <data name="Channels_Create" xml:space="preserve">
+        <value>Create a channel</value>
+    </data>
+    <data name="Button_CreateChannel" xml:space="preserve">
+        <value>Create channel</value>
+    </data>
+    <data name="Channels_Create_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Channels_Create_Library" xml:space="preserve">
+        <value>Library</value>
+    </data>
+    <data name="Channels_Create_ExternalId" xml:space="preserve">
+        <value>Original ID</value>
+    </data>
+    <data name="Channels_Create_ExternalUrl" xml:space="preserve">
+        <value>Original URL</value>
+    </data>
 </root>

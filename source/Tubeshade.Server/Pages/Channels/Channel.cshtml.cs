@@ -2,12 +2,12 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Tubeshade.Data.Media;
-using Tubeshade.Server.Pages.Libraries;
 
 namespace Tubeshade.Server.Pages.Channels;
 
-public sealed class Channel : LibraryPageBase
+public sealed class Channel : PageModel
 {
     private readonly ChannelRepository _channelRepository;
 

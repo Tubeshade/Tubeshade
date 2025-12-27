@@ -40,11 +40,17 @@
                 }
             </td>
             <td>
-                <a href="@channel.ExternalUrl">
-                    @SharedResources.ResourceManager.GetString($"Video_ExternalAvailability_{channel.Availability.Name}")
-                </a>
+                <a href="@channel.ExternalUrl">@channel.Availability.LocalizedName</a>
             </td>
         </tr>
     }
     </tbody>
 </table>
+
+<div class="row">
+    <div class="col-12 col-sm-4 col-lg-3 col-xxl-2">
+        <a asp-page="/Channels/Create" class="btn btn-primary w-100" type="button">
+            @SharedResources.Button_CreateChannel
+        </a>
+    </div>
+</div>

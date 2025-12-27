@@ -1,0 +1,66 @@
+﻿@using Tubeshade.Data.Media
+@model CreateChannelModel
+
+<form method="post" class="row g-3 mb-3">
+
+    <div class="col-sm-6">
+        <label class="form-label" asp-for="Name">
+            @SharedResources.Channels_Create_Name
+        </label>
+        <input class="form-control" asp-for="Name" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="Name"></span>
+    </div>
+
+    <div class="col-sm-6">
+        <label class="form-label" asp-for="LibraryId">
+            @SharedResources.Channels_Create_Library
+        </label>
+        <select class="form-control form-select" asp-for="LibraryId">
+            @foreach (var library in Model.Libraries)
+            {
+                <option value="@library.Id" selected="@(library.Id == Model.LibraryId)">
+                    @library.Name
+                </option>
+            }
+        </select>
+        <span class="form-text text-danger" asp-validation-for="LibraryId"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="ExternalId">
+            @SharedResources.Channels_Create_ExternalId
+        </label>
+        <input class="form-control" asp-for="ExternalId" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="ExternalId"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="ExternalUrl">
+            @SharedResources.Channels_Create_ExternalUrl
+        </label>
+        <input class="form-control" asp-for="ExternalUrl" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="ExternalUrl"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="Availability">
+            @SharedResources.Filters_Availability
+        </label>
+        <select class="form-control form-select" asp-for="Availability">
+            @foreach (var availability in ExternalAvailability.List)
+            {
+                <option value="@availability.Name" selected="@(availability == Model.Availability)">
+                    @availability.LocalizedName
+                </option>
+            }
+        </select>
+        <span class="form-text text-danger" asp-validation-for="Availability"></span>
+    </div>
+
+    <div class="col-12 col-sm-4 col-lg-3 col-xxl-2">
+        <button class="btn btn-success w-100" type="submit">
+            @SharedResources.Button_CreateChannel
+        </button>
+    </div>
+
+</form>

@@ -8,6 +8,8 @@ _Latest build from master branch._
 
 - `streaming` download method for MP4 videos
   ([#224](https://github.com/Tubeshade/Tubeshade/pull/224))
+- Pages for manually creating new channels
+  ([#225](https://github.com/Tubeshade/Tubeshade/pull/225))
 
 ### Changed
 

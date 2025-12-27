@@ -56,6 +56,7 @@ public sealed class YoutubeService
     private readonly TaskService _taskService;
     private readonly SponsorBlockService _sponsorBlockService;
     private readonly FfmpegService _ffmpegService;
+    private readonly ChannelService _channelService;
 
     public YoutubeService(
         ILogger<YoutubeService> logger,
@@ -72,7 +73,8 @@ public sealed class YoutubeService
         WebVideoTextTracksService webVideoTextTracksService,
         TaskService taskService,
         SponsorBlockService sponsorBlockService,
-        FfmpegService ffmpegService)
+        FfmpegService ffmpegService,
+        ChannelService channelService)
     {
         _logger = logger;
         _options = optionsMonitor.CurrentValue;
@@ -87,6 +89,7 @@ public sealed class YoutubeService
         _taskService = taskService;
         _sponsorBlockService = sponsorBlockService;
         _ffmpegService = ffmpegService;
+        _channelService = channelService;
         _imageFileRepository = imageFileRepository;
         _videoFileRepository = videoFileRepository;
     }
@@ -144,9 +147,9 @@ public sealed class YoutubeService
         VideoData data,
         NpgsqlTransaction transaction)
     {
-        if (data.ChannelId is not { } youtubeChannelId ||
-            data.Channel is not { } channelName ||
-            data.ChannelUrl is not { } channelUrl)
+        if (data.ChannelId is not { } externalId ||
+            data.Channel is not { } name ||
+            data.ChannelUrl is not { } externalUrl)
         {
             if (data.Availability is null)
             {
@@ -156,38 +159,14 @@ public sealed class YoutubeService
             throw new InvalidOperationException("Missing channel details");
         }
 
-        var channel = await _channelRepository.FindByExternalId(youtubeChannelId, userId, Access.Read, transaction);
+        var channel = await _channelRepository.FindByExternalId(externalId, userId, Access.Read, transaction);
         if (channel is not null)
         {
             return channel;
         }
 
-        var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
-        _logger.CreatingChannel(channelName, youtubeChannelId);
-
-        var channelId = await _channelRepository.AddAsync(
-            new ChannelEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = library.OwnerId,
-                Name = channelName,
-                StoragePath = library.StoragePath,
-                ExternalId = youtubeChannelId,
-                ExternalUrl = channelUrl,
-                Availability = ExternalAvailability.Public,
-            },
-            transaction);
-
-        channel = await _channelRepository.GetAsync(channelId!.Value, userId, transaction);
-
-        channel.StoragePath = Path.Combine(library.StoragePath, $"channel_{channel.Id}");
-        await _channelRepository.UpdateAsync(channel, transaction);
-        await _channelRepository.AddToLibrary(libraryId, channel.Id, transaction);
-
-        Directory.CreateDirectory(channel.StoragePath);
-
-        return channel;
+        var availability = ExternalAvailability.Public;
+        return await _channelService.Create(libraryId, userId, name, externalId, externalUrl, availability, transaction);
     }
 
     private async ValueTask<Guid> IndexVideo(

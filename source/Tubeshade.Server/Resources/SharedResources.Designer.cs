@@ -87,6 +87,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create channel.
+        /// </summary>
+        public static string Button_CreateChannel {
+            get {
+                return ResourceManager.GetString("Button_CreateChannel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create library.
         /// </summary>
         public static string Button_CreateLibrary {
@@ -245,6 +254,51 @@ namespace Tubeshade.Server.Resources {
         public static string Channels {
             get {
                 return ResourceManager.GetString("Channels", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a channel.
+        /// </summary>
+        public static string Channels_Create {
+            get {
+                return ResourceManager.GetString("Channels_Create", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Original ID.
+        /// </summary>
+        public static string Channels_Create_ExternalId {
+            get {
+                return ResourceManager.GetString("Channels_Create_ExternalId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Original URL.
+        /// </summary>
+        public static string Channels_Create_ExternalUrl {
+            get {
+                return ResourceManager.GetString("Channels_Create_ExternalUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Library.
+        /// </summary>
+        public static string Channels_Create_Library {
+            get {
+                return ResourceManager.GetString("Channels_Create_Library", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string Channels_Create_Name {
+            get {
+                return ResourceManager.GetString("Channels_Create_Name", resourceCulture);
             }
         }
         
