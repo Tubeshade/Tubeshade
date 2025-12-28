@@ -105,6 +105,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create video.
+        /// </summary>
+        public static string Button_CreateVideo {
+            get {
+                return ResourceManager.GetString("Button_CreateVideo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Delete.
         /// </summary>
         public static string Button_Delete {
@@ -1217,6 +1226,87 @@ namespace Tubeshade.Server.Resources {
         public static string Videos {
             get {
                 return ResourceManager.GetString("Videos", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a video.
+        /// </summary>
+        public static string Videos_Create {
+            get {
+                return ResourceManager.GetString("Videos_Create", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Categories.
+        /// </summary>
+        public static string Videos_Create_Categories {
+            get {
+                return ResourceManager.GetString("Videos_Create_Categories", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Channel.
+        /// </summary>
+        public static string Videos_Create_Channel {
+            get {
+                return ResourceManager.GetString("Videos_Create_Channel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Description.
+        /// </summary>
+        public static string Videos_Create_Description {
+            get {
+                return ResourceManager.GetString("Videos_Create_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Duration.
+        /// </summary>
+        public static string Videos_Create_Duration {
+            get {
+                return ResourceManager.GetString("Videos_Create_Duration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string Videos_Create_Name {
+            get {
+                return ResourceManager.GetString("Videos_Create_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Published at.
+        /// </summary>
+        public static string Videos_Create_PublishedAt {
+            get {
+                return ResourceManager.GetString("Videos_Create_PublishedAt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to In time zone.
+        /// </summary>
+        public static string Videos_Create_PublishedAtTimeZone {
+            get {
+                return ResourceManager.GetString("Videos_Create_PublishedAtTimeZone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tags.
+        /// </summary>
+        public static string Videos_Create_Tags {
+            get {
+                return ResourceManager.GetString("Videos_Create_Tags", resourceCulture);
             }
         }
     }

@@ -398,4 +398,34 @@
     <data name="Channels_Create_ExternalUrl" xml:space="preserve">
         <value>Oriģinālā saite</value>
     </data>
+    <data name="Videos_Create" xml:space="preserve">
+        <value>Izveidot video</value>
+    </data>
+    <data name="Button_CreateVideo" xml:space="preserve">
+        <value>Izveidot video</value>
+    </data>
+    <data name="Videos_Create_Categories" xml:space="preserve">
+        <value>Kategorijas</value>
+    </data>
+    <data name="Videos_Create_Channel" xml:space="preserve">
+        <value>Kanāls</value>
+    </data>
+    <data name="Videos_Create_Description" xml:space="preserve">
+        <value>Apraksts</value>
+    </data>
+    <data name="Videos_Create_Duration" xml:space="preserve">
+        <value>Ilgums</value>
+    </data>
+    <data name="Videos_Create_Name" xml:space="preserve">
+        <value>Nosaukums</value>
+    </data>
+    <data name="Videos_Create_PublishedAt" xml:space="preserve">
+        <value>Publicēts</value>
+    </data>
+    <data name="Videos_Create_PublishedAtTimeZone" xml:space="preserve">
+        <value>Laika zonā</value>
+    </data>
+    <data name="Videos_Create_Tags" xml:space="preserve">
+        <value>Tagi</value>
+    </data>
 </root>

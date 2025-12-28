@@ -2,6 +2,7 @@
 using FluentAssertions;
 using Microsoft.Playwright;
 using NUnit.Framework;
+using Tubeshade.Data.Media;
 using Tubeshade.Server.Tests.Integration.Published.Fixtures;
 
 namespace Tubeshade.Server.Tests.Integration.Published.Pages.Channels;
@@ -64,5 +65,26 @@ public sealed class CreateTests(IServerFixture serverFixture) : PlaywrightTests(
 
         await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Create channel" }).ClickAsync();
         (await Page.TitleAsync()).Should().Be($"{Name} - {Name} - Tubeshade");
+    }
+
+    [Test]
+    [Order(3)]
+    public async Task CreateVideo()
+    {
+        await Page.GotoAsync("/");
+        (await Page.TitleAsync()).Should().Be("Home page - Tubeshade");
+
+        await Page.GetByRole(AriaRole.Link, new() { Name = "+" }).ClickAsync();
+        (await Page.TitleAsync()).Should().Be("Create a video - Tubeshade");
+
+        await Page.GetByLabel("Name").FillAsync(Name);
+        await Page.GetByLabel("Video type").SelectOptionAsync(VideoType.Names.Video);
+        await Page.GetByLabel("Original ID").FillAsync(Name);
+        await Page.GetByLabel("Original URL").FillAsync(Name);
+        await Page.GetByLabel("Published at").FillAsync("2025-12-28T00:00");
+        await Page.GetByLabel("Duration").FillAsync("10");
+
+        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Create video" }).ClickAsync();
+        (await Page.TitleAsync()).Should().Be($"{Name} - Tubeshade");
     }
 }

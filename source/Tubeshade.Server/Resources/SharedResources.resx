@@ -405,4 +405,34 @@
     <data name="Channels_Create_ExternalUrl" xml:space="preserve">
         <value>Original URL</value>
     </data>
+    <data name="Videos_Create" xml:space="preserve">
+        <value>Create a video</value>
+    </data>
+    <data name="Button_CreateVideo" xml:space="preserve">
+        <value>Create video</value>
+    </data>
+    <data name="Videos_Create_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Videos_Create_Channel" xml:space="preserve">
+        <value>Channel</value>
+    </data>
+    <data name="Videos_Create_PublishedAt" xml:space="preserve">
+        <value>Published at</value>
+    </data>
+    <data name="Videos_Create_PublishedAtTimeZone" xml:space="preserve">
+        <value>In time zone</value>
+    </data>
+    <data name="Videos_Create_Duration" xml:space="preserve">
+        <value>Duration</value>
+    </data>
+    <data name="Videos_Create_Description" xml:space="preserve">
+        <value>Description</value>
+    </data>
+    <data name="Videos_Create_Categories" xml:space="preserve">
+        <value>Categories</value>
+    </data>
+    <data name="Videos_Create_Tags" xml:space="preserve">
+        <value>Tags</value>
+    </data>
 </root>

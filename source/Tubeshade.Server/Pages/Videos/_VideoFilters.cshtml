@@ -27,9 +27,7 @@
                 <option value="">@SharedResources.Filters_VideoType_All</option>
                 @foreach (var type in VideoType.List)
                 {
-                    <option value="@type.Name">
-                        @SharedResources.ResourceManager.GetString($"Filters_VideoType_{type.Name}")
-                    </option>
+                    <option value="@type.Name">@type.LocalizedName</option>
                 }
             </select>
         </div>
@@ -87,9 +85,15 @@
         </div>
 
         <div class="col-auto">
-            <button type="submit" class="btn btn-primary" title="Search">
+            <button type="submit" class="btn btn-primary" title="@SharedResources.Filters_Search">
                 🔎︎
             </button>
+        </div>
+
+        <div class="col-auto">
+            <a asp-page="/Videos/Create" type="submit" class="btn btn-success" title="@SharedResources.Videos_Create">
+                +
+            </a>
         </div>
 
         @if (Model is IPageWithSettings)

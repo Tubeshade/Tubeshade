@@ -57,6 +57,7 @@ public sealed class YoutubeService
     private readonly SponsorBlockService _sponsorBlockService;
     private readonly FfmpegService _ffmpegService;
     private readonly ChannelService _channelService;
+    private readonly VideoService _videoService;
 
     public YoutubeService(
         ILogger<YoutubeService> logger,
@@ -74,7 +75,8 @@ public sealed class YoutubeService
         TaskService taskService,
         SponsorBlockService sponsorBlockService,
         FfmpegService ffmpegService,
-        ChannelService channelService)
+        ChannelService channelService,
+        VideoService videoService)
     {
         _logger = logger;
         _options = optionsMonitor.CurrentValue;
@@ -90,6 +92,7 @@ public sealed class YoutubeService
         _sponsorBlockService = sponsorBlockService;
         _ffmpegService = ffmpegService;
         _channelService = channelService;
+        _videoService = videoService;
         _imageFileRepository = imageFileRepository;
         _videoFileRepository = videoFileRepository;
     }
@@ -118,7 +121,6 @@ public sealed class YoutubeService
         {
             result.VideoId = await IndexVideo(
                 url,
-                videoId,
                 channel,
                 libraryId,
                 userId,
@@ -171,7 +173,6 @@ public sealed class YoutubeService
 
     private async ValueTask<Guid> IndexVideo(
         string url,
-        Guid? videoId,
         ChannelEntity channel,
         Guid libraryId,
         Guid userId,
@@ -224,6 +225,8 @@ public sealed class YoutubeService
 
         if (video is null)
         {
+            var externalUrl = videoData.WebpageUrl ?? throw new InvalidOperationException("Missing video url");
+
             var publishedAt = videoData.ReleaseTimestamp ?? videoData.Timestamp
                 ?? throw new InvalidOperationException("Video is missing publish date");
             var publishedInstant = Instant.FromUnixTimeSeconds(publishedAt);
@@ -234,37 +237,24 @@ public sealed class YoutubeService
                 _ => VideoType.Video,
             };
 
-            videoId = await _videoRepository.AddAsync(
-                new VideoEntity
-                {
-                    CreatedByUserId = userId,
-                    ModifiedByUserId = userId,
-                    OwnerId = library.OwnerId,
-                    Name = videoData.Title,
-                    Type = type,
-                    Description = videoData.Description ?? string.Empty,
-                    Categories = videoData.Categories ?? [],
-                    Tags = videoData.Tags ?? [],
-                    ViewCount = videoData.ViewCount,
-                    LikeCount = videoData.LikeCount,
-                    ChannelId = channel.Id,
-                    StoragePath = channel.StoragePath,
-                    ExternalId = youtubeVideoId,
-                    ExternalUrl = videoData.WebpageUrl ?? throw new InvalidOperationException("Missing video url"),
-                    PublishedAt = publishedInstant,
-                    RefreshedAt = currentTime,
-                    Availability = availability,
-                    Duration = duration,
-                    TotalCount = 0,
-                },
+            video = await _videoService.Create(
+                userId,
+                channel,
+                library.OwnerId,
+                videoData.Title,
+                videoData.Description ?? string.Empty,
+                videoData.Categories ?? [],
+                videoData.Tags ?? [],
+                type,
+                youtubeVideoId,
+                externalUrl,
+                publishedInstant,
+                currentTime,
+                availability,
+                duration,
+                videoData.ViewCount,
+                videoData.LikeCount,
                 transaction);
-
-            video = await _videoRepository.GetAsync(videoId!.Value, userId, transaction);
-
-            video.StoragePath = Path.Combine(channel.StoragePath, $"video_{video.Id}");
-            await _videoRepository.UpdateAsync(video, transaction);
-
-            Directory.CreateDirectory(video.StoragePath);
         }
         else
         {
@@ -689,7 +679,7 @@ public sealed class YoutubeService
                     continue;
                 }
 
-                await IndexVideo(video.Url, null, channel, libraryId, userId, videoResult.Data, transaction, directory, cancellationToken, type);
+                await IndexVideo(video.Url, channel, libraryId, userId, videoResult.Data, transaction, directory, cancellationToken, type);
 
                 if (reportProgress)
                 {

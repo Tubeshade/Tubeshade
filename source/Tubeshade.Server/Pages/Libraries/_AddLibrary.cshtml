@@ -22,7 +22,7 @@
 
     <div class="col-sm-4">
         <label class="form-label" asp-for="TimeZoneId">@SharedResources.Libraries_SubscriptionTimeZone</label>
-        <select class="form-control form-select" asp-for="TimeZoneId">
+        <select class="form-control form-select tubeshade-time-zone-select" asp-for="TimeZoneId">
             @foreach (var id in Model.TimeZoneIds)
             {
                 <option value="@id">@id</option>

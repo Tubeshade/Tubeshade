@@ -4,6 +4,11 @@
     ViewData["Title"] = SharedResources.Libraries;
 }
 
+@section Head
+{
+    <link rel="prefetch" as="script" href="~/js/time-zone-select.js"/>
+}
+
 @section Navigation
 {
     <partial name="Shared/_Navigation" model="@Model"/>
@@ -37,13 +42,5 @@
 
 @section Scripts
 {
-    <script>
-        const timeZoneSelect = document.getElementById("@nameof(AddLibraryModel.TimeZoneId)");
-        if (timeZoneSelect !== null) {
-            const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone.trim();
-            if (userTimeZone !== null) {
-                timeZoneSelect.value = userTimeZone;
-            }
-        }
-    </script>
+    <script src="~/js/time-zone-select.js"></script>
 }

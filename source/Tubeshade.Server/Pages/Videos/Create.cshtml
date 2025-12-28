@@ -1,0 +1,22 @@
+﻿@page "~/Videos/Create/{handler?}"
+@model Create
+@{
+    ViewData["Title"] = SharedResources.Videos_Create;
+}
+
+@section Head
+{
+    <link rel="prefetch" as="script" href="~/js/time-zone-select.js"/>
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="@Model"/>
+}
+
+<partial name="Videos/_CreateVideo" for="CreateVideo"/>
+
+@section Scripts
+{
+    <script src="~/js/time-zone-select.js"></script>
+}

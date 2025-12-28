@@ -26,4 +26,10 @@ internal static class LocalizationExtensions
         internal string? LocalizedName => Manager
             .GetString($"Preferences_{nameof(DownloadMethod)}_{method.Name}");
     }
+
+    extension(VideoType type)
+    {
+        internal string? LocalizedName => Manager
+            .GetString($"Filters_{nameof(VideoType)}_{type.Name}");
+    }
 }

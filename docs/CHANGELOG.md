@@ -10,6 +10,8 @@ _Latest build from master branch._
   ([#224](https://github.com/Tubeshade/Tubeshade/pull/224))
 - Pages for manually creating new channels
   ([#225](https://github.com/Tubeshade/Tubeshade/pull/225))
+- Pages for manually creating new videos
+  ([#86](https://github.com/Tubeshade/Tubeshade/issues/86))
 
 ### Changed
 

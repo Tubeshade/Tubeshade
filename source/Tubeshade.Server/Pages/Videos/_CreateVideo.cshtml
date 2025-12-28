@@ -1,0 +1,132 @@
+﻿@using Tubeshade.Data.Media
+@model CreateVideoModel
+
+<form method="post" class="row g-3 mb-3">
+
+    <div class="col-sm-12">
+        <label class="form-label" asp-for="Name">
+            @SharedResources.Videos_Create_Name
+        </label>
+        <input class="form-control" asp-for="Name" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="Name"></span>
+    </div>
+
+    <div class="col-sm-6">
+        <label class="form-label" asp-for="ChannelId">
+            @SharedResources.Videos_Create_Channel
+        </label>
+        <select class="form-control form-select" asp-for="ChannelId">
+            @foreach (var library in Model.Channels)
+            {
+                <option value="@library.Id" selected="@(library.Id == Model.ChannelId)">
+                    @library.Name
+                </option>
+            }
+        </select>
+        <span class="form-text text-danger" asp-validation-for="ChannelId"></span>
+    </div>
+
+    <div class="col-sm-6">
+        <label class="form-label" asp-for="Type">
+            @SharedResources.Filters_VideoType
+        </label>
+        <select class="form-control form-select" asp-for="Type">
+            @foreach (var type in VideoType.List)
+            {
+                <option value="@type.Name" selected="@(type == Model.Type)">
+                    @type.LocalizedName
+                </option>
+            }
+        </select>
+        <span class="form-text text-danger" asp-validation-for="Type"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="ExternalId">
+            @SharedResources.Channels_Create_ExternalId
+        </label>
+        <input class="form-control" asp-for="ExternalId" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="ExternalId"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="ExternalUrl">
+            @SharedResources.Channels_Create_ExternalUrl
+        </label>
+        <input class="form-control" asp-for="ExternalUrl" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="ExternalUrl"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="Availability">
+            @SharedResources.Filters_Availability
+        </label>
+        <select class="form-control form-select" asp-for="Availability">
+            @foreach (var availability in ExternalAvailability.List)
+            {
+                <option value="@availability.Name" selected="@(availability == Model.Availability)">
+                    @availability.LocalizedName
+                </option>
+            }
+        </select>
+        <span class="form-text text-danger" asp-validation-for="Availability"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="PublishedAt">
+            @SharedResources.Videos_Create_PublishedAt
+        </label>
+        <input class="form-control" asp-for="PublishedAt" type="datetime-local"/>
+        <span class="form-text text-danger" asp-validation-for="PublishedAt"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="PublishedAtTimeZone">@SharedResources.Videos_Create_PublishedAtTimeZone</label>
+        <select class="form-control form-select tubeshade-time-zone-select" asp-for="PublishedAtTimeZone">
+            @foreach (var id in Model.TimeZoneIds)
+            {
+                <option value="@id">@id</option>
+            }
+        </select>
+        <span class="form-text text-danger" asp-validation-for="PublishedAtTimeZone"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="DurationInSeconds">
+            @SharedResources.Videos_Create_Duration
+        </label>
+        <input class="form-control" asp-for="DurationInSeconds" type="number" min="0"/>
+        <span class="form-text text-danger" asp-validation-for="DurationInSeconds"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="Description">
+            @SharedResources.Videos_Create_Description
+        </label>
+        <input class="form-control" asp-for="Description" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="Description"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="Categories">
+            @SharedResources.Videos_Create_Categories
+        </label>
+        <input class="form-control" asp-for="Categories" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="Categories"></span>
+    </div>
+
+    <div class="col-sm-4">
+        <label class="form-label" asp-for="Tags">
+            @SharedResources.Videos_Create_Tags
+        </label>
+        <input class="form-control" asp-for="Tags" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="Tags"></span>
+    </div>
+
+    <div class="col-12 col-sm-4 col-lg-3 col-xxl-2">
+        <button class="btn btn-success w-100" type="submit">
+            @SharedResources.Button_CreateVideo
+        </button>
+    </div>
+
+</form>

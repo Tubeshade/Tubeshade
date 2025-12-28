@@ -29,9 +29,7 @@
                 <option value="">@SharedResources.Filters_VideoType_All</option>
                 @foreach (var type in VideoType.List)
                 {
-                    <option value="@type.Name">
-                        @SharedResources.ResourceManager.GetString($"Filters_VideoType_{type.Name}")
-                    </option>
+                    <option value="@type.Name">@type.LocalizedName</option>
                 }
             </select>
         </div>
