@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Fixed
+
+- Skip overlapping Sponsor Block segments
+  ([#117](https://github.com/Tubeshade/Tubeshade/issues/117))
+
 ## [0.1.3] - 2025-12-28
 
 ### Added

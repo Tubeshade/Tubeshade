@@ -386,12 +386,13 @@
                     }
                 }
 
-                if (skippableCues.length === 1) {
-                    const cue = skippableCues[0];
-                    video.currentTime = cue.endTime;
-                } else {
-                    console.debug(`${skippableCues.length} active SponsorBlock cues`, skippableCues);
+                if (skippableCues.length === 0) {
+                    return;
                 }
+
+                video.currentTime = skippableCues
+                    .map(cue => cue.endTime)
+                    .reduce((previous, current) => (previous > current) ? previous : current);
             });
         }
     </script>
