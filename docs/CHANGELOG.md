@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Added
+
+- Sorting by view and like count
+  ([#229](https://github.com/Tubeshade/Tubeshade/pull/229))
+
 ### Fixed
 
 - Skip overlapping Sponsor Block segments

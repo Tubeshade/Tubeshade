@@ -13,6 +13,8 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, IParsable<SortVideoBy>
     public static readonly SortVideoBy ModifiedAt = new(Names.ModifiedAt, 3);
     public static readonly SortVideoBy PublishedAt = new(Names.PublishedAt, 4);
     public static readonly SortVideoBy RefreshedAt = new(Names.RefreshedAt, 5);
+    public static readonly SortVideoBy ViewCount = new(Names.ViewCount, 6);
+    public static readonly SortVideoBy LikeCount = new(Names.LikeCount, 7);
 
     public string SortExpression { get; }
 
@@ -35,6 +37,8 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, IParsable<SortVideoBy>
         public const string ModifiedAt = "modified_at";
         public const string PublishedAt = "published_at";
         public const string RefreshedAt = "refreshed_at";
+        public const string ViewCount = "view_count";
+        public const string LikeCount = "like_count";
     }
 
     /// <inheritdoc />

@@ -435,4 +435,10 @@
     <data name="Videos_Create_Tags" xml:space="preserve">
         <value>Tags</value>
     </data>
+    <data name="Filters_SortVideoBy_view_count" xml:space="preserve">
+        <value>Views</value>
+    </data>
+    <data name="Filters_SortVideoBy_like_count" xml:space="preserve">
+        <value>Likes</value>
+    </data>
 </root>

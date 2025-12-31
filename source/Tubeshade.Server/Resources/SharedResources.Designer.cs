@@ -501,6 +501,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Likes.
+        /// </summary>
+        public static string Filters_SortVideoBy_like_count {
+            get {
+                return ResourceManager.GetString("Filters_SortVideoBy_like_count", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Modified.
         /// </summary>
         public static string Filters_SortVideoBy_modified_at {
@@ -533,6 +542,15 @@ namespace Tubeshade.Server.Resources {
         public static string Filters_SortVideoBy_refreshed_at {
             get {
                 return ResourceManager.GetString("Filters_SortVideoBy_refreshed_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Views.
+        /// </summary>
+        public static string Filters_SortVideoBy_view_count {
+            get {
+                return ResourceManager.GetString("Filters_SortVideoBy_view_count", resourceCulture);
             }
         }
         

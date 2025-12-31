@@ -428,4 +428,10 @@
     <data name="Videos_Create_Tags" xml:space="preserve">
         <value>Tagi</value>
     </data>
+    <data name="Filters_SortVideoBy_view_count" xml:space="preserve">
+        <value>Skatījumi</value>
+    </data>
+    <data name="Filters_SortVideoBy_like_count" xml:space="preserve">
+        <value>Patīk</value>
+    </data>
 </root>

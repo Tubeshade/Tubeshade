@@ -42,10 +42,12 @@
       - option "Public"
     - combobox "Sort by":
       - option "Created"
+      - option "Likes"
       - option "Modified"
       - option "Published" [selected]
       - option "Random"
       - option "Refreshed"
+      - option "Views"
     - combobox "Sort direction":
       - option "Ascending"
       - option "Descending" [selected]
