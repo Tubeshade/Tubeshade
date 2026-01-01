@@ -25,4 +25,4 @@
     - text: Nav nevienas bibliotēkas, izveidojiet jaunu
     - link "šeit":
       - /url: /Libraries
-- contentinfo: © 2025 - Tubeshade v0.1.3
+- contentinfo: © 2025 - 2026 Tubeshade | v0.1.3
