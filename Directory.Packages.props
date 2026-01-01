@@ -52,6 +52,7 @@
         <PackageVersion Include="NUnit3TestAdapter" Version="5.2.0"/>
         <PackageVersion Include="Polly.Contrib.WaitAndRetry" Version="1.1.1"/>
         <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.9.0"/>
+        <PackageVersion Include="Testcontainers.Keycloak" Version="4.9.0"/>
         <PackageVersion Include="Testcontainers.PostgreSql" Version="4.9.0"/>
         <PackageVersion Include="Verify.NUnit" Version="31.8.0"/>
     </ItemGroup>

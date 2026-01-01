@@ -38,7 +38,7 @@ internal static class ServicesCollectionExtensions
             authenticationSchemes.Add(Schemes.Bearer);
         }
 
-        var oidcProviderSection = configuration.GetSection(OidcProviderOptions.OidcProviderSectionName);
+        var oidcProviderSection = configuration.GetSection(OidcProviderOptions.SectionName);
         var oidcProviderNames = oidcProviderSection.GetChildren().Select(section => section.Key).ToArray();
 
         authenticationSchemes.AddRange(oidcProviderNames);

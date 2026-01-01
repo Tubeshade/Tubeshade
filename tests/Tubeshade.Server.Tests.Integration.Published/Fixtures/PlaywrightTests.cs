@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -26,7 +25,7 @@ public abstract class PlaywrightTests
     private const int DebugPort = 6005;
     private static int _debugPortOffset;
 
-    private static readonly string Password = Guid.NewGuid().ToString("N");
+    protected static readonly string Password = Guid.NewGuid().ToString("N");
     private static readonly SemaphoreSlim SetUpLock = new(1);
     private static readonly ConcurrentDictionary<IServerFixture, SemaphoreSlim> FixtureLocks = new();
     private static readonly ConcurrentDictionary<(IServerFixture, string), bool> Registered = new();
@@ -115,7 +114,7 @@ public abstract class PlaywrightTests
 
         using (var firefoxClient = new FirefoxDebuggerClient(debugPort))
         {
-            var extensionPath = GetRelativePath("../../../extensions/browser/extension");
+            var extensionPath = PathHelper.GetRelativePath("../../../extensions/browser/extension");
             if (!Directory.Exists(extensionPath))
             {
                 throw new InvalidOperationException($"Could not resolve correct extension directory {extensionPath}");
@@ -143,6 +142,44 @@ public abstract class PlaywrightTests
             return;
         }
 
+        await UsernamePasswordLogin();
+    }
+
+    [TearDown]
+    public async Task TearDown()
+    {
+        if (TestContext.CurrentContext.Result.Outcome.Status is TestStatus.Failed)
+        {
+            var snapshot = await Page.Locator("body").AriaSnapshotAsync();
+            Console.WriteLine(snapshot);
+        }
+
+        var elements = await Page.QuerySelectorAllAsync(".field-validation-error");
+        foreach (var element in elements)
+        {
+            var innerText = await element.InnerTextAsync();
+            if (!string.IsNullOrWhiteSpace(innerText))
+            {
+                await TestContext.Out.WriteLineAsync(innerText);
+            }
+        }
+
+        if (Trace && _browserContext is not null)
+        {
+            await _browserContext.Tracing.StopAsync(new()
+            {
+                Path = Path.Combine(TestContext.CurrentContext.WorkDirectory, "playwright-traces", $"{TraceName}.zip"),
+            });
+        }
+
+        if (_browserContext is not null)
+        {
+            await _browserContext.CloseAsync();
+        }
+    }
+
+    protected async Task UsernamePasswordLogin()
+    {
         using (await FixtureLocks[Fixture].LockAsync())
         {
             if (!Registered.TryGetValue((Fixture, Username), out var registered) || !registered)
@@ -182,44 +219,5 @@ public abstract class PlaywrightTests
         {
             (await Page.TitleAsync()).Should().Be("Home page - Tubeshade");
         }
-    }
-
-    [TearDown]
-    public async Task TearDown()
-    {
-        if (TestContext.CurrentContext.Result.Outcome.Status is TestStatus.Failed)
-        {
-            var snapshot = await Page.Locator("body").AriaSnapshotAsync();
-            Console.WriteLine(snapshot);
-        }
-
-        var elements = await Page.QuerySelectorAllAsync(".field-validation-error");
-        foreach (var element in elements)
-        {
-            var innerText = await element.InnerTextAsync();
-            if (!string.IsNullOrWhiteSpace(innerText))
-            {
-                await TestContext.Out.WriteLineAsync(innerText);
-            }
-        }
-
-        if (Trace && _browserContext is not null)
-        {
-            await _browserContext.Tracing.StopAsync(new()
-            {
-                Path = Path.Combine(TestContext.CurrentContext.WorkDirectory, "playwright-traces", $"{TraceName}.zip"),
-            });
-        }
-
-        if (_browserContext is not null)
-        {
-            await _browserContext.CloseAsync();
-        }
-    }
-
-    private static string GetRelativePath(string relativePath, [CallerFilePath] string filePath = "")
-    {
-        var directory = Path.GetDirectoryName(filePath)!;
-        return Path.GetFullPath(relativePath, directory);
     }
 }

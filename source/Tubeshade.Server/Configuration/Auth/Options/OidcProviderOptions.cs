@@ -9,7 +9,7 @@ namespace Tubeshade.Server.Configuration.Auth.Options;
 public sealed class OidcProviderOptions
 {
     /// <summary>The name of the section under which to place provider sections.</summary>
-    internal const string OidcProviderSectionName = "Oidc";
+    public const string SectionName = "Oidc";
 
     /// <inheritdoc cref="JwtBearerOptions.Authority"/>
     /// <seealso cref="JwtBearerOptions.Authority"/>

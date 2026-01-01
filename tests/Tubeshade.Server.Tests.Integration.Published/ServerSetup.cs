@@ -10,8 +10,8 @@ public static class ServerSetup
 {
     internal static IServerFixture[] Fixtures { get; } =
     [
-        new ServerFixture("Debug with coverage", "tubeshade-cover-tests", "18.1-trixie", true),
-        new ServerFixture("Release", "tubeshade-integration-tests", "18.1-trixie", false),
+        new ServerFixture("Debug with coverage", "tubeshade-cover-tests", "18.1-trixie", "26.4.7-0", true),
+        new ServerFixture("Release", "tubeshade-integration-tests", "18.1-trixie", "26.4.7-0", false),
     ];
 
     [OneTimeSetUp]

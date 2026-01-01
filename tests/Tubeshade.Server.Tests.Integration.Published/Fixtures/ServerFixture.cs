@@ -13,19 +13,24 @@ using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 using NUnit.Framework;
+using Testcontainers.Keycloak;
 using Testcontainers.PostgreSql;
 using Tubeshade.Server.Configuration;
+using Tubeshade.Server.Configuration.Auth.Options;
 
 namespace Tubeshade.Server.Tests.Integration.Published.Fixtures;
 
 public sealed partial class ServerFixture : IServerFixture
 {
     public const string TestDirectory = "/test";
+    private const string KeycloakHostname = "keycloak";
+
+    private static int _keycloakPublicPort = 45278;
 
     private readonly bool _shutdown;
     private readonly INetwork _network;
-    private readonly IContainer _serverContainer;
     private readonly List<IContainer> _containers;
+    private readonly IContainer _serverContainer;
 
     /// <inheritdoc />
     public string Name { get; }
@@ -41,7 +46,7 @@ public sealed partial class ServerFixture : IServerFixture
     /// <inheritdoc />
     public HttpClient HttpClient => new() { BaseAddress = BaseAddress };
 
-    public ServerFixture(string name, string serverImageName, string postgresqlVersion, bool shutdown)
+    public ServerFixture(string name, string serverImageName, string postgresqlVersion, string keycloakVersion, bool shutdown)
     {
         _shutdown = shutdown;
         Name = name;
@@ -54,10 +59,25 @@ public sealed partial class ServerFixture : IServerFixture
             .WithEnvironment("PGDATA", "/var/lib/postgresql/data")
             .WithNetwork(_network)
             .WithHostname("database")
-            .WithPortBinding(5432, true)
+            .WithPortBinding(PostgreSqlBuilder.PostgreSqlPort, true)
             .WithCommand("-c", "fsync=off")
             .WithCommand("-c", "synchronous_commit=off")
             .WithCommand("-c", "full_page_writes=off")
+            .Build();
+
+        var clientSecret = Guid.NewGuid().ToString("N");
+        var realmFile = PathHelper.GetRelativePath("./Keycloak/realm.json");
+        var publicPort = Interlocked.Increment(ref _keycloakPublicPort);
+
+        var keycloakContainer = new KeycloakBuilder()
+            .WithImage($"quay.io/keycloak/keycloak:{keycloakVersion}")
+            .WithNetwork(_network)
+            .WithHostname(KeycloakHostname)
+            .WithPortBinding(publicPort, KeycloakBuilder.KeycloakPort)
+            .WithEnvironment("KC_HOSTNAME", $"http://localhost:{publicPort}")
+            .WithEnvironment("KC_HOSTNAME_BACKCHANNEL_DYNAMIC", "true")
+            .WithEnvironment("TUBESHADE_TEST_CLIENT_SECRET", clientSecret)
+            .WithRealm(realmFile)
             .Build();
 
         var reportsDirectory = Path.Combine(CommonDirectoryPath.GetProjectDirectory().DirectoryPath, "TestResults");
@@ -66,24 +86,26 @@ public sealed partial class ServerFixture : IServerFixture
             Directory.CreateDirectory(reportsDirectory);
         }
 
+        var keycloakRealmBaseUrl = $"http://{KeycloakHostname}:{KeycloakBuilder.KeycloakPort}/realms/Test";
         _serverContainer = new ContainerBuilder()
             .WithImage(serverImageName)
             .WithNetwork(_network)
             .WithBindMount(reportsDirectory, "/reports", AccessMode.ReadWrite)
             .WithTmpfsMount(TestDirectory)
-            .WithEnvironment(
-                "Database__ConnectionString",
-                "Host=database; Port=5432; Username=postgres; Password=postgres; Include Error Detail=true")
+            .WithEnvironment("Database__ConnectionString", $"Host=database; Port={PostgreSqlBuilder.PostgreSqlPort}; Username=postgres; Password=postgres; Include Error Detail=true")
             .WithEnvironment($"{SchedulerOptions.SectionName}__{nameof(SchedulerOptions.Period)}", "PT5S")
+            .WithEnvironment($"{OidcProviderOptions.SectionName}__Keycloak__ServerRealm", keycloakRealmBaseUrl)
+            .WithEnvironment($"{OidcProviderOptions.SectionName}__Keycloak__Metadata", $"{keycloakRealmBaseUrl}/.well-known/openid-configuration")
+            .WithEnvironment($"{OidcProviderOptions.SectionName}__Keycloak__ClientId", "tubeshade")
+            .WithEnvironment($"{OidcProviderOptions.SectionName}__Keycloak__ClientSecret", clientSecret)
+            .WithEnvironment($"{OidcProviderOptions.SectionName}__Keycloak__RequireHttpsMetadata", "false")
             .WithPortBinding(8080, true)
-            .WithWaitStrategy(Wait
-                .ForUnixContainer()
-                .UntilInternalTcpPortIsAvailable(8080)
-                .UntilMessageIsLogged(StartedRegex()))
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8080).UntilMessageIsLogged(StartedRegex()))
             .DependsOn(databaseContainer)
+            .DependsOn(keycloakContainer)
             .Build();
 
-        _containers = [databaseContainer, _serverContainer];
+        _containers = [databaseContainer, keycloakContainer, _serverContainer];
     }
 
     /// <inheritdoc />
@@ -103,7 +125,7 @@ public sealed partial class ServerFixture : IServerFixture
             },
             cancellationToken);
 
-        var stream = await client.Exec.StartContainerExecAsync(createResponse.ID, new ContainerExecStartParameters(), cancellationToken);
+        var stream = await client.Exec.StartContainerExecAsync(createResponse.ID, new(), cancellationToken);
         var (output, error) = await stream.ReadOutputToEndAsync(cancellationToken);
         await TestContext.Out.WriteLineAsync(output);
         await TestContext.Out.WriteLineAsync(error);

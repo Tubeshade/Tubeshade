@@ -91,6 +91,15 @@
           "Microsoft.Testing.Platform.MSBuild": "1.9.0"
         }
       },
+      "Testcontainers.Keycloak": {
+        "type": "Direct",
+        "requested": "[4.9.0, )",
+        "resolved": "4.9.0",
+        "contentHash": "aHpk1yWrqK6K3frVNr2ZsyyF+zWHwMiQ/o3DuqsOddp4JGd7GQos/gEpNz/KyYdswVsEg24DAx2NZIRqRtbcMQ==",
+        "dependencies": {
+          "Testcontainers": "4.9.0"
+        }
+      },
       "Testcontainers.PostgreSql": {
         "type": "Direct",
         "requested": "[4.9.0, )",
