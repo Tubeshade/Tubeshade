@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -10,6 +12,7 @@ using Microsoft.Playwright;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using Tubeshade.Server.Services.Background;
+using Tubeshade.Server.Tests.Integration.Published.Fixtures.Firefox;
 
 namespace Tubeshade.Server.Tests.Integration.Published.Fixtures;
 
@@ -19,6 +22,9 @@ namespace Tubeshade.Server.Tests.Integration.Published.Fixtures;
 public abstract class PlaywrightTests
 {
     public const string DefaultCulture = "en-US";
+
+    private const int DebugPort = 6005;
+    private static int _debugPortOffset;
 
     private static readonly string Password = Guid.NewGuid().ToString("N");
     private static readonly SemaphoreSlim SetUpLock = new(1);
@@ -86,7 +92,19 @@ public abstract class PlaywrightTests
     [SetUp]
     public async Task SetUp()
     {
-        var browser = await Playwright[_browserType].LaunchAsync();
+        var debugPort = DebugPort + Interlocked.Increment(ref _debugPortOffset);
+
+        var browser = await Playwright[_browserType].LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            Args = ["--start-debugger-server", $"{debugPort}"],
+            FirefoxUserPrefs = new Dictionary<string, object>
+            {
+                ["devtools.debugger.remote-enabled"] = true,
+                ["devtools.debugger.prompt-connection"] = false,
+                ["extensions.manifestV3.enabled"] = false,
+            },
+        });
+
         _browserContext = await browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = Fixture.BaseAddress.AbsoluteUri,
@@ -94,6 +112,18 @@ public abstract class PlaywrightTests
             Locale = Culture,
             ExtraHTTPHeaders = [new(HeaderNames.AcceptLanguage, Culture)],
         });
+
+        using (var firefoxClient = new FirefoxDebuggerClient(debugPort))
+        {
+            var extensionPath = GetRelativePath("../../../extensions/browser/extension");
+            if (!Directory.Exists(extensionPath))
+            {
+                throw new InvalidOperationException($"Could not resolve correct extension directory {extensionPath}");
+            }
+
+            await firefoxClient.Connect();
+            await firefoxClient.InstallExtension(extensionPath);
+        }
 
         _page = await _browserContext.NewPageAsync();
 
@@ -180,5 +210,16 @@ public abstract class PlaywrightTests
                 Path = Path.Combine(TestContext.CurrentContext.WorkDirectory, "playwright-traces", $"{TraceName}.zip"),
             });
         }
+
+        if (_browserContext is not null)
+        {
+            await _browserContext.CloseAsync();
+        }
+    }
+
+    private static string GetRelativePath(string relativePath, [CallerFilePath] string filePath = "")
+    {
+        var directory = Path.GetDirectoryName(filePath)!;
+        return Path.GetFullPath(relativePath, directory);
     }
 }
