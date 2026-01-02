@@ -2,9 +2,9 @@
 
 public interface IPaginatedDataPage<TData>
 {
-    public int? PageSize { get; set; }
+    int? PageSize { get; set; }
 
-    public int? PageIndex { get; set; }
+    int? PageIndex { get; set; }
 
-    public PaginatedData<TData> PageData { get; set; }
+    PaginatedData<TData> PageData { get; set; }
 }

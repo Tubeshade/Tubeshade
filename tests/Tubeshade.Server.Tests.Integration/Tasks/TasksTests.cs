@@ -104,7 +104,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
             (await repository.GetBlockingTaskRunIds(task1, CancellationToken.None)).Should().BeEmpty();
 
-            task1RunId = await repository.AddTaskRun(taskId, transaction);
+            task1RunId = await repository.AddTaskRun(taskId, TaskSource.User, transaction);
             await repository.StartTaskRun(task1RunId, CancellationToken.None);
             await transaction.CommitAsync();
         }
@@ -118,7 +118,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
             task2 = (await repository.TryDequeueTask(taskId, transaction))!;
             task2.Should().NotBeNull();
-            task2RunId = await repository.AddTaskRun(taskId, transaction);
+            task2RunId = await repository.AddTaskRun(taskId, TaskSource.User, transaction);
             await transaction.CommitAsync();
         }
 
@@ -151,7 +151,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
             taskId = await repository.AddIndexTask("https://example.org", _libraryId, _userId, transaction);
-            taskRunId = await repository.AddTaskRun(taskId, transaction);
+            taskRunId = await repository.AddTaskRun(taskId, TaskSource.User, transaction);
             await repository.StartTaskRun(taskRunId, CancellationToken.None);
 
             await transaction.CommitAsync();

@@ -35,6 +35,10 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
+    public TaskSource? Source { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public int? PageSize { get; set; }
 
     /// <inheritdoc />
@@ -61,6 +65,7 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
             new TaskParameters
             {
                 UserId = userId,
+                Source = Source,
                 Limit = pageSize,
                 Offset = offset,
             },
@@ -89,7 +94,7 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
         var libraries = await _libraryRepository.GetAsync(userId, transaction);
-        await _taskService.ScanSubscriptions(userId, libraries.Select(library => library.Id), transaction);
+        await _taskService.ScanSubscriptions(userId, libraries.Select(library => library.Id), TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);
@@ -102,7 +107,7 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
         var libraries = await _libraryRepository.GetAsync(userId, transaction);
-        await _taskService.ScanSegments(userId, libraries.Select(library => library.Id), transaction);
+        await _taskService.ScanSegments(userId, libraries.Select(library => library.Id), TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);
@@ -115,7 +120,7 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
         var libraries = await _libraryRepository.GetAsync(userId, transaction);
-        await _taskService.UpdateSegments(userId, libraries.Select(library => library.Id), transaction);
+        await _taskService.UpdateSegments(userId, libraries.Select(library => library.Id), TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);
@@ -124,7 +129,7 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
     /// <inheritdoc />
     public async Task<IActionResult> OnPostRetry(Guid taskId)
     {
-        await _taskService.RetryTask(User.GetUserId(), taskId);
+        await _taskService.RetryTask(User.GetUserId(), taskId, TaskSource.User);
         return StatusCode(StatusCodes.Status204NoContent);
     }
 

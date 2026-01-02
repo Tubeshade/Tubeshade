@@ -15,6 +15,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
+using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services;
@@ -142,7 +143,7 @@ public sealed class Video : LibraryPageBase
             return NotFound();
         }
 
-        await _taskService.IndexVideo(userId, LibraryId, video, transaction);
+        await _taskService.IndexVideo(userId, LibraryId, video, TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);
@@ -159,7 +160,7 @@ public sealed class Video : LibraryPageBase
             return NotFound();
         }
 
-        await _taskService.DownloadVideo(userId, LibraryId, VideoId, transaction);
+        await _taskService.DownloadVideo(userId, LibraryId, VideoId, TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);

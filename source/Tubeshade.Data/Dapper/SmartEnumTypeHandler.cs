@@ -9,7 +9,10 @@ using static System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes;
 
 namespace Tubeshade.Data.Dapper;
 
-internal sealed class SmartEnumTypeHandler<[DynamicallyAccessedMembers(All)] TEnum, TValue> : SqlMapper.TypeHandler<TEnum>
+internal sealed class SmartEnumTypeHandler<[DynamicallyAccessedMembers(All)] TEnum> : SmartEnumTypeHandler<TEnum, int>
+    where TEnum : SmartEnum<TEnum, int>;
+
+internal class SmartEnumTypeHandler<[DynamicallyAccessedMembers(All)] TEnum, TValue> : SqlMapper.TypeHandler<TEnum>
     where TEnum : SmartEnum<TEnum, TValue>
     where TValue : IEquatable<TValue>, IComparable<TValue>
 {

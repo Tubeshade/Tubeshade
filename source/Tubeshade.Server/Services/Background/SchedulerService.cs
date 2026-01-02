@@ -88,7 +88,7 @@ public sealed class SchedulerService : BackgroundService
 
                 // we only use NOTIFY here, so transaction isolation does not matter
                 await using var transaction = await connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, stoppingToken);
-                await taskRepository.TriggerTask(schedule.TaskId, transaction);
+                await taskRepository.TriggerTask(schedule.TaskId, TaskSource.Schedule, transaction);
                 await transaction.CommitAsync(stoppingToken);
             }
 

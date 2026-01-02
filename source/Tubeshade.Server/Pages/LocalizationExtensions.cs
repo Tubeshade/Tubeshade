@@ -1,6 +1,7 @@
 ﻿using System.Resources;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
+using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Resources;
 
 namespace Tubeshade.Server.Pages;
@@ -25,6 +26,12 @@ internal static class LocalizationExtensions
     {
         internal string? LocalizedName => Manager
             .GetString($"Preferences_{nameof(DownloadMethod)}_{method.Name}");
+    }
+
+    extension(TaskSource source)
+    {
+        internal string? LocalizedName => Manager
+            .GetString($"Tasks_{nameof(TaskSource)}_{source.Name}");
     }
 
     extension(VideoType type)

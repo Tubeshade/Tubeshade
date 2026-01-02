@@ -15,6 +15,7 @@ using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
+using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Services;
 using Tubeshade.Server.V1.Models;
 using LoggerExtensions = Tubeshade.Server.Services.LoggerExtensions;
@@ -168,11 +169,11 @@ public sealed class NotificationsController : ControllerBase
         {
             if (existingVideo is not null)
             {
-                await _taskService.IndexVideo(userId, libraryId, existingVideo, transaction);
+                await _taskService.IndexVideo(userId, libraryId, existingVideo, TaskSource.Webhook, transaction);
             }
             else
             {
-                await _taskService.IndexVideo(userId, libraryId, videoUrl, transaction);
+                await _taskService.IndexVideo(userId, libraryId, videoUrl, TaskSource.Webhook, transaction);
             }
         }
         else

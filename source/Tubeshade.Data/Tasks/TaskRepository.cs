@@ -73,15 +73,15 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             transaction));
     }
 
-    public async ValueTask<Guid> AddTaskRun(Guid taskId, NpgsqlTransaction transaction)
+    public async ValueTask<Guid> AddTaskRun(Guid taskId, TaskSource source, NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
             $"""
-             INSERT INTO tasks.task_runs (task_id, state)
-             VALUES (@{nameof(taskId)}, '{RunState.Names.Queued}')
+             INSERT INTO tasks.task_runs (task_id, state, source)
+             VALUES (@{nameof(taskId)}, '{RunState.Names.Queued}', @{nameof(source)})
              RETURNING id;
              """,
-            new { taskId },
+            new { taskId, source },
             transaction));
     }
 
@@ -99,16 +99,16 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         Trace.Assert(count is 1);
     }
 
-    public async ValueTask TriggerTask(Guid taskId, NpgsqlTransaction transaction)
+    public async ValueTask TriggerTask(Guid taskId, TaskSource source, NpgsqlTransaction transaction)
     {
         await Connection.ExecuteAsync(
             // lang=sql
-            $"SELECT pg_notify('{TaskChannels.Created}', @{nameof(taskId)}::text);",
-            new { taskId },
+            $"SELECT pg_notify('{TaskChannels.Created}', concat_ws('|', @{nameof(taskId)}::text, @{nameof(source)}::text));",
+            new { taskId, source },
             transaction);
     }
 
-    public async ValueTask TriggerTask(Guid taskId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask TriggerTask(Guid taskId, TaskSource source, Guid userId, NpgsqlTransaction transaction)
     {
         await Connection.ExecuteAsync(
             // lang=sql
@@ -122,12 +122,12 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                      ownerships.user_id = @{nameof(userId)} AND
                      (ownerships.access = 'modify' OR ownerships.access = 'owner'))
 
-             SELECT pg_notify('{TaskChannels.Created}', @{nameof(taskId)}::text)
+             SELECT pg_notify('{TaskChannels.Created}', concat_ws('|', @{nameof(taskId)}::text, @{nameof(source)}::text))
              FROM tasks.tasks
                   INNER JOIN media.libraries ON tasks.library_id = libraries.id
              WHERE(libraries.id IN (SELECT id FROM accessible)) AND tasks.id = @{nameof(taskId)};
              """,
-            new { taskId, userId },
+            new { taskId, source, userId },
             transaction);
     }
 
@@ -265,6 +265,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     filtered_tasks.video_id              AS VideoId,
                     task_runs.id                         AS RunId,
                     task_runs.state                      AS RunState,
+                    task_runs.source                     AS Source,
                     task_run_progress.value              AS Value,
                     task_run_progress.target             AS Target,
                     task_run_progress.rate               AS Rate,
@@ -308,6 +309,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                             LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
                    WHERE (libraries.id IN (SELECT id FROM accessible))
                      AND (@{nameof(parameters.LibraryId)} IS NULL OR libraries.id = @{nameof(parameters.LibraryId)})
+                     AND (@{nameof(parameters.Source)}::tasks.task_source IS NULL OR task_runs.source = @{nameof(parameters.Source)})
                      AND tasks.type != '{TaskType.Names.ReindexVideos}'
                    GROUP BY tasks.id, tasks.created_at
                    ORDER BY result_created DESC, run_created DESC, tasks.created_at DESC

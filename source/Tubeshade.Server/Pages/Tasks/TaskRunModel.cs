@@ -10,6 +10,7 @@ public sealed class TaskRunModel
 
     public required Guid Id { get; init; }
     public required RunState State { get; init; }
+    public required TaskSource Source { get; init; }
     public decimal? Value { get; init; }
     public decimal? Target { get; init; }
     public decimal? Rate { get; init; }

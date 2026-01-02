@@ -13,6 +13,8 @@ public sealed class TaskParameters : IAccessParameters, IPaginatedParameters
 
     public Guid? LibraryId { get; init; }
 
+    public TaskSource? Source { get; init; }
+
     /// <inheritdoc />
     public required int Limit { get; init; }
 

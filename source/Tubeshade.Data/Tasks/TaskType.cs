@@ -14,6 +14,13 @@ public sealed class TaskType : SmartEnum<TaskType>
     public static readonly TaskType ReindexVideos = new(Names.ReindexVideos, 7);
     public static readonly TaskType UpdateSponsorBlockSegments = new(Names.UpdateSponsorBlockSegments, 8);
 
+    public bool IsLibraryTask =>
+        Equals(ScanSubscriptions) ||
+        Equals(RefreshSubscriptions) ||
+        Equals(ScanSponsorBlockSegments) ||
+        Equals(UpdateSponsorBlockSegments) ||
+        Equals(ReindexVideos);
+
     private TaskType(string name, int value)
         : base(name, value)
     {

@@ -3,14 +3,18 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Tasks;
 
 public interface ITaskPage : IPaginatedDataPage<TaskModel>
 {
+    TaskSource? Source { get; set; }
+
     Dictionary<string, string?> GetRouteValues(int pageIndex) => new()
     {
+        { nameof(Source), Source?.Name },
         { nameof(PageSize), PageSize?.ToString() },
         { nameof(PageIndex), $"{pageIndex}" },
     };

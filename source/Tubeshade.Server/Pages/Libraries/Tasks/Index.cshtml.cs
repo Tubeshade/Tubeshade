@@ -28,6 +28,10 @@ public sealed class Index : LibraryPageBase, ITaskPage
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
+    public TaskSource? Source { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public int? PageSize { get; set; }
 
     /// <inheritdoc />
@@ -52,6 +56,7 @@ public sealed class Index : LibraryPageBase, ITaskPage
             {
                 UserId = userId,
                 LibraryId = LibraryId,
+                Source = Source,
                 Limit = pageSize,
                 Offset = offset,
             },
@@ -76,28 +81,28 @@ public sealed class Index : LibraryPageBase, ITaskPage
     /// <inheritdoc />
     public async Task<IActionResult> OnPostScanSubscriptions()
     {
-        await _taskService.ScanSubscriptions(User.GetUserId(), [LibraryId]);
+        await _taskService.ScanSubscriptions(User.GetUserId(), [LibraryId], TaskSource.User);
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
     /// <inheritdoc />
     public async Task<IActionResult> OnPostScanSegments()
     {
-        await _taskService.ScanSegments(User.GetUserId(), [LibraryId]);
+        await _taskService.ScanSegments(User.GetUserId(), [LibraryId], TaskSource.User);
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
     /// <inheritdoc />
     public async Task<IActionResult> OnPostUpdateSegments()
     {
-        await _taskService.UpdateSegments(User.GetUserId(), [LibraryId]);
+        await _taskService.UpdateSegments(User.GetUserId(), [LibraryId], TaskSource.User);
         return StatusCode(StatusCodes.Status204NoContent);
     }
 
     /// <inheritdoc />
     public async Task<IActionResult> OnPostRetry(Guid taskId)
     {
-        await _taskService.RetryTask(User.GetUserId(), taskId);
+        await _taskService.RetryTask(User.GetUserId(), taskId, TaskSource.User);
         return StatusCode(StatusCodes.Status204NoContent);
     }
 

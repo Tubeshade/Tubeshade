@@ -8,6 +8,8 @@ _Latest build from master branch._
 
 - Sorting by view and like count
   ([#229](https://github.com/Tubeshade/Tubeshade/pull/229))
+- Task run source tracking
+  ([#174](https://github.com/Tubeshade/Tubeshade/issues/174))
 
 ### Fixed
 

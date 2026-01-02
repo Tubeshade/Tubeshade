@@ -104,6 +104,7 @@ public sealed class YoutubeService
         Guid? videoId,
         Guid? channelId,
         DirectoryInfo tempDirectory,
+        TaskSource source,
         CancellationToken cancellationToken)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
@@ -127,6 +128,7 @@ public sealed class YoutubeService
                 data,
                 transaction,
                 tempDirectory,
+                source,
                 cancellationToken);
         }
         else if (data.ResultType is MetadataType.Playlist)
@@ -179,6 +181,7 @@ public sealed class YoutubeService
         VideoData videoData,
         NpgsqlTransaction transaction,
         DirectoryInfo directory,
+        TaskSource source,
         CancellationToken cancellationToken,
         VideoType? type = null)
     {
@@ -464,7 +467,7 @@ public sealed class YoutubeService
             throw new InvalidOperationException($"Unexpected download videos value '{preferences.DownloadVideos}'");
         }
 
-        await _taskService.DownloadVideo(userId, libraryId, video.Id, transaction);
+        await _taskService.DownloadVideo(userId, libraryId, video.Id, source, transaction);
         return video.Id;
     }
 
@@ -557,11 +560,12 @@ public sealed class YoutubeService
         TaskRepository taskRepository,
         Guid taskRunId,
         DirectoryInfo tempDirectory,
+        TaskSource source,
         CancellationToken cancellationToken)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
-        await ScanChannelCore(libraryId, channelId, allVideos, false, userId, taskRepository, taskRunId, transaction, tempDirectory, cancellationToken);
+        await ScanChannelCore(libraryId, channelId, allVideos, false, userId, taskRepository, taskRunId, transaction, tempDirectory, source, cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
     }
@@ -572,6 +576,7 @@ public sealed class YoutubeService
         TaskRepository taskRepository,
         Guid taskRunId,
         DirectoryInfo tempDirectory,
+        TaskSource source,
         CancellationToken cancellationToken)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
@@ -582,7 +587,7 @@ public sealed class YoutubeService
 
         foreach (var (index, channel) in channels.Index())
         {
-            await ScanChannelCore(libraryId, channel.Id, false, true, userId, taskRepository, taskRunId, transaction, tempDirectory, cancellationToken, false);
+            await ScanChannelCore(libraryId, channel.Id, false, true, userId, taskRepository, taskRunId, transaction, tempDirectory, source, cancellationToken, false);
             await taskRepository.UpdateProgress(taskRunId, index + 1);
         }
 
@@ -599,6 +604,7 @@ public sealed class YoutubeService
         Guid taskRunId,
         NpgsqlTransaction transaction,
         DirectoryInfo directory,
+        TaskSource source,
         CancellationToken cancellationToken,
         bool reportProgress = true)
     {
@@ -680,7 +686,7 @@ public sealed class YoutubeService
                     continue;
                 }
 
-                await IndexVideo(video.Url, channel, libraryId, userId, videoResult.Data, transaction, directory, cancellationToken, type);
+                await IndexVideo(video.Url, channel, libraryId, userId, videoResult.Data, transaction, directory, source, cancellationToken, type);
 
                 if (reportProgress)
                 {
@@ -1405,14 +1411,14 @@ public sealed class YoutubeService
         return size;
     }
 
-    public async ValueTask Reindex(Guid libraryId, Guid userId, CancellationToken cancellationToken)
+    public async ValueTask Reindex(Guid libraryId, Guid userId, TaskSource source, CancellationToken cancellationToken)
     {
         // we only read data at the start of the transaction, so ReadCommitted is ok
         await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, cancellationToken);
 
         foreach (var (videoId, channelId, videoUrl) in await _videoRepository.GetForReindex(libraryId, transaction))
         {
-            await _taskService.IndexVideo(userId, libraryId, videoUrl, channelId, videoId, transaction);
+            await _taskService.IndexVideo(userId, libraryId, videoUrl, channelId, videoId, source, transaction);
         }
 
         await transaction.CommitAsync(cancellationToken);

@@ -1,4 +1,5 @@
-﻿@using Tubeshade.Server.Pages.Shared
+﻿@using Tubeshade.Data.Tasks
+@using Tubeshade.Server.Pages.Shared
 @model ITaskPage
 
 <form method="get" class="row row-cols-2 row-cols-sm-auto g-2 align-items-center mb-2"
@@ -10,6 +11,17 @@
         <label asp-for="PageSize" hidden="hidden">@SharedResources.Filters_PageSize</label>
         <input asp-for="PageSize" class="form-control" type="number" placeholder="@SharedResources.Filters_PageSize"
                value="@(Model.PageSize is null or Defaults.PageSize ? null : Model.PageSize)"/>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Source" hidden="hidden">@SharedResources.Tasks_TaskSource</label>
+        <select asp-for="Source" class="form-select">
+            <option value="">@SharedResources.Tasks_TaskSource_All</option>
+            @foreach (var source in TaskSource.List)
+            {
+                <option value="@source.Name">@source.LocalizedName</option>
+            }
+        </select>
     </div>
 
     <div class="col-6">

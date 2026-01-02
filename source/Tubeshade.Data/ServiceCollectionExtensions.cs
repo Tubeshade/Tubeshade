@@ -22,20 +22,21 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddDatabase(this IServiceCollection services)
     {
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<Access, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskType, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<RunState, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskResult, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ExternalAvailability, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ImageType, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<VideoType, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<VideoContainerType, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentCategory, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentAction, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<PlayerClient, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<DownloadMethod, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<DownloadVideos, int>());
-        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SubscriptionStatus, int>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<Access>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskType>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<RunState>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskSource>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskResult>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ExternalAvailability>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ImageType>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<VideoType>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<VideoContainerType>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentCategory>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentAction>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<PlayerClient>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<DownloadMethod>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<DownloadVideos>());
+        SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SubscriptionStatus>());
 
         SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
         SqlMapper.AddTypeHandler(new PeriodTypeHandler());

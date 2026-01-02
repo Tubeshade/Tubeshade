@@ -441,4 +441,22 @@
     <data name="Filters_SortVideoBy_like_count" xml:space="preserve">
         <value>Likes</value>
     </data>
+    <data name="Tasks_TaskSource" xml:space="preserve">
+        <value>Source</value>
+    </data>
+    <data name="Tasks_TaskSource_unknown" xml:space="preserve">
+        <value>Unknown</value>
+    </data>
+    <data name="Tasks_TaskSource_user" xml:space="preserve">
+        <value>User</value>
+    </data>
+    <data name="Tasks_TaskSource_schedule" xml:space="preserve">
+        <value>Schedule</value>
+    </data>
+    <data name="Tasks_TaskSource_webhook" xml:space="preserve">
+        <value>Subscriptions</value>
+    </data>
+    <data name="Tasks_TaskSource_All" xml:space="preserve">
+        <value>All</value>
+    </data>
 </root>

@@ -1086,6 +1086,60 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Source.
+        /// </summary>
+        public static string Tasks_TaskSource {
+            get {
+                return ResourceManager.GetString("Tasks_TaskSource", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to All.
+        /// </summary>
+        public static string Tasks_TaskSource_All {
+            get {
+                return ResourceManager.GetString("Tasks_TaskSource_All", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Schedule.
+        /// </summary>
+        public static string Tasks_TaskSource_schedule {
+            get {
+                return ResourceManager.GetString("Tasks_TaskSource_schedule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown.
+        /// </summary>
+        public static string Tasks_TaskSource_unknown {
+            get {
+                return ResourceManager.GetString("Tasks_TaskSource_unknown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to User.
+        /// </summary>
+        public static string Tasks_TaskSource_user {
+            get {
+                return ResourceManager.GetString("Tasks_TaskSource_user", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Subscriptions.
+        /// </summary>
+        public static string Tasks_TaskSource_webhook {
+            get {
+                return ResourceManager.GetString("Tasks_TaskSource_webhook", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Download video.
         /// </summary>
         public static string Tasks_Type_download_video {

@@ -107,7 +107,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         var video = await _videoRepository.GetAsync(videoId, User.GetUserId(), transaction);
         var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, transaction);
 
-        await _taskService.DownloadVideo(User.GetUserId(), libraryId, videoId, transaction);
+        await _taskService.DownloadVideo(User.GetUserId(), libraryId, videoId, TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return RedirectToPage();
@@ -126,7 +126,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
 
         var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, transaction);
 
-        await _taskService.IndexVideo(userId, libraryId, video, transaction);
+        await _taskService.IndexVideo(userId, libraryId, video, TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return RedirectToPage();

@@ -12,6 +12,7 @@ using SponsorBlock;
 using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Downloads;
 using Tubeshade.Server.Pages.Shared;
@@ -101,7 +102,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
 
     public async Task<IActionResult> OnPostStartDownload(Guid videoId)
     {
-        await _taskService.DownloadVideo(User.GetUserId(), LibraryId, videoId);
+        await _taskService.DownloadVideo(User.GetUserId(), LibraryId, videoId, TaskSource.User);
         return RedirectToPage();
     }
 
@@ -116,7 +117,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
             return NotFound();
         }
 
-        await _taskService.IndexVideo(userId, LibraryId, video, transaction);
+        await _taskService.IndexVideo(userId, LibraryId, video, TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return RedirectToPage();
@@ -150,7 +151,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
             return Page();
         }
 
-        await _taskService.IndexVideo(User.GetUserId(), LibraryId, model.Url);
+        await _taskService.IndexVideo(User.GetUserId(), LibraryId, model.Url, TaskSource.User);
         return RedirectToPage();
     }
 

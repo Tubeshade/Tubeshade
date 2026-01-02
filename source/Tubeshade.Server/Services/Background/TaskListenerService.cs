@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Frozen;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -16,20 +17,17 @@ namespace Tubeshade.Server.Services.Background;
 
 public sealed class TaskListenerService : BackgroundService
 {
+    private readonly Channel<CreatedTask> _taskCreatedChannel = CreateUnboundedChannel<CreatedTask>();
+
     private readonly FrozenDictionary<string, Channel<Guid>> _channels = TaskChannels.Names
-        .ToFrozenDictionary(name => name, _ => Channel.CreateUnbounded<Guid>(
-            new UnboundedChannelOptions
-            {
-                AllowSynchronousContinuations = true,
-                SingleReader = true,
-                SingleWriter = true,
-            }));
+        .Where(name => name is not TaskChannels.Created)
+        .ToFrozenDictionary(name => name, _ => CreateUnboundedChannel<Guid>());
 
     private readonly ILogger<TaskListenerService> _logger;
     private readonly NpgsqlMultiHostDataSource _dataSource;
     private readonly DatabaseMigrationStartupFilter _migrationStartupFilter;
 
-    internal ChannelReader<Guid> TaskCreated => _channels[TaskChannels.Created].Reader;
+    internal ChannelReader<CreatedTask> TaskCreated => _taskCreatedChannel.Reader;
 
     internal ChannelReader<Guid> TaskRunCancelled => _channels[TaskChannels.Cancel].Reader;
 
@@ -74,26 +72,68 @@ public sealed class TaskListenerService : BackgroundService
     private void ConnectionOnNotification(object? sender, NpgsqlNotificationEventArgs args)
     {
         _logger.ReceivedNotification(args.Channel, args.PID);
-        if (!_channels.TryGetValue(args.Channel, out var channel))
+
+        if (args.Channel is TaskChannels.Created)
         {
-            _logger.UnexpectedNotificationChannel(args.Channel);
-            return;
+            _logger.ReceivedNotification(args.Channel, args.Payload);
+            var parts = args.Payload.Split('|', StringSplitOptions.RemoveEmptyEntries);
+            if (!Guid.TryParse(parts[0], out var taskId))
+            {
+                _logger.UnexpectedNotificationPayload(args.Payload);
+                return;
+            }
+
+            TaskSource? source = null;
+            if (parts.Length is 1)
+            {
+                source = TaskSource.Unknown;
+            }
+            else if (parts is [_, var sourceName])
+            {
+                _ = TaskSource.TryFromName(sourceName, out source);
+            }
+
+            if (source is null)
+            {
+                _logger.UnexpectedNotificationPayload(args.Payload);
+                return;
+            }
+
+            _logger.QueueingNotification(args.Channel, taskId, source.Name);
+            var queued = _taskCreatedChannel.Writer.TryWrite(new CreatedTask { Id = taskId, Source = source });
+            Trace.Assert(queued);
         }
-
-        _logger.ReceivedNotification(args.Channel, args.Payload);
-        if (!Guid.TryParse(args.Payload, out var id))
+        else
         {
-            _logger.UnexpectedNotificationPayload(args.Payload);
-            return;
-        }
+            if (!_channels.TryGetValue(args.Channel, out var channel))
+            {
+                _logger.UnexpectedNotificationChannel(args.Channel);
+                return;
+            }
 
-        _logger.QueueingNotification(args.Channel, id);
-        var queued = channel.Writer.TryWrite(id);
-        Trace.Assert(queued);
+            _logger.ReceivedNotification(args.Channel, args.Payload);
+            if (!Guid.TryParse(args.Payload, out var id))
+            {
+                _logger.UnexpectedNotificationPayload(args.Payload);
+                return;
+            }
 
-        if (args.Channel is TaskChannels.RunFinished)
-        {
-            TaskRunFinished?.Invoke(this, id);
+            _logger.QueueingNotification(args.Channel, id);
+            var queued = channel.Writer.TryWrite(id);
+            Trace.Assert(queued);
+
+            if (args.Channel is TaskChannels.RunFinished)
+            {
+                TaskRunFinished?.Invoke(this, id);
+            }
         }
     }
+
+    private static Channel<TData> CreateUnboundedChannel<TData>() => Channel.CreateUnbounded<TData>(
+        new UnboundedChannelOptions
+        {
+            AllowSynchronousContinuations = true,
+            SingleReader = true,
+            SingleWriter = true,
+        });
 }

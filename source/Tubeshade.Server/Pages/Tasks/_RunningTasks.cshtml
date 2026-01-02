@@ -8,6 +8,7 @@
         <thead>
         <tr>
             <th>@SharedResources.Tasks_Task</th>
+            <th>@SharedResources.Tasks_TaskSource</th>
             <th>@SharedResources.Tasks_Status_queued</th>
             <th>@SharedResources.Tasks_Action</th>
         </tr>
@@ -54,8 +55,7 @@
                                     <span>"@task.Name"</span>
                                 </a>
                             }
-                            else if ((task.Type == TaskType.ScanSubscriptions || task.Type == TaskType.ScanSponsorBlockSegments || task.Type == TaskType.RefreshSubscriptions) &&
-                                     task.LibraryId is { } libraryId)
+                            else if (task.Type.IsLibraryTask && task.LibraryId is { } libraryId)
                             {
                                 <a asp-page="/Libraries/Library" asp-route-libraryId="@libraryId">
                                     <span>"@task.Name"</span>
@@ -66,6 +66,9 @@
                                 <span>"@task.Name"</span>
                             }
                         }
+                    </td>
+                    <td>
+                        @run.Source.LocalizedName
                     </td>
                     <td>
                         @if (run.State == RunState.Queued)

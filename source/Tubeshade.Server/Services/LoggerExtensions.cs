@@ -243,4 +243,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(75, Debug, "Video {ExternalId} was live {WasLive}, is live {IsLive}, with status {LiveStatus}")]
     internal static partial void VideoLiveStatus(this ILogger logger, string externalId, bool? wasLive, bool? isLive, LiveStatus? liveStatus);
+
+    [LoggerMessage(76, Information, "Queuing notification {NotificationChannel} {TaskId} {TaskSource}")]
+    internal static partial void QueueingNotification(this ILogger logger, string notificationChannel, Guid taskId, string taskSource);
 }

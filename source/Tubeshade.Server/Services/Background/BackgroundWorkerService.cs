@@ -69,8 +69,11 @@ public sealed class BackgroundWorkerService : BackgroundService
             ProcessTask);
     }
 
-    private async ValueTask ProcessTask(Guid taskId, CancellationToken cancellationToken)
+    private async ValueTask ProcessTask(CreatedTask createdTask, CancellationToken cancellationToken)
     {
+        var taskId = createdTask.Id;
+        var taskSource = createdTask.Source;
+
         await using var scope = _serviceProvider.CreateAsyncScope();
 
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<BackgroundWorkerService>>();
@@ -97,7 +100,7 @@ public sealed class BackgroundWorkerService : BackgroundService
             }
 
             logger.AddingTaskRun(taskId);
-            taskRunId = await taskRepository.AddTaskRun(task.Id, dequeueTransaction);
+            taskRunId = await taskRepository.AddTaskRun(task.Id, taskSource, dequeueTransaction);
             await dequeueTransaction.CommitAsync(cancellationToken);
         }
 
@@ -111,7 +114,7 @@ public sealed class BackgroundWorkerService : BackgroundService
 
             // Separate scope is needed, so that all updates to task status are not within a transaction
             await using var taskScope = _serviceProvider.CreateAsyncScope();
-            await Execute(task, taskScope.ServiceProvider, taskRepository, taskRunId, source.Token);
+            await Execute(task, taskSource, taskScope.ServiceProvider, taskRepository, taskRunId, source.Token);
             await taskRepository.CompleteTask(taskRunId, source.Token);
         }
         catch (Exception exception) when (exception is TaskCanceledException or OperationCanceledException)
@@ -135,6 +138,7 @@ public sealed class BackgroundWorkerService : BackgroundService
 
     private async ValueTask Execute(
         TaskEntity task,
+        TaskSource source,
         IServiceProvider provider,
         TaskRepository taskRepository,
         Guid taskRunId,
@@ -153,6 +157,7 @@ public sealed class BackgroundWorkerService : BackgroundService
                 task.VideoId,
                 task.ChannelId,
                 scopedDirectory.Directory,
+                source,
                 cancellationToken);
 
             task.ChannelId = result.ChannelId;
@@ -189,6 +194,7 @@ public sealed class BackgroundWorkerService : BackgroundService
                 taskRepository,
                 taskRunId,
                 scopedDirectory.Directory,
+                source,
                 cancellationToken);
         }
         else if (task.Type == TaskType.ScanSubscriptions)
@@ -203,6 +209,7 @@ public sealed class BackgroundWorkerService : BackgroundService
                 taskRepository,
                 taskRunId,
                 scopedDirectory.Directory,
+                source,
                 cancellationToken);
         }
         else if (task.Type == TaskType.ScanSponsorBlockSegments)
@@ -229,6 +236,7 @@ public sealed class BackgroundWorkerService : BackgroundService
             await service.Reindex(
                 task.LibraryId!.Value,
                 task.UserId!.Value,
+                source,
                 cancellationToken);
         }
         else if (task.Type == TaskType.UpdateSponsorBlockSegments)
