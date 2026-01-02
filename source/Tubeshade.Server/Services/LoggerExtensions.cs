@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using PubSubHubbub.Models;
 using Tubeshade.Server.V1.Models;
+using YoutubeDLSharp.Metadata;
 using static Microsoft.Extensions.Logging.LogLevel;
 
 namespace Tubeshade.Server.Services;
@@ -239,4 +240,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(74, Debug, "Copying file from {SourcePath} to {TargetPath} with ffmpeg")]
     internal static partial void MovingFileFfmpeg(this ILogger logger, string sourcePath, string targetPath);
+
+    [LoggerMessage(75, Debug, "Video {ExternalId} was live {WasLive}, is live {IsLive}, with status {LiveStatus}")]
+    internal static partial void VideoLiveStatus(this ILogger logger, string externalId, bool? wasLive, bool? isLive, LiveStatus? liveStatus);
 }

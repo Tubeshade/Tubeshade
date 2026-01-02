@@ -187,6 +187,7 @@ public sealed class YoutubeService
         var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
         var youtubeVideoId = videoData.Id;
         _logger.IndexingVideo(youtubeVideoId);
+        _logger.VideoLiveStatus(youtubeVideoId, videoData.WasLive, videoData.IsLive, videoData.LiveStatus);
 
         var video = await _videoRepository.FindByExternalId(youtubeVideoId, userId, Access.Read, transaction);
         var isNewVideo = video is null;
