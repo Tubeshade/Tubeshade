@@ -13,6 +13,8 @@ _Latest build from master branch._
 
 - Skip overlapping Sponsor Block segments
   ([#117](https://github.com/Tubeshade/Tubeshade/issues/117))
+- Correctly display rate for non-download tasks
+  ([#234](https://github.com/Tubeshade/Tubeshade/pull/234))
 
 ## [0.1.3] - 2025-12-28
 

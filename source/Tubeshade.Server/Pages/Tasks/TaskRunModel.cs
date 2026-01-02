@@ -35,12 +35,12 @@ public sealed class TaskRunModel
         : null;
 
     public string? FormattedRate => Rate is { } rate
-        ? $"{Math.Round(rate / MiB, 2)} MiB/s"
+        ? IsFileSize ? $"{Math.Round(rate / MiB, 2)} MiB/s" : $"{Math.Round(rate, 2)}/s"
         : null;
 
     public string? FormattedRemaining => Remaining is not null
         ? HumanReadablePeriodPattern.Instance.Format(Remaining)
         : null;
 
-    private bool IsFileSize => Target is >= 1 * MiB;
+    private bool IsFileSize => Target >= MiB;
 }
