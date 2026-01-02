@@ -17,12 +17,12 @@ public static partial class StringExtensions
 
     public static bool TryExtractChapters(
         [NotNullWhen(true)] this string? description,
-        Period videoDuration,
+        Period? videoDuration,
         [MaybeNullWhen(false)] out TextTrackCue[] chapters)
     {
         chapters = null;
 
-        if (string.IsNullOrWhiteSpace(description))
+        if (string.IsNullOrWhiteSpace(description) || videoDuration is null)
         {
             return false;
         }

@@ -30,7 +30,7 @@ public sealed class VideoService
         Instant publishedAt,
         Instant refreshedAt,
         ExternalAvailability availability,
-        Period duration,
+        Period? duration,
         long? views,
         long? likes,
         NpgsqlTransaction transaction)

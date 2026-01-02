@@ -25,11 +25,14 @@
                         <time datetime="@InstantPattern.General.Format(Model.Video.PublishedAt)">
                             @LocalDatePattern.Iso.Format(Model.Video.PublishedAt.InUtc().Date)
                         </time>
-                        <span> - </span>
-                        <span>@(HumanReadablePeriodPattern.Instance.Format(Model.Video.Duration))</span>
-                        @if (Model.Video.Duration != Model.ActualDuration)
+                        @if (Model is { ActualDuration: { } actualDuration, Video.Duration: { } duration })
                         {
-                            <span>(@(HumanReadablePeriodPattern.Instance.Format(Model.ActualDuration)))</span>
+                            <span> - </span>
+                            <span>@(HumanReadablePeriodPattern.Instance.Format(duration))</span>
+                            @if (duration != actualDuration)
+                            {
+                                <span>(@(HumanReadablePeriodPattern.Instance.Format(actualDuration)))</span>
+                            }
                         }
                     </div>
 

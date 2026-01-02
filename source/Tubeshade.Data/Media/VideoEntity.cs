@@ -38,7 +38,7 @@ public sealed record VideoEntity : ModifiableEntity, IOwnableEntity, INamedEntit
 
     public required ExternalAvailability Availability { get; set; }
 
-    public required Period Duration { get; set; }
+    public required Period? Duration { get; set; }
 
     public Instant? IgnoredAt { get; set; }
 

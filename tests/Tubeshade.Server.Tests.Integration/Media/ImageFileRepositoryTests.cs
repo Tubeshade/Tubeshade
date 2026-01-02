@@ -73,7 +73,7 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
                     PublishedAt = SystemClock.Instance.GetCurrentInstant(),
                     RefreshedAt = SystemClock.Instance.GetCurrentInstant(),
                     Availability = ExternalAvailability.Public,
-                    Duration = Period.Zero,
+                    Duration = Period.FromMinutes(10),
                     TotalCount = 0
                 },
                 transaction))!.Value;

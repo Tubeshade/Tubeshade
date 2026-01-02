@@ -11,6 +11,11 @@ _Latest build from master branch._
 - Task run source tracking
   ([#174](https://github.com/Tubeshade/Tubeshade/issues/174))
 
+### Changed
+
+- Index livestreams while they are live
+  ([#176](https://github.com/Tubeshade/Tubeshade/issues/176))
+
 ### Fixed
 
 - Skip overlapping Sponsor Block segments

@@ -246,4 +246,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(76, Information, "Queuing notification {NotificationChannel} {TaskId} {TaskSource}")]
     internal static partial void QueueingNotification(this ILogger logger, string notificationChannel, Guid taskId, string taskSource);
+
+    [LoggerMessage(77, Debug, "Video {VideoId} is still live, not downloading")]
+    internal static partial void NotDownloadingLiveVideo(this ILogger logger, Guid videoId);
 }

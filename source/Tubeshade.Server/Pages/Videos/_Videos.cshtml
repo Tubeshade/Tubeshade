@@ -14,11 +14,11 @@
                          loading="lazy" alt="@video.Video.Name" title="@video.Video.Name"
                          class="card-img-top tubeshade-video-thumbnail"/>
                 </a>
-                @if (video.Video.Position is { } position &&
-                     Math.Abs(video.DurationInSeconds - position) > Defaults.PlaybackEpsilon &&
+                @if (video is { DurationInSeconds: { } durationInSeconds, Video.Position: { } position } &&
+                     Math.Abs(durationInSeconds - position) > Defaults.PlaybackEpsilon &&
                      position > Defaults.PlaybackEpsilon)
                 {
-                    <progress max="@video.DurationInSeconds.ToString(CultureInfo.InvariantCulture)"
+                    <progress max="@durationInSeconds.ToString(CultureInfo.InvariantCulture)"
                               value="@position.ToString(CultureInfo.InvariantCulture)"
                               class="position-absolute w-100" style="transform: translate(0,-50%)">
                     </progress>
@@ -51,10 +51,13 @@
                         @LocalDatePattern.Iso.Format(video.Video.PublishedAt.InUtc().Date)
                     </time>
                     <div>
-                        <span>@(HumanReadablePeriodPattern.Instance.Format(video.Video.Duration))</span>
-                        @if (video.Video.Duration != video.ActualDuration)
+                        @if (video is { ActualDuration: { } actualDuration, Video.Duration: { } duration })
                         {
-                            <span>(@(HumanReadablePeriodPattern.Instance.Format(video.ActualDuration)))</span>
+                            <span>@(HumanReadablePeriodPattern.Instance.Format(duration))</span>
+                            @if (duration != actualDuration)
+                            {
+                                <span>(@(HumanReadablePeriodPattern.Instance.Format(actualDuration)))</span>
+                            }
                         }
                     </div>
                 </div>

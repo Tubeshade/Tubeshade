@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Npgsql;
-using SponsorBlock;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
@@ -95,22 +94,7 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
         var videoIds = videos.Select(video => video.Id).ToArray();
         var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);
 
-        var models = videos.Select(video =>
-        {
-            var skippedDuration = segments
-                .Where(segment => segment.VideoId == video.Id && segment.Category != SegmentCategory.Filler)
-                .GetTotalDuration();
-
-            var actualDuration = (video.Duration - skippedDuration).Normalize();
-
-            return new VideoModel
-            {
-                Video = video,
-                ActualDuration = actualDuration,
-                Channel = channels.Single(channel => video.ChannelId == channel.Id), // todo
-            };
-        }).ToList();
-
+        var models = videos.MapToModels(segments, channels).ToList();
         var totalCount = videos is [] ? 0 : videos[0].TotalCount;
 
         PageData = new PaginatedData<VideoModel>

@@ -193,7 +193,7 @@ public sealed class YoutubeService
         _logger.VideoLiveStatus(youtubeVideoId, videoData.WasLive, videoData.IsLive, videoData.LiveStatus);
 
         var video = await _videoRepository.FindByExternalId(youtubeVideoId, userId, Access.Read, transaction);
-        var isNewVideo = video is null;
+        var isExistingVideo = video is not null;
 
         var currentTime = _clock.GetCurrentInstant();
         var availability = videoData.Availability switch
@@ -223,9 +223,21 @@ public sealed class YoutubeService
             return video.Id;
         }
 
-        // todo: livestreams, as well as videos from some sites besides YouTube, don't have duration
-        var duration = Period.FromSeconds(
-            (long)Math.Truncate(videoData.Duration ?? throw new InvalidOperationException("Video is missing duration")));
+        type ??= videoData switch
+        {
+            { LiveStatus: not (LiveStatus.None or LiveStatus.NotLive) } => VideoType.Livestream,
+            _ => VideoType.Video,
+        };
+
+        Period? duration = null;
+        if (videoData.Duration is { } durationInSeconds)
+        {
+            duration = Period.FromSeconds((long)Math.Truncate(durationInSeconds));
+        }
+        else if (type != VideoType.Livestream)
+        {
+            throw new InvalidOperationException("Video is missing duration");
+        }
 
         if (video is null)
         {
@@ -234,12 +246,6 @@ public sealed class YoutubeService
             var publishedAt = videoData.ReleaseTimestamp ?? videoData.Timestamp
                 ?? throw new InvalidOperationException("Video is missing publish date");
             var publishedInstant = Instant.FromUnixTimeSeconds(publishedAt);
-
-            type ??= videoData switch
-            {
-                { LiveStatus: not (LiveStatus.None or LiveStatus.NotLive) } => VideoType.Livestream,
-                _ => VideoType.Video,
-            };
 
             video = await _videoService.Create(
                 userId,
@@ -294,6 +300,12 @@ public sealed class YoutubeService
         var formatSelectors = preferences.Formats is { Length: > 0 } preferredFormats
             ? preferredFormats
             : DefaultVideoFormats;
+
+        // todo: do not create files for unfinished livestreams, because they cannot be downloaded anyway
+        if (videoData.LiveStatus is not (LiveStatus.None or LiveStatus.NotLive))
+        {
+            formatSelectors = [];
+        }
 
         foreach (var format in formatSelectors)
         {
@@ -441,7 +453,7 @@ public sealed class YoutubeService
             await CreateOrUpdateThumbnail(userId, video, thumbnailFile, existingThumbnail, transaction, cancellationToken);
         }
 
-        if (!isNewVideo)
+        if (isExistingVideo && !(videoData.LiveStatus is LiveStatus.WasLive && files.Any(file => file.DownloadedAt is not null)))
         {
             _logger.NotDownloadingExistingVideo();
             return video.Id;
@@ -450,6 +462,12 @@ public sealed class YoutubeService
         if (preferences.DownloadVideos is null || preferences.DownloadVideos == DownloadVideos.None)
         {
             _logger.NotDownloadingDueToPreferences();
+            return video.Id;
+        }
+
+        if (videoData.LiveStatus is LiveStatus.IsUpcoming or LiveStatus.IsLive or LiveStatus.PostLive)
+        {
+            _logger.NotDownloadingLiveVideo(video.Id);
             return video.Id;
         }
 
@@ -792,10 +810,10 @@ public sealed class YoutubeService
             var fileName = videoFile.StoragePath;
 
             var limitRate = _options.LimitRate;
-            if (size.HasValue && _options.LimitMultiplier is { } multiplier)
+            if (size.HasValue && _options.LimitMultiplier is { } multiplier && video.Duration is { } duration)
             {
-                var duration = (decimal)video.Duration.ToDuration().TotalSeconds;
-                var bitrate = (long)Math.Round(size.Value * 8 * multiplier / duration, 0);
+                var seconds = (decimal)duration.ToDuration().TotalSeconds;
+                var bitrate = (long)Math.Round(size.Value * 8 * multiplier / seconds, 0);
                 if (limitRate is null || limitRate.Value > bitrate)
                 {
                     limitRate = bitrate;
@@ -1111,10 +1129,10 @@ public sealed class YoutubeService
         var fileName = videoFile.StoragePath;
 
         var limitRate = _options.LimitRate;
-        if (size is not 0 && _options.LimitMultiplier is { } multiplier)
+        if (size is not 0 && _options.LimitMultiplier is { } multiplier && video.Duration is { } duration)
         {
-            var duration = (decimal)video.Duration.ToDuration().TotalSeconds;
-            var bitrate = (long)Math.Round(size * 8 * multiplier / duration, 0);
+            var seconds = (decimal)duration.ToDuration().TotalSeconds;
+            var bitrate = (long)Math.Round(size * 8 * multiplier / seconds, 0);
             if (limitRate is null || limitRate.Value > bitrate)
             {
                 limitRate = bitrate;
@@ -1271,12 +1289,13 @@ public sealed class YoutubeService
 
         var audioLimitRate = _options.LimitRate;
         var videoLimitRate = _options.LimitRate;
-        if (_options.LimitMultiplier is { } multiplier)
+        if (_options.LimitMultiplier is { } multiplier && video.Duration is { } duration)
         {
+            var seconds = (decimal)duration.ToDuration().TotalSeconds;
+
             if ((audioFormat.FileSize ?? audioFormat.ApproximateFileSize) is { } audioFormatSize)
             {
-                var duration = (decimal)video.Duration.ToDuration().TotalSeconds;
-                var bitrate = (long)Math.Round(audioFormatSize * 8 * multiplier / duration, 0);
+                var bitrate = (long)Math.Round(audioFormatSize * 8 * multiplier / seconds, 0);
                 if (audioLimitRate is null || audioLimitRate.Value > bitrate)
                 {
                     audioLimitRate = bitrate;
@@ -1285,8 +1304,7 @@ public sealed class YoutubeService
 
             if ((videoFormat.FileSize ?? videoFormat.ApproximateFileSize) is { } videoFormatSize)
             {
-                var duration = (decimal)video.Duration.ToDuration().TotalSeconds;
-                var bitrate = (long)Math.Round(videoFormatSize * 8 * multiplier / duration, 0);
+                var bitrate = (long)Math.Round(videoFormatSize * 8 * multiplier / seconds, 0);
                 if (videoLimitRate is null || videoLimitRate.Value > bitrate)
                 {
                     videoLimitRate = bitrate;
