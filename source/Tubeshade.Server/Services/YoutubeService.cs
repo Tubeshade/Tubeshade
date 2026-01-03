@@ -428,42 +428,7 @@ public sealed class YoutubeService
             await _webVideoTextTracksService.Write(chapterFile, chapterCues, cancellationToken);
         }
 
-        var existingThumbnail = await _imageFileRepository.FindVideoThumbnail(video.Id, userId, Access.Modify, transaction);
-        var orderedThumbnails = videoData.GetOrderedThumbnails();
-
-        if (existingThumbnail is not null && existingThumbnail.Width >= orderedThumbnails.First().Width)
-        {
-            _logger.ExistingThumbnail();
-        }
-        else
-        {
-            var fileName = $"thumbnail_{video.Id:N}";
-            foreach (var thumbnail in orderedThumbnails.Take(3))
-            {
-                try
-                {
-                    await _ytdlpWrapper.DownloadThumbnail(thumbnail.Url, directory.FullName, fileName, cookieFilepath, cancellationToken);
-                    break;
-                }
-                catch (Exception exception) when (exception.Message.Contains("HTTP Error 404"))
-                {
-                    _logger.ThumbnailNotFound(thumbnail.Url);
-                }
-            }
-
-            var thumbnails = directory.EnumerateFiles($"{fileName}.*").ToArray();
-            if (thumbnails is [])
-            {
-                throw new Exception("Could not find downloaded thumbnail");
-            }
-
-            if (thumbnails is not [var thumbnailFile])
-            {
-                throw new Exception("Multiple thumbnails");
-            }
-
-            await CreateOrUpdateThumbnail(userId, video, thumbnailFile, existingThumbnail, transaction, cancellationToken);
-        }
+        await CreateOrUpdateThumbnail(url, directory, cookieFilepath, userId, video, transaction, cancellationToken);
 
         if (isExistingVideo && !(videoData.LiveStatus is LiveStatus.WasLive && files.Any(file => file.DownloadedAt is not null)))
         {
@@ -502,13 +467,30 @@ public sealed class YoutubeService
     }
 
     private async ValueTask CreateOrUpdateThumbnail(
+        string url,
+        DirectoryInfo directory,
+        string? cookieFilepath,
         Guid userId,
         VideoEntity video,
-        FileInfo file,
-        ImageFileEntity? existing,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
+        _logger.DownloadingThumbnail();
+
+        var fileName = $"thumbnail_{video.Id:N}";
+        await _ytdlpWrapper.DownloadThumbnail(url, directory.FullName, fileName, cookieFilepath, cancellationToken);
+
+        var thumbnails = directory.EnumerateFiles($"{fileName}.*").ToArray();
+        if (thumbnails is [])
+        {
+            throw new Exception("Could not find downloaded thumbnail");
+        }
+
+        if (thumbnails is not [var file])
+        {
+            throw new Exception("Multiple thumbnails");
+        }
+
         var response = await _ffmpegService.AnalyzeFile(file.FullName, cancellationToken);
         if (response.Streams is not [var stream])
         {
@@ -520,7 +502,7 @@ public sealed class YoutubeService
             throw new InvalidOperationException("Could not extract image resolution");
         }
 
-        var destinationFileName = Path.Combine(video.StoragePath, file.Name);
+        var existing = await _imageFileRepository.FindVideoThumbnail(video.Id, userId, Access.Modify, transaction);
         if (existing is not null && existing.Width >= width)
         {
             _logger.ExistingThumbnail();
@@ -562,6 +544,7 @@ public sealed class YoutubeService
             }
         }
 
+        var destinationFileName = Path.Combine(video.StoragePath, file.Name);
         file.MoveTo(destinationFileName, true);
     }
 

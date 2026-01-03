@@ -252,4 +252,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(78, Warning, "Thumbnail {ExternalUrl} not found")]
     internal static partial void ThumbnailNotFound(this ILogger logger, string externalUrl);
+
+    [LoggerMessage(79, Debug, "Downloading thumbnail")]
+    internal static partial void DownloadingThumbnail(this ILogger logger);
 }

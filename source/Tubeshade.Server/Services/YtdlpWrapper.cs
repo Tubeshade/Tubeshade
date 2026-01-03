@@ -205,7 +205,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
 
     /// <inheritdoc />
     public async ValueTask DownloadThumbnail(
-        string thumbnailUrl,
+        string url,
         string path,
         string fileNameWithoutExtension,
         string? cookieFilepath,
@@ -214,8 +214,10 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         var optionSet = GetDefaultOptions(cookieFilepath);
         optionSet.Output = $"{fileNameWithoutExtension}.%(ext)s";
         optionSet.Paths = path;
+        optionSet.WriteThumbnail = true;
+        optionSet.SkipDownload = true;
 
-        var result = await _ytdlp.RunAsync(thumbnailUrl, optionSet, cancellationToken);
+        var result = await _ytdlp.RunAsync(url, optionSet, cancellationToken);
 
         if (result.ErrorOutput is { Length: > 0 } errorOutput)
         {
