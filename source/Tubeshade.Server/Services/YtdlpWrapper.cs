@@ -216,6 +216,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         optionSet.Paths = path;
         optionSet.WriteThumbnail = true;
         optionSet.SkipDownload = true;
+        optionSet.IgnoreNoFormatsError = true;
 
         var result = await _ytdlp.RunAsync(url, optionSet, cancellationToken);
 
