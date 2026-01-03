@@ -249,4 +249,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(77, Debug, "Video {VideoId} is still live, not downloading")]
     internal static partial void NotDownloadingLiveVideo(this ILogger logger, Guid videoId);
+
+    [LoggerMessage(78, Warning, "Thumbnail {ExternalUrl} not found")]
+    internal static partial void ThumbnailNotFound(this ILogger logger, string externalUrl);
 }

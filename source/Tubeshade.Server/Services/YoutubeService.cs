@@ -429,15 +429,27 @@ public sealed class YoutubeService
         }
 
         var existingThumbnail = await _imageFileRepository.FindVideoThumbnail(video.Id, userId, Access.Modify, transaction);
-        var thumbnail = videoData.Thumbnails!.Single(thumbnail => thumbnail.Url == videoData.Thumbnail);
-        if (existingThumbnail is not null && existingThumbnail.Width >= thumbnail.Width)
+        var orderedThumbnails = videoData.GetOrderedThumbnails();
+
+        if (existingThumbnail is not null && existingThumbnail.Width >= orderedThumbnails.First().Width)
         {
             _logger.ExistingThumbnail();
         }
         else
         {
             var fileName = $"thumbnail_{video.Id:N}";
-            await _ytdlpWrapper.DownloadThumbnail(thumbnail.Url, directory.FullName, fileName, cookieFilepath, cancellationToken);
+            foreach (var thumbnail in orderedThumbnails.Take(3))
+            {
+                try
+                {
+                    await _ytdlpWrapper.DownloadThumbnail(thumbnail.Url, directory.FullName, fileName, cookieFilepath, cancellationToken);
+                    break;
+                }
+                catch (Exception exception) when (exception.Message.Contains("HTTP Error 404"))
+                {
+                    _logger.ThumbnailNotFound(thumbnail.Url);
+                }
+            }
 
             var thumbnails = directory.EnumerateFiles($"{fileName}.*").ToArray();
             if (thumbnails is [])

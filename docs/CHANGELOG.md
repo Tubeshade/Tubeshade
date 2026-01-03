@@ -15,6 +15,8 @@ _Latest build from master branch._
 
 - Index livestreams while they are live
   ([#176](https://github.com/Tubeshade/Tubeshade/issues/176))
+- Skip thumbnails that are not found while downloading
+  ([#237](https://github.com/Tubeshade/Tubeshade/pull/237))
 
 ### Fixed
 
