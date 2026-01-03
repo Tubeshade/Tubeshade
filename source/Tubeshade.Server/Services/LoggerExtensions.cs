@@ -255,4 +255,13 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(79, Debug, "Downloading thumbnail")]
     internal static partial void DownloadingThumbnail(this ILogger logger);
+
+    [LoggerMessage(80, Debug, "Found existing video for {ExternalUrl}, stopping channel scan")]
+    internal static partial void ChannelScanExistingVideo(this ILogger logger, string externalUrl);
+
+    [LoggerMessage(81, Warning, "Skipping video {ExternalUrl} during channel scan - {ErrorMessage}")]
+    internal static partial void ChannelScanFailedVideo(this ILogger logger, string externalUrl, string errorMessage);
+
+    [LoggerMessage(82, Debug, "Scanning {Count} subscribed channels")]
+    internal static partial void ScanningSubscribedChannels(this ILogger logger, int count);
 }

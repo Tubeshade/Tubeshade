@@ -596,12 +596,18 @@ public sealed class YoutubeService
         var channels = await _channelRepository.GetSubscribedForLibrary(libraryId, userId, transaction);
 
         await taskRepository.InitializeTaskProgress(taskRunId, channels.Count);
-        _logger.LogDebug("Found {Count} subscribed channels", channels.Count);
+        _logger.ScanningSubscribedChannels(channels.Count);
+
+        var startTime = _clock.GetCurrentInstant();
+        var totalCount = channels.Count;
 
         foreach (var (index, channel) in channels.Index())
         {
             await ScanChannelCore(libraryId, channel.Id, false, true, userId, taskRepository, taskRunId, transaction, tempDirectory, source, cancellationToken, false);
-            await taskRepository.UpdateProgress(taskRunId, index + 1);
+
+            var currentIndex = index + 1;
+            var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
+            await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
         }
 
         await transaction.CommitAsync(cancellationToken);
@@ -660,12 +666,15 @@ public sealed class YoutubeService
             playlists.Add(type, playlistData);
         }
 
+        var totalCount = playlists.SelectMany(pair => pair.Value.Entries ?? []).Count();
         if (reportProgress)
         {
-            await taskRepository.InitializeTaskProgress(taskRunId, playlists.SelectMany(pair => pair.Value.Entries ?? []).Count());
+            await taskRepository.InitializeTaskProgress(taskRunId, totalCount);
         }
 
+        var startTime = _clock.GetCurrentInstant();
         var indexOffset = 0;
+
         foreach (var (type, playlistData) in playlists)
         {
             if (playlistData.Entries is null)
@@ -683,10 +692,13 @@ public sealed class YoutubeService
                 var existing = await _videoRepository.FindByExternalUrl(video.Url, userId, Access.Read, transaction);
                 if (existing is not null && breakOnExisting)
                 {
-                    _logger.LogDebug("Found existing video for {VideoExternalUrl}, stopping channel scan", existing.ExternalUrl);
+                    _logger.ChannelScanExistingVideo(existing.ExternalUrl);
+
                     if (reportProgress)
                     {
-                        await taskRepository.UpdateProgress(taskRunId, playlistData.Entries.Length + indexOffset);
+                        var currentIndex = playlistData.Entries.Length + indexOffset;
+                        var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
+                        await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
                     }
 
                     break;
@@ -695,7 +707,7 @@ public sealed class YoutubeService
                 var videoResult = await _ytdlpWrapper.FetchVideoData(video.Url, cookiesFilepath, cancellationToken);
                 if (!videoResult.Success)
                 {
-                    _logger.LogWarning("Skipping video during channel scan - {ErrorMessage}", string.Join(Environment.NewLine, videoResult.ErrorOutput));
+                    _logger.ChannelScanFailedVideo(video.Url, string.Join(Environment.NewLine, videoResult.ErrorOutput));
                     continue;
                 }
 
@@ -703,7 +715,9 @@ public sealed class YoutubeService
 
                 if (reportProgress)
                 {
-                    await taskRepository.UpdateProgress(taskRunId, index + 1 + indexOffset);
+                    var currentIndex = index + 1 + indexOffset;
+                    var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
+                    await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
                 }
             }
 

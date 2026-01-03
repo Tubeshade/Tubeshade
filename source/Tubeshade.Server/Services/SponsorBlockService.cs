@@ -89,14 +89,7 @@ public sealed class SponsorBlockService
             await UpdateVideoSegments(videoId.Id, videoId.ExternalId, userId, transaction, cancellationToken);
 
             var currentIndex = index + 1;
-
-            var total = _clock.GetCurrentInstant() - startTime;
-            var average = total / currentIndex;
-            var remaining = average * (totalCount - currentIndex);
-            var period = new PeriodBuilder { Nanoseconds = (long)remaining.TotalNanoseconds }.Build().Normalize();
-
-            var rate = Math.Round(currentIndex / (decimal)total.TotalSeconds, 2);
-
+            var (rate, period) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
             await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, period);
         }
 
