@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Execution;
@@ -13,7 +14,11 @@ public sealed class FfmpegServiceTests
 {
     private readonly FfmpegService _service = new(
         NullLogger<FfmpegService>.Instance,
-        new MockOptionsMonitor<YtdlpOptions>(options => options.FfprobePath = "ffprobe"));
+        new MockOptionsMonitor<YtdlpOptions>(options =>
+        {
+            options.FfmpegPath = "ffmpeg";
+            options.FfprobePath = "ffprobe";
+        }));
 
     [TestCase("thumbnail.jpg", "mjpeg", 1280, 720)]
     [TestCase("thumbnail.webp", "webp", 1280, 720)]
@@ -27,5 +32,15 @@ public sealed class FfmpegServiceTests
         stream.CodecName.Should().Be(codec);
         stream.Width.Should().Be(width);
         stream.Height.Should().Be(height);
+    }
+
+    [TestCaseSource(typeof(FfmpegExceptionTestCaseSource))]
+    public async Task ShouldThrowExpectedException(Func<FfmpegService, Task> function, string expectedMessage)
+    {
+        await FluentActions
+            .Awaiting(async () => await function(_service))
+            .Should()
+            .ThrowExactlyAsync<Exception>()
+            .WithMessage(expectedMessage);
     }
 }

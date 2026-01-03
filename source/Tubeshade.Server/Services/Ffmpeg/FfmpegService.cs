@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,7 +30,7 @@ public sealed class FfmpegService
         var args = new[]
         {
             "-v",
-            "quiet",
+            "error",
             "-i",
             filePath,
             "-print_format",
@@ -41,47 +39,25 @@ public sealed class FfmpegService
             "-show_streams",
         };
 
-        var processInfo = new ProcessStartInfo(_options.CurrentValue.FfprobePath, args)
-        {
-            CreateNoWindow = true,
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardErrorEncoding = Encoding.UTF8,
-            StandardOutputEncoding = Encoding.UTF8,
-        };
+        using var process = new CancelableProcess(_options.CurrentValue.FfprobePath, args, false);
+        process.ErrorReceived += OnErrorReceived;
 
-        using var process = Process.Start(processInfo);
-        if (process is null)
+        var processTask = process.Run(cancellationToken);
+        var deserializeTask = JsonSerializer.DeserializeAsync(
+            process.Output,
+            FfmpegContext.Default.ProbeResponse,
+            cancellationToken);
+
+        var exitCode = await processTask;
+
+        process.ErrorReceived -= OnErrorReceived;
+        if (exitCode is 0)
         {
-            throw new InvalidOperationException("Failed to start ffprobe");
+            return (await deserializeTask)!;
         }
 
-        ProbeResponse response;
-        await using (cancellationToken.Register(state => (state as Process)?.Kill(), process))
-        {
-            string error;
-            using (var reader = new StreamReader(process.StandardError.BaseStream))
-            {
-                error = await reader.ReadToEndAsync(cancellationToken);
-            }
-
-            if (!string.IsNullOrWhiteSpace(error))
-            {
-                throw new(error);
-            }
-
-            string output;
-            using (var reader = new StreamReader(process.StandardOutput.BaseStream))
-            {
-                output = await reader.ReadToEndAsync(cancellationToken);
-            }
-
-            response = JsonSerializer.Deserialize(output, FfmpegContext.Default.ProbeResponse)!;
-            await process.WaitForExitAsync(cancellationToken);
-        }
-
-        return response;
+        var error = string.Join(Environment.NewLine, process.ErrorLines);
+        throw new(error);
     }
 
     public async ValueTask<string> RemuxFile(
@@ -103,7 +79,7 @@ public sealed class FfmpegService
             _ => throw new("Expected video to have a single video and single audio stream")
         };
 
-        var args = new List<string> { "-i", filePath, "-vcodec", "copy" };
+        var args = new List<string> { "-v", "error", "-i", filePath, "-vcodec", "copy" };
 
         if (type == VideoContainerType.WebM && audio.CodecName is "opus" or "vorbis")
         {
@@ -125,51 +101,18 @@ public sealed class FfmpegService
 
         args.Add(outputFilePath);
 
-        var processInfo = new ProcessStartInfo(_options.CurrentValue.FfmpegPath, args)
+        using var process = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
+        process.OutputReceived += OnOutputReceived;
+        process.ErrorReceived += OnErrorReceived;
+
+        var exitCode = await process.Run(cancellationToken);
+
+        process.OutputReceived -= OnOutputReceived;
+        process.ErrorReceived -= OnErrorReceived;
+
+        if (exitCode is not 0)
         {
-            CreateNoWindow = true,
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardErrorEncoding = Encoding.UTF8,
-            StandardOutputEncoding = Encoding.UTF8,
-        };
-
-        using var process = Process.Start(processInfo);
-        if (process is null)
-        {
-            throw new InvalidOperationException("Failed to start ffmpeg");
-        }
-
-        string? error;
-        string? output;
-        await using (cancellationToken.Register(state => (state as Process)?.Kill(), process))
-        {
-            using (var reader = new StreamReader(process.StandardError.BaseStream))
-            {
-                error = await reader.ReadToEndAsync(cancellationToken);
-            }
-
-            using (var reader = new StreamReader(process.StandardOutput.BaseStream))
-            {
-                output = await reader.ReadToEndAsync(cancellationToken);
-            }
-
-            await process.WaitForExitAsync(cancellationToken);
-        }
-
-        if (!string.IsNullOrWhiteSpace(error))
-        {
-            _logger.StandardError(processInfo.FileName, error);
-        }
-
-        if (!string.IsNullOrWhiteSpace(output))
-        {
-            _logger.StandardOutput(processInfo.FileName, output);
-        }
-
-        if (process.ExitCode is not 0 && !string.IsNullOrWhiteSpace(error))
-        {
+            var error = string.Join(Environment.NewLine, process.ErrorLines);
             throw new(error);
         }
 
@@ -185,6 +128,8 @@ public sealed class FfmpegService
     {
         var args = new List<string>
         {
+            "-v",
+            "error",
             "-nostdin",
             "-y", // Overwrite output files without asking.
             "-rw_timeout", // Maximum time to wait for (network) read/write operations to complete, in microseconds.
@@ -220,18 +165,19 @@ public sealed class FfmpegService
 
         args.Add(outputFilePath);
 
-        using var ffmpegProcess = new CancelableProcess(_options.CurrentValue.FfmpegPath, string.Join(' ', args));
-        ffmpegProcess.OutputReceived += OnOutputReceived;
-        ffmpegProcess.ErrorReceived += OnErrorReceived;
+        using var process = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
+        process.OutputReceived += OnOutputReceived;
+        process.ErrorReceived += OnErrorReceived;
 
-        var exitCode = await ffmpegProcess.Run(cancellationToken);
+        var exitCode = await process.Run(cancellationToken);
 
-        ffmpegProcess.OutputReceived -= OnOutputReceived;
-        ffmpegProcess.ErrorReceived -= OnErrorReceived;
+        process.OutputReceived -= OnOutputReceived;
+        process.ErrorReceived -= OnErrorReceived;
 
         if (exitCode is not 0)
         {
-            throw new("Failed to combine video and audio streams");
+            var error = string.Join(Environment.NewLine, process.ErrorLines);
+            throw new(error);
         }
     }
 
@@ -243,7 +189,7 @@ public sealed class FfmpegService
     {
         var args = new List<string> { "-nostdin", "-y", "-i", $"file:{inputFilePath}", "-c", "copy", outputFilePath };
 
-        using var ffmpegProcess = new CancelableProcess(_options.CurrentValue.FfmpegPath, string.Join(' ', args));
+        using var ffmpegProcess = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
         ffmpegProcess.OutputReceived += OnOutputReceived;
         ffmpegProcess.ErrorReceived += OnErrorReceived;
 

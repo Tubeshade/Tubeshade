@@ -20,7 +20,7 @@ public sealed class CancelableProcessTests
     public async Task Run_ShouldRespectCancellation()
     {
         using var source = new CancellationTokenSource();
-        using var process = new CancelableProcess("yt-dlp", string.Join(' ', _args));
+        using var process = new CancelableProcess("yt-dlp", _args);
 
         var processStarted = new TaskCompletionSource();
         process.ErrorReceived += (_, _) => processStarted.TrySetResult();
@@ -47,7 +47,7 @@ public sealed class CancelableProcessTests
     [Test]
     public async Task RunToCompletion()
     {
-        using var process = new CancelableProcess("yt-dlp", string.Join(' ', _args));
+        using var process = new CancelableProcess("yt-dlp", _args);
 
         var result = await process.Run();
 
@@ -79,7 +79,7 @@ public sealed class CancelableProcessTests
         await FluentActions
             .Awaiting(async () =>
             {
-                using var process = new CancelableProcess(Guid.NewGuid().ToString(), string.Join(' ', _args));
+                using var process = new CancelableProcess(Guid.NewGuid().ToString(), _args);
                 return await process.Run();
             })
             .Should()
@@ -89,7 +89,7 @@ public sealed class CancelableProcessTests
     [Test]
     public async Task Finalizer_ShouldNotThrow()
     {
-        using var process = new CancelableProcess("yt-dlp", string.Join(' ', _args));
+        using var process = new CancelableProcess("yt-dlp", _args);
 
         var processStarted = new TaskCompletionSource();
         process.ErrorReceived += (_, _) => processStarted.TrySetResult();

@@ -25,6 +25,15 @@ public sealed class CancelableProcess : IDisposable
 
     public CancelableProcess(
         string fileName,
+        IEnumerable<string> arguments,
+        bool standardOutputEvents = true,
+        bool standardErrorEvents = true)
+        : this(fileName, string.Join(' ', arguments), standardOutputEvents, standardErrorEvents)
+    {
+    }
+
+    public CancelableProcess(
+        string fileName,
         string arguments,
         bool standardOutputEvents = true,
         bool standardErrorEvents = true)
