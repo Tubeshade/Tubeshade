@@ -50,11 +50,13 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         var channelRepository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
         var videoRepository = scope.ServiceProvider.GetRequiredService<VideoRepository>();
+
+        Guid channelId;
         Guid videoId;
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var channelId = await channelRepository.AddAsync(
+            channelId = (await channelRepository.AddAsync(
                 new()
                 {
                     CreatedByUserId = _userId,
@@ -66,7 +68,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
                     ExternalUrl = string.Empty,
                     Availability = ExternalAvailability.Public,
                 },
-                transaction);
+                transaction))!.Value;
 
             videoId = (await videoRepository.AddAsync(
                 new()
@@ -79,7 +81,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
                     Categories = [],
                     Tags = [],
                     Type = VideoType.Video,
-                    ChannelId = channelId!.Value,
+                    ChannelId = channelId,
                     StoragePath = string.Empty,
                     ExternalId = string.Empty,
                     ExternalUrl = "https://example.org",
@@ -93,6 +95,13 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
             await transaction.CommitAsync();
         }
 
+        Guid indexTaskId;
+        await using (var transaction = await connection.OpenAndBeginTransaction())
+        {
+            indexTaskId = await repository.AddIndexTask("https://example.org", _libraryId, _userId, transaction);
+            await transaction.CommitAsync();
+        }
+
         Guid task1RunId;
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
@@ -101,40 +110,43 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
             var task1 = (await repository.TryDequeueTask(taskId, transaction))!;
             task1.Should().NotBeNull();
-
-            (await repository.GetBlockingTaskRunIds(task1, CancellationToken.None)).Should().BeEmpty();
-
             task1RunId = await repository.AddTaskRun(taskId, TaskSource.User, transaction);
+
+            var parameters = BlockingTaskParameters.FromTask(task1, task1RunId);
+            (await repository.GetBlockingTaskRunIds(parameters, CancellationToken.None)).Should().BeEmpty();
+
             await repository.StartTaskRun(task1RunId, CancellationToken.None);
             await transaction.CommitAsync();
         }
 
-        TaskEntity task2;
-        Guid task2RunId;
-
-        await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var taskId = await repository.AddIndexTask("https://example.org", _libraryId, _userId, transaction);
+            TaskEntity indexTask;
+            Guid indexTaskRunId;
 
-            task2 = (await repository.TryDequeueTask(taskId, transaction))!;
-            task2.Should().NotBeNull();
-            task2RunId = await repository.AddTaskRun(taskId, TaskSource.User, transaction);
-            await transaction.CommitAsync();
+            await using (var transaction = await connection.OpenAndBeginTransaction())
+            {
+                indexTask = (await repository.TryDequeueTask(indexTaskId, transaction))!;
+                indexTask.Should().NotBeNull();
+                indexTaskRunId = await repository.AddTaskRun(indexTaskId, TaskSource.User, transaction);
+                await transaction.CommitAsync();
+            }
+
+            var parameters = BlockingTaskParameters.FromTask(indexTask, indexTaskRunId);
+
+            var blockingIds = await repository.GetBlockingTaskRunIds(parameters, CancellationToken.None);
+            blockingIds.Should().ContainSingle().Which.Should().Be(task1RunId);
+
+            await using (var parallelScope = Fixture.Services.CreateAsyncScope())
+            {
+                var parallelRepository = parallelScope.ServiceProvider.GetRequiredService<TaskRepository>();
+                await parallelRepository.CompleteTask(task1RunId, CancellationToken.None);
+            }
+
+            blockingIds = await repository.GetBlockingTaskRunIds(parameters, CancellationToken.None);
+            blockingIds.Should().BeEmpty();
+
+            await repository.StartTaskRun(indexTaskRunId, CancellationToken.None);
         }
-
-        var blockingIds = await repository.GetBlockingTaskRunIds(task2, CancellationToken.None);
-        blockingIds.Should().ContainSingle().Which.Should().Be(task1RunId);
-
-        await using (var parallelScope = Fixture.Services.CreateAsyncScope())
-        {
-            var parallelRepository = parallelScope.ServiceProvider.GetRequiredService<TaskRepository>();
-            await parallelRepository.CompleteTask(task1RunId, CancellationToken.None);
-        }
-
-        blockingIds = await repository.GetBlockingTaskRunIds(task2, CancellationToken.None);
-        blockingIds.Should().BeEmpty();
-
-        await repository.StartTaskRun(task2RunId, CancellationToken.None);
     }
 
     [Test]

@@ -139,7 +139,8 @@ public sealed class TaskService
         Guid taskRunId,
         CancellationToken cancellationToken)
     {
-        var blockingRunIds = await _taskRepository.GetBlockingTaskRunIds(task, cancellationToken);
+        var parameters = BlockingTaskParameters.FromTask(task, taskRunId);
+        var blockingRunIds = await _taskRepository.GetBlockingTaskRunIds(parameters, cancellationToken);
 
         if (blockingRunIds.Count is not 0)
         {

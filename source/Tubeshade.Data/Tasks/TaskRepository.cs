@@ -327,7 +327,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
     }
 
-    public async ValueTask<List<Guid>> GetBlockingTaskRunIds(TaskEntity task, CancellationToken cancellationToken)
+    public async ValueTask<List<Guid>> GetBlockingTaskRunIds(BlockingTaskParameters parameters, CancellationToken cancellationToken)
     {
         var command = new CommandDefinition(
             // lang=sql
@@ -335,31 +335,31 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              WITH matching_videos AS
                       (SELECT id, external_url, channel_id
                        FROM media.videos
-                       WHERE id = @{nameof(task.VideoId)}
-                          OR external_url = @{nameof(task.Url)}),
+                       WHERE id = @{nameof(parameters.VideoId)}
+                          OR external_url = @{nameof(parameters.Url)}),
 
                   matching_channels AS
                       (SELECT channels.id
                        FROM media.channels
                                 LEFT OUTER JOIN matching_videos ON channel_id = channels.id
                        WHERE matching_videos.id IS NOT NULL
-                          OR channels.id = @{nameof(task.ChannelId)})
+                          OR channels.id = @{nameof(parameters.ChannelId)})
 
              SELECT task_runs.id
              FROM tasks.tasks
                       INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
                       LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
              WHERE task_run_results.id IS NULL
-               AND tasks.created_at < @{nameof(task.CreatedAt)}
+               AND task_runs.created_at < (SELECT created_at FROM tasks.task_runs WHERE id = @{nameof(parameters.RunId)})
                AND (tasks.video_id IN (SELECT id FROM matching_videos)
                  OR tasks.url IN (SELECT external_url FROM matching_videos)
                  OR tasks.channel_id IN (SELECT id FROM matching_channels)
-                 OR (@{nameof(task.VideoId)} IS NOT NULL AND tasks.video_id = @{nameof(task.VideoId)})
-                 OR (@{nameof(task.ChannelId)} IS NOT NULL AND tasks.channel_id = @{nameof(task.ChannelId)})
-                 OR (@{nameof(task.Url)} IS NOT NULL AND tasks.url = @{nameof(task.Url)})
-                 OR (@{nameof(task.Type)} = tasks.type AND tasks.type = '{TaskType.Names.ReindexVideos}'));
+                 OR (@{nameof(parameters.VideoId)} IS NOT NULL AND tasks.video_id = @{nameof(parameters.VideoId)})
+                 OR (@{nameof(parameters.ChannelId)} IS NOT NULL AND tasks.channel_id = @{nameof(parameters.ChannelId)})
+                 OR (@{nameof(parameters.Url)} IS NOT NULL AND tasks.url = @{nameof(parameters.Url)})
+                 OR (@{nameof(parameters.Type)} = tasks.type AND tasks.type = '{TaskType.Names.ReindexVideos}'));
              """,
-            task,
+            parameters,
             cancellationToken: cancellationToken);
 
         var enumerable = await Connection.QueryAsync<Guid>(command);
