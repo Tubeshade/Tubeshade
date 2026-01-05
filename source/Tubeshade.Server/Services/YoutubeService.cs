@@ -302,7 +302,7 @@ public sealed class YoutubeService
             : DefaultVideoFormats;
 
         // todo: do not create files for unfinished livestreams, because they cannot be downloaded anyway
-        if (videoData.LiveStatus is not (LiveStatus.None or LiveStatus.NotLive))
+        if (videoData.LiveStatus is not (LiveStatus.None or LiveStatus.NotLive or LiveStatus.WasLive))
         {
             formatSelectors = [];
         }
