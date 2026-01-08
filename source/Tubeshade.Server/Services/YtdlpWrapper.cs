@@ -369,6 +369,8 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             Cookies = cookieFilepath,
             CookiesFromBrowser = options.CookiesFromBrowser,
             WriteComments = false,
+            LiveFromStart = true,
+            NoHlsUseMpegts = true,
         };
     }
 }

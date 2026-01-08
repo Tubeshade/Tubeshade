@@ -27,8 +27,9 @@ public sealed class CancelableProcess : IDisposable
         string fileName,
         IEnumerable<string> arguments,
         bool standardOutputEvents = true,
-        bool standardErrorEvents = true)
-        : this(fileName, string.Join(' ', arguments), standardOutputEvents, standardErrorEvents)
+        bool standardErrorEvents = true,
+        string? workingDirectory = null)
+        : this(fileName, string.Join(' ', arguments), standardOutputEvents, standardErrorEvents, workingDirectory)
     {
     }
 
@@ -36,7 +37,8 @@ public sealed class CancelableProcess : IDisposable
         string fileName,
         string arguments,
         bool standardOutputEvents = true,
-        bool standardErrorEvents = true)
+        bool standardErrorEvents = true,
+        string? workingDirectory = null)
     {
         _standardOutputEvents = standardOutputEvents;
         _standardErrorEvents = standardErrorEvents;
@@ -52,6 +54,7 @@ public sealed class CancelableProcess : IDisposable
             RedirectStandardInput = true,
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8,
+            WorkingDirectory = workingDirectory,
         };
 
         _process = new Process

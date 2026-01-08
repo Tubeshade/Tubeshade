@@ -101,20 +101,7 @@ public sealed class FfmpegService
 
         args.Add(outputFilePath);
 
-        using var process = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
-        process.OutputReceived += OnOutputReceived;
-        process.ErrorReceived += OnErrorReceived;
-
-        var exitCode = await process.Run(cancellationToken);
-
-        process.OutputReceived -= OnOutputReceived;
-        process.ErrorReceived -= OnErrorReceived;
-
-        if (exitCode is not 0)
-        {
-            var error = string.Join(Environment.NewLine, process.ErrorLines);
-            throw new(error);
-        }
+        await RunFfmpeg(args, cancellationToken);
 
         File.Delete(filePath);
         return outputFilePath;
@@ -165,6 +152,55 @@ public sealed class FfmpegService
 
         args.Add(outputFilePath);
 
+        await RunFfmpeg(args, cancellationToken);
+    }
+
+    public async Task Fragment(
+        string inputFilePath,
+        string outputFilePath,
+        CancellationToken cancellationToken)
+    {
+        var args = new List<string>
+        {
+            "-v",
+            "error",
+            "-nostdin",
+            "-y", // Overwrite output files without asking.
+            "-rw_timeout", // Maximum time to wait for (network) read/write operations to complete, in microseconds.
+            "5M",
+            "-follow", // If set to 1, the protocol will retry reading at the end of the file, allowing reading files that still are being written
+            "1",
+            "-i", // input file url
+            $"file:{inputFilePath}",
+            "-c",
+            "copy",
+        };
+
+        if (outputFilePath.EndsWith("mp4"))
+        {
+            args.AddRange(
+            [
+                "-movflags",
+                "+faststart+frag_keyframe+separate_moof+default_base_moof+delay_moov+empty_moov",
+                "-frag_duration",
+                "15M",
+            ]);
+        }
+
+        args.Add(outputFilePath);
+
+        await RunFfmpeg(args, cancellationToken);
+    }
+
+    /// <remarks>Defragments MP4 videos.</remarks>
+    public async Task Copy(string inputFilePath, string outputFilePath, CancellationToken cancellationToken)
+    {
+        var args = new List<string> { "-nostdin", "-y", "-i", $"file:{inputFilePath}", "-c", "copy", outputFilePath };
+        await RunFfmpeg(args, cancellationToken);
+    }
+
+    private async Task RunFfmpeg(List<string> args, CancellationToken cancellationToken)
+    {
         using var process = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
         process.OutputReceived += OnOutputReceived;
         process.ErrorReceived += OnErrorReceived;
@@ -178,29 +214,6 @@ public sealed class FfmpegService
         {
             var error = string.Join(Environment.NewLine, process.ErrorLines);
             throw new(error);
-        }
-    }
-
-    /// <remarks>Defragments MP4 videos.</remarks>
-    public async Task Copy(
-        string inputFilePath,
-        string outputFilePath,
-        CancellationToken cancellationToken)
-    {
-        var args = new List<string> { "-nostdin", "-y", "-i", $"file:{inputFilePath}", "-c", "copy", outputFilePath };
-
-        using var ffmpegProcess = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
-        ffmpegProcess.OutputReceived += OnOutputReceived;
-        ffmpegProcess.ErrorReceived += OnErrorReceived;
-
-        var exitCode = await ffmpegProcess.Run(cancellationToken);
-
-        ffmpegProcess.OutputReceived -= OnOutputReceived;
-        ffmpegProcess.ErrorReceived -= OnErrorReceived;
-
-        if (exitCode is not 0)
-        {
-            throw new("Failed to copy streams");
         }
     }
 
