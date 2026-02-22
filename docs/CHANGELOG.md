@@ -4,6 +4,8 @@
 
 _Latest build from master branch._
 
+## [0.1.4] - 2026-02-22
+
 ### Added
 
 - Sorting by view and like count
@@ -93,6 +95,8 @@ _Latest build from master branch._
 ## [0.1.0] - 2025-12-06
 
 _Initial release._
+
+[0.1.4]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.4
 
 [0.1.3]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.3
 

@@ -25,4 +25,4 @@
     - text: You don't have any libraries, create a new one
     - link "here":
       - /url: /Libraries
-- contentinfo: © 2025 - 2026 Tubeshade | v0.1.3
+- contentinfo: © 2025 - 2026 Tubeshade | v0.1.4
