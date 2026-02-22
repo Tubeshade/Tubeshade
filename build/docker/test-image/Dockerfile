@@ -1,6 +1,6 @@
 ﻿ARG DOTNET_CHANNEL="10.0"
-ARG DOTNET_SDK_VERSION="${DOTNET_CHANNEL}.101"
-ARG DOTNET_RUNTIME_VERSION="${DOTNET_CHANNEL}.1"
+ARG DOTNET_SDK_VERSION="${DOTNET_CHANNEL}.103"
+ARG DOTNET_RUNTIME_VERSION="${DOTNET_CHANNEL}.3"
 ARG DOTNET_RUNTIME="linux-x64"
 ARG ALPINE_VERSION="3.22"
 ARG BUILD_NUMBER="1"
@@ -13,7 +13,7 @@ ARG DOTNET_RUNTIME
 WORKDIR /tubeshade
 COPY ./ ./
 
-ADD --checksum="sha256:457f3f2a86f747a5f3b860813b7ac28828c28f92f7c9030c9980b69c6637859f" --chmod="+xr-w" https://github.com/yt-dlp/yt-dlp/releases/download/2025.12.08/yt-dlp_linux /usr/bin/yt-dlp
+ADD --checksum="sha256:057098b1390e8d4931e143eb889e9bbe088f17e40a2936f31ee218909f806f5f" --chmod="+xr-w" https://github.com/yt-dlp/yt-dlp/releases/download/2026.02.21/yt-dlp_linux /usr/bin/yt-dlp
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     ./build/docker/test-image/publish.sh "Tubeshade.Server" $DOTNET_RUNTIME $BUILD_NUMBER

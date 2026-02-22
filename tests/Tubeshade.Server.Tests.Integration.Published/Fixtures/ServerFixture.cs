@@ -53,8 +53,7 @@ public sealed partial class ServerFixture : IServerFixture
 
         _network = new NetworkBuilder().Build();
 
-        var databaseContainer = new PostgreSqlBuilder()
-            .WithImage($"postgres:{postgresqlVersion}")
+        var databaseContainer = new PostgreSqlBuilder($"postgres:{postgresqlVersion}")
             .WithTmpfsMount("/var/lib/postgresql/data")
             .WithEnvironment("PGDATA", "/var/lib/postgresql/data")
             .WithNetwork(_network)
@@ -69,8 +68,7 @@ public sealed partial class ServerFixture : IServerFixture
         var realmFile = PathHelper.GetRelativePath("./Keycloak/realm.json");
         var publicPort = Interlocked.Increment(ref _keycloakPublicPort);
 
-        var keycloakContainer = new KeycloakBuilder()
-            .WithImage($"quay.io/keycloak/keycloak:{keycloakVersion}")
+        var keycloakContainer = new KeycloakBuilder($"quay.io/keycloak/keycloak:{keycloakVersion}")
             .WithNetwork(_network)
             .WithHostname(KeycloakHostname)
             .WithPortBinding(publicPort, KeycloakBuilder.KeycloakPort)
@@ -87,8 +85,7 @@ public sealed partial class ServerFixture : IServerFixture
         }
 
         var keycloakRealmBaseUrl = $"http://{KeycloakHostname}:{KeycloakBuilder.KeycloakPort}/realms/Test";
-        _serverContainer = new ContainerBuilder()
-            .WithImage(serverImageName)
+        _serverContainer = new ContainerBuilder(serverImageName)
             .WithNetwork(_network)
             .WithBindMount(reportsDirectory, "/reports", AccessMode.ReadWrite)
             .WithTmpfsMount(TestDirectory)

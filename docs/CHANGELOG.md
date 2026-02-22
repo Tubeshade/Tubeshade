@@ -19,6 +19,10 @@ _Latest build from master branch._
   ([#238](https://github.com/Tubeshade/Tubeshade/pull/238))
 - Show rate/remaining estimate for more tasks
   ([#88](https://github.com/Tubeshade/Tubeshade/issues/88))
+- Update .NET SDK from 10.0.101 to 10.0.103, and runtime from 10.0.1 to 10.0.3
+  ([#245](https://github.com/Tubeshade/Tubeshade/pull/245))
+- Update yt-dlp from 2025.12.08 to 2026.02.21
+  ([#245](https://github.com/Tubeshade/Tubeshade/pull/245))
 
 ### Fixed
 

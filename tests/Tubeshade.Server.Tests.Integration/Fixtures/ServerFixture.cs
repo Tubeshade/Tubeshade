@@ -28,8 +28,7 @@ public sealed class ServerFixture : IAsyncDisposable
 
         var network = new NetworkBuilder().Build();
 
-        _postgreSqlContainer = new PostgreSqlBuilder()
-            .WithImage($"postgres:{version}")
+        _postgreSqlContainer = new PostgreSqlBuilder($"postgres:{version}")
             .WithTmpfsMount("/var/lib/postgresql/data")
             .WithEnvironment("PGDATA", "/var/lib/postgresql/data")
             .WithNetwork(network)
