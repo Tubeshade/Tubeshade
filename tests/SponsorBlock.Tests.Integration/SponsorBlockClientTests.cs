@@ -41,7 +41,7 @@ public sealed class SponsorBlockClientTests
                 VideoDuration = 914.241m,
                 Action = SegmentAction.Skip,
                 Locked = true,
-                Votes = 0,
+                Votes = 1,
                 Description = ""
             },
             new()
@@ -53,7 +53,7 @@ public sealed class SponsorBlockClientTests
                 VideoDuration = 914.241m,
                 Action = SegmentAction.Skip,
                 Locked = true,
-                Votes = 2,
+                Votes = 3,
                 Description = ""
             },
             new()
