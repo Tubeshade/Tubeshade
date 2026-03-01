@@ -11,6 +11,8 @@ namespace Ytdlp.Processes;
 
 public sealed class CancelableProcess : IDisposable
 {
+    private const int GracefulShutdownTimeout = 500;
+
     private readonly bool _standardOutputEvents;
     private readonly bool _standardErrorEvents;
     private readonly Process _process;
@@ -133,17 +135,16 @@ public sealed class CancelableProcess : IDisposable
 
     private void KillProcess()
     {
-        if (!_processStarted || _process.HasExited)
+        if (_processStarted && !_process.HasExited)
         {
-            return;
+            _ = _process.TryTerminate();
+            Thread.Sleep(GracefulShutdownTimeout);
         }
 
-        if (_process.TryTerminate())
+        if (_processStarted)
         {
-            return;
+            _process.Kill();
         }
-
-        _process.Kill();
     }
 
     private void ProcessOnOutputDataReceived(object? sender, DataReceivedEventArgs args)

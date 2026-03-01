@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Changed
+
+- Fall back to [Process.Kill](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.kill?view=net-10.0) after signaling process to exit
+  ([#247](https://github.com/Tubeshade/Tubeshade/pull/247))
+
 ## [0.1.4] - 2026-02-22
 
 ### Added
