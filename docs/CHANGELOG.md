@@ -18,6 +18,8 @@ _Latest build from master branch._
   ([#252](https://github.com/Tubeshade/Tubeshade/pull/252))
 - Switch to `notify` systemd service type
   ([#253](https://github.com/Tubeshade/Tubeshade/pull/253))
+- Update .NET SDK from 10.0.103 to 10.0.201, and runtime from 10.0.3 to 10.0.5
+  ([#248](https://github.com/Tubeshade/Tubeshade/pull/248))
 
 ## [0.1.4] - 2026-02-22
 
