@@ -15,7 +15,7 @@ runs:
       name: download yt-dlp
       shell: bash
       run: |
-        URL="https://github.com/yt-dlp/yt-dlp/releases/download/2025.11.12/yt-dlp_linux"
+        URL="https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp_linux"
         MAX_RETRY_DELAY=30
 
         mkdir -p "$HOME/.yt-dlp"
