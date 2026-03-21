@@ -8,6 +8,8 @@ _Latest build from master branch._
 
 - Fall back to [Process.Kill](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.kill?view=net-10.0) after signaling process to exit
   ([#247](https://github.com/Tubeshade/Tubeshade/pull/247))
+- Ignore formats with lower framerate than downloaded videos
+  ([#249](https://github.com/Tubeshade/Tubeshade/pull/249))
 
 ## [0.1.4] - 2026-02-22
 

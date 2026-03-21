@@ -370,7 +370,7 @@ public sealed class YoutubeService
             var matchingFiles = files
                 .Where(file =>
                     file.Width == videoFormat.Width &&
-                    Math.Round(file.Framerate) == (decimal)Math.Round(videoFormat.FrameRate!.Value))
+                    Math.Round(file.Framerate) >= (decimal)Math.Round(videoFormat.FrameRate!.Value))
                 .ToArray();
 
             if (matchingFiles is [])
@@ -806,7 +806,10 @@ public sealed class YoutubeService
 
             var videoFormat = formats.Single(format => !format.Resolution!.Contains("audio only", StringComparison.OrdinalIgnoreCase));
             var containerType = VideoContainerType.FromName(videoFormat.Extension);
-            var videoFile = files.Single(file => file.Type == containerType && file.Height == videoFormat.Height!.Value);
+            var videoFile = files.Single(file =>
+                file.Type == containerType &&
+                file.Width == videoFormat.Width!.Value &&
+                Math.Round(file.Framerate) == (decimal)Math.Round(videoFormat.FrameRate!.Value));
 
             var size = formats.Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
             if (videoFile.DownloadedAt is not null)
@@ -1058,7 +1061,10 @@ public sealed class YoutubeService
         if (formats is [var combinedFormat])
         {
             var containerType = VideoContainerType.FromName(combinedFormat.Extension);
-            var videoFile = files.Single(file => file.Type == containerType && file.Height == combinedFormat.Height!.Value);
+            var videoFile = files.Single(file =>
+                file.Type == containerType &&
+                file.Width == combinedFormat.Width!.Value &&
+                Math.Round(file.Framerate) == (decimal)Math.Round(combinedFormat.FrameRate!.Value));
 
             _logger.DownloadingCombinedVideoFile(videoFile.Id, combinedFormat.FormatId, containerType.Name);
             return await DownloadCombinedVideoFormat(
@@ -1088,7 +1094,10 @@ public sealed class YoutubeService
             };
 
             var containerType = VideoContainerType.FromName(videoFormat.Extension);
-            var videoFile = files.Single(file => file.Type == containerType && file.Height == videoFormat.Height!.Value);
+            var videoFile = files.Single(file =>
+                file.Type == containerType &&
+                file.Width == videoFormat.Width!.Value &&
+                Math.Round(file.Framerate) == (decimal)Math.Round(videoFormat.FrameRate!.Value));
 
             _logger.DownloadingSplitVideoFile(videoFile.Id, videoFormat.FormatId, audioFormat.FormatId, containerType.Name);
             return await DownloadSplitVideoFormat(
