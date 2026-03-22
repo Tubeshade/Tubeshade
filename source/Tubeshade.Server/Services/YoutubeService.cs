@@ -226,6 +226,7 @@ public sealed class YoutubeService
         type ??= videoData switch
         {
             { LiveStatus: not (LiveStatus.None or LiveStatus.NotLive) } => VideoType.Livestream,
+            { Duration: < 20 } => VideoType.Short,
             _ => VideoType.Video,
         };
 

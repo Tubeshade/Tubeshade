@@ -10,6 +10,8 @@ _Latest build from master branch._
   ([#247](https://github.com/Tubeshade/Tubeshade/pull/247))
 - Ignore formats with lower framerate than downloaded videos
   ([#249](https://github.com/Tubeshade/Tubeshade/pull/249))
+- Treat videos shorter than 20 seconds of unknown type as shorts
+  ([#250](https://github.com/Tubeshade/Tubeshade/pull/250))
 
 ## [0.1.4] - 2026-02-22
 
