@@ -104,7 +104,7 @@ internal static partial class LoggerExtensions
     internal static partial void ReceivedFeedUpdate(this ILogger logger, string channelName, string videoUrl);
 
     [LoggerMessage(29, Information, "Not indexing video of type {VideoType} due to preferences")]
-    internal static partial void FeedUpdatedIgnored(this ILogger logger, string videoType);
+    internal static partial void FeedUpdateIgnored(this ILogger logger, string videoType);
 
     [LoggerMessage(30, Trace, "Not updating existing locked segment {SegmentId} {SegmentExternalId}")]
     internal static partial void LockedSponsorBlockSegment(this ILogger logger, Guid segmentId, string segmentExternalId);
@@ -264,4 +264,10 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(82, Debug, "Scanning {Count} subscribed channels")]
     internal static partial void ScanningSubscribedChannels(this ILogger logger, int count);
+
+    [LoggerMessage(83, Information, "Not indexing video because it is a post")]
+    internal static partial void FeedUpdateIgnored(this ILogger logger);
+
+    [LoggerMessage(84, Warning, "Failed to check {ExternalUrl}")]
+    internal static partial void YouTubeUriCheckFailed(this ILogger logger, Exception exception, string externalUrl);
 }

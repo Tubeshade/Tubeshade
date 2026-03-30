@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Linq;
 using Asp.Versioning;
@@ -23,6 +24,7 @@ using Tubeshade.Server.Configuration.Startup;
 using Tubeshade.Server.Services;
 using Tubeshade.Server.Services.Background;
 using Tubeshade.Server.Services.Ffmpeg;
+using Tubeshade.Server.V1.Controllers.YouTube;
 
 namespace Tubeshade.Server;
 
@@ -162,6 +164,14 @@ internal static class Program
             .AddSingleton<FfmpegService>()
             .AddSingleton<FileSystemService>()
             .AddPubSubHubbubClient();
+
+        builder.Services
+            .AddHttpClient(nameof(NotificationsController), client => client.Timeout = TimeSpan.FromSeconds(15))
+            .UseSocketsHttpHandler((handler, _) =>
+            {
+                handler.ConnectTimeout = TimeSpan.FromSeconds(15);
+                handler.AllowAutoRedirect = false;
+            });
 
         builder.Services
             .AddSingleton<DatabaseMigrationStartupFilter>()
