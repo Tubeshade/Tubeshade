@@ -251,9 +251,6 @@
     <data name="Tasks_RefreshAutomatically" xml:space="preserve">
         <value>Atjaunināt automātiski</value>
     </data>
-    <data name="Tasks_Queued" xml:space="preserve">
-        <value>Gaida rindā</value>
-    </data>
     <data name="Button_ScanSubscriptions" xml:space="preserve">
         <value>Skenēt abonementus</value>
     </data>
