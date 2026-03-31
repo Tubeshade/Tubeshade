@@ -173,7 +173,8 @@ internal static class Program
             {
                 handler.ConnectTimeout = TimeSpan.FromSeconds(15);
                 handler.AllowAutoRedirect = false;
-            });
+            })
+            .RedactLoggedHeaders([]);
 
         builder.Services
             .AddSingleton<DatabaseMigrationStartupFilter>()
