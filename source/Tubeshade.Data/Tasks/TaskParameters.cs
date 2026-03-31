@@ -15,6 +15,12 @@ public sealed class TaskParameters : IAccessParameters, IPaginatedParameters
 
     public TaskSource? Source { get; init; }
 
+    public RunState? State { get; init; }
+
+    public TaskResult? Result { get; init; }
+
+    public Guid? TaskRunId { get; init; }
+
     /// <inheritdoc />
     public required int Limit { get; init; }
 

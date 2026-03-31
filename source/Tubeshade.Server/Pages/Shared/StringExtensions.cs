@@ -6,15 +6,24 @@ namespace Tubeshade.Server.Pages.Shared;
 
 public static class StringExtensions
 {
+    private static readonly string[] LineDelimiters = ["\r\n", "\n"];
     private static readonly string[] ParagraphDelimiters = ["\r\n\r\n", "\n\n"];
 
-    public static string ToJson(this string text)
+    extension(string text)
     {
-        return JsonSerializer.Serialize(text, SerializerContext.Default.String);
-    }
+        public string ToJson()
+        {
+            return JsonSerializer.Serialize(text, SerializerContext.Default.String);
+        }
 
-    public static string[] ToParagraphs(this string text)
-    {
-        return text.Split(ParagraphDelimiters, RemoveEmptyEntries | TrimEntries);
+        public string[] ToParagraphs()
+        {
+            return text.Split(ParagraphDelimiters, RemoveEmptyEntries | TrimEntries);
+        }
+
+        public string[] ToLines()
+        {
+            return text.Split(LineDelimiters, None);
+        }
     }
 }

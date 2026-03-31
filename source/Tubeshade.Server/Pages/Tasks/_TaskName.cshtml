@@ -1,0 +1,45 @@
+﻿@using Tubeshade.Data.Tasks
+@model TaskModel
+
+<span>@Model.TypeDisplay</span>
+@if (Model.Type == TaskType.Index)
+{
+    @if (Model.VideoId is { } videoId)
+    {
+        <a asp-page="/Videos/Video" asp-route-videoId="@videoId">
+            <span>"@Model.Name"</span>
+        </a>
+    }
+    else if (Model.ChannelId is { } channelId)
+    {
+        <a asp-page="/Channels/Channel" asp-route-channelId="@channelId">
+            <span>"@Model.Name"</span>
+        </a>
+    }
+    else
+    {
+        <span>"@Model.Name"</span>
+    }
+}
+else if (Model.Type == TaskType.DownloadVideo && Model.VideoId is { } videoId)
+{
+    <a asp-page="/Videos/Video" asp-route-videoId="@videoId">
+        <span>"@Model.Name"</span>
+    </a>
+}
+else if (Model.Type == TaskType.ScanChannel && Model.ChannelId is { } channelId)
+{
+    <a asp-page="/Channels/Channel" asp-route-channelId="@channelId">
+        <span>"@Model.Name"</span>
+    </a>
+}
+else if (Model.Type.IsLibraryTask && Model.LibraryId is { } libraryId)
+{
+    <a asp-page="/Libraries/Library" asp-route-libraryId="@libraryId">
+        <span>"@Model.Name"</span>
+    </a>
+}
+else
+{
+    <span>"@Model.Name"</span>
+}

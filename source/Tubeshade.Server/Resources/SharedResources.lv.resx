@@ -237,7 +237,7 @@
         <value>Darbības</value>
     </data>
     <data name="Tasks_Status_queued" xml:space="preserve">
-        <value>Statuss</value>
+        <value>Gaida rindā</value>
     </data>
     <data name="Tasks_Task" xml:space="preserve">
         <value>Uzdevums</value>
@@ -451,5 +451,11 @@
     </data>
     <data name="Tasks_TaskSource_All" xml:space="preserve">
         <value>Visi</value>
+    </data>
+    <data name="Tasks_Status_All" xml:space="preserve">
+        <value>Visi</value>
+    </data>
+    <data name="Tasks_Status" xml:space="preserve">
+        <value>Statuss</value>
     </data>
 </root>

@@ -14,6 +14,8 @@ _Latest build from master branch._
   ([#250](https://github.com/Tubeshade/Tubeshade/pull/250))
 - Ignore YouTube feed updates that are posts
   ([#251](https://github.com/Tubeshade/Tubeshade/pull/251))
+- Rework how error details are displayed for tasks
+  ([#252](https://github.com/Tubeshade/Tubeshade/pull/252))
 
 ## [0.1.4] - 2026-02-22
 

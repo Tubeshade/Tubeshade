@@ -1,6 +1,6 @@
 ﻿@using Tubeshade.Data.Tasks
 @using Tubeshade.Server.Pages.Shared
-@model ITaskPage
+@model ITasksPage
 
 <form method="get" class="row row-cols-2 row-cols-sm-auto g-2 align-items-center mb-2"
       hx-get="" hx-page-handler="" hx-params="*" hx-push-url="true"
@@ -8,12 +8,6 @@
       id="filter">
 
     <div class="col-6">
-        <label asp-for="PageSize" hidden="hidden">@SharedResources.Filters_PageSize</label>
-        <input asp-for="PageSize" class="form-control" type="number" placeholder="@SharedResources.Filters_PageSize"
-               value="@(Model.PageSize is null or Defaults.PageSize ? null : Model.PageSize)"/>
-    </div>
-
-    <div class="col-12">
         <label asp-for="Source" hidden="hidden">@SharedResources.Tasks_TaskSource</label>
         <select asp-for="Source" class="form-select">
             <option value="">@SharedResources.Tasks_TaskSource_All</option>
@@ -22,6 +16,23 @@
                 <option value="@source.Name">@source.LocalizedName</option>
             }
         </select>
+    </div>
+
+    <div class="col-6">
+        <label asp-for="Status" hidden="hidden">@SharedResources.Tasks_Status</label>
+        <select asp-for="Status" class="form-select">
+            <option value="">@SharedResources.Tasks_Status_All</option>
+            @foreach (var status in TaskStatus.List)
+            {
+                <option value="@status.Name">@status.LocalizedName</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-6">
+        <label asp-for="PageSize" hidden="hidden">@SharedResources.Filters_PageSize</label>
+        <input asp-for="PageSize" class="form-control" type="number" placeholder="@SharedResources.Filters_PageSize"
+               value="@(Model.PageSize is null or Defaults.PageSize ? null : Model.PageSize)"/>
     </div>
 
     <div class="col-6">
@@ -36,7 +47,10 @@
 
     <input asp-for="PageIndex" value="@Model.PageIndex" hidden="hidden"/>
 
-    <div class="col-6">
+</form>
+
+<div class="row row-cols-2 row-cols-sm-auto g-2 align-items-center mb-2">
+    <div class="col-12">
         <button hx-post="" hx-page-handler="ScanSubscriptions" class="btn btn-primary w-100" type="button">
             @SharedResources.Button_ScanSubscriptions
         </button>
@@ -53,7 +67,6 @@
             @SharedResources.Button_UpdateSponsorBlock
         </button>
     </div>
-
-</form>
+</div>
 
 <partial name="Tasks/_RunningTasks" model="@Model"/>

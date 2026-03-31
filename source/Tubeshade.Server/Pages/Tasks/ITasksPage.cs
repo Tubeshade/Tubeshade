@@ -8,18 +8,23 @@ using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Tasks;
 
-public interface ITaskPage : IPaginatedDataPage<TaskModel>
+public interface ITasksPage : IPaginatedDataPage<TaskModel>, IFormLayout
 {
     TaskSource? Source { get; set; }
+
+    TaskStatus? Status { get; set; }
 
     Dictionary<string, string?> GetRouteValues(int pageIndex) => new()
     {
         { nameof(Source), Source?.Name },
+        { nameof(Status), Status?.Name },
         { nameof(PageSize), PageSize?.ToString() },
         { nameof(PageIndex), $"{pageIndex}" },
     };
 
     Task<IActionResult> OnGet(CancellationToken cancellationToken);
+
+    Task<IActionResult> OnGetTaskRun(Guid taskRunId, CancellationToken cancellationToken);
 
     Task<IActionResult> OnPostScanSubscriptions();
 

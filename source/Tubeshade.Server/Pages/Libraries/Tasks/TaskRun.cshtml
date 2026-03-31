@@ -1,0 +1,12 @@
+﻿@page "~/Libraries/{libraryId:guid}/Tasks/TaskRuns/{taskRunId:guid}/{handler?}"
+@model TaskRun
+@{
+    ViewData["Title"] = SharedResources.Tasks;
+}
+
+@section Navigation
+{
+    <partial name="Libraries/_LibraryNavigation" for="Library"/>
+}
+
+<partial name="Tasks/_RunDetails" model="@Model"/>

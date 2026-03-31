@@ -1,0 +1,64 @@
+﻿@using Tubeshade.Server.Pages.Shared
+@model ITaskRunPage
+
+<div class="mb-5">
+    <table class="table">
+        <thead>
+        <tr>
+            <th>@SharedResources.Tasks_Task</th>
+            <th class="col-1">@SharedResources.Tasks_Status</th>
+            <th class="col-1">@SharedResources.Tasks_TaskSource</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr aria-busy="@Model.Run.HasProgress" aria-describedby="@Model.Run.ProgressBarId">
+            <td>
+                <partial name="Tasks/_TaskName" model="@Model.Task"/>
+            </td>
+            <td>
+                @if (Model.Run.Status == TaskStatus.Queued)
+                {
+                    <span>@Model.Run.Status.LocalizedName</span>
+                }
+                else if (Model.Run.HasProgress)
+                {
+                    <div class="d-inline-flex flex-column">
+                        <div class="d-flex align-items-center">
+                            <label for="@Model.Run.ProgressBarId" class="me-1">@Model.Run.FormattedValue</label>
+                            <progress id="@Model.Run.ProgressBarId" max="@Model.Run.Target" value="@Model.Run.Value">
+                                @Model.Run.Progress%
+                            </progress>
+                            <label for="@Model.Run.ProgressBarId" class="ms-1">@Model.Run.FormattedTarget</label>
+                        </div>
+                        <div class="d-flex">
+                            @if (Model.Run.FormattedRate is { } rate)
+                            {
+                                <span class="flex-fill text-nowrap">@rate</span>
+                            }
+                            @if (Model.Run.FormattedRemaining is { } remaining)
+                            {
+                                <span class="text-nowrap">~@remaining</span>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @(Model.Run.Status.LocalizedName)
+                }
+            </td>
+            <td>
+                @Model.Run.Source.LocalizedName
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div>
+    @if (Model.Run.Message is { } message)
+    {
+        <textarea class="form-control" readonly wrap="off" rows="@(message.ToLines().Length + 1)">@message</textarea>
+    }
+</div>

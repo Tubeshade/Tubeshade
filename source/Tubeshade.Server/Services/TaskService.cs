@@ -31,7 +31,15 @@ public sealed class TaskService
         CancellationToken cancellationToken)
     {
         var runningTasks = await _taskRepository.GetRunningTasks(parameters, cancellationToken);
-        return GroupTasks(runningTasks);
+        return GroupTasks(runningTasks).ToList();
+    }
+
+    public async ValueTask<TaskModel> GetGroupedTask(
+        TaskParameters parameters,
+        CancellationToken cancellationToken)
+    {
+        var runningTasks = await _taskRepository.GetRunningTasks(parameters, cancellationToken);
+        return GroupTasks(runningTasks).Single();
     }
 
     public async ValueTask ScanSubscriptions(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source)
@@ -161,7 +169,7 @@ public sealed class TaskService
         }
     }
 
-    private static List<TaskModel> GroupTasks(IEnumerable<RunningTaskEntity> runningTasks)
+    private static IEnumerable<TaskModel> GroupTasks(IEnumerable<RunningTaskEntity> runningTasks)
     {
         return runningTasks
             .GroupBy(task => task.Id)
@@ -194,7 +202,6 @@ public sealed class TaskService
                         })
                         .ToArray(),
                 };
-            })
-            .ToList();
+            });
     }
 }

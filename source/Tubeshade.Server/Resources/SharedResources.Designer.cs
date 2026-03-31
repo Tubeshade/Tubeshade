@@ -1014,20 +1014,29 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Queued.
-        /// </summary>
-        public static string Tasks_Queued {
-            get {
-                return ResourceManager.GetString("Tasks_Queued", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Refresh automatically.
         /// </summary>
         public static string Tasks_RefreshAutomatically {
             get {
                 return ResourceManager.GetString("Tasks_RefreshAutomatically", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Status.
+        /// </summary>
+        public static string Tasks_Status {
+            get {
+                return ResourceManager.GetString("Tasks_Status", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to All.
+        /// </summary>
+        public static string Tasks_Status_All {
+            get {
+                return ResourceManager.GetString("Tasks_Status_All", resourceCulture);
             }
         }
         
@@ -1068,7 +1077,7 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Status.
+        ///   Looks up a localized string similar to Queued.
         /// </summary>
         public static string Tasks_Status_queued {
             get {

@@ -17,7 +17,7 @@ using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Tasks;
 
-public sealed class Index : PageModel, ITaskPage, INonLibraryPage
+public sealed class Index : PageModel, ITasksPage, INonLibraryPage
 {
     private readonly NpgsqlConnection _connection;
     private readonly LibraryRepository _libraryRepository;
@@ -36,6 +36,10 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
     public TaskSource? Source { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public TaskStatus? Status { get; set; }
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
@@ -61,11 +65,15 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
         var page = PageIndex ?? Defaults.PageIndex;
         var offset = pageSize * page;
 
+        var (state, result) = TaskStatus.ToResult(Status);
+
         var tasks = await _taskService.GetGroupedTasks(
             new TaskParameters
             {
                 UserId = userId,
                 Source = Source,
+                State = state,
+                Result =  result,
                 Limit = pageSize,
                 Offset = offset,
             },
@@ -85,6 +93,13 @@ public sealed class Index : PageModel, ITaskPage, INonLibraryPage
         return Request.IsHtmx()
             ? Partial("Tasks/_RunningTasks", this)
             : Page();
+    }
+
+    /// <inheritdoc />
+    public Task<IActionResult> OnGetTaskRun(Guid taskRunId, CancellationToken cancellationToken)
+    {
+        var result = RedirectToPage("/Tasks/TaskRun", new { taskRunId });
+        return Task.FromResult<IActionResult>(result);
     }
 
     /// <inheritdoc />

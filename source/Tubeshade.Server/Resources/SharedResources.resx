@@ -253,7 +253,7 @@
         <value>Task</value>
     </data>
     <data name="Tasks_Status_queued" xml:space="preserve">
-        <value>Status</value>
+        <value>Queued</value>
     </data>
     <data name="Tasks_Action" xml:space="preserve">
         <value>Action</value>
@@ -263,9 +263,6 @@
     </data>
     <data name="Button_Cancel" xml:space="preserve">
         <value>Cancel</value>
-    </data>
-    <data name="Tasks_Queued" xml:space="preserve">
-        <value>Queued</value>
     </data>
     <data name="Video_Resolution" xml:space="preserve">
         <value>Resolution</value>
@@ -457,6 +454,12 @@
         <value>Subscriptions</value>
     </data>
     <data name="Tasks_TaskSource_All" xml:space="preserve">
+        <value>All</value>
+    </data>
+    <data name="Tasks_Status" xml:space="preserve">
+        <value>Status</value>
+    </data>
+    <data name="Tasks_Status_All" xml:space="preserve">
         <value>All</value>
     </data>
 </root>

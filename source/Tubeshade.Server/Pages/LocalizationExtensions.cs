@@ -2,6 +2,7 @@
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
+using Tubeshade.Server.Pages.Tasks;
 using Tubeshade.Server.Resources;
 
 namespace Tubeshade.Server.Pages;
@@ -32,6 +33,12 @@ internal static class LocalizationExtensions
     {
         internal string? LocalizedName => Manager
             .GetString($"Tasks_{nameof(TaskSource)}_{source.Name}");
+    }
+
+    extension(TaskStatus status)
+    {
+        internal string? LocalizedName => Manager
+            .GetString($"Tasks_Status_{status.Name}");
     }
 
     extension(VideoType type)

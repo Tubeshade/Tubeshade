@@ -310,6 +310,9 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                    WHERE (libraries.id IN (SELECT id FROM accessible))
                      AND (@{nameof(parameters.LibraryId)} IS NULL OR libraries.id = @{nameof(parameters.LibraryId)})
                      AND (@{nameof(parameters.Source)}::tasks.task_source IS NULL OR task_runs.source = @{nameof(parameters.Source)})
+                     AND (@{nameof(parameters.State)}::tasks.run_state IS NULL OR task_runs.state = @{nameof(parameters.State)})
+                     AND (@{nameof(parameters.Result)}::tasks.task_result IS NULL OR task_run_results.result = @{nameof(parameters.Result)})
+                     AND (@{nameof(parameters.TaskRunId)} IS NULL OR task_runs.id = @{nameof(parameters.TaskRunId)})
                      AND tasks.type != '{TaskType.Names.ReindexVideos}'
                    GROUP BY tasks.id, tasks.created_at
                    ORDER BY result_created DESC, run_created DESC, tasks.created_at DESC
