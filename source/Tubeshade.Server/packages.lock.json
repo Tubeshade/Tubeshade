@@ -65,6 +65,12 @@
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.0.1"
         }
       },
+      "Microsoft.Extensions.Hosting.Systemd": {
+        "type": "Direct",
+        "requested": "[10.0.3, )",
+        "resolved": "10.0.3",
+        "contentHash": "zuITk8c8dyHTvoBQG0CHDDTyLGT+WkMoR0czndcYjkTQ3O4tar14vfJtp+lygHZZgd6r8hFixD3cvvnqi16xXQ=="
+      },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
         "requested": "[10.0.3, )",

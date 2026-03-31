@@ -8,6 +8,7 @@ StartLimitBurst=3
 StartLimitIntervalSec=5m
 
 [Service]
+Type=notify
 WorkingDirectory=/etc/opt/tubeshade
 Environment="ASPNETCORE_WEBROOT=/opt/tubeshade/wwwroot"
 Environment="ENVIRONMENT=Production"

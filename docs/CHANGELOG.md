@@ -16,6 +16,8 @@ _Latest build from master branch._
   ([#251](https://github.com/Tubeshade/Tubeshade/pull/251))
 - Rework how error details are displayed for tasks
   ([#252](https://github.com/Tubeshade/Tubeshade/pull/252))
+- Switch to `notify` systemd service type
+  ([#253](https://github.com/Tubeshade/Tubeshade/pull/253))
 
 ## [0.1.4] - 2026-02-22
 

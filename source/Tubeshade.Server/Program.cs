@@ -34,6 +34,8 @@ internal static class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Host.UseSystemd();
+
         builder.Services
             .AddSingleton<IPostConfigureOptions<YtdlpOptions>, ExecutableDetector>()
             .AddSingleton<IValidateOptions<YtdlpOptions>, ExecutableDetector>()
