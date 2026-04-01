@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using NodaTime;
 using NodaTime.Text;
+using Ytdlp.Processes;
 
 namespace Tubeshade.Server.Services;
 
@@ -72,6 +74,16 @@ public static partial class StringExtensions
         }
 
         return true;
+    }
+
+    [SupportedOSPlatform("linux")]
+    public static void CreateFifoPipe(this string filePath)
+    {
+        const libc.Mode mask = libc.Mode.S_IWUSR | libc.Mode.S_IRUSR | libc.Mode.S_IRGRP | libc.Mode.S_IROTH;
+        if (libc.mkfifo(filePath, mask) is not 0)
+        {
+            throw new Exception($"Failed to create FIFO named pipe {filePath}");
+        }
     }
 
     [GeneratedRegex(@"^\s*(\d{0,2}:?\d{1,2}:\d{2})\s{1,}(.*)$")]
