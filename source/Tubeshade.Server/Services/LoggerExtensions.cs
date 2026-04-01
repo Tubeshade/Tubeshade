@@ -270,4 +270,10 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(84, Warning, "Failed to check {ExternalUrl}")]
     internal static partial void YouTubeUriCheckFailed(this ILogger logger, Exception exception, string externalUrl);
+
+    [LoggerMessage(85, Information, "Not creating a new video index task for {ExternalUrl} because at least one already exists")]
+    internal static partial void SkippingVideoIndexing(this ILogger logger, string externalUrl);
+
+    [LoggerMessage(86, Information, "Not creating a new video download task for {VideoId} because at least one already exists")]
+    internal static partial void SkippingVideoDownload(this ILogger logger, Guid videoId);
 }

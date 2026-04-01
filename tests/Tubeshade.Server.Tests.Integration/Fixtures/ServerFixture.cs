@@ -47,7 +47,7 @@ public sealed class ServerFixture : IAsyncDisposable
         await Task.WhenAll(_containers.Select(container => container.StartAsync()));
 
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection([new("Database:ConnectionString", _postgreSqlContainer.GetConnectionString())])
+            .AddInMemoryCollection([new("Database:ConnectionString", $"{_postgreSqlContainer.GetConnectionString()};Include Error Detail=true")])
             .Build();
 
         Services = new ServiceCollection()

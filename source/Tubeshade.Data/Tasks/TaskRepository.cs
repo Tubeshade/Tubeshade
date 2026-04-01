@@ -330,7 +330,9 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
     }
 
-    public async ValueTask<List<Guid>> GetBlockingTaskRunIds(BlockingTaskParameters parameters, CancellationToken cancellationToken)
+    public async ValueTask<List<Guid>> GetBlockingTaskRunIds(
+        BlockingTaskParameters parameters,
+        CancellationToken cancellationToken)
     {
         var command = new CommandDefinition(
             // lang=sql
@@ -369,135 +371,52 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         return enumerable as List<Guid> ?? enumerable.ToList();
     }
 
-    public ValueTask<Guid> AddIndexTask(string url, Guid libraryId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<Guid> AddTask(TaskEntity task, NpgsqlTransaction transaction)
     {
-        return AddTask(new TaskEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = userId,
-                Type = TaskType.Index,
-                UserId = userId,
-                LibraryId = libraryId,
-                ChannelId = null,
-                VideoId = null,
-                Url = url,
-                AllVideos = false,
-            },
-            transaction);
+        return await AddAsync(task, transaction) ?? throw new InvalidOperationException("Failed to create the task");
     }
 
-    public ValueTask<Guid> AddIndexTask(string url, Guid videoId, Guid channelId, Guid libraryId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<Guid?> TryAddTask(TaskEntity task, NpgsqlTransaction transaction)
     {
-        return AddTask(new TaskEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = userId,
-                Type = TaskType.Index,
-                UserId = userId,
-                LibraryId = libraryId,
-                ChannelId = channelId,
-                VideoId = videoId,
-                Url = url,
-                AllVideos = false,
-            },
-            transaction);
-    }
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             WITH matching_videos AS
+                 (SELECT id, external_url, channel_id
+                  FROM media.videos
+                  WHERE id = @{nameof(task.VideoId)} 
+                     OR external_url = @{nameof(task.Url)}),
+                 
+                 new_task AS 
+                 (SELECT @{nameof(task.CreatedByUserId)} AS created_by_user_id,
+                         @{nameof(task.ModifiedByUserId)} AS modified_by_user_id,
+                         @{nameof(task.OwnerId)} AS owner_id,
+                         @{nameof(task.Type)}::tasks.task_type AS type,
+                         @{nameof(task.UserId)} AS user_id,
+                         @{nameof(task.LibraryId)} AS library_id,
+                         @{nameof(task.ChannelId)} AS channel_id,
+                         @{nameof(task.VideoId)} AS video_id,
+                         @{nameof(task.Url)} AS url,
+                         @{nameof(task.AllVideos)} AS all_videos
+                  WHERE NOT EXISTS (SELECT task_runs.id
+                                    FROM tasks.tasks
+                                        INNER JOIN tasks.task_runs ON tasks.id = tasks.task_runs.task_id
+                                        LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+                                    WHERE task_run_results.id IS NULL
+                                      AND tasks.library_id = @{nameof(task.LibraryId)}
+                                      AND tasks.type = @{nameof(task.Type)}
+                                      AND (tasks.video_id IN (SELECT id FROM matching_videos)
+                                        OR tasks.url IN (SELECT external_url FROM matching_videos)
+                                       OR (@{nameof(task.Url)} IS NOT NULL AND tasks.url = @{nameof(task.Url)}))))
 
-    public ValueTask<Guid> AddDownloadTask(Guid videoId, Guid libraryId, Guid userId, NpgsqlTransaction transaction)
-    {
-        return AddTask(new TaskEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = userId,
-                Type = TaskType.DownloadVideo,
-                UserId = userId,
-                LibraryId = libraryId,
-                ChannelId = null,
-                VideoId = videoId,
-                Url = null,
-                AllVideos = false,
-            },
+             INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos) 
+             SELECT created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos FROM new_task
+             RETURNING id;
+             """,
+            task,
             transaction);
-    }
 
-    public ValueTask<Guid> AddScanChannelTask(
-        Guid libraryId,
-        Guid channelId,
-        bool allVideos,
-        Guid userId,
-        NpgsqlTransaction transaction)
-    {
-        return AddTask(new TaskEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = userId,
-                Type = TaskType.ScanChannel,
-                UserId = userId,
-                LibraryId = libraryId,
-                ChannelId = channelId,
-                VideoId = null,
-                Url = null,
-                AllVideos = allVideos,
-            },
-            transaction);
-    }
-
-    public ValueTask<Guid> AddScanSubscriptionsTask(Guid libraryId, Guid userId, NpgsqlTransaction transaction)
-    {
-        return AddTask(new TaskEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = userId,
-                Type = TaskType.ScanSubscriptions,
-                UserId = userId,
-                LibraryId = libraryId,
-                ChannelId = null,
-                VideoId = null,
-                Url = null,
-                AllVideos = false,
-            },
-            transaction);
-    }
-
-    public ValueTask<Guid> AddScanSegmentsTask(Guid libraryId, Guid userId, NpgsqlTransaction transaction)
-    {
-        return AddTask(new TaskEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = userId,
-                Type = TaskType.ScanSponsorBlockSegments,
-                UserId = userId,
-                LibraryId = libraryId,
-                ChannelId = null,
-                VideoId = null,
-                Url = null,
-                AllVideos = false,
-            },
-            transaction);
-    }
-
-    public ValueTask<Guid> AddUpdateSegmentsTask(Guid libraryId, Guid userId, NpgsqlTransaction transaction)
-    {
-        return AddTask(new TaskEntity
-            {
-                CreatedByUserId = userId,
-                ModifiedByUserId = userId,
-                OwnerId = userId,
-                Type = TaskType.UpdateSponsorBlockSegments,
-                UserId = userId,
-                LibraryId = libraryId,
-                ChannelId = null,
-                VideoId = null,
-                Url = null,
-                AllVideos = false,
-            },
-            transaction);
+        return await Connection.QuerySingleOrDefaultAsync<Guid?>(command);
     }
 
     public async ValueTask<int> UpdateAsync(TaskEntity task)
@@ -511,7 +430,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
 
         var taskRunIds = await Connection.QueryAsync<Guid>(new(
-            $"""
+            """
             SELECT task_runs.id
             FROM tasks.task_runs
                 LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
@@ -525,21 +444,14 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             await FinishTaskRun(taskRunId, transaction);
             await Connection.ExecuteAsync(new(
                 $"""
-                INSERT INTO tasks.task_run_results (run_id, result, message)
-                VALUES (@{nameof(taskRunId)}, @result, 'Failed because server was stopped unexpectedly');
-                """,
+                 INSERT INTO tasks.task_run_results (run_id, result, message)
+                 VALUES (@{nameof(taskRunId)}, @result, 'Failed because server was stopped unexpectedly');
+                 """,
                 new { taskRunId, result = TaskResult.Failed },
                 transaction));
         }
 
         await transaction.CommitAsync(cancellationToken);
-    }
-
-    private async ValueTask<Guid> AddTask(TaskEntity task, NpgsqlTransaction transaction)
-    {
-        var taskId = await AddAsync(task, transaction);
-        Trace.Assert(taskId is not null);
-        return taskId.Value;
     }
 
     private async ValueTask FinishTaskRun(Guid taskRunId, NpgsqlTransaction transaction)

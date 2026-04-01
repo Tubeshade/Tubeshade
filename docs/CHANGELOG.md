@@ -22,6 +22,8 @@ _Latest build from master branch._
   ([#248](https://github.com/Tubeshade/Tubeshade/pull/248))
 - Update yt-dlp from 2026.02.21 to 2026.03.17
   ([#248](https://github.com/Tubeshade/Tubeshade/pull/248))
+- Don't create a task if the same one is already queued/running
+  ([#164](https://github.com/Tubeshade/Tubeshade/issues/164))
 
 ## [0.1.4] - 2026-02-22
 

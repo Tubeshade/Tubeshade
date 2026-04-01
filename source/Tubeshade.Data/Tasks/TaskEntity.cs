@@ -21,4 +21,83 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
     public string? Url { get; init; }
 
     public bool AllVideos { get; init; }
+
+    public static TaskEntity Index(Guid libraryId, Guid userId, string url) => new()
+    {
+        CreatedByUserId = userId,
+        ModifiedByUserId = userId,
+        OwnerId = userId,
+        Type = TaskType.Index,
+        UserId = userId,
+        LibraryId = libraryId,
+        ChannelId = null,
+        VideoId = null,
+        Url = url,
+        AllVideos = false,
+    };
+
+    public static TaskEntity Index(Guid libraryId, Guid userId, Guid channelId, Guid videoId, string url) => new()
+    {
+        CreatedByUserId = userId,
+        ModifiedByUserId = userId,
+        OwnerId = userId,
+        Type = TaskType.Index,
+        UserId = userId,
+        LibraryId = libraryId,
+        ChannelId = channelId,
+        VideoId = videoId,
+        Url = url,
+        AllVideos = false,
+    };
+
+    public static TaskEntity Download(Guid libraryId, Guid userId, Guid videoId) => new()
+    {
+        CreatedByUserId = userId,
+        ModifiedByUserId = userId,
+        OwnerId = userId,
+        Type = TaskType.DownloadVideo,
+        UserId = userId,
+        LibraryId = libraryId,
+        ChannelId = null,
+        VideoId = videoId,
+        Url = null,
+        AllVideos = false,
+    };
+
+    public static TaskEntity ScanChannel(Guid libraryId, Guid userId, Guid channelId, bool allVideos) => new()
+    {
+        CreatedByUserId = userId,
+        ModifiedByUserId = userId,
+        OwnerId = userId,
+        Type = TaskType.ScanChannel,
+        UserId = userId,
+        LibraryId = libraryId,
+        ChannelId = channelId,
+        VideoId = null,
+        Url = null,
+        AllVideos = allVideos,
+    };
+
+    public static TaskEntity ScanSubscriptions(Guid libraryId, Guid userId) =>
+        LibraryTask(libraryId, userId, TaskType.ScanSubscriptions);
+
+    public static TaskEntity ScanSegments(Guid libraryId, Guid userId) =>
+        LibraryTask(libraryId, userId, TaskType.ScanSponsorBlockSegments);
+
+    public static TaskEntity UpdateSegments(Guid libraryId, Guid userId) =>
+        LibraryTask(libraryId, userId, TaskType.UpdateSponsorBlockSegments);
+
+    private static TaskEntity LibraryTask(Guid libraryId, Guid userId, TaskType type) => new()
+    {
+        CreatedByUserId = userId,
+        ModifiedByUserId = userId,
+        OwnerId = userId,
+        Type = type,
+        UserId = userId,
+        LibraryId = libraryId,
+        ChannelId = null,
+        VideoId = null,
+        Url = null,
+        AllVideos = false,
+    };
 }

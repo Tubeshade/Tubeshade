@@ -53,7 +53,7 @@ public sealed class TaskService
     {
         foreach (var id in libraryIds)
         {
-            var taskId = await _taskRepository.AddScanSubscriptionsTask(id, userId, transaction);
+            var taskId = await _taskRepository.AddTask(TaskEntity.ScanSubscriptions(id, userId), transaction);
             await _taskRepository.TriggerTask(taskId, source, userId, transaction);
         }
     }
@@ -69,7 +69,7 @@ public sealed class TaskService
     {
         foreach (var id in libraryIds)
         {
-            var taskId = await _taskRepository.AddScanSegmentsTask(id, userId, transaction);
+            var taskId = await _taskRepository.AddTask(TaskEntity.ScanSegments(id, userId), transaction);
             await _taskRepository.TriggerTask(taskId, source, userId, transaction);
         }
     }
@@ -85,7 +85,7 @@ public sealed class TaskService
     {
         foreach (var id in libraryIds)
         {
-            var taskId = await _taskRepository.AddUpdateSegmentsTask(id, userId, transaction);
+            var taskId = await _taskRepository.AddTask(TaskEntity.UpdateSegments(id, userId), transaction);
             await _taskRepository.TriggerTask(taskId, source, userId, transaction);
         }
     }
@@ -99,7 +99,13 @@ public sealed class TaskService
 
     public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, TaskSource source, NpgsqlTransaction transaction)
     {
-        var taskId = await _taskRepository.AddIndexTask(url, libraryId, userId, transaction);
+        var task = TaskEntity.Index(libraryId, userId, url);
+        if (await _taskRepository.TryAddTask(task, transaction) is not { } taskId)
+        {
+            _logger.SkippingVideoIndexing(url);
+            return;
+        }
+
         await _taskRepository.TriggerTask(taskId, source, userId, transaction);
     }
 
@@ -110,7 +116,13 @@ public sealed class TaskService
 
     public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, Guid channelId, Guid videoId, TaskSource source, NpgsqlTransaction transaction)
     {
-        var taskId = await _taskRepository.AddIndexTask(url, videoId, channelId, libraryId, userId, transaction);
+        var task = TaskEntity.Index(libraryId, userId, channelId, videoId, url);
+        if (await _taskRepository.TryAddTask(task, transaction) is not { } taskId)
+        {
+            _logger.SkippingVideoIndexing(url);
+            return;
+        }
+
         await _taskRepository.TriggerTask(taskId, source, userId, transaction);
     }
 
@@ -123,7 +135,13 @@ public sealed class TaskService
 
     public async ValueTask DownloadVideo(Guid userId, Guid libraryId, Guid videoId, TaskSource source, NpgsqlTransaction transaction)
     {
-        var taskId = await _taskRepository.AddDownloadTask(videoId, libraryId, userId, transaction);
+        var task = TaskEntity.Download(libraryId, userId, videoId);
+        if (await _taskRepository.TryAddTask(task, transaction) is not { } taskId)
+        {
+            _logger.SkippingVideoDownload(videoId);
+            return;
+        }
+
         await _taskRepository.TriggerTask(taskId, source, userId, transaction);
     }
 

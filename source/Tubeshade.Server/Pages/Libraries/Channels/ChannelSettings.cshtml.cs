@@ -144,10 +144,14 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
         var userId = User.GetUserId();
         var cancellationToken = CancellationToken.None;
 
-        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var taskId = await _taskRepository.AddScanChannelTask(LibraryId, channelId, all ?? false, userId, transaction);
-        await _taskRepository.TriggerTask(taskId, TaskSource.User, userId, transaction);
-        await transaction.CommitAsync(cancellationToken);
+        await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
+        {
+            var task = TaskEntity.ScanChannel(LibraryId, userId, channelId, all ?? false);
+            var taskId = await _taskRepository.AddTask(task, transaction);
+            await _taskRepository.TriggerTask(taskId, TaskSource.User, userId, transaction);
+
+            await transaction.CommitAsync(cancellationToken);
+        }
 
         return StatusCode(StatusCodes.Status204NoContent);
     }
