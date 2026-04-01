@@ -38,7 +38,10 @@
                                     <label for="@run.ProgressBarId" class="text-nowrap me-1">
                                         @run.FormattedValue
                                     </label>
-                                    <span class="text-nowrap">/</span>
+                                    @if (run is { FormattedValue: not null, FormattedTarget: not null })
+                                    {
+                                        <span class="text-nowrap">/</span>
+                                    }
                                     <label for="@run.ProgressBarId" class="text-nowrap ms-1">
                                         @run.FormattedTarget
                                     </label>
