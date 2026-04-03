@@ -177,10 +177,7 @@
 
 <details open="open">
     <summary>@SharedResources.Video_Description</summary>
-    @foreach (var paragraph in Model.Entity.Description.ToParagraphs())
-    {
-        <p class="tubeshade-paragraph">@paragraph</p>
-    }
+    @Model.DescriptionContent
 </details>
 
 @section Scripts

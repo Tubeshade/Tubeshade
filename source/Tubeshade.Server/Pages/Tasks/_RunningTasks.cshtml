@@ -68,7 +68,7 @@
                             @if (run.Status == TaskStatus.Failed)
                             {
                                 <a asp-page="" asp-page-handler="TaskRun" asp-route-taskRunId="@run.Id"
-                                   title="@run.Message?.ToParagraphs().FirstOrDefault()">
+                                   title="@run.Message?.GetFirstParagraph()">
                                     @(run.Status.LocalizedName)
                                 </a>
                             }

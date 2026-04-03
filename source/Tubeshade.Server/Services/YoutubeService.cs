@@ -740,7 +740,7 @@ public sealed class YoutubeService
         var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
 
         var video = await _videoRepository.GetAsync(videoId, userId, transaction);
-        var preferences = await _preferencesRepository.GetEffectiveForVideo(libraryId, videoId, userId, cancellationToken) ?? new();
+        var preferences = await _preferencesRepository.GetEffectiveForVideo(libraryId, videoId, userId, transaction, cancellationToken) ?? new();
         preferences.ApplyDefaults();
 
         if (preferences.DownloadMethod?.Name is null or DownloadMethod.Names.Default)

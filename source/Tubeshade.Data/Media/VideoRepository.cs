@@ -75,6 +75,34 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              ignored_by_user_id = @{nameof(VideoEntity.IgnoredByUserId)}
          """;
 
+    private string SelectFilesSql =>
+        // lang=sql
+        $"""
+         {AccessCte}
+
+         SELECT video_files.id AS Id,
+                video_files.created_at AS CreatedAt,
+                video_files.created_by_user_id AS CreatedByUserId,
+                video_files.modified_at AS ModifiedAt,
+                video_files.modified_by_user_id AS ModifiedByUserId,
+                video_files.owner_id AS OwnerId,
+                video_files.video_id AS VideoId,
+                video_files.storage_path AS StoragePath,
+                video_files.type AS Type,
+                video_files.width AS Width,
+                video_files.height AS Height,
+                video_files.framerate AS Framerate,
+                video_files.downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
+                video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)},
+                downloading.task_run_id AS TaskRunId,
+                downloading.path AS TempPath
+         FROM media.video_files
+            INNER JOIN media.videos ON video_files.video_id = videos.id
+            LEFT OUTER JOIN media.video_files_downloading downloading ON video_files.id = downloading.file_id
+         WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
+         ORDER BY video_files.width DESC, video_files.framerate DESC, video_files.id;
+         """;
+
     public async ValueTask<List<VideoEntity>> GetDownloadableVideos(
         VideoParameters parameters,
         CancellationToken cancellationToken = default)
@@ -213,32 +241,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             {AccessCte}
-
-             SELECT video_files.id AS Id,
-                    video_files.created_at AS CreatedAt,
-                    video_files.created_by_user_id AS CreatedByUserId,
-                    video_files.modified_at AS ModifiedAt,
-                    video_files.modified_by_user_id AS ModifiedByUserId,
-                    video_files.owner_id AS OwnerId,
-                    video_files.video_id AS VideoId,
-                    video_files.storage_path AS StoragePath,
-                    video_files.type AS Type,
-                    video_files.width AS Width,
-                    video_files.height AS Height,
-                    video_files.framerate AS Framerate,
-                    video_files.downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-                    video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)},
-                    downloading.task_run_id AS TaskRunId,
-                    downloading.path AS TempPath
-             FROM media.video_files
-                INNER JOIN media.videos ON video_files.video_id = videos.id
-                LEFT OUTER JOIN media.video_files_downloading downloading ON video_files.id = downloading.file_id
-             WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
-             ORDER BY video_files.width DESC, video_files.framerate DESC, video_files.id;
-             """,
+            SelectFilesSql,
             new GetVideoParameters(videoId, userId, Access.Read),
             cancellationToken: cancellationToken);
 
@@ -249,33 +252,14 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     public async ValueTask<List<VideoFileEntity>> GetFilesAsync(
         Guid videoId,
         Guid userId,
-        NpgsqlTransaction transaction)
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             {AccessCte}
-
-             SELECT video_files.id AS Id,
-                    video_files.created_at AS CreatedAt,
-                    video_files.created_by_user_id AS CreatedByUserId,
-                    video_files.modified_at AS ModifiedAt,
-                    video_files.modified_by_user_id AS ModifiedByUserId,
-                    video_files.owner_id AS OwnerId,
-                    video_files.video_id AS VideoId,
-                    video_files.storage_path AS StoragePath,
-                    video_files.type AS Type,
-                    video_files.width AS Width,
-                    video_files.height AS Height,
-                    video_files.framerate AS Framerate,
-                    video_files.downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-                    video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
-             FROM media.video_files
-                INNER JOIN media.videos ON video_files.video_id = videos.id
-             WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)};
-             """,
+            SelectFilesSql,
             new GetVideoParameters(videoId, userId, Access.Read),
-            transaction);
+            transaction,
+            cancellationToken: cancellationToken);
 
         var enumerable = await Connection.QueryAsync<VideoFileEntity>(command);
         return enumerable as List<VideoFileEntity> ?? enumerable.ToList();
@@ -318,7 +302,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return await Connection.QuerySingleOrDefaultAsync<VideoFileEntity>(command);
     }
 
-    public async ValueTask<VideoEntity?> FindByExternalId(string externalId, Guid userId, Access access,
+    public async ValueTask<VideoEntity?> FindByExternalId(
+        string externalId,
+        Guid userId,
+        Access access,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -330,6 +317,32 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
             transaction);
 
         return await Connection.QuerySingleOrDefaultAsync<VideoEntity>(command);
+    }
+
+    public async ValueTask<List<EntityId>> FindByExternalIds(
+        List<string> externalIds,
+        Guid userId,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             {AccessCte}
+
+             SELECT videos.id AS Id,
+                    videos.external_id AS ExternalId
+             FROM media.videos
+             WHERE {AccessFilter}
+               AND (videos.external_id = ANY(@{nameof(externalIds)}));
+             """,
+            new { UserId = userId, externalIds, Access = Access.Read },
+            transaction,
+            cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<EntityId>(command);
+        return enumerable as List<EntityId> ?? enumerable.ToList();
+
     }
 
     public async ValueTask<VideoEntity?> FindByExternalUrl(string externalUrl, Guid userId, Access access,

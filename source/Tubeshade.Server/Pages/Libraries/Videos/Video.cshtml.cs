@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Htmx;
+using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -20,10 +23,11 @@ using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services;
 using static System.IO.UnixFileMode;
+using StringExtensions = Tubeshade.Server.Pages.Shared.StringExtensions;
 
 namespace Tubeshade.Server.Pages.Libraries.Videos;
 
-public sealed class Video : LibraryPageBase
+public sealed partial class Video : LibraryPageBase
 {
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
@@ -68,6 +72,8 @@ public sealed class Video : LibraryPageBase
 
     public VideoEntity Entity { get; set; } = null!;
 
+    public IHtmlContent DescriptionContent { get; private set; } = null!;
+
     public List<VideoFileEntity> Files { get; set; } = [];
 
     public List<VideoFileEntity> PlayableFiles { get; set; } = [];
@@ -89,16 +95,17 @@ public sealed class Video : LibraryPageBase
     public async Task OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
+        await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.RepeatableRead, cancellationToken);
 
-        Entity = await _videoRepository.GetAsync(VideoId, userId, cancellationToken);
-        Files = await _videoRepository.GetFilesAsync(VideoId, userId, cancellationToken);
+        Entity = await _videoRepository.GetAsync(VideoId, userId, transaction);
+        Files = await _videoRepository.GetFilesAsync(VideoId, userId, transaction, cancellationToken);
         PlayableFiles = Files.Where(file => file.DownloadedAt is not null || file.TempPath is not null).ToList();
         DownloadableFiles = Files.Where(file => file.DownloadedAt is null && file.TempPath is null).ToList();
 
-        Channel = await _channelRepository.GetAsync(Entity.ChannelId, userId, cancellationToken);
-        Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
+        Channel = await _channelRepository.GetAsync(Entity.ChannelId, userId, transaction);
+        Library = await _libraryRepository.GetAsync(LibraryId, userId, transaction);
 
-        var preferences = await _preferencesRepository.GetEffectiveForVideo(LibraryId, VideoId, userId, cancellationToken);
+        var preferences = await _preferencesRepository.GetEffectiveForVideo(LibraryId, VideoId, userId, transaction, cancellationToken);
         if (preferences?.PlaybackSpeed is { } playbackSpeed)
         {
             PlaybackSpeed = playbackSpeed;
@@ -107,8 +114,11 @@ public sealed class Video : LibraryPageBase
         HasSubtitles = System.IO.File.Exists(Entity.GetSubtitlesFilePath());
         HasChapters = System.IO.File.Exists(Entity.GetChaptersFilePath());
 
-        var segments = await _sponsorBlockSegmentRepository.GetForVideo(VideoId, userId, cancellationToken);
+        var segments = await _sponsorBlockSegmentRepository.GetForVideo(VideoId, userId, transaction);
         HasSponsorBlockSegments = segments is not [];
+
+        DescriptionContent = await FormatDescription(userId, transaction, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task<IActionResult> OnPostViewed(string? viewed, Guid videoId)
@@ -213,5 +223,100 @@ public sealed class Video : LibraryPageBase
         Response.Htmx(headers =>
             headers.Redirect(Url.Page("/Libraries/Channels/Channel", new { LibraryId, video.ChannelId }) ?? ""));
         return StatusCode(StatusCodes.Status200OK);
+    }
+
+    private async Task<HtmlContentBuilder> FormatDescription(
+        Guid userId,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var description = Entity.Description;
+
+        var urlQueue = new Queue<UrlMatch>(YoutubeVideoUrlRegex().Matches(description).Select(match => new UrlMatch(match)));
+        var youTubeIds = urlQueue.Select(match => match.YouTubeId).Distinct().ToList();
+
+        var videoIds = youTubeIds is not []
+            ? await _videoRepository.FindByExternalIds(youTubeIds, userId, transaction, cancellationToken)
+            : [];
+
+        var videoUrlLookup = videoIds.ToDictionary(
+            id => id.ExternalId,
+            id => Url.Page("/Libraries/Videos/Video", new { LibraryId, videoId = id.Id }));
+
+        var descriptionSpan = description.AsSpan();
+        var builder = new HtmlContentBuilder();
+        foreach (var paragraphRange in StringExtensions.ParagraphSplit().EnumerateSplits(descriptionSpan))
+        {
+            var paragraphSpan = descriptionSpan[paragraphRange];
+            if (paragraphSpan.Length is 0 || paragraphSpan.IsWhiteSpace())
+            {
+                continue;
+            }
+
+            // lang=html
+            builder.AppendHtml("<p class=\"tubeshade-paragraph\">");
+
+            var currentIndex = paragraphRange.Start.Value;
+            while (urlQueue.TryPeek(out var match))
+            {
+                var range = match.Range;
+
+                if (range.Start.Value > paragraphRange.End.Value)
+                {
+                    break;
+                }
+
+                match = urlQueue.Dequeue();
+                if (range.Start.Value < paragraphRange.Start.Value)
+                {
+                    continue;
+                }
+
+                if (!videoUrlLookup.TryGetValue(match.YouTubeId, out var videoUrl) ||
+                    string.IsNullOrWhiteSpace(videoUrl))
+                {
+                    continue;
+                }
+
+                builder.Append(descriptionSpan[currentIndex..range.Start].ToString());
+
+                builder.AppendHtml("<a href=\"");
+                builder.Append(videoUrl);
+                builder.AppendHtml("\">");
+                builder.Append(match.Match.Value);
+                builder.AppendHtml("</a>");
+
+                currentIndex = range.End.Value;
+            }
+
+            builder.Append(descriptionSpan[currentIndex..paragraphRange.End.Value].ToString());
+
+            // lang=html
+            builder.AppendHtmlLine("</p>");
+        }
+
+        return builder;
+    }
+
+    [GeneratedRegex(
+        @"(?<=^|\s)(?:https?:\/\/)?(?:(?:www\.)?youtube\.com|youtu\.be)\/(?:watch\?v\=|embed\/|v\/)?(?'id'[a-zA-Z0-9_\-]{11})(?:[^\s]*)",
+        RegexOptions.Multiline,
+        100)]
+    public static partial Regex YoutubeVideoUrlRegex();
+
+    private readonly struct UrlMatch
+    {
+        public UrlMatch(Match match)
+        {
+            Match = match;
+            YouTubeId = match.Groups["id"].Value;
+            Range = new(match.Index, match.Index + match.Length);
+        }
+
+        public Match Match { get; }
+
+        public string YouTubeId { get; }
+
+        public Range Range { get; }
     }
 }

@@ -59,6 +59,6 @@
 <div>
     @if (Model.Run.Message is { } message)
     {
-        <textarea class="form-control" readonly wrap="off" rows="@(message.ToLines().Length + 1)">@message</textarea>
+        <textarea class="form-control" readonly wrap="off" rows="@(message.GetLineCount() + 1)">@message</textarea>
     }
 </div>

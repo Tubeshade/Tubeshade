@@ -8,6 +8,8 @@ _Latest build from master branch._
 
 - Periodically report video playback position
   ([#141](https://github.com/Tubeshade/Tubeshade/issues/141))
+- Link to indexed videos in video descriptions
+  ([#169](https://github.com/Tubeshade/Tubeshade/issues/169))
 
 ### Changed
 

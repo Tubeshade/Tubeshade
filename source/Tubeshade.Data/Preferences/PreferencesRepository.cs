@@ -283,6 +283,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
         Guid libraryId,
         Guid videoId,
         Guid userId,
+        NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
@@ -311,6 +312,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
              WHERE videos.id = @{nameof(videoId)} AND COALESCE(channel_p.id, library_p.id) IS NOT NULL;
              """,
             new { libraryId, videoId, userId },
+            transaction,
             cancellationToken: cancellationToken));
     }
 }
