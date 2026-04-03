@@ -34,18 +34,18 @@
                         else if (run.HasProgress)
                         {
                             <div class="d-inline-flex flex-column">
-                                <div class="d-flex justify-content-between">
-                                    <label for="@run.ProgressBarId" class="text-nowrap me-1">
-                                        @run.FormattedValue
-                                    </label>
-                                    @if (run is { FormattedValue: not null, FormattedTarget: not null })
-                                    {
+                                @if (run.FormattedValue is not null || run.FormattedTarget is not null)
+                                {
+                                    <div class="d-flex justify-content-between">
+                                        <label for="@run.ProgressBarId" class="text-nowrap me-1">
+                                            @run.FormattedValue
+                                        </label>
                                         <span class="text-nowrap">/</span>
-                                    }
-                                    <label for="@run.ProgressBarId" class="text-nowrap ms-1">
-                                        @run.FormattedTarget
-                                    </label>
-                                </div>
+                                        <label for="@run.ProgressBarId" class="text-nowrap ms-1">
+                                            @run.FormattedTarget
+                                        </label>
+                                    </div>
+                                }
                                 <div class="d-flex">
                                     <progress id="@run.ProgressBarId" max="@run.Target" value="@run.Value">
                                         @run.Progress%
