@@ -32,6 +32,11 @@ _Latest build from master branch._
 - Don't create a task if the same one is already queued/running
   ([#164](https://github.com/Tubeshade/Tubeshade/issues/164))
 
+### Fixed
+
+- Refresh cookies between requests during long-running tasks
+  ([#260](https://github.com/Tubeshade/Tubeshade/pull/260))
+
 ## [0.1.4] - 2026-02-22
 
 ### Added

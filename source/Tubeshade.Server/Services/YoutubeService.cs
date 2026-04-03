@@ -289,7 +289,7 @@ public sealed class YoutubeService
         var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channel.Id, userId, cancellationToken) ?? new();
         preferences.ApplyDefaults();
 
-        var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction);
+        var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction, cancellationToken);
         foreach (var file in files.Where(file => file.DownloadedAt is null).ToArray())
         {
             _logger.DeletingNotDownloadedFile(file.Id);
@@ -705,6 +705,7 @@ public sealed class YoutubeService
                     break;
                 }
 
+                cookiesFilepath = await CreateCookieFile(libraryId, directory, cancellationToken);
                 var videoResult = await _ytdlpWrapper.FetchVideoData(video.Url, cookiesFilepath, cancellationToken);
                 if (!videoResult.Success)
                 {
@@ -737,7 +738,6 @@ public sealed class YoutubeService
         CancellationToken cancellationToken)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
 
         var video = await _videoRepository.GetAsync(videoId, userId, transaction);
         var preferences = await _preferencesRepository.GetEffectiveForVideo(libraryId, videoId, userId, transaction, cancellationToken) ?? new();
@@ -745,11 +745,11 @@ public sealed class YoutubeService
 
         if (preferences.DownloadMethod?.Name is null or DownloadMethod.Names.Default)
         {
-            await DownloadDefault(videoId, userId, taskRepository, taskRunId, tempDirectory, preferences, video, cookieFilepath, transaction, cancellationToken);
+            await DownloadDefault(libraryId, videoId, userId, taskRepository, taskRunId, tempDirectory, preferences, video, transaction, cancellationToken);
         }
         else if (preferences.DownloadMethod == DownloadMethod.Streaming)
         {
-            await DownloadStreaming(videoId, userId, taskRepository, taskRunId, tempDirectory, preferences, video, cookieFilepath, transaction, provider, cancellationToken);
+            await DownloadStreaming(libraryId, videoId, userId, taskRepository, taskRunId, tempDirectory, preferences, video, transaction, provider, cancellationToken);
         }
         else
         {
@@ -760,6 +760,7 @@ public sealed class YoutubeService
     }
 
     private async ValueTask DownloadDefault(
+        Guid libraryId,
         Guid videoId,
         Guid userId,
         TaskRepository taskRepository,
@@ -767,7 +768,6 @@ public sealed class YoutubeService
         DirectoryInfo tempDirectory,
         PreferencesEntity preferences,
         VideoEntity video,
-        string? cookieFilepath,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
@@ -775,8 +775,9 @@ public sealed class YoutubeService
             ? preferredFormats
             : DefaultVideoFormats;
 
-        var files = await _videoRepository.GetFilesAsync(videoId, userId, transaction);
+        var files = await _videoRepository.GetFilesAsync(videoId, userId, transaction, cancellationToken);
 
+        var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
         var selectedFormats = await _ytdlpWrapper.SelectFormats(
             video.ExternalUrl,
             formatSelectors,
@@ -833,6 +834,7 @@ public sealed class YoutubeService
                 }
             }
 
+            cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
             var downloadTask = _ytdlpWrapper.DownloadVideo(
                 video.ExternalUrl,
                 string.Join('+', formats.Select(format => format.FormatId)),
@@ -949,6 +951,7 @@ public sealed class YoutubeService
     }
 
     private async ValueTask DownloadStreaming(
+        Guid libraryId,
         Guid videoId,
         Guid userId,
         TaskRepository taskRepository,
@@ -956,7 +959,6 @@ public sealed class YoutubeService
         DirectoryInfo tempDirectory,
         PreferencesEntity preferences,
         VideoEntity video,
-        string? cookieFilepath,
         NpgsqlTransaction transaction,
         IServiceProvider provider,
         CancellationToken cancellationToken)
@@ -965,8 +967,9 @@ public sealed class YoutubeService
             ? preferredFormats
             : DefaultVideoFormats;
 
-        var files = await _videoRepository.GetFilesAsync(videoId, userId, transaction);
+        var files = await _videoRepository.GetFilesAsync(videoId, userId, transaction, cancellationToken);
 
+        var cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
         var selectedFormats = await _ytdlpWrapper.SelectFormats(
             video.ExternalUrl,
             formatSelectors,
@@ -990,6 +993,7 @@ public sealed class YoutubeService
 
         foreach (var formats in selectedFormats)
         {
+            cookieFilepath = await CreateCookieFile(libraryId, tempDirectory, cancellationToken);
             sizeOffset += await DownloadVideoFile(
                 userId,
                 taskRepository,
@@ -1478,7 +1482,8 @@ public sealed class YoutubeService
              FROM media.library_external_cookies
              WHERE id = @{nameof(libraryId)} AND domain = 'youtube.com';
              """,
-            new { libraryId }));
+            new { libraryId },
+            cancellationToken: cancellationToken));
 
         if (cookie?.Cookie is null)
         {
