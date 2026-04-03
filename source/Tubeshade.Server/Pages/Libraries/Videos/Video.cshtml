@@ -206,10 +206,26 @@
             }
         });
 
+        video.addEventListener("timeupdate", onVideoTimeUpdate, false);
+
+        const reportingPeriod = @Defaults.ReportPeriodInSeconds.ToString(CultureInfo.InvariantCulture);
+        let lastReportedTime = -1;
+        function onVideoTimeUpdate(event) {
+            const currentTime = event.target.currentTime;
+            const currentReportedTime = Math.floor(currentTime / reportingPeriod);
+
+            if (currentReportedTime !== 0 && currentReportedTime !== lastReportedTime) {
+                reportPlaybackPosition();
+            }
+        }
+
         function reportPlaybackPosition() {
-            const position = Math.abs(video.duration - video.currentTime) < 0.1
+            const currentTime = video.currentTime;
+            lastReportedTime = Math.floor(currentTime / reportingPeriod);
+
+            const position = Math.abs(video.duration - currentTime) < 0.1
                 ? 0
-                : video.currentTime;
+                : currentTime;
 
             navigator.sendBeacon(
                 "@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))",
@@ -332,21 +348,9 @@
                     createMarker(cue);
                 }
 
-                chaptersTrack.addEventListener("cuechange", function (_event) {
-                    const activeCues = chaptersTrack.track.activeCues;
-                    if (activeCues.length === 0) {
-                        console.warn("Chapters cue changed, but none are active");
-                        return;
-                    }
-
-                    const cue = activeCues[activeCues.length - 1];
-                    chapters.value = cue.startTime;
-                });
-
+                chaptersTrack.addEventListener("cuechange", onChapterCueChange);
                 chapters.size = chaptersTrack.track.cues.length;
-                chapters.addEventListener("change", function (event) {
-                    video.currentTime = event.target.value;
-                });
+                chapters.addEventListener("change", onChaptersChange);
             }
 
             function createMarker(cue) {
@@ -359,6 +363,22 @@
                 option.value = cue.startTime;
                 option.innerHTML = `${timestamp} - ${cue.text}`;
                 chapters.appendChild(option);
+            }
+
+            function onChapterCueChange(_event) {
+                const activeCues = chaptersTrack.track.activeCues;
+                if (activeCues.length === 0) {
+                    console.warn("Chapters cue changed, but none are active");
+                    return;
+                }
+
+                const cue = activeCues[activeCues.length - 1];
+                chapters.value = cue.startTime;
+                reportPlaybackPosition();
+            }
+
+            function onChaptersChange(event) {
+                video.currentTime = event.target.value;
             }
         }
 
@@ -375,25 +395,27 @@
         }
 
         function onSponsorBlockTrackLoad() {
-            sponsorBlockTrack.addEventListener("cuechange", function (_event) {
-                const activeCues = sponsorBlockTrack.track.activeCues;
-                let skippableCues = [];
+            sponsorBlockTrack.addEventListener("cuechange", onSponsorBlockCueChange);
+        }
 
-                for (let i = 0; i < activeCues.length; i++) {
-                    const cue = activeCues[i];
-                    if (cue.text !== "filler") {
-                        skippableCues.push(cue);
-                    }
+        function onSponsorBlockCueChange(_event) {
+            const activeCues = sponsorBlockTrack.track.activeCues;
+            let skippableCues = [];
+
+            for (let i = 0; i < activeCues.length; i++) {
+                const cue = activeCues[i];
+                if (cue.text !== "filler") {
+                    skippableCues.push(cue);
                 }
+            }
 
-                if (skippableCues.length === 0) {
-                    return;
-                }
+            if (skippableCues.length === 0) {
+                return;
+            }
 
-                video.currentTime = skippableCues
-                    .map(cue => cue.endTime)
-                    .reduce((previous, current) => (previous > current) ? previous : current);
-            });
+            video.currentTime = skippableCues
+                .map(cue => cue.endTime)
+                .reduce((previous, current) => (previous > current) ? previous : current);
         }
     </script>
 }

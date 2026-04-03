@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Added
+
+- Periodically report video playback position
+  ([#141](https://github.com/Tubeshade/Tubeshade/issues/141))
+
 ### Changed
 
 - Fall back to [Process.Kill](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.kill?view=net-10.0) after signaling process to exit
