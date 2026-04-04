@@ -4,6 +4,8 @@
 
 _Latest build from master branch._
 
+## [0.1.5] - 2026-04-04
+
 ### Added
 
 - Periodically report video playback position
@@ -130,6 +132,8 @@ _Latest build from master branch._
 ## [0.1.0] - 2025-12-06
 
 _Initial release._
+
+[0.1.5]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.5
 
 [0.1.4]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.4
 
