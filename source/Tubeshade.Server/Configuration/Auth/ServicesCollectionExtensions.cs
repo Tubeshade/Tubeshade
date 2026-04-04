@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Htmx;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -202,7 +203,7 @@ internal static class ServicesCollectionExtensions
     /// <seealso cref="CookieAuthenticationEvents.OnRedirectToLogin"/>
     private static Task OnCookieRedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
     {
-        if (context.Request.IsApiRequest())
+        if (context.Request.IsApiRequest() || context.Request.IsHtmx())
         {
             context.Response.Headers.Location = context.RedirectUri;
             context.Response.StatusCode = 401;

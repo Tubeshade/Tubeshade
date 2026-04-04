@@ -36,6 +36,8 @@ _Latest build from master branch._
 
 - Refresh cookies between requests during long-running tasks
   ([#260](https://github.com/Tubeshade/Tubeshade/pull/260))
+- Don't redirect htmx requests to login page
+  ([#218](https://github.com/Tubeshade/Tubeshade/issues/218))
 
 ## [0.1.4] - 2026-02-22
 

@@ -50,6 +50,8 @@ public abstract class PlaywrightTests
 
     protected IServerFixture Fixture { get; }
 
+    protected IBrowserContext Context => _browserContext ?? throw new InvalidOperationException();
+
     protected IPage Page => _page ?? throw new InvalidOperationException();
 
     private string TraceName => string.Join(
