@@ -276,4 +276,10 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(86, Information, "Not creating a new video download task for {VideoId} because at least one already exists")]
     internal static partial void SkippingVideoDownload(this ILogger logger, Guid videoId);
+
+    [LoggerMessage(87, Debug, "No cookies found for {Domain}, not creating cookie file")]
+    internal static partial void NoCookies(this ILogger logger, string domain);
+
+    [LoggerMessage(88, Debug, "Writing cookies for {Domain} to {Path}")]
+    internal static partial void WritingCookies(this ILogger logger, string domain, string path);
 }

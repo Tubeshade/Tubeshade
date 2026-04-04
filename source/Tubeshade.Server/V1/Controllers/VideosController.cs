@@ -115,7 +115,7 @@ public sealed class VideosController : ControllerBase
         var videoFile = await _repository.FindFileAsync(fileId, userId, cancellationToken);
         if (videoFile is null)
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "Video file does not exist");
+            return Problem("Video file does not exist", statusCode: StatusCodes.Status404NotFound);
         }
 
         FileInfo file;
@@ -131,14 +131,14 @@ public sealed class VideosController : ControllerBase
             var path = Path.Combine(video.StoragePath, videoFile.StoragePath);
             if (!System.IO.File.Exists(path))
             {
-                return Problem(statusCode: StatusCodes.Status404NotFound, detail: $"File {path} does not exist");
+                return Problem($"File {path} does not exist", statusCode: StatusCodes.Status404NotFound);
             }
 
             file = new FileInfo(Path.Combine(video.StoragePath, videoFile.StoragePath));
         }
         else
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, detail: "No file path found");
+            return Problem("No file path found", statusCode: StatusCodes.Status404NotFound);
         }
 
         var stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite);

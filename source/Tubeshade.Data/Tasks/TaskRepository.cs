@@ -125,7 +125,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              SELECT pg_notify('{TaskChannels.Created}', concat_ws('|', @{nameof(taskId)}::text, @{nameof(source)}::text))
              FROM tasks.tasks
                   INNER JOIN media.libraries ON tasks.library_id = libraries.id
-             WHERE(libraries.id IN (SELECT id FROM accessible)) AND tasks.id = @{nameof(taskId)};
+             WHERE (libraries.id IN (SELECT id FROM accessible)) AND tasks.id = @{nameof(taskId)};
              """,
             new { taskId, source, userId },
             transaction);

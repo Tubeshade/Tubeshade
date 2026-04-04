@@ -22,6 +22,13 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
 
     public bool AllVideos { get; init; }
 
+    public (Guid LibraryId, Guid UserId) DestructureLibraryTask()
+    {
+        return this is { LibraryId: { } libraryId, UserId: { } userId }
+            ? (libraryId, userId)
+            : throw new InvalidOperationException("Task is not for a library");
+    }
+
     public static TaskEntity Index(Guid libraryId, Guid userId, string url) => new()
     {
         CreatedByUserId = userId,

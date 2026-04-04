@@ -112,9 +112,11 @@ public sealed class BackgroundWorkerService : BackgroundService
 
             await taskService.WaitForBlockingTasks(listener.Reader, task, taskRunId, source.Token);
 
+            var factory = scope.ServiceProvider.GetRequiredService<CookiesServiceFactory>();
+
             // Separate scope is needed, so that all updates to task status are not within a transaction
             await using var taskScope = _serviceProvider.CreateAsyncScope();
-            await Execute(task, taskSource, taskScope.ServiceProvider, taskRepository, taskRunId, source.Token);
+            await Execute(task, taskSource, taskScope.ServiceProvider, taskRepository, taskRunId, factory, source.Token);
             await taskRepository.CompleteTask(taskRunId, source.Token);
         }
         catch (Exception exception) when (exception is TaskCanceledException or OperationCanceledException)
@@ -142,6 +144,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         IServiceProvider provider,
         TaskRepository taskRepository,
         Guid taskRunId,
+        CookiesServiceFactory cookiesServiceFactory,
         CancellationToken cancellationToken)
     {
         if (task.Type == TaskType.Index)
@@ -149,15 +152,19 @@ public sealed class BackgroundWorkerService : BackgroundService
             using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
             using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory(TaskRunPrefix, taskRunId);
 
-            var service = provider.GetRequiredService<YoutubeService>();
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            var service = provider.GetRequiredService<YoutubeIndexingService>();
+            var cookieService = cookiesServiceFactory.Create(userId, libraryId, scopedDirectory.Directory, cancellationToken);
+
             var result = await service.Index(
                 task.Url!,
-                task.LibraryId!.Value,
-                task.UserId!.Value,
+                libraryId,
+                userId,
                 task.VideoId,
                 task.ChannelId,
                 scopedDirectory.Directory,
                 source,
+                cookieService,
                 cancellationToken);
 
             task.ChannelId = result.ChannelId;
@@ -169,15 +176,19 @@ public sealed class BackgroundWorkerService : BackgroundService
             using var scope = await LockAsync(_downloadLock, taskRepository, taskRunId, cancellationToken);
             using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory(TaskRunPrefix, taskRunId);
 
-            var service = provider.GetRequiredService<YoutubeService>();
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            var service = provider.GetRequiredService<YoutubeDownloadService>();
+            var cookieService = cookiesServiceFactory.Create(userId, libraryId, scopedDirectory.Directory, cancellationToken);
+
             await service.DownloadVideo(
-                task.LibraryId!.Value,
+                libraryId,
                 task.VideoId!.Value,
-                task.UserId!.Value,
+                userId,
                 taskRepository,
                 taskRunId,
                 scopedDirectory.Directory,
                 provider,
+                cookieService,
                 cancellationToken);
         }
         else if (task.Type == TaskType.ScanChannel)
@@ -185,16 +196,20 @@ public sealed class BackgroundWorkerService : BackgroundService
             using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
             using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory(TaskRunPrefix, taskRunId);
 
-            var service = provider.GetRequiredService<YoutubeService>();
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            var service = provider.GetRequiredService<YoutubeIndexingService>();
+            var cookieService = cookiesServiceFactory.Create(userId, libraryId, scopedDirectory.Directory, cancellationToken);
+
             await service.ScanChannel(
-                task.LibraryId!.Value,
+                libraryId,
                 task.ChannelId!.Value,
                 task.AllVideos,
-                task.UserId!.Value,
+                userId,
                 taskRepository,
                 taskRunId,
                 scopedDirectory.Directory,
                 source,
+                cookieService,
                 cancellationToken);
         }
         else if (task.Type == TaskType.ScanSubscriptions)
@@ -202,26 +217,27 @@ public sealed class BackgroundWorkerService : BackgroundService
             using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
             using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory(TaskRunPrefix, taskRunId);
 
-            var service = provider.GetRequiredService<YoutubeService>();
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            var service = provider.GetRequiredService<YoutubeIndexingService>();
+            var cookieService = cookiesServiceFactory.Create(userId, libraryId, scopedDirectory.Directory, cancellationToken);
+
             await service.ScanSubscriptions(
-                task.LibraryId!.Value,
-                task.UserId!.Value,
+                libraryId,
+                userId,
                 taskRepository,
                 taskRunId,
                 scopedDirectory.Directory,
                 source,
+                cookieService,
                 cancellationToken);
         }
         else if (task.Type == TaskType.ScanSponsorBlockSegments)
         {
             using var scope = await LockAsync(_sponsorBlockLock, taskRepository, taskRunId, cancellationToken);
             var service = provider.GetRequiredService<SponsorBlockService>();
-            await service.ScanVideoSegments(
-                task.LibraryId!.Value,
-                task.UserId!.Value,
-                taskRepository,
-                taskRunId,
-                cancellationToken);
+
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            await service.ScanVideoSegments(libraryId, userId, taskRepository, taskRunId, cancellationToken);
         }
         else if (task.Type == TaskType.RefreshSubscriptions)
         {
@@ -232,23 +248,18 @@ public sealed class BackgroundWorkerService : BackgroundService
         else if (task.Type == TaskType.ReindexVideos)
         {
             using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
-            var service = provider.GetRequiredService<YoutubeService>();
-            await service.Reindex(
-                task.LibraryId!.Value,
-                task.UserId!.Value,
-                source,
-                cancellationToken);
+
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            var service = provider.GetRequiredService<YoutubeIndexingService>();
+            await service.Reindex(libraryId, userId, source, cancellationToken);
         }
         else if (task.Type == TaskType.UpdateSponsorBlockSegments)
         {
             using var scope = await LockAsync(_sponsorBlockLock, taskRepository, taskRunId, cancellationToken);
+
+            var (libraryId, userId) = task.DestructureLibraryTask();
             var service = provider.GetRequiredService<SponsorBlockService>();
-            await service.UpdateVideoSegments(
-                task.LibraryId!.Value,
-                task.UserId!.Value,
-                taskRepository,
-                taskRunId,
-                cancellationToken);
+            await service.UpdateVideoSegments(libraryId, userId, taskRepository, taskRunId, cancellationToken);
         }
     }
 

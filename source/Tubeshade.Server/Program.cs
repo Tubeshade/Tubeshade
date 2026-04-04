@@ -159,7 +159,9 @@ internal static class Program
                 return new(options.YtdlpPath);
             })
             .AddScoped<IYtdlpWrapper, YtdlpWrapper>()
-            .AddScoped<YoutubeService>()
+            .AddScoped<YoutubeIndexingService>()
+            .AddScoped<YoutubeDownloadService>()
+            .AddScoped<CookiesServiceFactory>()
             .AddSponsorBlockClient()
             .AddScoped<SubscriptionsService>()
             .AddScoped<FileUploadService>()

@@ -6,10 +6,10 @@ internal static class PreferencesExtensions
 {
     internal static void ApplyDefaults(this PreferencesEntity preferences)
     {
-        preferences.Formats ??= YoutubeService.DefaultVideoFormats;
+        preferences.Formats ??= YoutubeIndexingService.DefaultVideoFormats;
         preferences.DownloadVideos ??= DownloadVideos.None;
         preferences.DownloadMethod ??= DownloadMethod.Default;
-        preferences.VideosCount ??= YoutubeService.DefaultVideoCount;
+        preferences.VideosCount ??= YoutubeIndexingService.DefaultVideoCount;
         preferences.LiveStreamsCount ??= 0;
         preferences.ShortsCount ??= 0;
         preferences.PlaybackSpeed ??= 1;

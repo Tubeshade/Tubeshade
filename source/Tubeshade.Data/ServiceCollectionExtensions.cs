@@ -67,6 +67,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<TaskRepository>()
             .AddScoped<ScheduleRepository>()
             .AddScoped<LibraryRepository>()
+            .AddScoped<LibraryCookieRepository>()
             .AddScoped<ChannelRepository>()
             .AddScoped<VideoRepository>()
             .AddScoped<VideoFileRepository>()

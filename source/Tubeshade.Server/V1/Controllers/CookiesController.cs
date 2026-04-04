@@ -1,11 +1,10 @@
-﻿using System.Diagnostics;
-using System.Threading.Tasks;
-using Dapper;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.V1.Models;
@@ -18,10 +17,12 @@ namespace Tubeshade.Server.V1.Controllers;
 public sealed class CookiesController : ControllerBase
 {
     private readonly NpgsqlConnection _connection;
+    private readonly LibraryCookieRepository _repository;
 
-    public CookiesController(NpgsqlConnection connection)
+    public CookiesController(NpgsqlConnection connection, LibraryCookieRepository repository)
     {
         _connection = connection;
+        _repository = repository;
     }
 
     [HttpPost]
@@ -31,21 +32,7 @@ public sealed class CookiesController : ControllerBase
         var userId = User.GetUserId();
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
-        var cookie = await _connection.QuerySingleOrDefaultAsync<LibraryCookieEntity>(new CommandDefinition(
-            """
-            SELECT cookies.id AS Id,
-                   cookies.created_at AS CreatedAt,
-                   cookies.created_by_user_id AS CreatedByUserId,
-                   cookies.modified_at AS ModifiedAt,
-                   cookies.modified_by_user_id AS ModifiedByUserId,
-                   cookies.domain AS Domain,
-                   cookies.cookie AS Cookie
-            FROM media.library_external_cookies cookies
-            INNER JOIN media.libraries ON cookies.id = libraries.id
-            WHERE libraries.owner_id = @userId AND libraries.id = @libraryId;
-            """, // todo: auth
-            new { userId, libraryId = request.LibraryId },
-            transaction));
+        var cookie = await _repository.FindByDomain(request.Domain, userId, request.LibraryId!.Value, Access.Read, transaction);
 
         if (cookie is null)
         {
@@ -58,32 +45,20 @@ public sealed class CookiesController : ControllerBase
                 Cookie = request.Cookie,
             };
 
-            var count = await _connection.ExecuteAsync(new CommandDefinition(
-                $"""
-                 INSERT INTO media.library_external_cookies (id, created_by_user_id, modified_by_user_id, domain, cookie)
-                 VALUES (@Id, @CreatedByUserId, @ModifiedByUserId, @Domain, @Cookie);
-                 """,
-                cookie,
-                transaction));
-            Trace.Assert(count is not 0);
+            if (await _repository.AddAsync(cookie, transaction) is null)
+            {
+                return Problem("Missing permissions to modify cookies", statusCode: StatusCodes.Status403Forbidden);
+            }
         }
         else
         {
             cookie.ModifiedByUserId = userId;
-            cookie.Domain = request.Domain;
             cookie.Cookie = request.Cookie;
 
-            var count = await _connection.ExecuteAsync(new CommandDefinition(
-                $"""
-                 UPDATE media.library_external_cookies
-                 SET modified_at = CURRENT_TIMESTAMP,
-                     domain = @Domain,
-                     cookie = @Cookie
-                 WHERE id = @Id;
-                 """,
-                cookie,
-                transaction));
-            Trace.Assert(count is not 0);
+            if (await _repository.UpdateAsync(cookie, transaction) is 0)
+            {
+                return Problem("Missing permissions to modify cookies", statusCode: StatusCodes.Status403Forbidden);
+            }
         }
 
         await transaction.CommitAsync();
