@@ -182,7 +182,7 @@ public abstract class PlaywrightTests
 
     protected async Task UsernamePasswordLogin()
     {
-        using (await FixtureLocks[Fixture].LockAsync())
+        using (await LockFixture())
         {
             if (!Registered.TryGetValue((Fixture, Username), out var registered) || !registered)
             {
@@ -221,5 +221,10 @@ public abstract class PlaywrightTests
         {
             (await Page.TitleAsync()).Should().Be("Home page - Tubeshade");
         }
+    }
+
+    protected async Task<SemaphoreSlimExtensions.SemaphoreScope> LockFixture()
+    {
+        return await FixtureLocks[Fixture].LockAsync();
     }
 }

@@ -27,7 +27,8 @@ else if (Model.Type == TaskType.DownloadVideo && Model.VideoId is { } videoId)
         <span>"@Model.Name"</span>
     </a>
 }
-else if (Model.Type == TaskType.ScanChannel && Model.ChannelId is { } channelId)
+else if (Model.Type.Name is TaskType.Names.ScanChannel or TaskType.Names.YouTubeFeedUpdate &&
+         Model.ChannelId is { } channelId)
 {
     <a asp-page="/Channels/Channel" asp-route-channelId="@channelId">
         <span>"@Model.Name"</span>

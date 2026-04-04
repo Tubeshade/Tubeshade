@@ -100,8 +100,8 @@ internal static partial class LoggerExtensions
     [LoggerMessage(27, Debug, "Received feed update notification for channel {ChannelId}")]
     internal static partial void ReceivedFeedUpdate(this ILogger logger, Guid channelId);
 
-    [LoggerMessage(28, Information, "Received feed update notification for channel {ChannelName} video {VideoUrl}")]
-    internal static partial void ReceivedFeedUpdate(this ILogger logger, string channelName, string videoUrl);
+    [LoggerMessage(28, Information, "Received feed update notification for channel {ChannelName} ({ChannelId})")]
+    internal static partial void ReceivedFeedUpdate(this ILogger logger, Guid channelId, string channelName);
 
     [LoggerMessage(29, Information, "Not indexing video of type {VideoType} due to preferences")]
     internal static partial void FeedUpdateIgnored(this ILogger logger, string videoType);
@@ -266,7 +266,7 @@ internal static partial class LoggerExtensions
     internal static partial void ScanningSubscribedChannels(this ILogger logger, int count);
 
     [LoggerMessage(83, Information, "Not indexing video because it is a post")]
-    internal static partial void FeedUpdateIgnored(this ILogger logger);
+    internal static partial void SkippingPost(this ILogger logger);
 
     [LoggerMessage(84, Warning, "Failed to check {ExternalUrl}")]
     internal static partial void YouTubeUriCheckFailed(this ILogger logger, Exception exception, string externalUrl);
@@ -282,4 +282,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(88, Debug, "Writing cookies for {Domain} to {Path}")]
     internal static partial void WritingCookies(this ILogger logger, string domain, string path);
+
+    [LoggerMessage(89, Information, "Not indexing video due to preferences")]
+    internal static partial void FeedUpdateIgnored(this ILogger logger);
 }

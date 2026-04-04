@@ -211,12 +211,7 @@ public sealed class YoutubeIndexingService
             return video.Id;
         }
 
-        type ??= videoData switch
-        {
-            { LiveStatus: not (LiveStatus.None or LiveStatus.NotLive) } => VideoType.Livestream,
-            { Duration: < 20 } => VideoType.Short,
-            _ => VideoType.Video,
-        };
+        type ??= videoData.GetVideoType();
 
         Period? duration = null;
         if (videoData.Duration is { } durationInSeconds)
@@ -724,7 +719,7 @@ public sealed class YoutubeIndexingService
 
         foreach (var (videoId, channelId, videoUrl) in await _videoRepository.GetForReindex(libraryId, transaction))
         {
-            await _taskService.IndexVideo(userId, libraryId, videoUrl, channelId, videoId, source, transaction);
+            await _taskService.IndexVideo(userId, libraryId, videoUrl, channelId, videoId, source, transaction, cancellationToken);
         }
 
         await transaction.CommitAsync(cancellationToken);

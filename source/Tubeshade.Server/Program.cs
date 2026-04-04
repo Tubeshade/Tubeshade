@@ -24,7 +24,6 @@ using Tubeshade.Server.Configuration.Startup;
 using Tubeshade.Server.Services;
 using Tubeshade.Server.Services.Background;
 using Tubeshade.Server.Services.Ffmpeg;
-using Tubeshade.Server.V1.Controllers.YouTube;
 
 namespace Tubeshade.Server;
 
@@ -161,6 +160,7 @@ internal static class Program
             .AddScoped<IYtdlpWrapper, YtdlpWrapper>()
             .AddScoped<YoutubeIndexingService>()
             .AddScoped<YoutubeDownloadService>()
+            .AddScoped<YoutubeWebhookService>()
             .AddScoped<CookiesServiceFactory>()
             .AddSponsorBlockClient()
             .AddScoped<SubscriptionsService>()
@@ -170,7 +170,7 @@ internal static class Program
             .AddPubSubHubbubClient();
 
         builder.Services
-            .AddHttpClient(nameof(NotificationsController), client => client.Timeout = TimeSpan.FromSeconds(15))
+            .AddHttpClient<YoutubePostChecker>(client => client.Timeout = TimeSpan.FromSeconds(15))
             .UseSocketsHttpHandler((handler, _) =>
             {
                 handler.ConnectTimeout = TimeSpan.FromSeconds(15);

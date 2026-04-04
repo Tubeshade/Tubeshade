@@ -1221,6 +1221,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Feed update from.
+        /// </summary>
+        public static string Tasks_Type_youtube_feed_update {
+            get {
+                return ResourceManager.GetString("Tasks_Type_youtube_feed_update", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Chapter.
         /// </summary>
         public static string Video_Chapter {

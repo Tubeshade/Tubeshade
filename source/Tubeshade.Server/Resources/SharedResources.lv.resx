@@ -455,4 +455,7 @@
     <data name="Tasks_Status" xml:space="preserve">
         <value>Statuss</value>
     </data>
+    <data name="Tasks_Type_youtube_feed_update" xml:space="preserve">
+        <value>Jaunumi no</value>
+    </data>
 </root>

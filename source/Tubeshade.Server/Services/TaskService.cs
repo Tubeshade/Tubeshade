@@ -90,14 +90,25 @@ public sealed class TaskService
         }
     }
 
-    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, TaskSource source)
+    public async ValueTask FeedUpdate(Guid userId, Guid libraryId, Guid channelId, string payload)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
-        await IndexVideo(userId, libraryId, url, source, transaction);
+
+        var task = TaskEntity.YouTubeFeedUpdate(libraryId, userId, channelId, payload);
+        var taskId = await _taskRepository.AddTask(task, transaction);
+        await _taskRepository.TriggerTask(taskId, TaskSource.Webhook, userId, transaction);
+
         await transaction.CommitAsync();
     }
 
-    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, TaskSource source, NpgsqlTransaction transaction)
+    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, TaskSource source, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        await IndexVideo(userId, libraryId, url, source, transaction, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, TaskSource source, NpgsqlTransaction transaction, CancellationToken cancellationToken = default)
     {
         var task = TaskEntity.Index(libraryId, userId, url);
         if (await _taskRepository.TryAddTask(task, transaction) is not { } taskId)
@@ -109,12 +120,19 @@ public sealed class TaskService
         await _taskRepository.TriggerTask(taskId, source, userId, transaction);
     }
 
+    public async ValueTask IndexVideo(Guid userId, Guid libraryId, VideoEntity video, TaskSource source, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        await IndexVideo(userId, libraryId, video.ExternalUrl, video.ChannelId, video.Id, source, transaction, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
     public ValueTask IndexVideo(Guid userId, Guid libraryId, VideoEntity video, TaskSource source, NpgsqlTransaction transaction)
     {
         return IndexVideo(userId, libraryId, video.ExternalUrl, video.ChannelId, video.Id, source, transaction);
     }
 
-    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, Guid channelId, Guid videoId, TaskSource source, NpgsqlTransaction transaction)
+    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, Guid channelId, Guid videoId, TaskSource source, NpgsqlTransaction transaction, CancellationToken cancellationToken = default)
     {
         var task = TaskEntity.Index(libraryId, userId, channelId, videoId, url);
         if (await _taskRepository.TryAddTask(task, transaction) is not { } taskId)

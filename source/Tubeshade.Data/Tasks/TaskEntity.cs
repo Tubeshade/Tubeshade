@@ -22,6 +22,8 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
 
     public bool AllVideos { get; init; }
 
+    public string? Payload { get; init; }
+
     public (Guid LibraryId, Guid UserId) DestructureLibraryTask()
     {
         return this is { LibraryId: { } libraryId, UserId: { } userId }
@@ -41,6 +43,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         VideoId = null,
         Url = url,
         AllVideos = false,
+        Payload = null,
     };
 
     public static TaskEntity Index(Guid libraryId, Guid userId, Guid channelId, Guid videoId, string url) => new()
@@ -55,6 +58,22 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         VideoId = videoId,
         Url = url,
         AllVideos = false,
+        Payload = null,
+    };
+
+    public static TaskEntity YouTubeFeedUpdate(Guid libraryId, Guid userId, Guid channelId, string payload) => new()
+    {
+        CreatedByUserId = userId,
+        ModifiedByUserId = userId,
+        OwnerId = userId,
+        Type = TaskType.YouTubeFeedUpdate,
+        UserId = userId,
+        LibraryId = libraryId,
+        ChannelId = channelId,
+        VideoId = null,
+        Url = null,
+        AllVideos = false,
+        Payload = payload,
     };
 
     public static TaskEntity Download(Guid libraryId, Guid userId, Guid videoId) => new()
@@ -69,6 +88,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         VideoId = videoId,
         Url = null,
         AllVideos = false,
+        Payload = null,
     };
 
     public static TaskEntity ScanChannel(Guid libraryId, Guid userId, Guid channelId, bool allVideos) => new()
@@ -83,6 +103,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         VideoId = null,
         Url = null,
         AllVideos = allVideos,
+        Payload = null,
     };
 
     public static TaskEntity ScanSubscriptions(Guid libraryId, Guid userId) =>
@@ -106,5 +127,6 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         VideoId = null,
         Url = null,
         AllVideos = false,
+        Payload = null,
     };
 }

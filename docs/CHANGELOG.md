@@ -4,6 +4,16 @@
 
 _Latest build from master branch._
 
+### Changed
+
+- Process feed updates in a background task instead of during the request
+  ([#264](https://github.com/Tubeshade/Tubeshade/pull/264))
+
+### Fixed
+
+- Identify and filter livestream feed updates
+  ([#121](https://github.com/Tubeshade/Tubeshade/issues/121))
+
 ## [0.1.5] - 2026-04-04
 
 ### Added

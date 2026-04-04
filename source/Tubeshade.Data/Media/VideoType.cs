@@ -26,12 +26,6 @@ public sealed class VideoType : SmartEnum<VideoType>, IParsable<VideoType>
             return true;
         }
 
-        if (url.Contains("/watch"))
-        {
-            videoType = Video;
-            return true;
-        }
-
         videoType = null;
         return false;
     }

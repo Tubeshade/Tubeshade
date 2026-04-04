@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Net.Http;
-using System.Net.Mime;
+using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -10,16 +10,11 @@ using Microsoft.Extensions.Logging;
 using NodaTime;
 using Npgsql;
 using PubSubHubbub;
-using PubSubHubbub.Models;
 using Tubeshade.Data;
-using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
-using Tubeshade.Data.Preferences;
-using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Services;
 using Tubeshade.Server.V1.Models;
-using static System.Net.HttpStatusCode;
 using LoggerExtensions = Tubeshade.Server.Services.LoggerExtensions;
 
 namespace Tubeshade.Server.V1.Controllers.YouTube;
@@ -34,11 +29,8 @@ public sealed class NotificationsController : ControllerBase
     private readonly NpgsqlConnection _connection;
     private readonly ChannelRepository _channelRepository;
     private readonly ChannelSubscriptionRepository _channelSubscriptionRepository;
-    private readonly VideoRepository _videoRepository;
-    private readonly PreferencesRepository _preferencesRepository;
     private readonly UserRepository _userRepository;
     private readonly TaskService _taskService;
-    private readonly HttpClient _httpClient;
 
     public NotificationsController(
         ILogger<NotificationsController> logger,
@@ -46,22 +38,16 @@ public sealed class NotificationsController : ControllerBase
         NpgsqlConnection connection,
         ChannelRepository channelRepository,
         ChannelSubscriptionRepository channelSubscriptionRepository,
-        VideoRepository videoRepository,
-        PreferencesRepository preferencesRepository,
         UserRepository userRepository,
-        TaskService taskService,
-        IHttpClientFactory httpClientFactory)
+        TaskService taskService)
     {
         _logger = logger;
         _clock = clock;
         _connection = connection;
         _channelRepository = channelRepository;
         _channelSubscriptionRepository = channelSubscriptionRepository;
-        _videoRepository = videoRepository;
-        _preferencesRepository = preferencesRepository;
         _userRepository = userRepository;
         _taskService = taskService;
-        _httpClient = httpClientFactory.CreateClient(nameof(NotificationsController));
     }
 
     [HttpGet]
@@ -137,97 +123,27 @@ public sealed class NotificationsController : ControllerBase
     }
 
     [HttpPost]
-    [Consumes(MediaTypeNames.Application.Xml)]
-    public async Task<IActionResult> Post(Guid channelId, Feed feed)
+    public async Task<IActionResult> Post(Guid channelId, CancellationToken cancellationToken)
     {
-        using (LoggerExtensions.FeedUpdateScope(_logger, feed))
-        {
-            _logger.ReceivedFeedUpdate(channelId);
-        }
+        _logger.ReceivedFeedUpdate(channelId);
 
-
-        await using var transaction = await _connection.OpenAndBeginTransaction();
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var channel = await _channelRepository.FindAsync(channelId, transaction);
         if (channel is null)
         {
             return Problem("Channel does not exist", statusCode: StatusCodes.Status404NotFound);
         }
 
-        var videoUrl = feed.Entry.Link.Uri;
-        var isPost = false;
-        _logger.ReceivedFeedUpdate(channel.Name, videoUrl);
+        _logger.ReceivedFeedUpdate(channelId, channel.Name);
 
         var userId = await _userRepository.GetSystemUserId(transaction);
         var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, transaction);
-        var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channelId, userId, CancellationToken.None);
-        var existingVideo = await _videoRepository.FindByExternalUrl(videoUrl, userId, Access.Read, transaction);
+        await transaction.CommitAsync(cancellationToken);
 
-        var videoType = existingVideo?.Type;
-        if (videoType is null)
-        {
-            _ = VideoType.TryFromUrl(videoUrl, out videoType);
-            isPost = await IsYouTubePost(videoUrl);
-        }
-
-        if (isPost)
-        {
-            _logger.FeedUpdateIgnored();
-        }
-        else if (preferences is not null &&
-                 videoType is not null &&
-                 (videoType.Name is not VideoType.Names.Video || !(preferences.VideosCount > 0)) &&
-                 (videoType.Name is not VideoType.Names.Livestream || !(preferences.LiveStreamsCount > 0)) &&
-                 (videoType.Name is not VideoType.Names.Short || !(preferences.ShortsCount > 0)))
-        {
-            _logger.FeedUpdateIgnored(videoType.Name);
-        }
-        else
-        {
-            if (existingVideo is not null)
-            {
-                await _taskService.IndexVideo(userId, libraryId, existingVideo, TaskSource.Webhook, transaction);
-            }
-            else
-            {
-                await _taskService.IndexVideo(userId, libraryId, videoUrl, TaskSource.Webhook, transaction);
-            }
-        }
-
-        await transaction.CommitAsync();
+        using var reader = new StreamReader(Request.Body, Encoding.UTF8);
+        var payload = await reader.ReadToEndAsync(cancellationToken);
+        await _taskService.FeedUpdate(userId, libraryId, channelId, payload);
 
         return NoContent();
-    }
-
-    private async Task<bool> IsYouTubePost(string videoUrl)
-    {
-        if (!Uri.TryCreate(videoUrl, UriKind.Absolute, out var uri))
-        {
-            return false;
-        }
-
-        if (!uri.Host.Equals("youtube.com", StringComparison.OrdinalIgnoreCase) &&
-            !uri.Host.Equals("youtu.be", StringComparison.OrdinalIgnoreCase) &&
-            !uri.Host.EndsWith(".youtube.com", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        if (uri.PathAndQuery.Contains("/post/", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        try
-        {
-            using var response = await _httpClient.GetAsync(videoUrl, HttpCompletionOption.ResponseHeadersRead);
-            return response.StatusCode is Moved or Found or SeeOther or TemporaryRedirect or PermanentRedirect &&
-                   response.Headers.Location is { } location &&
-                   location.PathAndQuery.Contains("/post/", StringComparison.OrdinalIgnoreCase);
-        }
-        catch (Exception exception)
-        {
-            _logger.YouTubeUriCheckFailed(exception, videoUrl);
-            return false;
-        }
     }
 }

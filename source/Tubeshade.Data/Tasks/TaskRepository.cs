@@ -19,8 +19,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos) 
-         VALUES (@{nameof(TaskEntity.CreatedByUserId)}, @{nameof(TaskEntity.ModifiedByUserId)}, @{nameof(TaskEntity.OwnerId)}, @{nameof(TaskEntity.Type)}, @{nameof(TaskEntity.UserId)}, @{nameof(TaskEntity.LibraryId)}, @{nameof(TaskEntity.ChannelId)}, @{nameof(TaskEntity.VideoId)}, @{nameof(TaskEntity.Url)}, @{nameof(TaskEntity.AllVideos)})
+         INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos, payload) 
+         VALUES (@{nameof(TaskEntity.CreatedByUserId)}, @{nameof(TaskEntity.ModifiedByUserId)}, @{nameof(TaskEntity.OwnerId)}, @{nameof(TaskEntity.Type)}, @{nameof(TaskEntity.UserId)}, @{nameof(TaskEntity.LibraryId)}, @{nameof(TaskEntity.ChannelId)}, @{nameof(TaskEntity.VideoId)}, @{nameof(TaskEntity.Url)}, @{nameof(TaskEntity.AllVideos)}, @{nameof(TaskEntity.Payload)})
          RETURNING id;
          """;
 
@@ -39,7 +39,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                 channel_id AS {nameof(TaskEntity.ChannelId)},
                 video_id AS {nameof(TaskEntity.VideoId)},
                 url AS {nameof(TaskEntity.Url)},
-                all_videos AS {nameof(TaskEntity.AllVideos)}
+                all_videos AS {nameof(TaskEntity.AllVideos)},
+                payload AS {nameof(TaskEntity.Payload)}
          FROM tasks.tasks
          """;
 
@@ -52,7 +53,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              channel_id = @{nameof(TaskEntity.ChannelId)},
              video_id = @{nameof(TaskEntity.VideoId)},
              url = @{nameof(TaskEntity.Url)},
-             all_videos = @{nameof(TaskEntity.AllVideos)}
+             all_videos = @{nameof(TaskEntity.AllVideos)},
+             payload = @{nameof(TaskEntity.Payload)}
          """;
 
     public async ValueTask<TaskEntity?> TryDequeueTask(Guid taskId, NpgsqlTransaction transaction)
@@ -110,7 +112,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
     public async ValueTask TriggerTask(Guid taskId, TaskSource source, Guid userId, NpgsqlTransaction transaction)
     {
-        await Connection.ExecuteAsync(
+        var notifications = await Connection.QueryAsync(
             // lang=sql
             $"""
              WITH accessible AS
@@ -129,6 +131,11 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              """,
             new { taskId, source, userId },
             transaction);
+
+        if (!notifications.Any())
+        {
+            throw new InvalidOperationException("Failed to trigger task due to missing access");
+        }
     }
 
     public async ValueTask CancelTaskRun(Guid taskRunId, Guid userId, NpgsqlTransaction transaction)
@@ -287,6 +294,9 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
                         WHEN filtered_tasks.type = 'scan_channel' THEN
                             (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
+             
+                        WHEN filtered_tasks.type = 'youtube_feed_update' THEN
+                            (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
 
                         ELSE
                             libraries.name
@@ -397,7 +407,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                          @{nameof(task.ChannelId)} AS channel_id,
                          @{nameof(task.VideoId)} AS video_id,
                          @{nameof(task.Url)} AS url,
-                         @{nameof(task.AllVideos)} AS all_videos
+                         @{nameof(task.AllVideos)} AS all_videos,
+                         @{nameof(task.Payload)} AS payload
                   WHERE NOT EXISTS (SELECT task_runs.id
                                     FROM tasks.tasks
                                         INNER JOIN tasks.task_runs ON tasks.id = tasks.task_runs.task_id
@@ -409,8 +420,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                                         OR tasks.url IN (SELECT external_url FROM matching_videos)
                                        OR (@{nameof(task.Url)} IS NOT NULL AND tasks.url = @{nameof(task.Url)}))))
 
-             INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos) 
-             SELECT created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos FROM new_task
+             INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos, payload) 
+             SELECT created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos, payload FROM new_task
              RETURNING id;
              """,
             task,

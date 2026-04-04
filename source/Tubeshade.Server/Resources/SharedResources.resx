@@ -462,4 +462,7 @@
     <data name="Tasks_Status_All" xml:space="preserve">
         <value>All</value>
     </data>
+    <data name="Tasks_Type_youtube_feed_update" xml:space="preserve">
+        <value>Feed update from</value>
+    </data>
 </root>

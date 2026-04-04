@@ -171,6 +171,22 @@ public sealed class BackgroundWorkerService : BackgroundService
             task.VideoId = result.VideoId;
             await taskRepository.UpdateAsync(task);
         }
+        else if (task.Type == TaskType.YouTubeFeedUpdate)
+        {
+            using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory(TaskRunPrefix, taskRunId);
+
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            var service = provider.GetRequiredService<YoutubeWebhookService>();
+            var cookieService = cookiesServiceFactory.Create(userId, libraryId, scopedDirectory.Directory, cancellationToken);
+
+            await service.ProcessWebhook(
+                task.Payload!,
+                libraryId,
+                userId,
+                task.ChannelId!.Value,
+                cookieService,
+                cancellationToken);
+        }
         else if (task.Type == TaskType.DownloadVideo)
         {
             using var scope = await LockAsync(_downloadLock, taskRepository, taskRunId, cancellationToken);
