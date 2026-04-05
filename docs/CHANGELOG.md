@@ -13,6 +13,8 @@ _Latest build from master branch._
 
 - Identify and filter livestream feed updates
   ([#121](https://github.com/Tubeshade/Tubeshade/issues/121))
+- Access control rules for new users and system user
+  ([#264](https://github.com/Tubeshade/Tubeshade/pull/264))
 
 ## [0.1.5] - 2026-04-04
 
