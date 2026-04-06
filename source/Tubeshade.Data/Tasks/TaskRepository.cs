@@ -366,9 +366,11 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                       LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
              WHERE task_run_results.id IS NULL
                AND task_runs.created_at < (SELECT created_at FROM tasks.task_runs WHERE id = @{nameof(parameters.RunId)})
+               AND ((tasks.type = '{TaskType.Names.YouTubeFeedUpdate}' AND @{nameof(parameters.Type)}::tasks.task_type = '{TaskType.Names.YouTubeFeedUpdate}')
+                 OR (tasks.type != '{TaskType.Names.YouTubeFeedUpdate}' AND @{nameof(parameters.Type)}::tasks.task_type != '{TaskType.Names.YouTubeFeedUpdate}'))
                AND (tasks.video_id IN (SELECT id FROM matching_videos)
                  OR tasks.url IN (SELECT external_url FROM matching_videos)
-                 OR tasks.channel_id IN (SELECT id FROM matching_channels)
+                 OR (tasks.channel_id IN (SELECT id FROM matching_channels))
                  OR (@{nameof(parameters.VideoId)} IS NOT NULL AND tasks.video_id = @{nameof(parameters.VideoId)})
                  OR (@{nameof(parameters.ChannelId)} IS NOT NULL AND tasks.channel_id = @{nameof(parameters.ChannelId)})
                  OR (@{nameof(parameters.Url)} IS NOT NULL AND tasks.url = @{nameof(parameters.Url)})

@@ -207,6 +207,84 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         ids.Should().ContainSingle(id => id.HasValue);
     }
 
+    [Test]
+    public async Task FeedUpdates()
+    {
+        var token = CancellationToken.None;
+
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
+
+        Guid channelId1;
+        Guid channelId2;
+        Guid videoId;
+
+        await using (var transaction = await connection.OpenAndBeginTransaction(cancellationToken: token))
+        {
+            var channelRepository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
+            var videoRepository = scope.ServiceProvider.GetRequiredService<VideoRepository>();
+            channelId1 = await CreateChannel(channelRepository, transaction);
+            channelId2 = await CreateChannel(channelRepository, transaction);
+            videoId = await CreateVideo(channelId1, Guid.NewGuid().ToString("N"), videoRepository, transaction);
+
+            await transaction.CommitAsync(token);
+        }
+
+        Guid updateRunId;
+
+        await using (var transaction = await connection.OpenAndBeginTransaction(cancellationToken: token))
+        {
+            var task = TaskEntity.YouTubeFeedUpdate(_libraryId, _userId, channelId1, string.Empty);
+            var taskId = await repository.AddTask(task, transaction);
+            updateRunId = await repository.AddTaskRun(taskId, TaskSource.Webhook, transaction);
+            await repository.StartTaskRun(updateRunId, token);
+            await transaction.CommitAsync(token);
+        }
+
+        TaskEntity blockedTask;
+        Guid blockedRunId;
+
+        TaskEntity unblockedTask;
+        Guid unblockedRunId;
+
+        TaskEntity indexTask;
+        Guid indexTaskRunId;
+
+        await using (var transaction = await connection.OpenAndBeginTransaction(token))
+        {
+            blockedTask = TaskEntity.YouTubeFeedUpdate(_libraryId, _userId, channelId1, string.Empty);
+            var blockedTaskId = await repository.AddTask(blockedTask, transaction);
+            blockedRunId = await repository.AddTaskRun(blockedTaskId, TaskSource.Webhook, transaction);
+
+            unblockedTask = TaskEntity.YouTubeFeedUpdate(_libraryId, _userId, channelId2, string.Empty);
+            var unblockedTaskId = await repository.AddTask(unblockedTask, transaction);
+            unblockedRunId = await repository.AddTaskRun(unblockedTaskId, TaskSource.Webhook, transaction);
+
+            indexTask = TaskEntity.Index(_libraryId, _userId, channelId1, videoId, Guid.NewGuid().ToString("N"));
+            var indexTaskId = await repository.AddTask(indexTask, transaction);
+            indexTaskRunId = await repository.AddTaskRun(indexTaskId, TaskSource.Webhook, transaction);
+
+            await transaction.CommitAsync(token);
+        }
+
+        using var assertionScope = new AssertionScope();
+
+        (await repository.GetBlockingTaskRunIds(BlockingTaskParameters.FromTask(blockedTask, blockedRunId), token))
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .Be(updateRunId);
+
+        (await repository.GetBlockingTaskRunIds(BlockingTaskParameters.FromTask(indexTask, indexTaskRunId), token))
+            .Should()
+            .BeEmpty();
+
+        (await repository.GetBlockingTaskRunIds(BlockingTaskParameters.FromTask(unblockedTask, unblockedRunId), token))
+            .Should()
+            .BeEmpty();
+    }
+
     private async Task<Guid?> AddTask(string url)
     {
         await using var scope = Fixture.Services.CreateAsyncScope();
