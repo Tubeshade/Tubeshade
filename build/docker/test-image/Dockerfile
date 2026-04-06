@@ -18,6 +18,8 @@ ADD --checksum="sha256:c2b0189f581fe4a2ddd41954f1bcb7d327db04b07ed0dea97e4f1b3e0
 RUN --mount=type=cache,target=/root/.nuget/packages \
     ./build/docker/test-image/publish.sh "Tubeshade.Server" $DOTNET_RUNTIME $BUILD_NUMBER
 
+RUN dotnet tool restore
+
 VOLUME /reports
 EXPOSE 8080
 
