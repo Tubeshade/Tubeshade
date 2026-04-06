@@ -60,7 +60,7 @@ public sealed class YoutubeWebhookService
 
         await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.RepeatableRead, cancellationToken);
 
-        var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channelId, userId, cancellationToken);
+        var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channelId, userId, transaction, cancellationToken);
         var existingVideo = await _videoRepository.FindByExternalUrl(videoUrl, userId, Access.Read, transaction);
 
         await transaction.CommitAsync(cancellationToken);

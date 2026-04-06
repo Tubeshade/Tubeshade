@@ -10,6 +10,8 @@ _Latest build from master branch._
   ([#264](https://github.com/Tubeshade/Tubeshade/pull/264))
 - Use textarea instead of CSV for multi-value inputs
   ([#269](https://github.com/Tubeshade/Tubeshade/pull/269))
+- Save changes after each video when scanning channels
+  ([#271](https://github.com/Tubeshade/Tubeshade/pull/271))
 
 ### Fixed
 

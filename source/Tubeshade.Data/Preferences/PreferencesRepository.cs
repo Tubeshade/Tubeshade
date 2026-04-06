@@ -245,10 +245,30 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                 transaction));
     }
 
-    public async ValueTask<PreferencesEntity?> GetEffectiveForChannel(
+    public ValueTask<PreferencesEntity?> GetEffectiveForChannel(
         Guid libraryId,
         Guid channelId,
         Guid userId,
+        CancellationToken cancellationToken)
+    {
+        return GetEffectiveForChannelCore(libraryId, channelId, userId, null, cancellationToken);
+    }
+
+    public ValueTask<PreferencesEntity?> GetEffectiveForChannel(
+        Guid libraryId,
+        Guid channelId,
+        Guid userId,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        return GetEffectiveForChannelCore(libraryId, channelId, userId, transaction, cancellationToken);
+    }
+
+    private async ValueTask<PreferencesEntity?> GetEffectiveForChannelCore(
+        Guid libraryId,
+        Guid channelId,
+        Guid userId,
+        NpgsqlTransaction? transaction,
         CancellationToken cancellationToken)
     {
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
@@ -276,6 +296,7 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
              WHERE channels.id = @{nameof(channelId)} AND COALESCE(channel_p.id, library_p.id) IS NOT NULL;
              """,
             new { libraryId, channelId, userId },
+            transaction,
             cancellationToken: cancellationToken));
     }
 
