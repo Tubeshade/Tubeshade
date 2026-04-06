@@ -1,4 +1,5 @@
 ﻿@using Tubeshade.Data.Media
+@using Tubeshade.Server.Pages.Shared
 @model CreateVideoModel
 
 <form method="post" class="row g-3 mb-3">
@@ -103,7 +104,7 @@
         <label class="form-label" asp-for="Description">
             @SharedResources.Videos_Create_Description
         </label>
-        <input class="form-control" asp-for="Description" type="text"/>
+        <textarea class="form-control" asp-for="Description" rows="@(Model.Description?.GetLineCount() + 1 ?? 2)"></textarea>
         <span class="form-text text-danger" asp-validation-for="Description"></span>
     </div>
 
@@ -111,7 +112,7 @@
         <label class="form-label" asp-for="Categories">
             @SharedResources.Videos_Create_Categories
         </label>
-        <input class="form-control" asp-for="Categories" type="text"/>
+        <textarea class="form-control" asp-for="Categories" rows="@(Model.Categories?.GetNonEmptyLineCount() + 1 ?? 2)"></textarea>
         <span class="form-text text-danger" asp-validation-for="Categories"></span>
     </div>
 
@@ -119,7 +120,7 @@
         <label class="form-label" asp-for="Tags">
             @SharedResources.Videos_Create_Tags
         </label>
-        <input class="form-control" asp-for="Tags" type="text"/>
+        <textarea class="form-control" asp-for="Tags" rows="@(Model.Tags?.GetNonEmptyLineCount() + 1 ?? 2)"></textarea>
         <span class="form-text text-danger" asp-validation-for="Tags"></span>
     </div>
 

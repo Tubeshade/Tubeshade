@@ -8,6 +8,8 @@ _Latest build from master branch._
 
 - Process feed updates in a background task instead of during the request
   ([#264](https://github.com/Tubeshade/Tubeshade/pull/264))
+- Use textarea instead of CSV for multi-value inputs
+  ([#269](https://github.com/Tubeshade/Tubeshade/pull/269))
 
 ### Fixed
 

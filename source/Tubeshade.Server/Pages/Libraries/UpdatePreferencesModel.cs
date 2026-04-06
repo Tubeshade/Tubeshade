@@ -1,5 +1,7 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using Tubeshade.Data.Preferences;
+using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Libraries;
 
@@ -37,7 +39,7 @@ public sealed class UpdatePreferencesModel
         PlayerClient = preferences?.PlayerClient?.Name;
         DownloadVideos = preferences?.DownloadVideos;
         DownloadMethod = preferences?.DownloadMethod;
-        Formats = preferences?.Formats is { Length: > 0 } formats ? string.Join(',', formats) : null;
+        Formats = preferences?.Formats is { Length: > 0 } formats ? string.Join(Environment.NewLine, formats) : null;
     }
 
     public PreferencesEntity ToPreferences()
@@ -56,7 +58,7 @@ public sealed class UpdatePreferencesModel
             PlayerClient = client,
             DownloadVideos = DownloadVideos,
             DownloadMethod = DownloadMethod,
-            Formats = string.IsNullOrWhiteSpace(Formats) ? null : Formats.Split(','),
+            Formats = string.IsNullOrWhiteSpace(Formats) ? null : Formats.GetNonEmptyLines().ToArray(),
         };
     }
 
@@ -73,6 +75,6 @@ public sealed class UpdatePreferencesModel
         preferences.PlayerClient = client;
         preferences.DownloadVideos = DownloadVideos;
         preferences.DownloadMethod = DownloadMethod;
-        preferences.Formats = string.IsNullOrWhiteSpace(Formats) ? null : Formats.Split(',');
+        preferences.Formats = string.IsNullOrWhiteSpace(Formats) ? null : Formats.GetNonEmptyLines().ToArray();
     }
 }

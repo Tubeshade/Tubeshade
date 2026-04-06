@@ -95,8 +95,8 @@
         <label class="form-label" asp-for="Formats">
             @SharedResources.Preferences_DownloadFormats
         </label>
-        <input class="form-control" asp-for="Formats" type="text"
-               placeholder="@(Model.Effective?.Formats is null or [] ? string.Empty : string.Join(",", Model.Effective.Formats))"/>
+        <textarea class="form-control" asp-for="Formats" rows="@(Model.Effective?.Formats?.Length + 1 ?? 2)"
+                  placeholder="@(Model.Effective?.Formats is null or [] ? string.Empty : string.Join(Environment.NewLine, Model.Effective.Formats))"></textarea>
         <span class="form-text text-danger" asp-validation-for="Formats"></span>
     </div>
 

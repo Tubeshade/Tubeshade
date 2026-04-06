@@ -10,9 +10,6 @@ namespace Tubeshade.Server.Pages.Videos;
 
 public sealed class CreateVideoModel
 {
-    // lang=regex
-    public const string CommaSeparatedRegexPattern = "^[a-zA-Z]+(,[a-zA-Z]+)*$";
-
     [Required]
     public string Name { get; set; } = null!;
 
@@ -46,10 +43,8 @@ public sealed class CreateVideoModel
 
     public string? Description { get; set; }
 
-    [RegularExpression(CommaSeparatedRegexPattern)]
     public string? Categories { get; set; }
 
-    [RegularExpression(CommaSeparatedRegexPattern)]
     public string? Tags { get; set; }
 
 
