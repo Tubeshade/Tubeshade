@@ -57,13 +57,13 @@ public sealed class LibraryCookieRepository
                           ownerships.user_id = @{nameof(userId)} AND
                           (ownerships.access = @{nameof(access)} OR ownerships.access = 'owner'))
 
-             SELECT cookies.id AS Id,
-                    cookies.created_at AS CreatedAt,
-                    cookies.created_by_user_id AS CreatedByUserId,
-                    cookies.modified_at AS ModifiedAt,
-                    cookies.modified_by_user_id AS ModifiedByUserId,
-                    cookies.domain AS Domain,
-                    cookies.cookie AS Cookie
+             SELECT cookies.id,
+                    cookies.created_at,
+                    cookies.created_by_user_id,
+                    cookies.modified_at,
+                    cookies.modified_by_user_id,
+                    cookies.domain,
+                    cookies.cookie
              FROM media.library_external_cookies cookies
                  INNER JOIN media.libraries ON cookies.id = libraries.id
              WHERE libraries.id = @{nameof(libraryId)}

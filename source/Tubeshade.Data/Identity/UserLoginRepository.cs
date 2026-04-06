@@ -42,15 +42,11 @@ public sealed class UserLoginRepository
     public async ValueTask<List<UserLogin>> GetAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         const string sql =
-            $"""
-             SELECT provider_key          AS {nameof(UserLogin.ProviderKey)},
-                    provider_display_name AS {nameof(UserLogin.ProviderDisplayName)},
-                    user_id               AS {nameof(UserLogin.UserId)},
-                    login_provider        AS {nameof(UserLogin.LoginProvider)},
-                    refresh_token         AS {nameof(UserLogin.RefreshToken)}
-             FROM identity.user_logins
-             WHERE user_id = @userId;
-             """;
+            """
+            SELECT provider_key, provider_display_name, user_id, login_provider, refresh_token
+            FROM identity.user_logins
+            WHERE user_id = @userId;
+            """;
 
         var command = new CommandDefinition(sql, new { userId }, cancellationToken: cancellationToken);
         var enumerable = await _connection.QueryAsync<UserLogin>(command);

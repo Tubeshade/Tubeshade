@@ -23,18 +23,18 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
 
     /// <inheritdoc />
     protected override string SelectSql =>
-        $"""
-         SELECT id AS {nameof(ImageFileEntity.Id)},
-                created_at AS {nameof(ImageFileEntity.CreatedAt)},
-                created_by_user_id AS {nameof(ImageFileEntity.CreatedByUserId)},
-                modified_at AS {nameof(ImageFileEntity.ModifiedAt)},
-                modified_by_user_id AS {nameof(ImageFileEntity.ModifiedByUserId)},
-                storage_path AS {nameof(ImageFileEntity.StoragePath)},
-                type AS {nameof(ImageFileEntity.Type)},
-                width AS {nameof(ImageFileEntity.Width)},
-                height AS {nameof(ImageFileEntity.Height)}
-         FROM media.image_files
-         """;
+        """
+        SELECT id,
+               created_at,
+               created_by_user_id,
+               modified_at,
+               modified_by_user_id,
+               storage_path,
+               type,
+               width,
+               height
+        FROM media.image_files
+        """;
 
     /// <inheritdoc />
     protected override string UpdateSet =>
@@ -113,15 +113,15 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
             $"""
              {AccessCte}
 
-             SELECT image_files.id AS {nameof(ImageFileEntity.Id)},
-                    image_files.created_at AS {nameof(ImageFileEntity.CreatedAt)},
-                    image_files.created_by_user_id AS {nameof(ImageFileEntity.CreatedByUserId)},
-                    image_files.modified_at AS {nameof(ImageFileEntity.ModifiedAt)},
-                    image_files.modified_by_user_id AS {nameof(ImageFileEntity.ModifiedByUserId)},
-                    image_files.storage_path AS {nameof(ImageFileEntity.StoragePath)},
-                    image_files.type AS {nameof(ImageFileEntity.Type)},
-                    image_files.width AS {nameof(ImageFileEntity.Width)},
-                    image_files.height AS {nameof(ImageFileEntity.Height)}
+             SELECT image_files.id,
+                    image_files.created_at,
+                    image_files.created_by_user_id,
+                    image_files.modified_at,
+                    image_files.modified_by_user_id,
+                    image_files.storage_path,
+                    image_files.type,
+                    image_files.width,
+                    image_files.height
              FROM media.image_files
                  INNER JOIN media.video_images ON image_files.id = video_images.image_id
                  INNER JOIN accessible ON image_files.id = accessible.image_id

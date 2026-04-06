@@ -10,32 +10,32 @@ public sealed class LibraryRepository(NpgsqlConnection connection) : ModifiableR
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        $"""
-         INSERT INTO media.libraries (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, subscriptions_schedule_id) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @SubscriptionsScheduleId)
-         RETURNING id;
-         """;
+        """
+        INSERT INTO media.libraries (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, subscriptions_schedule_id) 
+        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @SubscriptionsScheduleId)
+        RETURNING id;
+        """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
-        $"""
-         SELECT id AS Id,
-                created_at AS CreatedAt,
-                created_by_user_id AS CreatedByUserId,
-                modified_at AS ModifiedAt,
-                modified_by_user_id AS ModifiedByUserId,
-                owner_id AS OwnerId,
-                name AS Name,
-                storage_path AS StoragePath,
-                subscriptions_schedule_id AS SubscriptionsScheduleId
-         FROM media.libraries
-         """;
+        """
+        SELECT id,
+               created_at,
+               created_by_user_id,
+               modified_at,
+               modified_by_user_id,
+               owner_id,
+               name,
+               storage_path,
+               subscriptions_schedule_id
+        FROM media.libraries
+        """;
 
     /// <inheritdoc />
     protected override string UpdateSet =>
-        $"""
-           name = @Name,
-           storage_path = @StoragePath,
-           subscriptions_schedule_id = @SubscriptionsScheduleId
-         """;
+        """
+          name = @Name,
+          storage_path = @StoragePath,
+          subscriptions_schedule_id = @SubscriptionsScheduleId
+        """;
 }

@@ -15,28 +15,28 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        $"""
-         INSERT INTO media.preferences (created_by_user_id, modified_by_user_id, playback_speed, videos_count, live_streams_count, shorts_count, player_client, download_videos, download_method)
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @PlaybackSpeed, @VideosCount, @LiveStreamsCount, @ShortsCount, @PlayerClient, @DownloadVideos, @DownloadMethod)
-         RETURNING id;
-         """;
+        """
+        INSERT INTO media.preferences (created_by_user_id, modified_by_user_id, playback_speed, videos_count, live_streams_count, shorts_count, player_client, download_videos, download_method)
+        VALUES (@CreatedByUserId, @ModifiedByUserId, @PlaybackSpeed, @VideosCount, @LiveStreamsCount, @ShortsCount, @PlayerClient, @DownloadVideos, @DownloadMethod)
+        RETURNING id;
+        """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
         $"""
-         SELECT preferences.id AS {nameof(PreferencesEntity.Id)},
-                preferences.created_at AS {nameof(PreferencesEntity.CreatedAt)},
-                preferences.created_by_user_id AS {nameof(PreferencesEntity.CreatedByUserId)},
-                preferences.modified_at AS {nameof(PreferencesEntity.ModifiedAt)},
-                preferences.modified_by_user_id AS {nameof(PreferencesEntity.ModifiedByUserId)},
-                preferences.playback_speed AS {nameof(PreferencesEntity.PlaybackSpeed)},
-                preferences.videos_count AS {nameof(PreferencesEntity.VideosCount)},
-                preferences.live_streams_count AS {nameof(PreferencesEntity.LiveStreamsCount)},
-                preferences.shorts_count AS {nameof(PreferencesEntity.ShortsCount)},
-                preferences.player_client AS {nameof(PreferencesEntity.PlayerClient)},
-                preferences.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
-                preferences.download_method AS {nameof(PreferencesEntity.DownloadMethod)},
-                preferences.formats AS {nameof(PreferencesEntity.Formats)}
+         SELECT preferences.id,
+                preferences.created_at,
+                preferences.created_by_user_id,
+                preferences.modified_at,
+                preferences.modified_by_user_id,
+                preferences.playback_speed,
+                preferences.videos_count,
+                preferences.live_streams_count,
+                preferences.shorts_count,
+                preferences.player_client,
+                preferences.download_videos,
+                preferences.download_method,
+                preferences.formats
          FROM media.preferences
          """;
 
@@ -70,19 +70,19 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
             // lang=sql
             $"""
-             SELECT preferences.id AS {nameof(PreferencesEntity.Id)},
-                    preferences.created_at AS {nameof(PreferencesEntity.CreatedAt)},
-                    preferences.created_by_user_id AS {nameof(PreferencesEntity.CreatedByUserId)},
-                    preferences.modified_at AS {nameof(PreferencesEntity.ModifiedAt)},
-                    preferences.modified_by_user_id AS {nameof(PreferencesEntity.ModifiedByUserId)},
-                    preferences.playback_speed AS {nameof(PreferencesEntity.PlaybackSpeed)},
-                    preferences.videos_count AS {nameof(PreferencesEntity.VideosCount)},
-                    preferences.live_streams_count AS {nameof(PreferencesEntity.LiveStreamsCount)},
-                    preferences.shorts_count AS {nameof(PreferencesEntity.ShortsCount)},
-                    preferences.player_client AS {nameof(PreferencesEntity.PlayerClient)},
-                    preferences.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
-                    preferences.download_method AS {nameof(PreferencesEntity.DownloadMethod)},
-                    preferences.formats AS {nameof(PreferencesEntity.Formats)}
+             SELECT preferences.id,
+                    preferences.created_at,
+                    preferences.created_by_user_id,
+                    preferences.modified_at,
+                    preferences.modified_by_user_id,
+                    preferences.playback_speed,
+                    preferences.videos_count,
+                    preferences.live_streams_count,
+                    preferences.shorts_count,
+                    preferences.player_client,
+                    preferences.download_videos,
+                    preferences.download_method,
+                    preferences.formats
              FROM media.libraries
                 INNER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                 INNER JOIN media.preferences ON library_preferences.preference_id = preferences.id
@@ -100,19 +100,19 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
             // lang=sql
             $"""
-             SELECT preferences.id AS {nameof(PreferencesEntity.Id)},
-                    preferences.created_at AS {nameof(PreferencesEntity.CreatedAt)},
-                    preferences.created_by_user_id AS {nameof(PreferencesEntity.CreatedByUserId)},
-                    preferences.modified_at AS {nameof(PreferencesEntity.ModifiedAt)},
-                    preferences.modified_by_user_id AS {nameof(PreferencesEntity.ModifiedByUserId)},
-                    preferences.playback_speed AS {nameof(PreferencesEntity.PlaybackSpeed)},
-                    preferences.videos_count AS {nameof(PreferencesEntity.VideosCount)},
-                    preferences.live_streams_count AS {nameof(PreferencesEntity.LiveStreamsCount)},
-                    preferences.shorts_count AS {nameof(PreferencesEntity.ShortsCount)},
-                    preferences.player_client AS {nameof(PreferencesEntity.PlayerClient)},
-                    preferences.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
-                    preferences.download_method AS {nameof(PreferencesEntity.DownloadMethod)},
-                    preferences.formats AS {nameof(PreferencesEntity.Formats)}
+             SELECT preferences.id,
+                    preferences.created_at,
+                    preferences.created_by_user_id,
+                    preferences.modified_at,
+                    preferences.modified_by_user_id,
+                    preferences.playback_speed,
+                    preferences.videos_count,
+                    preferences.live_streams_count,
+                    preferences.shorts_count,
+                    preferences.player_client,
+                    preferences.download_videos,
+                    preferences.download_method,
+                    preferences.formats
              FROM media.libraries
                 INNER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                 INNER JOIN media.preferences ON library_preferences.preference_id = preferences.id
@@ -146,19 +146,19 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
     {
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
             $"""
-             SELECT library_p.id AS Id,
-                    library_p.created_at AS CreatedAt,
-                    library_p.created_by_user_id AS CreatedByUserId,
-                    library_p.modified_at AS ModifiedAt,
-                    library_p.modified_by_user_id AS ModifiedByUserId,
-                    library_p.playback_speed AS PlaybackSpeed,
-                    library_p.videos_count AS VideosCount,
-                    library_p.live_streams_count AS LiveStreamsCount,
-                    library_p.shorts_count AS ShortsCount,
-                    library_p.player_client AS PlayerClient,
-                    library_p.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
-                    library_p.download_method AS {nameof(PreferencesEntity.DownloadMethod)},
-                    library_p.formats AS {nameof(PreferencesEntity.Formats)}
+             SELECT library_p.id,
+                    library_p.created_at,
+                    library_p.created_by_user_id,
+                    library_p.modified_at,
+                    library_p.modified_by_user_id,
+                    library_p.playback_speed,
+                    library_p.videos_count,
+                    library_p.live_streams_count,
+                    library_p.shorts_count,
+                    library_p.player_client,
+                    library_p.download_videos,
+                    library_p.download_method,
+                    library_p.formats
              FROM media.libraries
                       LEFT OUTER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                       LEFT OUTER JOIN media.preferences library_p ON library_preferences.preference_id = library_p.id
@@ -176,19 +176,19 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
             // lang=sql
             $"""
-             SELECT preferences.id AS {nameof(PreferencesEntity.Id)},
-                    preferences.created_at AS {nameof(PreferencesEntity.CreatedAt)},
-                    preferences.created_by_user_id AS {nameof(PreferencesEntity.CreatedByUserId)},
-                    preferences.modified_at AS {nameof(PreferencesEntity.ModifiedAt)},
-                    preferences.modified_by_user_id AS {nameof(PreferencesEntity.ModifiedByUserId)},
-                    preferences.playback_speed AS {nameof(PreferencesEntity.PlaybackSpeed)},
-                    preferences.videos_count AS {nameof(PreferencesEntity.VideosCount)},
-                    preferences.live_streams_count AS {nameof(PreferencesEntity.LiveStreamsCount)},
-                    preferences.shorts_count AS {nameof(PreferencesEntity.ShortsCount)},
-                    preferences.player_client AS {nameof(PreferencesEntity.PlayerClient)},
-                    preferences.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
-                    preferences.download_method AS {nameof(PreferencesEntity.DownloadMethod)},
-                    preferences.formats AS {nameof(PreferencesEntity.Formats)}
+             SELECT preferences.id,
+                    preferences.created_at,
+                    preferences.created_by_user_id,
+                    preferences.modified_at,
+                    preferences.modified_by_user_id,
+                    preferences.playback_speed,
+                    preferences.videos_count,
+                    preferences.live_streams_count,
+                    preferences.shorts_count,
+                    preferences.player_client,
+                    preferences.download_videos,
+                    preferences.download_method,
+                    preferences.formats
              FROM media.channels
                 INNER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
                 INNER JOIN media.preferences ON channel_preferences.preference_id = preferences.id
@@ -206,19 +206,19 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
             // lang=sql
             $"""
-             SELECT preferences.id AS {nameof(PreferencesEntity.Id)},
-                    preferences.created_at AS {nameof(PreferencesEntity.CreatedAt)},
-                    preferences.created_by_user_id AS {nameof(PreferencesEntity.CreatedByUserId)},
-                    preferences.modified_at AS {nameof(PreferencesEntity.ModifiedAt)},
-                    preferences.modified_by_user_id AS {nameof(PreferencesEntity.ModifiedByUserId)},
-                    preferences.playback_speed AS {nameof(PreferencesEntity.PlaybackSpeed)},
-                    preferences.videos_count AS {nameof(PreferencesEntity.VideosCount)},
-                    preferences.live_streams_count AS {nameof(PreferencesEntity.LiveStreamsCount)},
-                    preferences.shorts_count AS {nameof(PreferencesEntity.ShortsCount)},
-                    preferences.player_client AS {nameof(PreferencesEntity.PlayerClient)},
-                    preferences.download_videos AS {nameof(PreferencesEntity.DownloadVideos)},
-                    preferences.download_method AS {nameof(PreferencesEntity.DownloadMethod)},
-                    preferences.formats AS {nameof(PreferencesEntity.Formats)}
+             SELECT preferences.id,
+                    preferences.created_at,
+                    preferences.created_by_user_id,
+                    preferences.modified_at,
+                    preferences.modified_by_user_id,
+                    preferences.playback_speed,
+                    preferences.videos_count,
+                    preferences.live_streams_count,
+                    preferences.shorts_count,
+                    preferences.player_client,
+                    preferences.download_videos,
+                    preferences.download_method,
+                    preferences.formats
              FROM media.channels
                 INNER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
                 INNER JOIN media.preferences ON channel_preferences.preference_id = preferences.id

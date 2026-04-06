@@ -36,17 +36,17 @@ public sealed class ChannelSubscriptionRepository(NpgsqlConnection connection)
     /// <inheritdoc />
     protected override string SelectSql =>
         """
-        SELECT id AS Id,
-               created_at AS CreatedAt,
-               created_by_user_id AS CreatedByUserId,
-               modified_at AS ModifiedAt,
-               modified_by_user_id AS ModifiedByUserId,
-               status AS Status,
-               callback AS Callback,
-               topic AS Topic,
-               expires_at AS ExpiresAt,
-               verify_token AS VerifyToken,
-               secret AS Secret
+        SELECT id,
+               created_at,
+               created_by_user_id,
+               modified_at,
+               modified_by_user_id,
+               status,
+               callback,
+               topic,
+               expires_at,
+               verify_token,
+               secret
         FROM media.channel_subscriptions
         """;
 

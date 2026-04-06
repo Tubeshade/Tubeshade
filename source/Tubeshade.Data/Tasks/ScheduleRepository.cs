@@ -18,26 +18,26 @@ public sealed class ScheduleRepository(NpgsqlConnection connection)
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        $"""
-         INSERT INTO tasks.schedules (created_by_user_id, modified_by_user_id, owner_id, task_id, cron_expression, time_zone_id)
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @TaskId, @CronExpression, @TimeZoneId)
-         RETURNING id;
-         """;
+        """
+        INSERT INTO tasks.schedules (created_by_user_id, modified_by_user_id, owner_id, task_id, cron_expression, time_zone_id)
+        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @TaskId, @CronExpression, @TimeZoneId)
+        RETURNING id;
+        """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
-        $"""
-         SELECT id AS Id,
-                created_at AS CreatedAt,
-                created_by_user_id AS CreatedByUserId,
-                modified_at AS ModifiedAt,
-                modified_by_user_id AS ModifiedByUserId,
-                owner_id AS OwnerId,
-                task_id AS TaskId,
-                cron_expression AS CronExpression,
-                time_zone_id AS TimeZoneId
-         FROM tasks.schedules
-         """;
+        """
+        SELECT id,
+               created_at,
+               created_by_user_id,
+               modified_at,
+               modified_by_user_id,
+               owner_id,
+               task_id,
+               cron_expression,
+               time_zone_id
+        FROM tasks.schedules
+        """;
 
     /// <inheritdoc />
     protected override string UpdateSet =>
@@ -74,15 +74,15 @@ public sealed class ScheduleRepository(NpgsqlConnection connection)
                           ownerships.user_id = @{nameof(userId)} AND
                           (ownerships.access = @{nameof(access)} OR ownerships.access = 'owner'))
 
-             SELECT schedules.id                  AS Id,
-                    schedules.created_at          AS CreatedAt,
-                    schedules.created_by_user_id  AS CreatedByUserId,
-                    schedules.modified_at         AS ModifiedAt,
-                    schedules.modified_by_user_id AS ModifiedByUserId,
-                    schedules.owner_id            AS OwnerId,
-                    schedules.task_id             AS TaskId,
-                    schedules.cron_expression     AS CronExpression,
-                    schedules.time_zone_id        AS TimeZoneId
+             SELECT schedules.id,
+                    schedules.created_at,
+                    schedules.created_by_user_id,
+                    schedules.modified_at,
+                    schedules.modified_by_user_id,
+                    schedules.owner_id,
+                    schedules.task_id,
+                    schedules.cron_expression,
+                    schedules.time_zone_id
              FROM tasks.schedules
                  INNER JOIN tasks.tasks ON schedules.task_id = tasks.id
                  INNER JOIN accessible ON tasks.library_id = accessible.id

@@ -14,23 +14,23 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     private readonly NpgsqlConnection _connection;
 
     private static string SelectSql =>
-        $"""
-         SELECT users.id AS {nameof(UserEntity.Id)},
-                users.created_at AS {nameof(UserEntity.CreatedAt)},
-                users.created_by_user_id AS {nameof(UserEntity.CreatedByUserId)},
-                users.modified_at AS {nameof(UserEntity.ModifiedAt)},
-                users.modified_by_user_id AS {nameof(UserEntity.ModifiedByUserId)},
-                users.name AS {nameof(UserEntity.Name)},
-                users.normalized_name AS {nameof(UserEntity.NormalizedName)},
-                users.password_hash AS {nameof(UserEntity.PasswordHash)},
-                users.security_stamp AS {nameof(UserEntity.SecurityStamp)},
-                users.concurrency_stamp AS {nameof(UserEntity.ConcurrencyStamp)},
-                users.two_factor_enabled AS {nameof(UserEntity.TwoFactorEnabled)},
-                users.lockout_end AS {nameof(UserEntity.LockoutEnd)},
-                users.lockout_enabled AS {nameof(UserEntity.LockoutEnabled)},
-                users.access_failed_count AS {nameof(UserEntity.AccessFailedCount)}
-         FROM identity.users
-         """;
+        """
+        SELECT users.id,
+               users.created_at,
+               users.created_by_user_id,
+               users.modified_at,
+               users.modified_by_user_id,
+               users.name,
+               users.normalized_name,
+               users.password_hash,
+               users.security_stamp,
+               users.concurrency_stamp,
+               users.two_factor_enabled,
+               users.lockout_end,
+               users.lockout_enabled,
+               users.access_failed_count
+        FROM identity.users
+        """;
 
     private static string InsertSql =>
         //lang=sql
@@ -188,21 +188,21 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
         entity.NormalizeInvariant();
         var command = new CommandDefinition(
             //lang=sql
-            $"""
-             UPDATE identity.users
-             SET modified_at         = CURRENT_TIMESTAMP,
-                 modified_by_user_id = @Id,
-                 name                = @Name,
-                 normalized_name     = @NormalizedName,
-                 password_hash       = @PasswordHash,
-                 security_stamp      = @SecurityStamp,
-                 concurrency_stamp   = @ConcurrencyStamp,
-                 two_factor_enabled  = @TwoFactorEnabled,
-                 lockout_end         = @LockoutEnd,
-                 lockout_enabled     = @LockoutEnabled,
-                 access_failed_count = @AccessFailedCount
-             WHERE users.id = @Id;
-             """,
+            """
+            UPDATE identity.users
+            SET modified_at         = CURRENT_TIMESTAMP,
+                modified_by_user_id = @Id,
+                name                = @Name,
+                normalized_name     = @NormalizedName,
+                password_hash       = @PasswordHash,
+                security_stamp      = @SecurityStamp,
+                concurrency_stamp   = @ConcurrencyStamp,
+                two_factor_enabled  = @TwoFactorEnabled,
+                lockout_end         = @LockoutEnd,
+                lockout_enabled     = @LockoutEnabled,
+                access_failed_count = @AccessFailedCount
+            WHERE users.id = @Id;
+            """,
             entity,
             transaction);
 

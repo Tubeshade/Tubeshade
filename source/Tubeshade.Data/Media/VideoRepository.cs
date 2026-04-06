@@ -26,31 +26,31 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     /// <inheritdoc />
     protected override string SelectSql =>
         $"""
-         SELECT videos.id AS {nameof(VideoEntity.Id)},
-                videos.created_at AS {nameof(VideoEntity.CreatedAt)},
-                videos.created_by_user_id AS {nameof(VideoEntity.CreatedByUserId)},
-                videos.modified_at AS {nameof(VideoEntity.ModifiedAt)},
-                videos.modified_by_user_id AS {nameof(VideoEntity.ModifiedByUserId)},
-                videos.owner_id AS {nameof(VideoEntity.OwnerId)},
-                videos.name AS {nameof(VideoEntity.Name)},
-                videos.description AS {nameof(VideoEntity.Description)},
-                videos.categories AS {nameof(VideoEntity.Categories)},
-                videos.tags AS {nameof(VideoEntity.Tags)},
-                videos.type AS {nameof(VideoEntity.Type)},
-                videos.view_count AS {nameof(VideoEntity.ViewCount)},
-                videos.like_count AS {nameof(VideoEntity.LikeCount)},
-                videos.channel_id AS {nameof(VideoEntity.ChannelId)},
-                videos.storage_path AS {nameof(VideoEntity.StoragePath)},
-                videos.external_id AS {nameof(VideoEntity.ExternalId)},
-                videos.external_url AS {nameof(VideoEntity.ExternalUrl)},
-                videos.published_at AS PublishedAt,
-                videos.refreshed_at AS RefreshedAt,
-                videos.availability AS Availability,
-                videos.duration AS Duration,
-                videos.ignored_at AS IgnoredAt,
-                videos.ignored_by_user_id AS IgnoredByUserId,
-                video_viewed_by_users.viewed AS Viewed,
-                video_viewed_by_users.position AS Position
+         SELECT videos.id,
+                videos.created_at,
+                videos.created_by_user_id,
+                videos.modified_at,
+                videos.modified_by_user_id,
+                videos.owner_id,
+                videos.name,
+                videos.description,
+                videos.categories,
+                videos.tags,
+                videos.type,
+                videos.view_count,
+                videos.like_count,
+                videos.channel_id,
+                videos.storage_path,
+                videos.external_id,
+                videos.external_url,
+                videos.published_at,
+                videos.refreshed_at,
+                videos.availability,
+                videos.duration,
+                videos.ignored_at,
+                videos.ignored_by_user_id,
+                video_viewed_by_users.viewed,
+                video_viewed_by_users.position
          FROM media.videos
            LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(GetParameters.UserId)}
          """;
@@ -80,21 +80,21 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         $"""
          {AccessCte}
 
-         SELECT video_files.id AS Id,
-                video_files.created_at AS CreatedAt,
-                video_files.created_by_user_id AS CreatedByUserId,
-                video_files.modified_at AS ModifiedAt,
-                video_files.modified_by_user_id AS ModifiedByUserId,
-                video_files.owner_id AS OwnerId,
-                video_files.video_id AS VideoId,
-                video_files.storage_path AS StoragePath,
-                video_files.type AS Type,
-                video_files.width AS Width,
-                video_files.height AS Height,
-                video_files.framerate AS Framerate,
-                video_files.downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-                video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)},
-                downloading.task_run_id AS TaskRunId,
+         SELECT video_files.id,
+                video_files.created_at,
+                video_files.created_by_user_id,
+                video_files.modified_at,
+                video_files.modified_by_user_id,
+                video_files.owner_id,
+                video_files.video_id,
+                video_files.storage_path,
+                video_files.type,
+                video_files.width,
+                video_files.height,
+                video_files.framerate,
+                video_files.downloaded_at,
+                video_files.downloaded_by_user_id,
+                downloading.task_run_id,
                 downloading.path AS TempPath
          FROM media.video_files
             INNER JOIN media.videos ON video_files.video_id = videos.id
@@ -119,22 +119,22 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                    WHERE tasks.type = 'download_video'
                      AND task_run_results.id IS NULL)
 
-             SELECT videos.id AS {nameof(VideoEntity.Id)},
-                    videos.created_at AS {nameof(VideoEntity.CreatedAt)},
-                    videos.created_by_user_id AS {nameof(VideoEntity.CreatedByUserId)},
-                    videos.modified_at AS {nameof(VideoEntity.ModifiedAt)},
-                    videos.modified_by_user_id AS {nameof(VideoEntity.ModifiedByUserId)},
-                    videos.owner_id AS {nameof(VideoEntity.OwnerId)},
-                    videos.name AS {nameof(VideoEntity.Name)},
-                    videos.type AS {nameof(VideoEntity.Type)},
-                    videos.channel_id AS {nameof(VideoEntity.ChannelId)},
-                    videos.storage_path AS {nameof(VideoEntity.StoragePath)},
-                    videos.external_id AS {nameof(VideoEntity.ExternalId)},
-                    videos.external_url AS {nameof(VideoEntity.ExternalUrl)},
-                    videos.published_at AS PublishedAt,
-                    videos.refreshed_at AS RefreshedAt,
-                    videos.availability AS Availability,
-                    videos.duration AS Duration,
+             SELECT videos.id,
+                    videos.created_at,
+                    videos.created_by_user_id,
+                    videos.modified_at,
+                    videos.modified_by_user_id,
+                    videos.owner_id,
+                    videos.name,
+                    videos.type,
+                    videos.channel_id,
+                    videos.storage_path,
+                    videos.external_id,
+                    videos.external_url,
+                    videos.published_at,
+                    videos.refreshed_at,
+                    videos.availability,
+                    videos.duration,
                     count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
              FROM media.videos
                 INNER JOIN media.channels ON videos.channel_id = channels.id
@@ -276,21 +276,21 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
             $"""
              {AccessCte}
 
-             SELECT video_files.id AS Id,
-                    video_files.created_at AS CreatedAt,
-                    video_files.created_by_user_id AS CreatedByUserId,
-                    video_files.modified_at AS ModifiedAt,
-                    video_files.modified_by_user_id AS ModifiedByUserId,
-                    video_files.owner_id AS OwnerId,
-                    video_files.video_id AS VideoId,
-                    video_files.storage_path AS StoragePath,
-                    video_files.type AS Type,
-                    video_files.width AS Width,
-                    video_files.height AS Height,
-                    video_files.framerate AS Framerate,
-                    video_files.downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-                    video_files.downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)},
-                    downloading.task_run_id AS TaskRunId,
+             SELECT video_files.id,
+                    video_files.created_at,
+                    video_files.created_by_user_id,
+                    video_files.modified_at,
+                    video_files.modified_by_user_id,
+                    video_files.owner_id,
+                    video_files.video_id,
+                    video_files.storage_path,
+                    video_files.type,
+                    video_files.width,
+                    video_files.height,
+                    video_files.framerate,
+                    video_files.downloaded_at,
+                    video_files.downloaded_by_user_id,
+                    downloading.task_run_id,
                     downloading.path AS TempPath
              FROM media.video_files
                 INNER JOIN media.videos ON video_files.video_id = videos.id
@@ -331,8 +331,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
             $"""
              {AccessCte}
 
-             SELECT videos.id AS Id,
-                    videos.external_id AS ExternalId
+             SELECT videos.id,
+                    videos.external_id
              FROM media.videos
              WHERE {AccessFilter}
                AND (videos.external_id = ANY(@{nameof(externalIds)}));
@@ -367,8 +367,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     {
         var enumerable = await Connection.QueryAsync<EntityId>(
             $"""
-             SELECT videos.id AS Id,
-                    videos.external_id AS ExternalId
+             SELECT videos.id,
+                    videos.external_id
              FROM media.videos
                       INNER JOIN media.channels ON videos.channel_id = channels.id
                       INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
@@ -389,8 +389,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     {
         var enumerable = await Connection.QueryAsync<EntityId>(
             $"""
-             SELECT videos.id AS Id,
-                    videos.external_id AS ExternalId
+             SELECT videos.id,
+                    videos.external_id
              FROM media.videos
                       INNER JOIN media.channels ON videos.channel_id = channels.id
                       INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
@@ -457,24 +457,24 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         $"""
          {AccessCte}
 
-         SELECT videos.id AS {nameof(VideoEntity.Id)},
-                videos.created_at AS {nameof(VideoEntity.CreatedAt)},
-                videos.created_by_user_id AS {nameof(VideoEntity.CreatedByUserId)},
-                videos.modified_at AS {nameof(VideoEntity.ModifiedAt)},
-                videos.modified_by_user_id AS {nameof(VideoEntity.ModifiedByUserId)},
-                videos.owner_id AS {nameof(VideoEntity.OwnerId)},
-                videos.name AS {nameof(VideoEntity.Name)},
-                videos.type AS {nameof(VideoEntity.Type)},
-                videos.channel_id AS {nameof(VideoEntity.ChannelId)},
-                videos.storage_path AS {nameof(VideoEntity.StoragePath)},
-                videos.external_id AS {nameof(VideoEntity.ExternalId)},
-                videos.external_url AS {nameof(VideoEntity.ExternalUrl)},
-                videos.published_at AS {nameof(VideoEntity.PublishedAt)},
-                videos.refreshed_at AS {nameof(VideoEntity.RefreshedAt)},
-                videos.availability AS {nameof(VideoEntity.Availability)},
-                videos.duration AS {nameof(VideoEntity.Duration)},
-                video_viewed_by_users.viewed AS {nameof(VideoEntity.Viewed)},
-                video_viewed_by_users.position AS {nameof(VideoEntity.Position)},
+         SELECT videos.id,
+                videos.created_at,
+                videos.created_by_user_id,
+                videos.modified_at,
+                videos.modified_by_user_id,
+                videos.owner_id,
+                videos.name,
+                videos.type,
+                videos.channel_id,
+                videos.storage_path,
+                videos.external_id,
+                videos.external_url,
+                videos.published_at,
+                videos.refreshed_at,
+                videos.availability,
+                videos.duration,
+                video_viewed_by_users.viewed,
+                video_viewed_by_users.position,
                 count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
          FROM media.videos
             LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(parameters.UserId)}

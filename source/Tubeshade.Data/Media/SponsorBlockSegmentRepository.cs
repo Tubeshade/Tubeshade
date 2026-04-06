@@ -18,27 +18,30 @@ public sealed class SponsorBlockSegmentRepository(NpgsqlConnection connection)
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        $"""
-         INSERT INTO media.sponsorblock_segments (created_by_user_id, modified_by_user_id, video_id, external_id, start_time, end_time, category, action, locked, description) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @VideoId, @ExternalId, @StartTime, @EndTime, @Category, @Action, @Locked, @Description)
-         RETURNING id;
-         """;
+        """
+        INSERT INTO media.sponsorblock_segments (created_by_user_id, modified_by_user_id, video_id, external_id, start_time, end_time, category, action, locked, description) 
+        VALUES (@CreatedByUserId, @ModifiedByUserId, @VideoId, @ExternalId, @StartTime, @EndTime, @Category, @Action, @Locked, @Description)
+        RETURNING id;
+        """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
-        $"""
-         SELECT id AS Id,
-                created_at AS CreatedAt,
-                created_by_user_id AS CreatedByUserId,
-                video_id AS VideoId,
-                external_id AS ExternalId,
-                start_time AS StartTime,
-                end_time AS EndTime,
-                category AS Category,
-                action AS Action,
-                description AS Description
-         FROM media.sponsorblock_segments
-         """;
+        """
+        SELECT id,
+               created_at,
+               created_by_user_id,
+               modified_at,
+               modified_by_user_id,
+               video_id,
+               external_id,
+               start_time,
+               end_time,
+               category,
+               action,
+               locked,
+               description
+        FROM media.sponsorblock_segments
+        """;
 
     /// <inheritdoc />
     protected override string UpdateSet => throw new NotSupportedException();
@@ -49,12 +52,12 @@ public sealed class SponsorBlockSegmentRepository(NpgsqlConnection connection)
          UPDATE media.sponsorblock_segments
          SET modified_at = CURRENT_TIMESTAMP,
              modified_by_user_id = @{nameof(SponsorBlockSegmentEntity.ModifiedByUserId)},
-             start_time = @StartTime,
-             end_time = @EndTime,
-             category = @Category,
-             action = @Action,
-             locked = @Locked,
-             description = @Description
+             start_time = @{nameof(SponsorBlockSegmentEntity.StartTime)},
+             end_time = @{nameof(SponsorBlockSegmentEntity.EndTime)},
+             category = @{nameof(SponsorBlockSegmentEntity.Category)},
+             action = @{nameof(SponsorBlockSegmentEntity.Action)},
+             locked = @{nameof(SponsorBlockSegmentEntity.Locked)},
+             description = @{nameof(SponsorBlockSegmentEntity.Description)}
 
          WHERE (sponsorblock_segments.id = @{nameof(SponsorBlockSegmentEntity.Id)});
          """;

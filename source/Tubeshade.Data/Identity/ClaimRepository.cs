@@ -65,16 +65,11 @@ public sealed class ClaimRepository : IRepository<ClaimEntity>
     public async ValueTask<List<ClaimEntity>> GetAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            $"""
-             SELECT id AS Id,
-                    created_at AS CreatedAt,
-                    created_by_user_id AS CreatedByUserId,
-                    user_id AS UserId,
-                    claim_type AS ClaimType,
-                    claim_value AS ClaimValue
-             FROM identity.claims
-             WHERE claims.user_id = @userId;
-             """,
+            """
+            SELECT id, created_at, created_by_user_id, user_id, claim_type, claim_value
+            FROM identity.claims
+            WHERE claims.user_id = @userId;
+            """,
             new { userId },
             cancellationToken: cancellationToken);
 

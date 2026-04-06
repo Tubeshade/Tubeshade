@@ -17,39 +17,39 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        $"""
-         INSERT INTO media.channels (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, external_id, subscribed_at, subscriber_count, external_url, availability) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @ExternalId, @SubscribedAt, @SubscriberCount, @ExternalUrl, @Availability)
-         RETURNING id;
-         """;
+        """
+        INSERT INTO media.channels (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, external_id, subscribed_at, subscriber_count, external_url, availability) 
+        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @ExternalId, @SubscribedAt, @SubscriberCount, @ExternalUrl, @Availability)
+        RETURNING id;
+        """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
-        $"""
-         SELECT id AS Id,
-                created_at AS CreatedAt,
-                created_by_user_id AS CreatedByUserId,
-                modified_at AS ModifiedAt,
-                modified_by_user_id AS ModifiedByUserId,
-                owner_id AS OwnerId,
-                name AS Name,
-                storage_path AS StoragePath,
-                external_id AS ExternalId,
-                subscribed_at AS SubscribedAt,
-                subscriber_count AS SubscriberCount,
-                external_url AS ExternalUrl,
-                availability AS Availability
-         FROM media.channels
-         """;
+        """
+        SELECT id,
+               created_at,
+               created_by_user_id,
+               modified_at,
+               modified_by_user_id,
+               owner_id,
+               name,
+               storage_path,
+               external_id,
+               subscribed_at,
+               subscriber_count,
+               external_url,
+               availability
+        FROM media.channels
+        """;
 
     /// <inheritdoc />
     protected override string UpdateSet =>
-        $"""
-         name = @Name,
-         storage_path = @StoragePath,
-         external_id = @ExternalId,
-         subscribed_at = @SubscribedAt
-         """;
+        """
+        name = @Name,
+        storage_path = @StoragePath,
+        external_id = @ExternalId,
+        subscribed_at = @SubscribedAt
+        """;
 
     public async ValueTask<List<ChannelEntity>> GetSubscribedForLibrary(
         Guid libraryId,
@@ -59,23 +59,7 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             {AccessCte}
-
-             SELECT id AS Id,
-                    created_at AS CreatedAt,
-                    created_by_user_id AS CreatedByUserId,
-                    modified_at AS ModifiedAt,
-                    modified_by_user_id AS ModifiedByUserId,
-                    owner_id AS OwnerId,
-                    name AS Name,
-                    storage_path AS StoragePath,
-                    external_id AS ExternalId,
-                    subscribed_at AS SubscribedAt,
-                    subscriber_count AS SubscriberCount,
-                    external_url AS ExternalUrl,
-                    availability AS Availability
-             FROM media.channels
-             WHERE {AccessFilter}
+             {SelectAccessibleSql}
                 AND EXISTS(SELECT 1
                            FROM media.libraries
                                INNER JOIN media.library_channels ON libraries.id = library_channels.library_id
@@ -98,23 +82,7 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             {AccessCte}
-
-             SELECT id AS Id,
-                    created_at AS CreatedAt,
-                    created_by_user_id AS CreatedByUserId,
-                    modified_at AS ModifiedAt,
-                    modified_by_user_id AS ModifiedByUserId,
-                    owner_id AS OwnerId,
-                    name AS Name,
-                    storage_path AS StoragePath,
-                    external_id AS ExternalId,
-                    subscribed_at AS SubscribedAt,
-                    subscriber_count AS SubscriberCount,
-                    external_url AS ExternalUrl,
-                    availability AS Availability
-             FROM media.channels
-             WHERE {AccessFilter}
+             {SelectAccessibleSql}
                 AND EXISTS(SELECT 1
                            FROM media.libraries
                                INNER JOIN media.library_channels ON libraries.id = library_channels.library_id

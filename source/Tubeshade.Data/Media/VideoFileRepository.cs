@@ -15,29 +15,29 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        $"""
-         INSERT INTO media.video_files (created_by_user_id, modified_by_user_id, owner_id, video_id, storage_path, type, width, height, framerate, downloaded_at, downloaded_by_user_id) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @VideoId, @StoragePath, @Type, @Width, @Height, @Framerate,@DownloadedAt, @DownloadedByUserId)
-         RETURNING id;
-         """;
+        """
+        INSERT INTO media.video_files (created_by_user_id, modified_by_user_id, owner_id, video_id, storage_path, type, width, height, framerate, downloaded_at, downloaded_by_user_id) 
+        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @VideoId, @StoragePath, @Type, @Width, @Height, @Framerate,@DownloadedAt, @DownloadedByUserId)
+        RETURNING id;
+        """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
         $"""
-         SELECT id AS {nameof(VideoFileEntity.Id)},
-                created_at AS {nameof(VideoFileEntity.CreatedAt)},
-                created_by_user_id AS {nameof(VideoFileEntity.CreatedByUserId)},
-                modified_at AS {nameof(VideoFileEntity.ModifiedAt)},
-                modified_by_user_id AS {nameof(VideoFileEntity.ModifiedByUserId)},
-                owner_id AS {nameof(VideoFileEntity.OwnerId)},
-                video_id AS {nameof(VideoFileEntity.VideoId)},
-                storage_path AS {nameof(VideoFileEntity.StoragePath)},
-                type AS {nameof(VideoFileEntity.Type)},
-                width AS {nameof(VideoFileEntity.Width)},
-                height AS {nameof(VideoFileEntity.Height)},
-                framerate AS {nameof(VideoFileEntity.Framerate)},
-                downloaded_at AS {nameof(VideoFileEntity.DownloadedAt)},
-                downloaded_by_user_id AS {nameof(VideoFileEntity.DownloadedByUserId)}
+         SELECT id,
+                created_at,
+                created_by_user_id,
+                modified_at,
+                modified_by_user_id,
+                owner_id,
+                video_id,
+                storage_path,
+                type,
+                width,
+                height,
+                framerate,
+                downloaded_at,
+                downloaded_by_user_id
          FROM media.video_files
          """;
 

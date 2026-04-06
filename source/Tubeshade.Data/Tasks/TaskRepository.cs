@@ -26,23 +26,23 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
     /// <inheritdoc />
     protected override string SelectSql =>
-        $"""
-         SELECT id AS {nameof(TaskEntity.Id)},
-                created_at AS {nameof(TaskEntity.CreatedAt)},
-                created_by_user_id AS {nameof(TaskEntity.CreatedByUserId)},
-                modified_at AS {nameof(TaskEntity.ModifiedAt)},
-                modified_by_user_id AS {nameof(TaskEntity.ModifiedByUserId)},
-                owner_id AS {nameof(TaskEntity.OwnerId)},
-                type AS {nameof(TaskEntity.Type)},
-                user_id AS {nameof(TaskEntity.UserId)},
-                library_id AS {nameof(TaskEntity.LibraryId)},
-                channel_id AS {nameof(TaskEntity.ChannelId)},
-                video_id AS {nameof(TaskEntity.VideoId)},
-                url AS {nameof(TaskEntity.Url)},
-                all_videos AS {nameof(TaskEntity.AllVideos)},
-                payload AS {nameof(TaskEntity.Payload)}
-         FROM tasks.tasks
-         """;
+        """
+        SELECT id,
+               created_at,
+               created_by_user_id,
+               modified_at,
+               modified_by_user_id,
+               owner_id,
+               type,
+               user_id,
+               library_id,
+               channel_id,
+               video_id,
+               url,
+               all_videos,
+               payload
+        FROM tasks.tasks
+        """;
 
     /// <inheritdoc />
     protected override string UpdateSet =>
@@ -265,20 +265,20 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                            ownerships.user_id = @{nameof(parameters.UserId)} AND
                            (ownerships.access = @{nameof(parameters.Access)} OR ownerships.access = 'owner'))
 
-             SELECT filtered_tasks.id                    AS Id,
-                    filtered_tasks.type                  AS Type,
-                    filtered_tasks.library_id            AS LibraryId,
-                    filtered_tasks.channel_id            AS ChannelId,
-                    filtered_tasks.video_id              AS VideoId,
+             SELECT filtered_tasks.id,
+                    filtered_tasks.type,
+                    filtered_tasks.library_id,
+                    filtered_tasks.channel_id,
+                    filtered_tasks.video_id,
                     task_runs.id                         AS RunId,
                     task_runs.state                      AS RunState,
-                    task_runs.source                     AS Source,
-                    task_run_progress.value              AS Value,
-                    task_run_progress.target             AS Target,
-                    task_run_progress.rate               AS Rate,
-                    task_run_progress.remaining_duration AS RemainingDuration,
-                    task_run_results.result              AS Result,
-                    task_run_results.message             AS Message,
+                    task_runs.source,
+                    task_run_progress.value,
+                    task_run_progress.target,
+                    task_run_progress.rate,
+                    task_run_progress.remaining_duration,
+                    task_run_results.result,
+                    task_run_results.message,
                     CASE
                         WHEN filtered_tasks.type = 'index' AND filtered_tasks.video_id IS NOT NULL THEN
                             (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
