@@ -99,7 +99,6 @@ public sealed partial class ServerFixture : IServerFixture
             .WithPortBinding(8080, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8080).UntilMessageIsLogged(StartedRegex()))
             .DependsOn(databaseContainer)
-            .DependsOn(keycloakContainer)
             .Build();
 
         _containers = [databaseContainer, keycloakContainer, _serverContainer];
