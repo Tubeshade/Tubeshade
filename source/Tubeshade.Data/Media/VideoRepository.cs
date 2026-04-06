@@ -214,7 +214,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                                        INNER JOIN media.library_channels ON videos.channel_id = library_channels.channel_id
                                    WHERE library_channels."primary" 
                                      AND library_channels.library_id = @{nameof(libraryId)}
-                                     AND videos.ignored_at IS NULL)
+                                     AND videos.ignored_at IS NULL
+                                     AND videos.published_at < CURRENT_TIMESTAMP)
 
              SELECT id,
                     channel_id,
@@ -223,8 +224,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              WHERE ((from_publish <= 'PT1H' AND from_now >= 'PT30M') OR
                     (from_publish <= 'P2D' AND from_now >= 'P1D') OR
                     (from_publish <= 'P2M' AND from_now >= 'P1M') OR
-                    from_now >= 'P6M') AND
-                   NOT EXISTS(SELECT 1 FROM media.sponsorblock_segments WHERE sponsorblock_segments.video_id = stale_videos.id)
+                    from_now >= 'P6M') 
+               AND NOT EXISTS(SELECT 1 FROM media.sponsorblock_segments WHERE sponsorblock_segments.video_id = stale_videos.id)
              ORDER BY stale_videos.published_at DESC, stale_videos.id
              LIMIT 5;
              """,
