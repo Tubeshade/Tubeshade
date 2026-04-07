@@ -5,18 +5,24 @@ using NodaTime;
 namespace PubSubHubbub.Models;
 
 [Serializable]
-[XmlRoot("feed", Namespace = "http://www.w3.org/2005/Atom")]
+[XmlRoot("feed", Namespace = Namespaces.Atom)]
 public sealed class Feed
 {
-    [XmlElement("link")]
-    public required Link[] Links { get; init; }
+    [XmlElement("link", Namespace = Namespaces.Atom)]
+    public Link[]? Links { get; init; }
 
-    [XmlElement("title")]
-    public required string Title { get; init; }
+    [XmlElement("title", Namespace = Namespaces.Atom)]
+    public string? Title { get; init; }
 
-    [XmlElement("updated")]
-    public required OffsetDateTime Updated { get; init; }
+    [XmlElement("updated", Namespace = Namespaces.Atom)]
+    public OffsetDateTime? Updated { get; init; }
 
-    [XmlElement("entry")]
-    public required Entry Entry { get; init; }
+    [XmlIgnore]
+    public bool UpdatedSpecified => Updated is not null;
+
+    [XmlElement("entry", Namespace = Namespaces.Atom)]
+    public Entry? Entry { get; init; }
+
+    [XmlElement("deleted-entry", Namespace = Namespaces.Tombstones)]
+    public DeletedEntry? DeletedEntry { get; init; }
 }

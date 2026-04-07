@@ -56,7 +56,13 @@ public sealed class YoutubeWebhookService
     {
         using var reader = new StringReader(payload);
         var feed = (Feed)FeedSerializer.Deserialize(reader)!;
-        var videoUrl = feed.Entry.Link.Uri;
+
+        var videoUrl = feed switch
+        {
+            { Entry.Link.Uri: { } uri } => uri,
+            { DeletedEntry.Link.Uri: { } deletedUri } => deletedUri,
+            _ => throw new InvalidOperationException("Feed update does not contain a link to a video"),
+        };
 
         await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.RepeatableRead, cancellationToken);
 

@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Added
+
+- Handle deleted entry feed updates
+  ([#273](https://github.com/Tubeshade/Tubeshade/pull/273))
+
 ### Changed
 
 - Process feed updates in a background task instead of during the request

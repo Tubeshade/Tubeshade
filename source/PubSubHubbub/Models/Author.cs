@@ -6,9 +6,9 @@ namespace PubSubHubbub.Models;
 [Serializable]
 public sealed class Author
 {
-    [XmlElement("name")]
+    [XmlElement("name", Namespace = Namespaces.Atom)]
     public required string Name { get; init; }
 
-    [XmlElement("uri")]
+    [XmlElement("uri", Namespace = Namespaces.Atom)]
     public required string Uri { get; init; }
 }

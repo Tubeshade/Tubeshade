@@ -7,7 +7,7 @@ namespace PubSubHubbub.Models;
 public sealed class Link
 {
     [XmlAttribute("rel")]
-    public required string Relation { get; init; }
+    public string? Relation { get; init; }
 
     [XmlAttribute("href")]
     public required string Uri { get; init; }

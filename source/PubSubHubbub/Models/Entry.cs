@@ -7,27 +7,27 @@ namespace PubSubHubbub.Models;
 [Serializable]
 public sealed class Entry
 {
-    [XmlElement("id")]
+    [XmlElement("id", Namespace = Namespaces.Atom)]
     public required string Id { get; init; }
 
-    [XmlElement("videoId", Namespace = "http://www.youtube.com/xml/schemas/2015")]
+    [XmlElement("videoId", Namespace = Namespaces.YouTube)]
     public required string VideoId { get; init; }
 
-    [XmlElement("channelId", Namespace = "http://www.youtube.com/xml/schemas/2015")]
+    [XmlElement("channelId", Namespace = Namespaces.YouTube)]
     public required string ChannelId { get; init; }
 
-    [XmlElement("title")]
+    [XmlElement("title", Namespace = Namespaces.Atom)]
     public required string Title { get; init; }
 
-    [XmlElement("link")]
+    [XmlElement("link", Namespace = Namespaces.Atom)]
     public required Link Link { get; init; }
 
-    [XmlElement("author")]
+    [XmlElement("author", Namespace = Namespaces.Atom)]
     public required Author Author { get; init; }
 
-    [XmlElement("published")]
+    [XmlElement("published", Namespace = Namespaces.Atom)]
     public required OffsetDateTime Published { get; init; }
 
-    [XmlElement("updated")]
+    [XmlElement("updated", Namespace = Namespaces.Atom)]
     public required OffsetDateTime Updated { get; init; }
 }
