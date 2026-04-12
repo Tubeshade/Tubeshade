@@ -17,6 +17,8 @@ _Latest build from master branch._
   ([#269](https://github.com/Tubeshade/Tubeshade/pull/269))
 - Save changes after each video when scanning channels
   ([#271](https://github.com/Tubeshade/Tubeshade/pull/271))
+- Schedule tasks only after listening to database notifications
+  ([#274](https://github.com/Tubeshade/Tubeshade/pull/274))
 
 ### Fixed
 

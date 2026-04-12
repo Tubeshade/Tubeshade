@@ -17,6 +17,8 @@ namespace Tubeshade.Server.Services.Background;
 
 public sealed class TaskListenerService : BackgroundService
 {
+    private readonly TaskCompletionSource _taskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     private readonly Channel<CreatedTask> _taskCreatedChannel = CreateUnboundedChannel<CreatedTask>();
 
     private readonly FrozenDictionary<string, Channel<Guid>> _channels = TaskChannels.Names
@@ -33,6 +35,8 @@ public sealed class TaskListenerService : BackgroundService
 
     internal event EventHandler<Guid>? TaskRunFinished;
 
+    internal Task IsListeningTask => _taskCompletionSource.Task;
+
     public TaskListenerService(
         ILogger<TaskListenerService> logger,
         NpgsqlMultiHostDataSource dataSource,
@@ -46,7 +50,7 @@ public sealed class TaskListenerService : BackgroundService
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await _migrationStartupFilter.MigrationTask;
+        await _migrationStartupFilter.MigrationTask.WaitAsync(stoppingToken);
 
         await using var connection = _dataSource.CreateConnection(TargetSessionAttributes.Any);
         await connection.OpenConnection(stoppingToken);
@@ -61,6 +65,8 @@ public sealed class TaskListenerService : BackgroundService
         }
 
         _logger.ListeningToDatabaseNotifications(connection.DataSource);
+        _ = _taskCompletionSource.TrySetResult();
+
         while (!stoppingToken.IsCancellationRequested)
         {
             await connection.WaitAsync(stoppingToken);
