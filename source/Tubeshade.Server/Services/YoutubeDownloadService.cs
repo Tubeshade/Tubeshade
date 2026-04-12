@@ -243,10 +243,19 @@ public sealed class YoutubeDownloadService
             {
                 _logger.DownloadedVideoFile(videoFile.Id);
 
-                videoFile.ModifiedAt = _clock.GetCurrentInstant();
+                var file = new FileInfo(Path.Combine(tempDirectory.FullName, fileName));
+                var hashAlgorithm = HashAlgorithm.Default;
+                var hash = await hashAlgorithm.ComputeHashAsync(file, cancellationToken);
+                var currentTime = _clock.GetCurrentInstant();
+
+                videoFile.ModifiedAt = currentTime;
                 videoFile.ModifiedByUserId = userId;
-                videoFile.DownloadedAt = _clock.GetCurrentInstant();
+                videoFile.DownloadedAt = currentTime;
                 videoFile.DownloadedByUserId = userId;
+                videoFile.HashAlgorithm = hashAlgorithm;
+                videoFile.Hash = hash;
+                videoFile.StorageSize = file.Length;
+
                 await _videoFileRepository.UpdateAsync(videoFile, transaction);
 
                 sizeOffset += size ?? 0;
@@ -579,10 +588,19 @@ public sealed class YoutubeDownloadService
         {
             _logger.DownloadedVideoFile(videoFile.Id);
 
-            videoFile.ModifiedAt = _clock.GetCurrentInstant();
+            var file = new FileInfo(Path.Combine(tempDirectory.FullName, fileName));
+            var hashAlgorithm = HashAlgorithm.Default;
+            var hash = await hashAlgorithm.ComputeHashAsync(file, cancellationToken);
+            var currentTime = _clock.GetCurrentInstant();
+
+            videoFile.ModifiedAt = currentTime;
             videoFile.ModifiedByUserId = userId;
-            videoFile.DownloadedAt = _clock.GetCurrentInstant();
+            videoFile.DownloadedAt = currentTime;
             videoFile.DownloadedByUserId = userId;
+            videoFile.HashAlgorithm = hashAlgorithm;
+            videoFile.Hash = hash;
+            videoFile.StorageSize = file.Length;
+
             var count = await _videoFileRepository.UpdateAsync(videoFile, transaction);
             if (count is 0)
             {
@@ -769,10 +787,19 @@ public sealed class YoutubeDownloadService
 
         _logger.DownloadedVideoFile(videoFile.Id);
 
-        videoFile.ModifiedAt = _clock.GetCurrentInstant();
+        var file = new FileInfo(outputFilePath);
+        var hashAlgorithm = HashAlgorithm.Default;
+        var hash = await hashAlgorithm.ComputeHashAsync(file, cancellationToken);
+        var currentTime = _clock.GetCurrentInstant();
+
+        videoFile.ModifiedAt = currentTime;
         videoFile.ModifiedByUserId = userId;
-        videoFile.DownloadedAt = _clock.GetCurrentInstant();
+        videoFile.DownloadedAt = currentTime;
         videoFile.DownloadedByUserId = userId;
+        videoFile.HashAlgorithm = hashAlgorithm;
+        videoFile.Hash = hash;
+        videoFile.StorageSize = file.Length;
+
         var count = await _videoFileRepository.UpdateAsync(videoFile, transaction);
         if (count is 0)
         {

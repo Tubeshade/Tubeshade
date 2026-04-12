@@ -14,13 +14,15 @@ public sealed class TaskType : SmartEnum<TaskType>
     public static readonly TaskType ReindexVideos = new(Names.ReindexVideos, 7);
     public static readonly TaskType UpdateSponsorBlockSegments = new(Names.UpdateSponsorBlockSegments, 8);
     public static readonly TaskType YouTubeFeedUpdate = new(Names.YouTubeFeedUpdate, 9);
+    public static readonly TaskType RefreshFileMetadata = new(Names.RefreshFileMetadata, 10);
 
     public bool IsLibraryTask =>
         Equals(ScanSubscriptions) ||
         Equals(RefreshSubscriptions) ||
         Equals(ScanSponsorBlockSegments) ||
         Equals(UpdateSponsorBlockSegments) ||
-        Equals(ReindexVideos);
+        Equals(ReindexVideos) ||
+        Equals(RefreshFileMetadata);
 
     private TaskType(string name, int value)
         : base(name, value)
@@ -39,5 +41,6 @@ public sealed class TaskType : SmartEnum<TaskType>
         public const string ReindexVideos = "reindex_videos";
         public const string UpdateSponsorBlockSegments = "update_sponsor_block_segments";
         public const string YouTubeFeedUpdate = "youtube_feed_update";
+        public const string RefreshFileMetadata = "refresh_file_metadata";
     }
 }

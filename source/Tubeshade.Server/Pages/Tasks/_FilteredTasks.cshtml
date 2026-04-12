@@ -67,6 +67,12 @@
             @SharedResources.Button_UpdateSponsorBlock
         </button>
     </div>
+
+    <div class="col-6">
+        <button hx-post="" hx-page-handler="RefreshMetadata" class="btn btn-primary w-100" type="button">
+            @SharedResources.Tasks_Type_refresh_file_metadata
+        </button>
+    </div>
 </div>
 
 <partial name="Tasks/_RunningTasks" model="@Model"/>

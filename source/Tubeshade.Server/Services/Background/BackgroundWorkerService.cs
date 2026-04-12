@@ -277,6 +277,14 @@ public sealed class BackgroundWorkerService : BackgroundService
             var service = provider.GetRequiredService<SponsorBlockService>();
             await service.UpdateVideoSegments(libraryId, userId, taskRepository, taskRunId, cancellationToken);
         }
+        else if (task.Type == TaskType.RefreshFileMetadata)
+        {
+            using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
+
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            var service = provider.GetRequiredService<FileMetadataService>();
+            await service.AddMissingMetadata(libraryId, userId, taskRepository, taskRunId, cancellationToken);
+        }
     }
 
     private static async ValueTask<SemaphoreSlimExtensions.SemaphoreScope> LockAsync(

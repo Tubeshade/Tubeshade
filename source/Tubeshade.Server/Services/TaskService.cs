@@ -90,6 +90,22 @@ public sealed class TaskService
         }
     }
 
+    public async ValueTask RefreshFileMetadata(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        await RefreshFileMetadata(userId, libraryIds, source, transaction);
+        await transaction.CommitAsync();
+    }
+
+    public async ValueTask RefreshFileMetadata(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source, NpgsqlTransaction transaction)
+    {
+        foreach (var id in libraryIds)
+        {
+            var taskId = await _taskRepository.AddTask(TaskEntity.RefreshMetadata(id, userId), transaction);
+            await _taskRepository.TriggerTask(taskId, source, userId, transaction);
+        }
+    }
+
     public async ValueTask FeedUpdate(Guid userId, Guid libraryId, Guid channelId, string payload)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();

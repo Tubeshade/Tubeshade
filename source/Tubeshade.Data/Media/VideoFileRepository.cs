@@ -16,8 +16,8 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
     /// <inheritdoc />
     protected override string InsertSql =>
         """
-        INSERT INTO media.video_files (created_by_user_id, modified_by_user_id, owner_id, video_id, storage_path, type, width, height, framerate, downloaded_at, downloaded_by_user_id) 
-        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @VideoId, @StoragePath, @Type, @Width, @Height, @Framerate,@DownloadedAt, @DownloadedByUserId)
+        INSERT INTO media.video_files (created_by_user_id, modified_by_user_id, owner_id, video_id, storage_path, type, width, height, framerate, downloaded_at, downloaded_by_user_id, hash_algorithm, hash, storage_size) 
+        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @VideoId, @StoragePath, @Type, @Width, @Height, @Framerate,@DownloadedAt, @DownloadedByUserId, @HashAlgorithm, @Hash, @StorageSize)
         RETURNING id;
         """;
 
@@ -37,7 +37,10 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
                 height,
                 framerate,
                 downloaded_at,
-                downloaded_by_user_id
+                downloaded_by_user_id,
+                hash_algorithm,
+                hash,
+                storage_size
          FROM media.video_files
          """;
 
@@ -51,7 +54,10 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
              height = @{nameof(VideoFileEntity.Height)},
              framerate = @{nameof(VideoFileEntity.Framerate)},
              downloaded_at = @{nameof(VideoFileEntity.DownloadedAt)},
-             downloaded_by_user_id = @{nameof(VideoFileEntity.DownloadedByUserId)}
+             downloaded_by_user_id = @{nameof(VideoFileEntity.DownloadedByUserId)},
+             hash_algorithm = @{nameof(VideoFileEntity.HashAlgorithm)},
+             hash = @{nameof(VideoFileEntity.Hash)},
+             storage_size = @{nameof(VideoFileEntity.StorageSize)}
          """;
 
     public async ValueTask CreateTemporaryFile(

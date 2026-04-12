@@ -8,6 +8,8 @@ _Latest build from master branch._
 
 - Handle deleted entry feed updates
   ([#273](https://github.com/Tubeshade/Tubeshade/pull/273))
+- Store file metadata
+  ([#274](https://github.com/Tubeshade/Tubeshade/pull/274))
 
 ### Changed
 

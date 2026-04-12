@@ -32,6 +32,8 @@ public interface ITasksPage : IPaginatedDataPage<TaskModel>, IFormLayout
 
     Task<IActionResult> OnPostUpdateSegments();
 
+    Task<IActionResult> OnPostRefreshMetadata();
+
     Task<IActionResult> OnPostRetry(Guid taskId);
 
     Task<IActionResult> OnPostCancel(Guid taskRunId);

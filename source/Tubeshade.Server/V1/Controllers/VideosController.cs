@@ -143,7 +143,9 @@ public sealed class VideosController : ControllerBase
 
         var stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         var lastWriteTime = file.LastWriteTimeUtc;
-        var etag = $"\"video_{id}_{lastWriteTime.ToString(CultureInfo.InvariantCulture)}\"";
+        var etag = videoFile is { HashAlgorithm.Name: not HashAlgorithm.Names.Placeholder, Hash: { } hash }
+            ? $"\"{Convert.ToBase64String(hash)}\""
+            : $"\"video_{id}_{lastWriteTime.ToString(CultureInfo.InvariantCulture)}\"";
 
         return File(
             stream,
@@ -181,12 +183,16 @@ public sealed class VideosController : ControllerBase
             _ => throw new InvalidOperationException($"Unexpected thumbnail extension '{file.Extension}'"),
         };
 
+        var etag = thumbnail is {HashAlgorithm.Name: not HashAlgorithm.Names.Placeholder, Hash: { } hash}
+            ? $"\"{Convert.ToBase64String(hash)}\""
+            : $"\"thumbnail_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"";
+
         var stream = file.OpenRead();
         return File(
             stream,
             contentType,
             file.LastWriteTimeUtc,
-            new EntityTagHeaderValue(new StringSegment($"\"thumbnail_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")));
+            new EntityTagHeaderValue(new StringSegment(etag)));
     }
 
     [HttpGet("Subtitles")]

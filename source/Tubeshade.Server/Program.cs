@@ -21,6 +21,7 @@ using Tubeshade.Server.Areas.Identity;
 using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Configuration.Startup;
+using Tubeshade.Server.Configuration.Startup.Migrations;
 using Tubeshade.Server.Services;
 using Tubeshade.Server.Services.Background;
 using Tubeshade.Server.Services.Ffmpeg;
@@ -147,6 +148,8 @@ internal static class Program
             .AddSingleton<BackgroundWorkerService>()
             .AddHostedService<BackgroundWorkerService>(provider => provider.GetRequiredService<BackgroundWorkerService>())
             .AddHostedService<SchedulerService>()
+            .AddHostedService<ApplicationMigrationService>()
+            .AddScoped<FileMetadataMigration>()
             .AddScoped<TaskService>()
             .AddScoped<ChannelService>()
             .AddScoped<VideoService>()
@@ -165,6 +168,7 @@ internal static class Program
             .AddSponsorBlockClient()
             .AddScoped<SubscriptionsService>()
             .AddScoped<FileUploadService>()
+            .AddScoped<FileMetadataService>()
             .AddSingleton<FfmpegService>()
             .AddSingleton<FileSystemService>()
             .AddPubSubHubbubClient();

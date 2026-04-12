@@ -493,6 +493,9 @@ public sealed class YoutubeIndexingService
             return;
         }
 
+        var hashAlgorithm = HashAlgorithm.Default;
+        var hashData = await hashAlgorithm.ComputeHashAsync(file, cancellationToken);
+
         if (existing is null)
         {
             _logger.CreatingThumbnail();
@@ -503,9 +506,12 @@ public sealed class YoutubeIndexingService
                     CreatedByUserId = userId,
                     ModifiedByUserId = userId,
                     StoragePath = file.Name,
+                    StorageSize = file.Length,
                     Type = ImageType.Thumbnail,
                     Width = width,
-                    Height = height
+                    Height = height,
+                    HashAlgorithm = hashAlgorithm,
+                    Hash = hashData,
                 },
                 transaction);
 
@@ -517,9 +523,12 @@ public sealed class YoutubeIndexingService
 
             existing.ModifiedByUserId = userId;
             existing.StoragePath = file.Name;
+            existing.StorageSize = file.Length;
             existing.Type = ImageType.Thumbnail;
             existing.Width = width;
             existing.Height = height;
+            existing.HashAlgorithm = hashAlgorithm;
+            existing.Hash = hashData;
 
             var count = await _imageFileRepository.UpdateAsync(existing, transaction);
             if (count is 0)

@@ -465,4 +465,7 @@
     <data name="Tasks_Type_youtube_feed_update" xml:space="preserve">
         <value>Feed update from</value>
     </data>
+    <data name="Tasks_Type_refresh_file_metadata" xml:space="preserve">
+        <value>Refresh file metadata</value>
+    </data>
 </root>

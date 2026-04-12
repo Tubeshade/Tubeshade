@@ -142,6 +142,19 @@ public sealed class Index : PageModel, ITasksPage, INonLibraryPage
     }
 
     /// <inheritdoc />
+    public async Task<IActionResult> OnPostRefreshMetadata()
+    {
+        var userId = User.GetUserId();
+
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        var libraries = await _libraryRepository.GetAsync(userId, transaction);
+        await _taskService.RefreshFileMetadata(userId, libraries.Select(library => library.Id), TaskSource.User, transaction);
+        await transaction.CommitAsync();
+
+        return StatusCode(StatusCodes.Status204NoContent);
+    }
+
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostRetry(Guid taskId)
     {
         await _taskService.RetryTask(User.GetUserId(), taskId, TaskSource.User);

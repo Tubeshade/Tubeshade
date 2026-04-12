@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<DownloadMethod>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<DownloadVideos>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SubscriptionStatus>());
+            SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<HashAlgorithm>());
 
             SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
             SqlMapper.AddTypeHandler(new PeriodTypeHandler());

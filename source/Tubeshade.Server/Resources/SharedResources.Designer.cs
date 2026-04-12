@@ -1167,6 +1167,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Refresh file metadata.
+        /// </summary>
+        public static string Tasks_Type_refresh_file_metadata {
+            get {
+                return ResourceManager.GetString("Tasks_Type_refresh_file_metadata", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Refresh subscriptions.
         /// </summary>
         public static string Tasks_Type_refresh_subscriptions {

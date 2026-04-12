@@ -116,6 +116,13 @@ public sealed class Index : LibraryPageBase, ITasksPage
     }
 
     /// <inheritdoc />
+    public async Task<IActionResult> OnPostRefreshMetadata()
+    {
+        await _taskService.RefreshFileMetadata(User.GetUserId(), [LibraryId], TaskSource.User);
+        return StatusCode(StatusCodes.Status204NoContent);
+    }
+
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostRetry(Guid taskId)
     {
         await _taskService.RetryTask(User.GetUserId(), taskId, TaskSource.User);

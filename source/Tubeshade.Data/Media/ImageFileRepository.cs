@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Npgsql;
@@ -16,8 +19,8 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
     /// <inheritdoc />
     protected override string InsertSql =>
         """
-        INSERT INTO media.image_files (created_by_user_id, modified_by_user_id, storage_path, type, width, height) 
-        VALUES (@CreatedByUserId, @ModifiedByUserId, @StoragePath, @Type, @Width, @Height)
+        INSERT INTO media.image_files (created_by_user_id, modified_by_user_id, storage_path, type, width, height, hash_algorithm, hash, storage_size)
+        VALUES (@CreatedByUserId, @ModifiedByUserId, @StoragePath, @Type, @Width, @Height, @HashAlgorithm, @Hash, @StorageSize)
         RETURNING id;
         """;
 
@@ -32,7 +35,10 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
                storage_path,
                type,
                width,
-               height
+               height,
+               hash_algorithm,
+               hash,
+               storage_size
         FROM media.image_files
         """;
 
@@ -42,11 +48,15 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
            storage_path = @{nameof(ImageFileEntity.StoragePath)},
            type = @{nameof(ImageFileEntity.Type)},
            width = @{nameof(ImageFileEntity.Width)},
-           height = @{nameof(ImageFileEntity.Height)}
+           height = @{nameof(ImageFileEntity.Height)},
+           hash_algorithm = @{nameof(ImageFileEntity.HashAlgorithm)},
+           hash = @{nameof(ImageFileEntity.Hash)},
+           storage_size = @{nameof(ImageFileEntity.StorageSize)}
          """;
 
     /// <inheritdoc />
     protected override string AccessCte =>
+        // lang=sql
         $"""
          WITH accessible_libraries AS
          (SELECT libraries.id
@@ -66,6 +76,7 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
 
     /// <inheritdoc />
     protected override string UpdateAccessCte =>
+        // lang=sql
         $"""
          WITH accessible_libraries AS
          (SELECT libraries.id
@@ -113,16 +124,7 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
             $"""
              {AccessCte}
 
-             SELECT image_files.id,
-                    image_files.created_at,
-                    image_files.created_by_user_id,
-                    image_files.modified_at,
-                    image_files.modified_by_user_id,
-                    image_files.storage_path,
-                    image_files.type,
-                    image_files.width,
-                    image_files.height
-             FROM media.image_files
+             {SelectSql}
                  INNER JOIN media.video_images ON image_files.id = video_images.image_id
                  INNER JOIN accessible ON image_files.id = accessible.image_id
              WHERE {AccessFilter} AND
@@ -133,5 +135,33 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
             transaction);
 
         return await Connection.QuerySingleOrDefaultAsync<ImageFileEntity>(command);
+    }
+
+    public async ValueTask<List<ImageFileEntity>> GetForVideo(
+        Guid videoId,
+        Guid userId,
+        Access access,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken = default)
+    {
+        var parameters = new GetVideoParameters(videoId, userId, access);
+
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             {AccessCte}
+
+             {SelectSql}
+                 INNER JOIN media.video_images ON image_files.id = video_images.image_id
+                 INNER JOIN accessible ON image_files.id = accessible.image_id
+             WHERE {AccessFilter} AND
+                   video_images.video_id = @{nameof(parameters.VideoId)};
+             """,
+            parameters,
+            transaction,
+            cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<ImageFileEntity>(command);
+        return enumerable as List<ImageFileEntity> ?? enumerable.ToList();
     }
 }

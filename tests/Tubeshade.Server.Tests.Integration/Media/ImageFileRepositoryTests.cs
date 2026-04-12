@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -93,6 +94,11 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
+            var hashAlgorithm = HashAlgorithm.Default;
+
+            using var content1 = new MemoryStream(Guid.NewGuid().ToByteArray());
+            using var content2 = new MemoryStream(Guid.NewGuid().ToByteArray());
+
             fileId = (await repository.AddAsync(
                 new()
                 {
@@ -102,6 +108,9 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
                     Type = ImageType.Thumbnail,
                     Width = 0,
                     Height = 0,
+                    HashAlgorithm = hashAlgorithm,
+                    Hash = await hashAlgorithm.ComputeHashAsync(content1),
+                    StorageSize = content1.Length,
                 },
                 transaction))!.Value;
 
@@ -114,6 +123,9 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
                     Type = ImageType.Banner,
                     Width = 0,
                     Height = 0,
+                    HashAlgorithm = hashAlgorithm,
+                    Hash = await hashAlgorithm.ComputeHashAsync(content2),
+                    StorageSize = content2.Length,
                 },
                 transaction);
 

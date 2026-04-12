@@ -285,4 +285,25 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(89, Information, "Not indexing video due to preferences")]
     internal static partial void FeedUpdateIgnored(this ILogger logger);
+
+    [LoggerMessage(90, Warning, "Video file {VideoFileId} for video {VideoId} does not exist at {Path}")]
+    internal static partial void VideoFileDoesNotExist(this ILogger logger, Guid videoFileId, Guid videoId, string path);
+
+    [LoggerMessage(91, Debug, "Adding hash with {HashAlgorithm} for video file {VideoFileId} stored at {Path}")]
+    internal static partial void AddingVideoMetadata(this ILogger logger, string hashAlgorithm, Guid videoFileId, string path);
+
+    [LoggerMessage(92, Debug, "Replacing placeholder hash with {HashAlgorithm} for video file {VideoFileId} stored at {Path}")]
+    internal static partial void ReplacingVideoPlaceholderHash(this ILogger logger, string hashAlgorithm, Guid videoFileId, string path);
+
+    [LoggerMessage(93, Warning, "Image file {ImageFileId} for video {VideoId} does not exist at {Path}")]
+    internal static partial void ImageFileDoesNotExist(this ILogger logger, Guid imageFileId, Guid videoId, string path);
+
+    [LoggerMessage(94, Debug, "Replacing placeholder hash with {HashAlgorithm} for image file {ImageFileId} stored at {Path}")]
+    internal static partial void ReplacingImagePlaceholderHash(this ILogger logger, string hashAlgorithm, Guid imageFileId, string path);
+
+    [LoggerMessage(95, Information, "Applying application migration {ApplicationMigrationName}")]
+    internal static partial void ApplyingApplicationMigration(this ILogger logger, string applicationMigrationName);
+
+    [LoggerMessage(96, Information, "Applied all application migrations")]
+    internal static partial void ApplicationMigrationsApplied(this ILogger logger);
 }

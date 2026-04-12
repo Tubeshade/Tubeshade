@@ -94,6 +94,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 video_files.framerate,
                 video_files.downloaded_at,
                 video_files.downloaded_by_user_id,
+                video_files.hash_algorithm,
+                video_files.hash,
+                video_files.storage_size,
                 downloading.task_run_id,
                 downloading.path AS TempPath
          FROM media.video_files
@@ -290,6 +293,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     video_files.framerate,
                     video_files.downloaded_at,
                     video_files.downloaded_by_user_id,
+                    video_files.hash_algorithm,
+                    video_files.hash,
+                    video_files.storage_size,
                     downloading.task_run_id,
                     downloading.path AS TempPath
              FROM media.video_files
