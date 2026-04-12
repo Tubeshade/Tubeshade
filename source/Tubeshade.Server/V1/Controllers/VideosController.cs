@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -31,6 +32,8 @@ namespace Tubeshade.Server.V1.Controllers;
 [Route("api/v{version:apiVersion}/[controller]/{id:guid}")]
 public sealed class VideosController : ControllerBase
 {
+    private const string WebVttContentType = "text/vtt";
+
     private readonly ILogger<VideosController> _logger;
     private readonly NpgsqlConnection _connection;
     private readonly VideoRepository _repository;
@@ -39,6 +42,7 @@ public sealed class VideosController : ControllerBase
     private readonly FileUploadService _fileUploadService;
     private readonly SponsorBlockService _sponsorBlockService;
     private readonly ImageFileRepository _imageFileRepository;
+    private readonly TrackFileRepository _trackFileRepository;
 
     public VideosController(
         ILogger<VideosController> logger,
@@ -48,7 +52,8 @@ public sealed class VideosController : ControllerBase
         WebVideoTextTracksService webVideoTextTracksService,
         FileUploadService fileUploadService,
         SponsorBlockService sponsorBlockService,
-        ImageFileRepository imageFileRepository)
+        ImageFileRepository imageFileRepository,
+        TrackFileRepository trackFileRepository)
     {
         _logger = logger;
         _connection = connection;
@@ -58,6 +63,7 @@ public sealed class VideosController : ControllerBase
         _fileUploadService = fileUploadService;
         _sponsorBlockService = sponsorBlockService;
         _imageFileRepository = imageFileRepository;
+        _trackFileRepository = trackFileRepository;
     }
 
     [HttpPost("PlaybackPosition")]
@@ -196,44 +202,69 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Subtitles")]
-    public async Task<IActionResult> GetSubtitles(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSubtitles(Guid id, string? language, CancellationToken cancellationToken)
     {
-        var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-        var path = video.GetSubtitlesFilePath();
+        var userId = User.GetUserId();
+        language ??= "en";
 
-        if (!System.IO.File.Exists(path))
+        await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.RepeatableRead, cancellationToken);
+        var video = await _repository.GetAsync(id, userId, transaction);
+        var files = await _trackFileRepository.GetForVideo(id, userId, Access.Read, transaction, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        var comparer = StringComparer.OrdinalIgnoreCase;
+        if (files.SingleOrDefault(file => file.Type == TrackType.Subtitles && comparer.Equals(file.Language, language)) is not { } trackFile)
         {
-            return NotFound();
+            return Problem("Video does not have subtitles for the specified language", statusCode: StatusCodes.Status404NotFound);
         }
 
-        var file = new FileInfo(path);
+        var file = new FileInfo(Path.Combine(video.StoragePath, trackFile.StoragePath));
+        if (!file.Exists)
+        {
+            return Problem("Subtitle file does not exist for the specified language", statusCode: StatusCodes.Status404NotFound);
+        }
+
+        var etag = $"\"{Convert.ToBase64String(trackFile.Hash)}\"";
+
         var stream = file.OpenRead();
         return File(
             stream,
-            "text/vtt",
+            WebVttContentType,
             file.LastWriteTimeUtc,
-            new EntityTagHeaderValue(new StringSegment($"\"subtitles_en_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")));
+            new EntityTagHeaderValue(new StringSegment(etag)));
     }
 
     [HttpGet("Chapters")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetChapters(Guid id, CancellationToken cancellationToken)
     {
-        var video = await _repository.GetAsync(id, User.GetUserId(), cancellationToken);
-        var path = video.GetChaptersFilePath();
+        var userId = User.GetUserId();
 
-        if (!System.IO.File.Exists(path))
+        await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.RepeatableRead, cancellationToken);
+        var video = await _repository.GetAsync(id, userId, transaction);
+        var files = await _trackFileRepository.GetForVideo(id, userId, Access.Read, transaction, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        if (files.SingleOrDefault(file => file.Type == TrackType.Chapters) is not { } trackFile)
         {
-            return NotFound();
+            return Problem("Video does not have chapters", statusCode: StatusCodes.Status404NotFound);
         }
 
-        var file = new FileInfo(path);
+        var file = new FileInfo(Path.Combine(video.StoragePath, trackFile.StoragePath));
+        if (!file.Exists)
+        {
+            return Problem("Chapters file does not exist", statusCode: StatusCodes.Status404NotFound);
+        }
+
         var stream = file.OpenRead();
         return File(
             stream,
-            "text/vtt",
+            WebVttContentType,
             file.LastWriteTimeUtc,
-            new EntityTagHeaderValue(new StringSegment($"\"chapters_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"")));
+            new EntityTagHeaderValue(new StringSegment($"\"{Convert.ToBase64String(trackFile.Hash)}\"")));
     }
+
 
     [HttpGet("SponsorBlock")]
     [ResponseCache(CacheProfileName = CacheProfiles.Static)]
@@ -272,12 +303,13 @@ public sealed class VideosController : ControllerBase
         memoryStream.Position = 0;
 
         var modifiedAt = segments.Select(segment => segment.ModifiedAt).Max();
+        var etag = $"\"sponsorblock_{id}_{InstantPattern.ExtendedIso.Format(modifiedAt)}\"";
+
         return File(
             memoryStream,
-            "text/vtt",
+            WebVttContentType,
             modifiedAt.ToDateTimeOffset(),
-            new EntityTagHeaderValue(
-                new StringSegment($"\"sponsorblock_{id}_{InstantPattern.ExtendedIso.Format(modifiedAt)}\"")));
+            new EntityTagHeaderValue(new StringSegment(etag)));
     }
 
     private void DisableResponseCaching()

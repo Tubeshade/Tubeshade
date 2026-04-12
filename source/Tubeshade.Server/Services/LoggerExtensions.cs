@@ -306,4 +306,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(96, Information, "Applied all application migrations")]
     internal static partial void ApplicationMigrationsApplied(this ILogger logger);
+
+    [LoggerMessage(97, Debug, "Chapters file for video {VideoId} does not exist at {Path}")]
+    internal static partial void ChaptersFileDoesNotExist(this ILogger logger, Guid videoId, string path);
 }

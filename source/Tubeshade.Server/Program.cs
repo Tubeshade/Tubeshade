@@ -25,6 +25,7 @@ using Tubeshade.Server.Configuration.Startup.Migrations;
 using Tubeshade.Server.Services;
 using Tubeshade.Server.Services.Background;
 using Tubeshade.Server.Services.Ffmpeg;
+using Tubeshade.Server.Services.Migrations;
 
 namespace Tubeshade.Server;
 
@@ -150,6 +151,7 @@ internal static class Program
             .AddHostedService<SchedulerService>()
             .AddHostedService<ApplicationMigrationService>()
             .AddScoped<FileMetadataMigration>()
+            .AddScoped<TrackFileMigration>()
             .AddScoped<TaskService>()
             .AddScoped<ChannelService>()
             .AddScoped<VideoService>()
@@ -169,6 +171,7 @@ internal static class Program
             .AddScoped<SubscriptionsService>()
             .AddScoped<FileUploadService>()
             .AddScoped<FileMetadataService>()
+            .AddScoped<TrackFileService>()
             .AddSingleton<FfmpegService>()
             .AddSingleton<FileSystemService>()
             .AddPubSubHubbubClient();

@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<DownloadVideos>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SubscriptionStatus>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<HashAlgorithm>());
+            SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TrackType>());
 
             SqlMapper.AddTypeHandler(new LocalDateTypeHandler());
             SqlMapper.AddTypeHandler(new PeriodTypeHandler());
@@ -77,6 +78,7 @@ public static class ServiceCollectionExtensions
                 .AddScoped<VideoRepository>()
                 .AddScoped<VideoFileRepository>()
                 .AddScoped<ImageFileRepository>()
+                .AddScoped<TrackFileRepository>()
                 .AddScoped<PreferencesRepository>()
                 .AddScoped<SponsorBlockSegmentRepository>()
                 .AddScoped<ChannelSubscriptionRepository>()

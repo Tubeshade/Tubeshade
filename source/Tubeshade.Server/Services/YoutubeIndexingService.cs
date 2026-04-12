@@ -14,6 +14,7 @@ using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services.Ffmpeg;
+using Tubeshade.Server.Services.Migrations;
 using YoutubeDLSharp.Metadata;
 using static System.Data.IsolationLevel;
 using static YoutubeDLSharp.Metadata.Availability;
@@ -37,6 +38,7 @@ public sealed class YoutubeIndexingService
     private readonly VideoRepository _videoRepository;
     private readonly VideoFileRepository _videoFileRepository;
     private readonly ImageFileRepository _imageFileRepository;
+    private readonly TrackFileRepository _trackFileRepository;
     private readonly PreferencesRepository _preferencesRepository;
     private readonly IClock _clock;
     private readonly NpgsqlConnection _connection;
@@ -47,6 +49,7 @@ public sealed class YoutubeIndexingService
     private readonly FfmpegService _ffmpegService;
     private readonly ChannelService _channelService;
     private readonly VideoService _videoService;
+    private readonly TrackFileService _trackFileService;
 
     public YoutubeIndexingService(
         ILogger<YoutubeIndexingService> logger,
@@ -64,7 +67,9 @@ public sealed class YoutubeIndexingService
         SponsorBlockService sponsorBlockService,
         FfmpegService ffmpegService,
         ChannelService channelService,
-        VideoService videoService)
+        VideoService videoService,
+        TrackFileRepository trackFileRepository,
+        TrackFileService trackFileService)
     {
         _logger = logger;
         _channelRepository = channelRepository;
@@ -80,6 +85,8 @@ public sealed class YoutubeIndexingService
         _ffmpegService = ffmpegService;
         _channelService = channelService;
         _videoService = videoService;
+        _trackFileRepository = trackFileRepository;
+        _trackFileService = trackFileService;
         _imageFileRepository = imageFileRepository;
         _videoFileRepository = videoFileRepository;
     }
@@ -388,6 +395,8 @@ public sealed class YoutubeIndexingService
             }
         }
 
+        var tracks = await _trackFileRepository.GetForVideo(video.Id, userId, Access.Read, transaction, cancellationToken);
+
         var youtubeChapters = videoData.Chapters?.Select(TextTrackCue.FromYouTubeChapter).ToArray();
         var descriptionChapters = video.Description.TryExtractChapters(video.Duration, out var chaptersCues)
             ? chaptersCues
@@ -408,9 +417,30 @@ public sealed class YoutubeIndexingService
             var chaptersFilePath = video.GetChaptersFilePath();
             _logger.WritingVideoChapters(chaptersFilePath);
 
-            await using var chapterFile = File.Create(chaptersFilePath);
-            await _webVideoTextTracksService.Write(chapterFile, chapterCues, cancellationToken);
+            var chaptersFile = new FileInfo(chaptersFilePath);
+            await using (var stream = chaptersFile.Create())
+            {
+                await _webVideoTextTracksService.Write(stream, chapterCues, cancellationToken);
+            }
+
+            await _trackFileService.CreateOrUpdateChapters(
+                video,
+                chaptersFile,
+                tracks,
+                HashAlgorithm.Default,
+                userId,
+                transaction,
+                cancellationToken);
         }
+
+        await _trackFileService.CreateOrUpdateSubtitles(
+            video,
+            directory,
+            tracks,
+            HashAlgorithm.Default,
+            userId,
+            transaction,
+            cancellationToken);
 
         await CreateOrUpdateThumbnail(url, directory, cookieFilepath, userId, video, transaction, cancellationToken);
 

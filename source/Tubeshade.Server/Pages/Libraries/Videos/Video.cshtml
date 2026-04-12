@@ -25,14 +25,14 @@
                     type="video/@file.Type.Name"/>
             }
 
-            @if (Model.HasSubtitles)
+            @foreach (var track in Model.Subtitles)
             {
                 <track
-                    src="@Url.Action("GetSubtitles", "Videos", new { version = "1.0", id = Model.VideoId })"
-                    label="English" kind="subtitles" srclang="en" default/>
+                    src="@Url.Action("GetSubtitles", "Videos", new { version = "1.0", id = Model.VideoId, language = track.Language })"
+                    label="@track.Language" kind="subtitles" srclang="@track.Language"/>
             }
 
-            @if (Model.HasChapters)
+            @if (Model.Chapters is not null)
             {
                 <track
                     src="@Url.Action("GetChapters", "Videos", new { version = "1.0", id = Model.VideoId })"

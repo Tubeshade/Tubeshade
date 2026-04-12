@@ -20,7 +20,6 @@ using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
-using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services;
 using static System.IO.UnixFileMode;
 using StringExtensions = Tubeshade.Server.Pages.Shared.StringExtensions;
@@ -39,6 +38,7 @@ public sealed partial class Video : LibraryPageBase
     private readonly IClock _clock;
     private readonly ILogger<Video> _logger;
     private readonly TaskService _taskService;
+    private readonly TrackFileRepository _trackFileRepository;
 
     public Video(
         VideoRepository videoRepository,
@@ -50,7 +50,8 @@ public sealed partial class Video : LibraryPageBase
         VideoFileRepository fileRepository,
         IClock clock,
         ILogger<Video> logger,
-        TaskService taskService)
+        TaskService taskService,
+        TrackFileRepository trackFileRepository)
     {
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
@@ -62,6 +63,7 @@ public sealed partial class Video : LibraryPageBase
         _clock = clock;
         _logger = logger;
         _taskService = taskService;
+        _trackFileRepository = trackFileRepository;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -86,9 +88,9 @@ public sealed partial class Video : LibraryPageBase
 
     public decimal PlaybackSpeed { get; set; } = 1.0m;
 
-    public bool HasSubtitles { get; set; }
+    public TrackFileEntity? Chapters { get; set; }
 
-    public bool HasChapters { get; set; }
+    public List<TrackFileEntity> Subtitles { get; set; } = [];
 
     public bool HasSponsorBlockSegments { get; set; }
 
@@ -111,8 +113,9 @@ public sealed partial class Video : LibraryPageBase
             PlaybackSpeed = playbackSpeed;
         }
 
-        HasSubtitles = System.IO.File.Exists(Entity.GetSubtitlesFilePath());
-        HasChapters = System.IO.File.Exists(Entity.GetChaptersFilePath());
+        var trackFiles = await _trackFileRepository.GetForVideo(VideoId, userId, Access.Read, transaction, cancellationToken);
+        Chapters = trackFiles.SingleOrDefault(file => file.Type == TrackType.Chapters);
+        Subtitles = trackFiles.Where(file => file.Type == TrackType.Subtitles).ToList();
 
         var segments = await _sponsorBlockSegmentRepository.GetForVideo(VideoId, userId, transaction);
         HasSponsorBlockSegments = segments is not [];

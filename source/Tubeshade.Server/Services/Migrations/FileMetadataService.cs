@@ -11,7 +11,7 @@ using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Tasks;
 
-namespace Tubeshade.Server.Services;
+namespace Tubeshade.Server.Services.Migrations;
 
 public sealed class FileMetadataService
 {

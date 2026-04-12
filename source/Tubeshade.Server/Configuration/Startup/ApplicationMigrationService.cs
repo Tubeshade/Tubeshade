@@ -31,13 +31,18 @@ public sealed class ApplicationMigrationService : BackgroundService
     {
         await _taskListenerService.IsListeningTask.WaitAsync(stoppingToken);
 
-        await using (var scope = _serviceProvider.CreateAsyncScope())
-        {
-            _logger.ApplyingApplicationMigration(nameof(FileMetadataMigration));
-            var fileMetadataMigration = scope.ServiceProvider.GetRequiredService<FileMetadataMigration>();
-            await fileMetadataMigration.MigrateAsync(stoppingToken);
-        }
+        await ApplyMigration<FileMetadataMigration>(nameof(FileMetadataMigration), stoppingToken);
+        await ApplyMigration<TrackFileMigration>(nameof(TrackFileMigration), stoppingToken);
 
         _logger.ApplicationMigrationsApplied();
+    }
+
+    private async ValueTask ApplyMigration<TMigration>(string name, CancellationToken cancellationToken)
+        where TMigration : IApplicationMigration
+    {
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        _logger.ApplyingApplicationMigration(name);
+        var migration = scope.ServiceProvider.GetRequiredService<TMigration>();
+        await migration.MigrateAsync(cancellationToken);
     }
 }

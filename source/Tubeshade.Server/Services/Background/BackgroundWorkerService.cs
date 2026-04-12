@@ -12,6 +12,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
+using Tubeshade.Server.Services.Migrations;
 
 namespace Tubeshade.Server.Services.Background;
 
@@ -284,6 +285,14 @@ public sealed class BackgroundWorkerService : BackgroundService
             var (libraryId, userId) = task.DestructureLibraryTask();
             var service = provider.GetRequiredService<FileMetadataService>();
             await service.AddMissingMetadata(libraryId, userId, taskRepository, taskRunId, cancellationToken);
+        }
+        else if (task.Type == TaskType.RefreshTrackFiles)
+        {
+            using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
+
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            var service = provider.GetRequiredService<TrackFileService>();
+            await service.RefreshTrackFiles(libraryId, userId, taskRepository, taskRunId, cancellationToken);
         }
     }
 

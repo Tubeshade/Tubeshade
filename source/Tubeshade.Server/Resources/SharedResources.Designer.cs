@@ -1185,6 +1185,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Refresh track files.
+        /// </summary>
+        public static string Tasks_Type_refresh_track_files {
+            get {
+                return ResourceManager.GetString("Tasks_Type_refresh_track_files", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Reindex videos.
         /// </summary>
         public static string Tasks_Type_reindex_videos {

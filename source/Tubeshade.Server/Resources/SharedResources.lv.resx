@@ -461,4 +461,7 @@
     <data name="Tasks_Type_refresh_file_metadata" xml:space="preserve">
         <value>Atjaunot failu metadatus</value>
     </data>
+    <data name="Tasks_Type_refresh_track_files" xml:space="preserve">
+        <value>Atjaunot ierakstu failus</value>
+    </data>
 </root>

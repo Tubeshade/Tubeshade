@@ -118,6 +118,9 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
     public static TaskEntity RefreshMetadata(Guid libraryId, Guid userId) =>
         LibraryTask(libraryId, userId, TaskType.RefreshFileMetadata);
 
+    public static TaskEntity RefreshTracks(Guid libraryId, Guid userId) =>
+        LibraryTask(libraryId, userId, TaskType.RefreshTrackFiles);
+
     private static TaskEntity LibraryTask(Guid libraryId, Guid userId, TaskType type) => new()
     {
         CreatedByUserId = userId,
