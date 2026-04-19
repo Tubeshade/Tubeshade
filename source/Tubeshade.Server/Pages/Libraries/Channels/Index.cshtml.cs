@@ -3,10 +3,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration.Auth;
+using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Libraries.Channels;
 
-public sealed class Index : LibraryPageBase
+public sealed class Index : LibraryPageBase, IFormLayout
 {
     private readonly ChannelRepository _channelRepository;
     private readonly LibraryRepository _libraryRepository;

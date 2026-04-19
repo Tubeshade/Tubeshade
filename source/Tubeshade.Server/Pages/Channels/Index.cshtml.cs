@@ -9,7 +9,7 @@ using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Channels;
 
-public sealed class Index : PageModel, INonLibraryPage
+public sealed class Index : PageModel, INonLibraryPage, IFormLayout
 {
     private readonly ChannelRepository _channelRepository;
     private readonly LibraryRepository _libraryRepository;
