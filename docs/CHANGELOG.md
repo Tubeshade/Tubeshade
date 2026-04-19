@@ -21,6 +21,8 @@ _Latest build from master branch._
   ([#271](https://github.com/Tubeshade/Tubeshade/pull/271))
 - Schedule tasks only after listening to database notifications
   ([#274](https://github.com/Tubeshade/Tubeshade/pull/274))
+- Format file sizes to closest unit instead of MiB
+  ([#274](https://github.com/Tubeshade/Tubeshade/pull/274))
 
 ### Fixed
 
