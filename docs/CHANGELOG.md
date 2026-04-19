@@ -32,6 +32,8 @@ _Latest build from master branch._
   ([#264](https://github.com/Tubeshade/Tubeshade/pull/264))
 - Don't automatically reindex videos that have not yet been published
   ([#265](https://github.com/Tubeshade/Tubeshade/issues/265))
+- Fix slow query for downloadable video search
+  ([#275](https://github.com/Tubeshade/Tubeshade/issues/275))
 
 ## [0.1.5] - 2026-04-04
 

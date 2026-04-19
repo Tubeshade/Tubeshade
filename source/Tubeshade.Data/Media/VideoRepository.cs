@@ -114,7 +114,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
             // lang=sql
             $"""
              {AccessCte},
-                  downloading AS
+                  downloading AS MATERIALIZED
                   (SELECT tasks.video_id
                    FROM tasks.tasks
                             INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
