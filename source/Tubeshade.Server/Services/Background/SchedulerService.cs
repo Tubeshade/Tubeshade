@@ -76,7 +76,7 @@ public sealed class SchedulerService : BackgroundService
             foreach (var schedule in schedules)
             {
                 using var scheduleScope = _logger.BeginScope("{ScheduleId}", schedule.Id);
-                var nextTime = GetNextTime(schedule.CronExpression, beforeTick);
+                var nextTime = GetNextTime(schedule.CronExpression, beforeTick, schedule.Id.GetHashCode());
                 if (!interval.Contains(nextTime))
                 {
                     _logger.SkippingSchedule();
@@ -95,9 +95,9 @@ public sealed class SchedulerService : BackgroundService
         }
     }
 
-    public static Instant GetNextTime(string cron, Instant currentTime)
+    public Instant GetNextTime(string cron, Instant currentTime, int seed)
     {
-        var expression = CronExpression.Parse(cron);
+        var expression = CronExpression.Parse(cron, seed);
         if (expression.GetNextOccurrence(currentTime.ToDateTimeUtc()) is { } nextTime)
         {
             return Instant.FromDateTimeUtc(nextTime);

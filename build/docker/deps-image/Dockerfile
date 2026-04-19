@@ -1,4 +1,4 @@
-﻿ARG DOTNET_RUNTIME_VERSION="10.0.5-alpine3.23"
+﻿ARG DOTNET_RUNTIME_VERSION="10.0.6-alpine3.23"
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:${DOTNET_RUNTIME_VERSION}
 

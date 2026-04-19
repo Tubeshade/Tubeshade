@@ -1,6 +1,6 @@
 ﻿param(
     [Parameter(Mandatory)]
-    [String]$DotnetRuntimeVersion = "10.0.5-alpine3.23"
+    [String]$DotnetRuntimeVersion = "10.0.6-alpine3.23"
 )
 
 $image = "ghcr.io/tubeshade/tubeshade-runtime-deps"

@@ -13,7 +13,7 @@ public sealed class CronExpressionAttribute : ValidationAttribute
             return null;
         }
 
-        return CronExpression.TryParse(expression, out _)
+        return CronExpression.TryParse(expression, 0, out _)
             ? ValidationResult.Success
             : new ValidationResult("Not a valid cron expression");
     }
