@@ -1,7 +1,7 @@
 ﻿@using Tubeshade.Data.Tasks
 @model TaskModel
 
-<span>@Model.TypeDisplay</span>
+<span>@Model.Type.LocalizedName</span>
 @if (Model.Type == TaskType.Index)
 {
     @if (Model.VideoId is { } videoId)
@@ -10,7 +10,7 @@
             <span>"@Model.Name"</span>
         </a>
     }
-    else if (Model.ChannelId is { } channelId)
+    else if (Model is { ChannelId: { } channelId, Url: null })
     {
         <a asp-page="/Channels/Channel" asp-route-channelId="@channelId">
             <span>"@Model.Name"</span>

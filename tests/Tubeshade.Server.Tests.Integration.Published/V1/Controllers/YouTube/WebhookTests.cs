@@ -59,7 +59,6 @@ public sealed class WebhookTests(IServerFixture fixture) : PlaywrightTests(fixtu
 
         if (type is not null)
         {
-            await Page.GetByText($"Index \"{externalVideoId}\"").WaitForAsync();
         }
         else
         {

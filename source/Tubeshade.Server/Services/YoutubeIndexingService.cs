@@ -95,7 +95,6 @@ public sealed class YoutubeIndexingService
         string url,
         Guid libraryId,
         Guid userId,
-        Guid? videoId,
         Guid? channelId,
         DirectoryInfo tempDirectory,
         TaskSource source,
@@ -106,7 +105,7 @@ public sealed class YoutubeIndexingService
         var data = await _ytdlpWrapper.FetchUnknownUrlData(url, cookieFilepath, cancellationToken);
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var channel = videoId is not null && channelId is not null
+        var channel = channelId is not null
             ? await _channelRepository.GetAsync(channelId.Value, userId, transaction)
             : await GetChannel(libraryId, userId, data, transaction);
 

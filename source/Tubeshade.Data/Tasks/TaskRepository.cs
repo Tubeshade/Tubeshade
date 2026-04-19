@@ -270,6 +270,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     filtered_tasks.library_id,
                     filtered_tasks.channel_id,
                     filtered_tasks.video_id,
+                    filtered_tasks.url,
                     task_runs.id                         AS RunId,
                     task_runs.state                      AS RunState,
                     task_runs.source,
@@ -283,7 +284,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                         WHEN filtered_tasks.type = 'index' AND filtered_tasks.video_id IS NOT NULL THEN
                             (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
 
-                        WHEN filtered_tasks.type = 'index' AND filtered_tasks.channel_id IS NOT NULL THEN
+                        WHEN filtered_tasks.type = 'index' AND filtered_tasks.channel_id IS NOT NULL AND filtered_tasks.url IS NULL THEN
                             (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
                         
                         WHEN filtered_tasks.type = 'index' THEN

@@ -41,6 +41,12 @@ internal static class LocalizationExtensions
             .GetString($"Tasks_Status_{status.Name}");
     }
 
+    extension(TaskType type)
+    {
+        internal string? LocalizedName => Manager
+            .GetString($"Tasks_Type_{type.Name}");
+    }
+
     extension(VideoType type)
     {
         internal string? LocalizedName => Manager

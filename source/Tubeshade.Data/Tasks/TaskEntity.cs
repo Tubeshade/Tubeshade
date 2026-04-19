@@ -31,22 +31,10 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
             : throw new InvalidOperationException("Task is not for a library");
     }
 
-    public static TaskEntity Index(Guid libraryId, Guid userId, string url) => new()
-    {
-        CreatedByUserId = userId,
-        ModifiedByUserId = userId,
-        OwnerId = userId,
-        Type = TaskType.Index,
-        UserId = userId,
-        LibraryId = libraryId,
-        ChannelId = null,
-        VideoId = null,
-        Url = url,
-        AllVideos = false,
-        Payload = null,
-    };
+    public static TaskEntity Index(Guid libraryId, Guid userId, string url) =>
+        Index(libraryId, userId, null, null, url);
 
-    public static TaskEntity Index(Guid libraryId, Guid userId, Guid channelId, Guid videoId, string url) => new()
+    public static TaskEntity Index(Guid libraryId, Guid userId, Guid? channelId, Guid? videoId, string url) => new()
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,

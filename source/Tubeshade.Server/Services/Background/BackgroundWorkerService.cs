@@ -161,7 +161,6 @@ public sealed class BackgroundWorkerService : BackgroundService
                 task.Url!,
                 libraryId,
                 userId,
-                task.VideoId,
                 task.ChannelId,
                 scopedDirectory.Directory,
                 source,

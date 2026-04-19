@@ -150,7 +150,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
             return Page();
         }
 
-        await _taskService.IndexVideo(User.GetUserId(), LibraryId, model.Url, TaskSource.User);
+        await _taskService.IndexVideo(User.GetUserId(), LibraryId, model.Url, TaskSource.User, cancellationToken);
         return RedirectToPage();
     }
 
