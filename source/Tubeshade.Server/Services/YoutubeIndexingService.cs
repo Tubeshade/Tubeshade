@@ -433,15 +433,6 @@ public sealed class YoutubeIndexingService
                 cancellationToken);
         }
 
-        await _trackFileService.CreateOrUpdateSubtitles(
-            video,
-            directory,
-            tracks,
-            HashAlgorithm.Default,
-            userId,
-            transaction,
-            cancellationToken);
-
         await CreateOrUpdateThumbnail(url, directory, cookieFilepath, userId, video, transaction, cancellationToken);
 
         if (isExistingVideo && !(videoData.LiveStatus is LiveStatus.WasLive && files.Any(file => file.DownloadedAt is not null)))

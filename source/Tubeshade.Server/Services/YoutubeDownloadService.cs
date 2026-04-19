@@ -13,12 +13,14 @@ using Microsoft.Extensions.Options;
 using NodaTime;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services.Ffmpeg;
+using Tubeshade.Server.Services.Migrations;
 using YoutubeDLSharp.Metadata;
 using Ytdlp;
 using Ytdlp.Processes;
@@ -36,6 +38,8 @@ public sealed class YoutubeDownloadService
     private readonly NpgsqlConnection _connection;
     private readonly IYtdlpWrapper _ytdlpWrapper;
     private readonly FfmpegService _ffmpegService;
+    private readonly TrackFileRepository _trackFileRepository;
+    private readonly TrackFileService _trackFileService;
 
     public YoutubeDownloadService(
         ILogger<YoutubeDownloadService> logger,
@@ -46,7 +50,9 @@ public sealed class YoutubeDownloadService
         NpgsqlConnection connection,
         PreferencesRepository preferencesRepository,
         IYtdlpWrapper ytdlpWrapper,
-        FfmpegService ffmpegService)
+        FfmpegService ffmpegService,
+        TrackFileRepository trackFileRepository,
+        TrackFileService trackFileService)
     {
         _logger = logger;
         _options = optionsMonitor.CurrentValue;
@@ -56,6 +62,8 @@ public sealed class YoutubeDownloadService
         _preferencesRepository = preferencesRepository;
         _ytdlpWrapper = ytdlpWrapper;
         _ffmpegService = ffmpegService;
+        _trackFileRepository = trackFileRepository;
+        _trackFileService = trackFileService;
         _videoFileRepository = videoFileRepository;
     }
 
@@ -73,6 +81,7 @@ public sealed class YoutubeDownloadService
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
         var video = await _videoRepository.GetAsync(videoId, userId, transaction);
+        var tracks = await _trackFileRepository.GetForVideo(video.Id, userId, Access.Read, transaction, cancellationToken);
         var preferences = await _preferencesRepository.GetEffectiveForVideo(libraryId, videoId, userId, transaction, cancellationToken) ?? new();
         preferences.ApplyDefaults();
 
@@ -88,6 +97,16 @@ public sealed class YoutubeDownloadService
         {
             throw new InvalidOperationException($"Unexpected download method '{preferences.DownloadMethod}'");
         }
+
+        var videoDirectory = new DirectoryInfo(video.GetDirectoryPath());
+        await _trackFileService.CreateOrUpdateSubtitles(
+            video,
+            videoDirectory,
+            tracks,
+            HashAlgorithm.Default,
+            userId,
+            transaction,
+            cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
     }
