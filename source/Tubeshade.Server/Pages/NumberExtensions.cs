@@ -31,13 +31,12 @@ public static class NumberExtensions
 
             if (unitIndex < minimumMultiplier)
             {
-                return value.ToString(cultureInfo);
+                return Math.Round(value, 2).ToString(cultureInfo);
             }
 
-            var rounded = Math.Round(normalized, 2);
             var unit = Units[unitIndex];
 
-            return $"{rounded.ToString(cultureInfo)} {unit}";
+            return $"{Math.Round(normalized, 2).ToString(cultureInfo)} {unit}";
         }
     }
 }

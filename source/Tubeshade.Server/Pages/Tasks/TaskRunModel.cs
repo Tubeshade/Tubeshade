@@ -35,7 +35,7 @@ public sealed class TaskRunModel
         : null;
 
     public string? FormattedRate => Rate is { } rate
-        ? $"{rate.FormatSize(2, CultureInfo.CurrentCulture)}/s"
+        ? $"{rate.FormatSize(1, CultureInfo.CurrentCulture)}/s"
         : null;
 
     public string? FormattedRemaining => Remaining is not null
