@@ -29,7 +29,7 @@
             {
                 <track
                     src="@Url.Action("GetSubtitles", "Videos", new { version = "1.0", id = Model.VideoId, language = track.Language })"
-                    label="@track.Language" kind="subtitles" srclang="@track.Language"/>
+                    label="@track.Language" kind="subtitles" srclang="@track.Language" default="@(Model.Subtitles.Count is 1)"/>
             }
 
             @if (Model.Chapters is not null)
