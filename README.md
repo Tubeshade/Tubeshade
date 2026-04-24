@@ -1,5 +1,9 @@
 ﻿# Tubeshade
 
+Self-hosted YouTube media server
+
+[Changelog](./docs/CHANGELOG.md) | [Download](https://github.com/Tubeshade/Tubeshade/releases/latest)
+
 ## Main features
 
 * Subscribe to YouTube channels, either by checking channels based on schedule or via [webhooks](https://pubsubhubbub.appspot.com/subscribe)
@@ -41,3 +45,7 @@ Library settings:
 ![Library settings](./docs/assets/library_settings.png)
 Channel settings:
 ![Channel settings](./docs/assets/channel_settings.png)
+Manual channel creation:
+![Channel settings](./docs/assets/create_channel.png)
+Manual video creation:
+![Channel settings](./docs/assets/create_video.png)
