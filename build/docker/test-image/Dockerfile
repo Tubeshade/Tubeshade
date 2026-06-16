@@ -13,7 +13,7 @@ ARG DOTNET_RUNTIME
 WORKDIR /tubeshade
 COPY ./ ./
 
-ADD --checksum="sha256:c2b0189f581fe4a2ddd41954f1bcb7d327db04b07ed0dea97e4f1b3e09b5dd8e" --chmod="+xr-w" https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp_linux /usr/bin/yt-dlp
+ADD --checksum="sha256:bf8aac79b72287a6d2043074415132558b43743a8f9461a22b0141e90f16ce66" --chmod="+xr-w" https://github.com/yt-dlp/yt-dlp/releases/download/2026.06.09/yt-dlp_linux /usr/bin/yt-dlp
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     ./build/docker/test-image/publish.sh "Tubeshade.Server" $DOTNET_RUNTIME $BUILD_NUMBER
