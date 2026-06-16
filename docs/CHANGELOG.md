@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Changed
+
+- Update .NET SDK from 10.0.203 to 10.0.301, and runtime from 10.0.7 to 10.0.9
+  ([#284](https://github.com/Tubeshade/Tubeshade/pull/284))
+
 ## [0.1.6] - 2026-04-24
 
 ### Added

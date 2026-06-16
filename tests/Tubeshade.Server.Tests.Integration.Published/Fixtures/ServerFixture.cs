@@ -111,7 +111,7 @@ public sealed partial class ServerFixture : IServerFixture
 
         // the release image runs with a non-root user, which does not have write access to mounted paths
         // weirdly, this only is needed in GitHub actions and not locally
-        using var client = new DockerClientConfiguration().CreateClient();
+        using var client = new DockerClientBuilder().Build();
         var createResponse = await client.Exec.CreateContainerExecAsync(
             _serverContainer.Id,
             new ContainerExecCreateParameters
