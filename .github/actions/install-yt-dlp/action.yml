@@ -6,7 +6,7 @@ runs:
 
   steps:
     - id: restore-cache
-      uses: actions/cache@v4.3.0
+      uses: actions/cache@v5.0.5
       with:
         key: yt-dlp-${{ hashFiles('.github/actions/install-yt-dlp/action.yml') }}
         path: ~/.yt-dlp
