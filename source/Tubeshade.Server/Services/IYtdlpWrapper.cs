@@ -32,10 +32,10 @@ public interface IYtdlpWrapper
         string format,
         string? cookieFilepath,
         PlayerClient? client,
-        bool ignoreNoFormatsError,
         CancellationToken cancellationToken);
 
-    ValueTask<FormatData[][]> SelectFormats(string videoUrl,
+    ValueTask<FormatData[][]> SelectFormats(
+        string videoUrl,
         IEnumerable<string> formats,
         string? cookieFilepath,
         PlayerClient? client,

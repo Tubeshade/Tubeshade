@@ -118,13 +118,12 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         string format,
         string? cookieFilepath,
         PlayerClient? client,
-        bool ignoreNoFormatsError,
         CancellationToken cancellationToken)
     {
         var optionSet = GetDefaultOptions(cookieFilepath);
         optionSet.Format = format;
         optionSet.EmbedChapters = true;
-        optionSet.IgnoreNoFormatsError = ignoreNoFormatsError;
+        optionSet.IgnoreNoFormatsError = true;
         optionSet.DumpSingleJson = true;
         optionSet.ExtractorArgs = client is not null
             ? new MultiValue<string>($"youtube:player_client={client.Name}")

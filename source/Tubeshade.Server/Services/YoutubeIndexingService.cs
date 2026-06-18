@@ -304,7 +304,6 @@ public sealed class YoutubeIndexingService
                 format,
                 cookieFilepath,
                 preferences.PlayerClient,
-                availability != ExternalAvailability.Public,
                 cancellationToken);
 
             if (data.Formats is null or [])

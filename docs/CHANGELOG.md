@@ -10,6 +10,8 @@ _Latest build from master branch._
   ([#284](https://github.com/Tubeshade/Tubeshade/pull/284))
 - Update yt-dlp from 2026.03.17 to 2026.06.09
   ([#284](https://github.com/Tubeshade/Tubeshade/pull/284))
+- Ignore no format errors when indexing videos
+  ([#285](https://github.com/Tubeshade/Tubeshade/pull/285))
 
 ## [0.1.6] - 2026-04-24
 
