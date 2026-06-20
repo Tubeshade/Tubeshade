@@ -14,6 +14,7 @@ using NUnit.Framework;
 using PubSubHubbub.Models;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Preferences;
+using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Tests.Integration.Published.Fixtures;
 
 namespace Tubeshade.Server.Tests.Integration.Published.V1.Controllers.YouTube;
@@ -50,7 +51,9 @@ public sealed class WebhookTests(IServerFixture fixture) : PlaywrightTests(fixtu
 
         await Page.GotoAsync($"/Libraries/{libraryId}/Tasks");
 
+        await Page.GetByLabel("Source").SelectOptionAsync("Subscriptions");
         await Page.GetByText($"Feed update from \"{name}\"").WaitForAsync();
+        await Page.GetByLabel("Source").SelectOptionAsync("All");
 
         if (ignored)
         {

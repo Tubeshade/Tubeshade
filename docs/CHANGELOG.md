@@ -17,6 +17,8 @@ _Latest build from master branch._
   ([#284](https://github.com/Tubeshade/Tubeshade/pull/284))
 - Ignore no format errors when indexing videos
   ([#285](https://github.com/Tubeshade/Tubeshade/pull/285))
+- Hide subscribtions tasks by default
+  ([#289](https://github.com/Tubeshade/Tubeshade/pull/289))
 
 ### Fixed
 
