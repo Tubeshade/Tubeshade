@@ -51,9 +51,9 @@ public sealed class WebhookTests(IServerFixture fixture) : PlaywrightTests(fixtu
 
         await Page.GotoAsync($"/Libraries/{libraryId}/Tasks");
 
-        await Page.GetByLabel("Source").SelectOptionAsync("Subscriptions");
+        await Page.GetByLabel("Source").SelectOptionAsync(TaskSource.Webhook.Name);
         await Page.GetByText($"Feed update from \"{name}\"").WaitForAsync();
-        await Page.GetByLabel("Source").SelectOptionAsync("All");
+        await Page.GetByLabel("Source").SelectOptionAsync(string.Empty);
 
         if (ignored)
         {
