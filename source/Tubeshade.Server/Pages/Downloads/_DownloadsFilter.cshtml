@@ -5,7 +5,7 @@
 <search>
     <form method="get" class="row row-cols-2 row-cols-sm-auto g-2 align-items-center mb-2"
           hx-get="" hx-page="" hx-params="*" hx-push-url="true"
-          hx-trigger="input changed delay:100ms" hx-target="#downloadable-videos" hx-swap="outerHtml">
+          hx-trigger="input changed delay:100ms, @(Triggers.Refresh) delay:100ms from:body" hx-target="#downloadable-videos" hx-swap="outerHtml">
 
         <div class="col-12 col-md">
             <label asp-for="Query" hidden="hidden">@SharedResources.Filters_Search</label>

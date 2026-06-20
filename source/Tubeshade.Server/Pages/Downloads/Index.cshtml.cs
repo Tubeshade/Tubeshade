@@ -109,7 +109,8 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         await _taskService.DownloadVideo(User.GetUserId(), libraryId, videoId, TaskSource.User, transaction);
         await transaction.CommitAsync();
 
-        return RedirectToPage();
+        Response.Htmx(headers => headers.WithTrigger(Triggers.Refresh));
+        return StatusCode(StatusCodes.Status200OK);
     }
 
     public async Task<IActionResult> OnPostScan(Guid videoId)
@@ -128,15 +129,16 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         await _taskService.IndexVideo(userId, libraryId, video, TaskSource.User, transaction);
         await transaction.CommitAsync();
 
-        return RedirectToPage();
+        Response.Htmx(headers => headers.WithTrigger(Triggers.Refresh));
+        return StatusCode(StatusCodes.Status200OK);
     }
 
+    /// <inheritdoc />
     public async Task<IActionResult> OnPostIgnore(Guid videoId)
     {
         var userId = User.GetUserId();
-        var cancellationToken = CancellationToken.None;
 
-        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        await using var transaction = await _connection.OpenAndBeginTransaction();
         var video = await _videoRepository.FindAsync(videoId, userId, Access.Modify, transaction);
         if (video is null)
         {
@@ -147,7 +149,9 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         video.IgnoredByUserId = userId;
         await _videoRepository.UpdateAsync(video, transaction);
 
-        await transaction.CommitAsync(cancellationToken);
+        await transaction.CommitAsync();
+
+        Response.Htmx(headers => headers.WithTrigger(Triggers.Refresh));
         return StatusCode(StatusCodes.Status200OK);
     }
 

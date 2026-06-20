@@ -13,6 +13,11 @@ _Latest build from master branch._
 - Ignore no format errors when indexing videos
   ([#285](https://github.com/Tubeshade/Tubeshade/pull/285))
 
+### Fixed
+
+- Refresh video list after ignoring a downloadable video
+  ([#287](https://github.com/Tubeshade/Tubeshade/pull/287))
+
 ## [0.1.6] - 2026-04-24
 
 ### Added
