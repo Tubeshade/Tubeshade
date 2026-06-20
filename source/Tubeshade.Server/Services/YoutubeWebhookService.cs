@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Microsoft.Extensions.Logging;
+using NodaTime;
 using Npgsql;
 using PubSubHubbub.Models;
 using Tubeshade.Data;
@@ -24,26 +26,32 @@ public sealed class YoutubeWebhookService
     private readonly NpgsqlConnection _connection;
     private readonly VideoRepository _videoRepository;
     private readonly PreferencesRepository _preferencesRepository;
+    private readonly TaskRepository _taskRepository;
     private readonly TaskService _taskService;
     private readonly IYtdlpWrapper _ytdlpWrapper;
     private readonly YoutubePostChecker _postChecker;
+    private readonly IClock _clock;
 
     public YoutubeWebhookService(
         ILogger<YoutubeWebhookService> logger,
         NpgsqlConnection connection,
         VideoRepository videoRepository,
         PreferencesRepository preferencesRepository,
+        TaskRepository taskRepository,
         TaskService taskService,
         IYtdlpWrapper ytdlpWrapper,
-        YoutubePostChecker postChecker)
+        YoutubePostChecker postChecker,
+        IClock clock)
     {
         _logger = logger;
         _connection = connection;
         _videoRepository = videoRepository;
         _preferencesRepository = preferencesRepository;
+        _taskRepository = taskRepository;
         _taskService = taskService;
         _ytdlpWrapper = ytdlpWrapper;
         _postChecker = postChecker;
+        _clock = clock;
     }
 
     public async ValueTask ProcessWebhook(
@@ -71,9 +79,38 @@ public sealed class YoutubeWebhookService
 
         await transaction.CommitAsync(cancellationToken);
 
-        // always index existing videos
         if (existingVideo is not null)
         {
+            // Don't rate limit deleted entries, since videos can be deleted only once
+            if (feed.DeletedEntry is not null)
+            {
+                await _taskService.IndexVideo(userId, libraryId, existingVideo, TaskSource.Webhook, cancellationToken);
+                return;
+            }
+
+            var previousTasks = await _taskRepository.GetRunningTasks(
+                new TaskParameters
+                {
+                    UserId = userId,
+                    LibraryId = libraryId,
+                    Source = TaskSource.Webhook,
+                    Type = TaskType.Index,
+                    Url = videoUrl,
+                    Limit = 64,
+                    Offset = 0,
+                },
+                cancellationToken);
+
+            var currentTime = _clock.GetCurrentInstant();
+            var taskRunAges = previousTasks.Select(task => currentTime - task.RunCreatedAt).ToArray();
+
+            if (taskRunAges.Count(age => age <= Duration.FromHours(1)) > 1 ||
+                taskRunAges.Count(age => age <= Duration.FromDays(1)) > 5)
+            {
+                _logger.FeedUpdateRateLimited();
+                return;
+            }
+
             await _taskService.IndexVideo(userId, libraryId, existingVideo, TaskSource.Webhook, cancellationToken);
             return;
         }

@@ -23,6 +23,8 @@ public sealed class TaskParameters : IAccessParameters, IPaginatedParameters
 
     public TaskType? Type { get; init; }
 
+    public string? Url { get; init; }
+
     /// <inheritdoc />
     public required int Limit { get; init; }
 

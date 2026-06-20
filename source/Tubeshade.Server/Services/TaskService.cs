@@ -241,6 +241,7 @@ public sealed class TaskService
                             Id = run.RunId,
                             State = run.RunState,
                             Source = run.Source,
+                            CreatedAt = run.RunCreatedAt,
                             Value = run.Value,
                             Target = run.Target,
                             Rate = run.Rate,

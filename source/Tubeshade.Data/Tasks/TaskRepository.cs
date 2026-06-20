@@ -274,6 +274,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     task_runs.id                         AS RunId,
                     task_runs.state                      AS RunState,
                     task_runs.source,
+                    task_runs.created_at                 AS RunCreatedAt,
                     task_run_progress.value,
                     task_run_progress.target,
                     task_run_progress.rate,
@@ -325,6 +326,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                      AND (@{nameof(parameters.Result)}::tasks.task_result IS NULL OR task_run_results.result = @{nameof(parameters.Result)})
                      AND (@{nameof(parameters.TaskRunId)} IS NULL OR task_runs.id = @{nameof(parameters.TaskRunId)})
                      AND (@{nameof(parameters.Type)}::tasks.task_type IS NULL OR tasks.type = @{nameof(parameters.Type)})
+                     AND (@{nameof(parameters.Url)} IS NULL OR tasks.url = @{nameof(parameters.Url)})
                      AND tasks.type != '{TaskType.Names.ReindexVideos}'
                    GROUP BY tasks.id, tasks.created_at
                    ORDER BY result_created DESC, run_created DESC, tasks.created_at DESC

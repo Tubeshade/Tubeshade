@@ -309,4 +309,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(97, Debug, "Chapters file for video {VideoId} does not exist at {Path}")]
     internal static partial void ChaptersFileDoesNotExist(this ILogger logger, Guid videoId, string path);
+
+    [LoggerMessage(98, Information, "Not indexing video due to too many recent feed updates")]
+    internal static partial void FeedUpdateRateLimited(this ILogger logger);
 }

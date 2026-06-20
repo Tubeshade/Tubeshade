@@ -16,6 +16,8 @@ public sealed record RunningTaskEntity
     public required Guid RunId { get; init; }
     public required RunState RunState { get; init; }
     public required TaskSource Source { get; init; }
+    public required Instant RunCreatedAt { get; init; }
+
     public decimal? Value { get; init; }
     public decimal? Target { get; init; }
     public decimal? Rate { get; init; }

@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Added
+
+- Rate limit automatic video indexing
+  ([#256](https://github.com/Tubeshade/Tubeshade/issues/256))
+
 ### Changed
 
 - Update .NET SDK from 10.0.203 to 10.0.301, and runtime from 10.0.7 to 10.0.9
@@ -37,7 +42,7 @@ _Latest build from master branch._
   ([#271](https://github.com/Tubeshade/Tubeshade/pull/271))
 - Schedule tasks only after listening to database notifications
   ([#274](https://github.com/Tubeshade/Tubeshade/pull/274))
-- Format file sizes to closest unit instead of MiB
+- Format file sizes to the closest unit instead of MiB
   ([#274](https://github.com/Tubeshade/Tubeshade/pull/274))
 - Update .NET SDK from 10.0.201 to 10.0.203, and runtime from 10.0.5 to 10.0.7
   ([#279](https://github.com/Tubeshade/Tubeshade/pull/279), [#281](https://github.com/Tubeshade/Tubeshade/pull/281))
@@ -141,7 +146,7 @@ _Latest build from master branch._
 
 ### Fixed
 
-- Don't log cancelled requests
+- Don't log canceled requests
   ([#186](https://github.com/Tubeshade/Tubeshade/issues/186))
 - Correctly select video thumbnail when scanning a channel
   ([#220](https://github.com/Tubeshade/Tubeshade/issues/220))
