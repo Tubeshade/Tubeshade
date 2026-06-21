@@ -8,6 +8,8 @@ _Latest build from master branch._
 
 - Rate limit automatic video indexing
   ([#256](https://github.com/Tubeshade/Tubeshade/issues/256))
+- Video sorting by download time
+  ([#291](https://github.com/Tubeshade/Tubeshade/pull/291))
 
 ### Changed
 

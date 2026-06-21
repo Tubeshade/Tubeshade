@@ -464,4 +464,7 @@
     <data name="Tasks_Type_refresh_track_files" xml:space="preserve">
         <value>Atjaunot ierakstu failus</value>
     </data>
+    <data name="Filters_SortVideoBy_downloaded_at" xml:space="preserve">
+        <value>Lejupielādēts</value>
+    </data>
 </root>

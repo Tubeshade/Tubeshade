@@ -7,6 +7,10 @@ namespace Tubeshade.Data.Media;
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public sealed class SortVideoBy : SmartEnum<SortVideoBy>, IParsable<SortVideoBy>
 {
+    private const string DownloadedAtExpression =
+        // lang=sql
+        "(SELECT MAX(video_files.downloaded_at) FROM media.video_files WHERE video_files.video_id = videos.id)";
+
     // Probably going to regret this at some point, but ORDER BY random() works for the current table sizes
     public static readonly SortVideoBy Random = new(Names.Random, "random()", 1);
     public static readonly SortVideoBy CreatedAt = new(Names.CreatedAt, 2);
@@ -15,6 +19,7 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, IParsable<SortVideoBy>
     public static readonly SortVideoBy RefreshedAt = new(Names.RefreshedAt, 5);
     public static readonly SortVideoBy ViewCount = new(Names.ViewCount, 6);
     public static readonly SortVideoBy LikeCount = new(Names.LikeCount, 7);
+    public static readonly SortVideoBy DownloadedAt = new(Names.DownloadedAt, DownloadedAtExpression, 8);
 
     public string SortExpression { get; }
 
@@ -39,6 +44,7 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, IParsable<SortVideoBy>
         public const string RefreshedAt = "refreshed_at";
         public const string ViewCount = "view_count";
         public const string LikeCount = "like_count";
+        public const string DownloadedAt = "downloaded_at";
     }
 
     /// <inheritdoc />

@@ -48,7 +48,8 @@ public interface IDownloadPage : IPaginatedDataPage<VideoModel>
             page.WithFiles = true;
         }
 
-        if (page.SortBy is null && !page.Request.Query.ContainsKey(nameof(page.SortBy)))
+        if ((page.SortBy is null && !page.Request.Query.ContainsKey(nameof(page.SortBy))) ||
+            page.SortBy == SortVideoBy.DownloadedAt)
         {
             page.SortBy = Defaults.VideoOrder;
         }

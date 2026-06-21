@@ -501,6 +501,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Downloaded.
+        /// </summary>
+        public static string Filters_SortVideoBy_downloaded_at {
+            get {
+                return ResourceManager.GetString("Filters_SortVideoBy_downloaded_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Likes.
         /// </summary>
         public static string Filters_SortVideoBy_like_count {

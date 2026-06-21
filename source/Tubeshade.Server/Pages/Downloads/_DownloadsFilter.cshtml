@@ -65,7 +65,7 @@
         <div class="col-6">
             <label asp-for="SortBy" hidden="hidden">@SharedResources.Filters_SortVideoBy</label>
             <select asp-for="SortBy" class="form-select">
-                @foreach (var sortBy in SortVideoBy.List)
+                @foreach (var sortBy in SortVideoBy.List.Except([SortVideoBy.DownloadedAt]))
                 {
                     <option value="@sortBy.Name" selected="@(Model.SortBy == sortBy)">
                         @SharedResources.ResourceManager.GetString($"Filters_SortVideoBy_{sortBy.Name}")

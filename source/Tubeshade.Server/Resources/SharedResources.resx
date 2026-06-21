@@ -471,4 +471,7 @@
     <data name="Tasks_Type_refresh_track_files" xml:space="preserve">
         <value>Refresh track files</value>
     </data>
+    <data name="Filters_SortVideoBy_downloaded_at" xml:space="preserve">
+        <value>Downloaded</value>
+    </data>
 </root>
