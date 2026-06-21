@@ -17,13 +17,15 @@ _Latest build from master branch._
   ([#284](https://github.com/Tubeshade/Tubeshade/pull/284))
 - Ignore no format errors when indexing videos
   ([#285](https://github.com/Tubeshade/Tubeshade/pull/285))
-- Hide subscribtion tasks by default
+- Hide subscription tasks by default
   ([#289](https://github.com/Tubeshade/Tubeshade/pull/289))
 
 ### Fixed
 
 - Refresh video list after ignoring a downloadable video
   ([#287](https://github.com/Tubeshade/Tubeshade/pull/287))
+- Limit chapter selector width
+  ([#290](https://github.com/Tubeshade/Tubeshade/pull/290))
 
 ## [0.1.6] - 2026-04-24
 

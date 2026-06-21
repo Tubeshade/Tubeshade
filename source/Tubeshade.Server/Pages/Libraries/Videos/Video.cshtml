@@ -48,31 +48,39 @@
         </video>
     </div>
 
-    <section id="video-controls" class="col-md-12 col-lg-auto">
+    <section id="video-controls" class="col-md-12 col-lg-4 col-xxl-3">
         <div class="row" hidden="@(Model.PlayableFiles is [])">
             <div class="col-6 col-lg-12 mb-3">
-                <label for="sources" class="form-label">@SharedResources.Video_Resolution</label>
-                <select id="sources" class="form-control form-select" disabled="@(Model.PlayableFiles.Count < 2)">
-                    @foreach (var file in Model.PlayableFiles)
-                    {
-                        <option
-                            value="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })">
-                            @(file.Height)@@@(file.Framerate)
-                        </option>
-                    }
-                </select>
+                <div class="row">
+                    <label for="sources" class="col-4 col-md-3 col-form-label">@SharedResources.Video_Resolution</label>
+                    <div class="col">
+                        <select id="sources" class="form-control form-select" disabled="@(Model.PlayableFiles.Count < 2)">
+                            @foreach (var file in Model.PlayableFiles)
+                            {
+                                <option
+                                    value="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })">
+                                    @(file.Height)@@@(file.Framerate)
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="col-6 col-lg-12 mb-3">
-                <label for="playback-rate-input" class="form-label">@SharedResources.Video_Speed</label>
-                <input id="playback-rate-input" class="form-control" type="number" min="0" step="0.25"
-                       value="@Model.PlaybackSpeed"/>
+                <div class="row">
+                    <label for="playback-rate-input" class="col-4 col-md-3 col-form-label">@SharedResources.Video_Speed</label>
+                    <div class="col">
+                        <input id="playback-rate-input" class="form-control" type="number" min="0" step="0.25"
+                               value="@Model.PlaybackSpeed"/>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="chapter-marker-div" hidden class="mb-3">
-            <label for="chapter-markers" class="form-label">@SharedResources.Video_Chapter</label>
-            <select id="chapter-markers" class="form-control form-select"></select>
+        <div id="chapter-marker-div" hidden class="mb-3 mb-lg-0">
+            <label for="chapter-markers" class="form-label" hidden="hidden">@SharedResources.Video_Chapter</label>
+            <select id="chapter-markers" class="form-control form-select overflow-auto"></select>
         </div>
     </section>
 </div>
@@ -346,7 +354,7 @@
                 }
 
                 chaptersTrack.addEventListener("cuechange", onChapterCueChange);
-                chapters.size = chaptersTrack.track.cues.length;
+                chapters.size = Math.min(9, chaptersTrack.track.cues.length);
                 chapters.addEventListener("change", onChaptersChange);
             }
 
