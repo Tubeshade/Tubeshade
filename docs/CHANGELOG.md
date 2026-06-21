@@ -10,6 +10,8 @@ _Latest build from master branch._
   ([#256](https://github.com/Tubeshade/Tubeshade/issues/256))
 - Video sorting by download time
   ([#291](https://github.com/Tubeshade/Tubeshade/pull/291))
+- Parse timestamps from linked videos
+  ([#267](https://github.com/Tubeshade/Tubeshade/issues/267))
 
 ### Changed
 

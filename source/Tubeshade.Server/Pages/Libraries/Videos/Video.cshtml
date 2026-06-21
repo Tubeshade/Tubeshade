@@ -195,7 +195,11 @@
 
         const video = document.querySelector("#video");
         video.playbackRate = @Model.PlaybackSpeed.ToString(CultureInfo.InvariantCulture);
-        @if (Model.Entity.Position is { } position and > Defaults.PlaybackEpsilon)
+        @if (Model.Time is { } time)
+        {
+            @: video.currentTime = @(time.ToString(CultureInfo.InvariantCulture));
+        }
+        else if (Model.Entity.Position is { } position and > Defaults.PlaybackEpsilon)
         {
             @: video.currentTime = @(position.ToString(CultureInfo.InvariantCulture));
         }

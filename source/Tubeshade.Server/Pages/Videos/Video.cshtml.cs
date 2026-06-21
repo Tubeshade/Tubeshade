@@ -22,10 +22,13 @@ public sealed class Video : PageModel
     [BindProperty(SupportsGet = true)]
     public Guid VideoId { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public double? Time { get; set; }
+
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var video = await _videoRepository.GetAsync(VideoId, User.GetUserId(), cancellationToken);
         var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, cancellationToken);
-        return RedirectToPage("/Libraries/Videos/Video", new { libraryId, VideoId });
+        return RedirectToPage("/Libraries/Videos/Video", new { libraryId, VideoId, Time });
     }
 }

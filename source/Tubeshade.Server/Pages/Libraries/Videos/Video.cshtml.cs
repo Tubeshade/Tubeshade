@@ -22,7 +22,6 @@ using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Services;
 using static System.IO.UnixFileMode;
-using StringExtensions = Tubeshade.Server.Pages.Shared.StringExtensions;
 
 namespace Tubeshade.Server.Pages.Libraries.Videos;
 
@@ -71,6 +70,9 @@ public sealed partial class Video : LibraryPageBase
 
     [BindProperty(SupportsGet = true)]
     public Guid? FileId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public double? Time { get; set; }
 
     public VideoEntity Entity { get; set; } = null!;
 
@@ -242,13 +244,11 @@ public sealed partial class Video : LibraryPageBase
             ? await _videoRepository.FindByExternalIds(youTubeIds, userId, transaction, cancellationToken)
             : [];
 
-        var videoUrlLookup = videoIds.ToDictionary(
-            id => id.ExternalId,
-            id => Url.Page("/Libraries/Videos/Video", new { LibraryId, videoId = id.Id }));
+        var videoLookup = videoIds.ToDictionary(id => id.ExternalId, id => id.Id);
 
         var descriptionSpan = description.AsSpan();
         var builder = new HtmlContentBuilder();
-        foreach (var paragraphRange in StringExtensions.ParagraphSplit().EnumerateSplits(descriptionSpan))
+        foreach (var paragraphRange in Shared.StringExtensions.ParagraphSplit().EnumerateSplits(descriptionSpan))
         {
             var paragraphSpan = descriptionSpan[paragraphRange];
             if (paragraphSpan.Length is 0 || paragraphSpan.IsWhiteSpace())
@@ -275,8 +275,13 @@ public sealed partial class Video : LibraryPageBase
                     continue;
                 }
 
-                if (!videoUrlLookup.TryGetValue(match.YouTubeId, out var videoUrl) ||
-                    string.IsNullOrWhiteSpace(videoUrl))
+                if (!videoLookup.TryGetValue(match.YouTubeId, out var id))
+                {
+                    continue;
+                }
+
+                var videoUrl = Url.Page("/Libraries/Videos/Video", new { LibraryId, videoId = id, match.Time });
+                if (string.IsNullOrWhiteSpace(videoUrl))
                 {
                     continue;
                 }
@@ -314,6 +319,7 @@ public sealed partial class Video : LibraryPageBase
             Match = match;
             YouTubeId = match.Groups["id"].Value;
             Range = new(match.Index, match.Index + match.Length);
+            Time = Match.Value.GetTimeParameter();
         }
 
         public Match Match { get; }
@@ -321,5 +327,7 @@ public sealed partial class Video : LibraryPageBase
         public string YouTubeId { get; }
 
         public Range Range { get; }
+
+        public double? Time { get; }
     }
 }
