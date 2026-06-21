@@ -8,7 +8,11 @@ public static class StringExtensions
 {
     public static double? GetTimeParameter(this string uri)
     {
-        var queryParameters = HttpUtility.ParseQueryString(new UriBuilder(uri).Query);
+        var uriBuilder = new UriBuilder(uri);
+        var queryParameters = HttpUtility.ParseQueryString(uriBuilder.Query);
+        var fragmentParameters = HttpUtility.ParseQueryString(uriBuilder.Fragment.TrimStart('#'));
+        queryParameters.Add(fragmentParameters);
+
         if (queryParameters["t"] is not { } time)
         {
             return null;
