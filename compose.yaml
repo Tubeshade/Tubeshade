@@ -9,9 +9,13 @@
       database:
         condition: service_healthy
         restart: true
+      pot_provider:
+        condition: service_healthy
+        restart: true
     environment:
       ENVIRONMENT: Production
       Database__ConnectionString: "Host=database; Port=5432; Username=${POSTGRES_USER:-postgres}; Password=${POSTGRES_PASSWORD:?error}; Database=${POSTGRES_DB:-tubeshade}"
+      Ytdlp__PotBaseUrl: "http://pot_provider:4416"
     volumes:
       - app_data:/home/app
       - libraries:/var/opt/tubeshade
@@ -33,6 +37,18 @@
       timeout: 3s
     volumes:
       - database:/var/lib/postgresql
+
+  pot_provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:1.3.1-deno
+    networks:
+      - internal
+    healthcheck:
+      test: [ "CMD", "deno", "eval", "--allow-net=localhost:4416", "try { const r = await fetch('http://localhost:4416/ping'); if (!r.ok) Deno.exit(1); } catch { Deno.exit(1); }" ]
+      interval: 10s
+      retries: 3
+      start_period: 10s
+      start_interval: 1s
+      timeout: 3s
 
 networks:
   internal: { }

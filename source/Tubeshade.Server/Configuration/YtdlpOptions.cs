@@ -19,7 +19,11 @@ public sealed class YtdlpOptions
     [Required]
     public required string TempPath { get; set; } = Path.GetTempPath();
 
+    public string[]? Args { get; set; }
+
     public string? JavascriptRuntimePath { get; set; }
+
+    public string? PotBaseUrl { get; set; }
 
     public long? LimitRate { get; set; } = 5 * 1024 * 1024;
 

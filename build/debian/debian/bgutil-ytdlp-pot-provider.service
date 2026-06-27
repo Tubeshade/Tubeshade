@@ -1,23 +1,17 @@
 [Unit]
-Description=Tubeshade server
+Description=BgUtils POT Provider
 
-After=network-online.target nss-lookup.target sssd.service systemd-resolved.service bgutil-ytdlp-pot-provider.service
-Wants=network-online.target nss-lookup.target sssd.service systemd-resolved.service bgutil-ytdlp-pot-provider.service
+After=network-online.target nss-lookup.target sssd.service systemd-resolved.service
+Wants=network-online.target nss-lookup.target sssd.service systemd-resolved.service
 
 StartLimitBurst=3
 StartLimitIntervalSec=5m
 
 [Service]
-Type=notify
-WorkingDirectory=/etc/opt/tubeshade
-Environment="ASPNETCORE_WEBROOT=/opt/tubeshade/wwwroot"
-Environment="ENVIRONMENT=Production"
-Environment="DOTNET_gcServer=0"
-Environment="Ytdlp__YtdlpPath=/opt/tubeshade/yt-dlp"
-Environment="Ytdlp__JavascriptRuntimePath=deno:/opt/tubeshade/deno"
-Environment="Ytdlp__PotBaseUrl=http://localhost:4416"
+Type=exec
+WorkingDirectory=/opt/bgutil-ytdlp-pot-provider/server
 
-ExecStart=/opt/tubeshade/Tubeshade.Server
+ExecStart=/opt/tubeshade/deno run --allow-env --allow-net --allow-ffi=. --allow-read=. ./src/main.ts
 ExecReload=/bin/kill -s HUP $MAINPID
 ExecStop=/bin/kill -s QUIT $MAINPID
 
@@ -26,8 +20,6 @@ RestartSec=3
 
 User=tubeshade
 Group=tubeshade
-
-AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 ProtectSystem=full
 PrivateTmp=yes

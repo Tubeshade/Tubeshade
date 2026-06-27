@@ -2,3 +2,4 @@
 set -e
 
 deb-systemd-invoke stop tubeshade.service
+deb-systemd-invoke stop bgutil-ytdlp-pot-provider.service

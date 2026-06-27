@@ -45,7 +45,8 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         var result = await _ytdlp.FetchAsync(url, optionSet, cancellationToken);
         if (result.ErrorOutput is { Length: > 0 } errorOutput)
         {
-            _logger.StandardError(_ytdlp.Path, string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+            _logger.StandardError(_ytdlp.Path,
+                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
         }
 
         if (!result.Success)
@@ -125,9 +126,10 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         optionSet.EmbedChapters = true;
         optionSet.IgnoreNoFormatsError = true;
         optionSet.DumpSingleJson = true;
-        optionSet.ExtractorArgs = client is not null
-            ? new MultiValue<string>($"youtube:player_client={client.Name}")
-            : null;
+        if (client is not null)
+        {
+            (optionSet.ExtractorArgs ??= new()).Values.Add($"youtube:player_client={client.Name}");
+        }
 
         var result = await _ytdlp.FetchAsync(videoUrl, optionSet, cancellationToken);
 
@@ -154,17 +156,16 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         PlayerClient? client,
         CancellationToken cancellationToken)
     {
-        var youtubeClient = client is not null
-            ? new MultiValue<string>($"youtube:player_client={client.Name}")
-            : null;
-
         var tasks = formats.Select(async format =>
         {
             var optionSet = GetDefaultOptions(cookieFilepath);
             optionSet.EmbedChapters = true;
             optionSet.Format = format;
-            optionSet.ExtractorArgs = youtubeClient;
             optionSet.DumpSingleJson = true;
+            if (client is not null)
+            {
+                (optionSet.ExtractorArgs ??= new()).Values.Add($"youtube:player_client={client.Name}");
+            }
 
             var result = await _ytdlp.FetchAsync(videoUrl, optionSet, cancellationToken);
             if (result.ErrorOutput is { Length: > 0 } errorOutput)
@@ -285,10 +286,6 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             Value = $"subtitle:{Path.Combine(outputFolder, "subtitles.%(ext)s")}"
         };
 
-        var youtubeClient = client is not null
-            ? new MultiValue<string>($"youtube:player_client={client.Name}")
-            : null;
-
         var optionSet = GetDefaultOptions(cookieFilepath, subtitleOption);
         optionSet.Format = format;
         optionSet.Output = Path.Combine(outputFolder, outputTemplate);
@@ -298,9 +295,12 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         optionSet.SubFormat = "vtt";
         optionSet.SubLangs = "all,-live_chat";
         optionSet.EmbedChapters = true;
-        optionSet.ExtractorArgs = youtubeClient;
         optionSet.MergeOutputFormat = mergeFormat;
         optionSet.RecodeVideo = VideoRecodeFormat.None;
+        if (client is not null)
+        {
+            (optionSet.ExtractorArgs ??= new()).Values.Add($"youtube:player_client={client.Name}");
+        }
 
         var result = await _ytdlp.RunAsync(videoUrl, optionSet, cancellationToken);
 
@@ -319,10 +319,6 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         PlayerClient? client)
     {
         // todo: subtitles
-        var youtubeClient = client is not null
-            ? new MultiValue<string>($"youtube:player_client={client.Name}")
-            : null;
-
         var optionSet = GetDefaultOptions(cookieFilepath);
         optionSet.Format = format;
         optionSet.Output = output;
@@ -332,8 +328,11 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         optionSet.SubFormat = "vtt";
         optionSet.SubLangs = "all,-live_chat";
         optionSet.EmbedChapters = true;
-        optionSet.ExtractorArgs = youtubeClient;
         optionSet.RecodeVideo = VideoRecodeFormat.None;
+        if (client is not null)
+        {
+            (optionSet.ExtractorArgs ??= new()).Values.Add($"youtube:player_client={client.Name}");
+        }
 
         return optionSet;
     }
@@ -341,33 +340,38 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
     private OptionSet GetDefaultOptions(string? cookieFilepath, params ReadOnlySpan<IOption> additionalOptions)
     {
         var options = _optionsMonitor.CurrentValue;
+        var optionSet = OptionSet.FromString(options.Args ?? []);
 
-        var customOptions = new List<IOption>();
+        optionSet.IgnoreErrors = true;
+        optionSet.IgnoreConfig = true;
+        optionSet.NoPlaylist = true;
+        optionSet.FlatPlaylist = true;
+        (optionSet.Downloader ??= new()).Values.Add("m3u8:native");
+        (optionSet.DownloaderArgs ??= new()).Values.Add("ffmpeg:-nostats -loglevel 0");
+        optionSet.RestrictFilenames = false;
+        optionSet.ForceOverwrites = true;
+        optionSet.NoOverwrites = false;
+        optionSet.NoPart = true;
+        optionSet.FfmpegLocation = options.FfmpegPath;
+        optionSet.Verbose = true;
+        optionSet.Cookies = cookieFilepath;
+        optionSet.CookiesFromBrowser = options.CookiesFromBrowser;
+        optionSet.WriteComments = false;
+
+        if (options.PotBaseUrl is { } potBaseUrl)
+        {
+            (optionSet.ExtractorArgs ??= new()).Values.Add($"youtubepot-bgutilhttp:base_url={potBaseUrl}");
+        }
+
+        var customOptions = new List<IOption>(optionSet.CustomOptions);
         if (options.JavascriptRuntimePath is { } javascriptRuntimePath)
         {
             customOptions.Add(new Option<string>("--js-runtimes") { Value = javascriptRuntimePath });
         }
 
         customOptions.AddRange(additionalOptions);
+        optionSet.CustomOptions = customOptions.ToArray();
 
-        return new OptionSet
-        {
-            IgnoreErrors = true,
-            IgnoreConfig = true,
-            NoPlaylist = true,
-            FlatPlaylist = true,
-            Downloader = "m3u8:native",
-            DownloaderArgs = "ffmpeg:-nostats -loglevel 0",
-            RestrictFilenames = false,
-            ForceOverwrites = true,
-            NoOverwrites = false,
-            NoPart = true,
-            FfmpegLocation = options.FfmpegPath,
-            Verbose = true,
-            CustomOptions = customOptions.ToArray(),
-            Cookies = cookieFilepath,
-            CookiesFromBrowser = options.CookiesFromBrowser,
-            WriteComments = false,
-        };
+        return optionSet;
     }
 }

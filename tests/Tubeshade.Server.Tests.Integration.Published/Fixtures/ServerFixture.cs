@@ -24,6 +24,7 @@ public sealed partial class ServerFixture : IServerFixture
 {
     public const string TestDirectory = "/test";
     private const string KeycloakHostname = "keycloak";
+    private const string PotHostname = "pot_provider";
 
     private static int _keycloakPublicPort = 45278;
 
@@ -64,6 +65,12 @@ public sealed partial class ServerFixture : IServerFixture
             .WithCommand("-c", "full_page_writes=off")
             .Build();
 
+        var potProviderContainer = new ContainerBuilder("brainicism/bgutil-ytdlp-pot-provider:1.3.1-deno")
+            .WithNetwork(_network)
+            .WithHostname(PotHostname)
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(4416))
+            .Build();
+
         var clientSecret = Guid.NewGuid().ToString("N");
         var realmFile = PathHelper.GetRelativePath("./Keycloak/realm.json");
         var publicPort = Interlocked.Increment(ref _keycloakPublicPort);
@@ -96,12 +103,13 @@ public sealed partial class ServerFixture : IServerFixture
             .WithEnvironment($"{OidcProviderOptions.SectionName}__Keycloak__ClientId", "tubeshade")
             .WithEnvironment($"{OidcProviderOptions.SectionName}__Keycloak__ClientSecret", clientSecret)
             .WithEnvironment($"{OidcProviderOptions.SectionName}__Keycloak__RequireHttpsMetadata", "false")
+            .WithEnvironment($"{YtdlpOptions.SectionName}__PotBaseUrl", $"http://{PotHostname}:4416")
             .WithPortBinding(8080, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8080).UntilMessageIsLogged(StartedRegex()))
             .DependsOn(databaseContainer)
             .Build();
 
-        _containers = [databaseContainer, keycloakContainer, _serverContainer];
+        _containers = [databaseContainer, potProviderContainer, keycloakContainer, _serverContainer];
     }
 
     /// <inheritdoc />

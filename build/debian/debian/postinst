@@ -16,5 +16,14 @@ fi
 
 chown tubeshade /etc/opt/tubeshade --recursive
 chown tubeshade /opt/tubeshade --recursive
+chown tubeshade /opt/bgutil-ytdlp-pot-provider --recursive
+
+(
+	cd /opt/bgutil-ytdlp-pot-provider/server
+	/opt/tubeshade/deno install --allow-scripts=npm:canvas --frozen
+)
+
+chown tubeshade /opt/bgutil-ytdlp-pot-provider --recursive
 
 deb-systemd-invoke enable tubeshade.service
+deb-systemd-invoke enable bgutil-ytdlp-pot-provider.service

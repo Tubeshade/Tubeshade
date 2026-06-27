@@ -41,6 +41,27 @@ mv changelog.gz $changelog_path
 mkdir -p tubeshade/lib/systemd/system
 cp build/debian/debian/tubeshade.service tubeshade/lib/systemd/system/tubeshade.service
 
+mv yt-dlp tubeshade/opt/tubeshade/yt-dlp
+chmod +x tubeshade/opt/tubeshade/yt-dlp
+chmod go-w tubeshade/opt/tubeshade/yt-dlp
+
+unzip deno.zip -d tubeshade/opt/tubeshade
+chmod +x tubeshade/opt/tubeshade/deno
+chmod go-w tubeshade/opt/tubeshade/deno
+
+mkdir tubeshade/opt/tubeshade/yt-dlp-plugins
+mv bgutil-ytdlp-pot-provider.zip tubeshade/opt/tubeshade/yt-dlp-plugins
+
+mkdir -p tubeshade/opt/bgutil-ytdlp-pot-provider
+tar --extract --gzip --strip-components=1 -C tubeshade/opt/bgutil-ytdlp-pot-provider --file=1.3.1.tar.gz
+(
+	cd tubeshade/opt/bgutil-ytdlp-pot-provider
+	find . -mindepth 1 -maxdepth 1 ! -name 'server' -exec rm -r {} +
+	rm ./server/.gitattributes
+	chmod -R go-w ./
+)
+cp build/debian/debian/bgutil-ytdlp-pot-provider.service tubeshade/lib/systemd/system/bgutil-ytdlp-pot-provider.service
+
 tree tubeshade
 
 dpkg-deb --root-owner-group -Zxz --build tubeshade

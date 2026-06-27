@@ -12,6 +12,8 @@ _Latest build from master branch._
   ([#291](https://github.com/Tubeshade/Tubeshade/pull/291))
 - Parse timestamps from linked videos
   ([#267](https://github.com/Tubeshade/Tubeshade/issues/267))
+- Add BgUtils POT Provider
+  ([#293](https://github.com/Tubeshade/Tubeshade/pull/293))
 
 ### Changed
 
