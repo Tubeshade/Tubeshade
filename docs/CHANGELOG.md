@@ -30,6 +30,8 @@ _Latest build from master branch._
   ([#287](https://github.com/Tubeshade/Tubeshade/pull/287))
 - Limit chapter selector width
   ([#290](https://github.com/Tubeshade/Tubeshade/pull/290))
+- Delete downloadable files for unavailable videos
+  ([#293](https://github.com/Tubeshade/Tubeshade/pull/293))
 
 ## [0.1.6] - 2026-04-24
 

@@ -201,6 +201,17 @@ public sealed class YoutubeIndexingService
                 "Unexpected availability value"),
         };
 
+        var files = video is not null
+            ? await _videoRepository.GetFilesAsync(video.Id, userId, transaction, cancellationToken)
+            : [];
+
+        foreach (var file in files.Where(file => file.DownloadedAt is null).ToArray())
+        {
+            _logger.DeletingNotDownloadedFile(file.Id);
+            await _videoFileRepository.DeleteAsync(file, transaction);
+            files.Remove(file);
+        }
+
         if (availability == ExternalAvailability.NotAvailable)
         {
             if (video is null)
@@ -277,14 +288,6 @@ public sealed class YoutubeIndexingService
 
         var preferences = await _preferencesRepository.GetEffectiveForChannel(libraryId, channel.Id, userId, transaction, cancellationToken) ?? new();
         preferences.ApplyDefaults();
-
-        var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction, cancellationToken);
-        foreach (var file in files.Where(file => file.DownloadedAt is null).ToArray())
-        {
-            _logger.DeletingNotDownloadedFile(file.Id);
-            await _videoFileRepository.DeleteAsync(file, transaction);
-            files.Remove(file);
-        }
 
         var videoFormats = new Dictionary<string, FormatData>();
         var formatSelectors = preferences.Formats is { Length: > 0 } preferredFormats
