@@ -176,7 +176,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
                 LibraryId = _libraryId,
                 Limit = 24,
                 Offset = 0,
-                Viewed = true,
+                Viewed = ViewStatus.Viewed,
             });
 
         var notViewedVideos = await repository.GetFiltered(
@@ -188,7 +188,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
                 LibraryId = _libraryId,
                 Limit = 24,
                 Offset = 0,
-                Viewed = false,
+                Viewed = ViewStatus.NotViewed,
             });
 
         using var assertionScope = new AssertionScope();

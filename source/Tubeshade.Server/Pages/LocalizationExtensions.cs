@@ -29,6 +29,18 @@ internal static class LocalizationExtensions
             .GetString($"Preferences_{nameof(DownloadMethod)}_{method.Name}");
     }
 
+    extension(SortDirection direction)
+    {
+        internal string? LocalizedName => Manager
+            .GetString($"Filters_{nameof(SortDirection)}_{direction.Name}");
+    }
+
+    extension(SortVideoBy sortBy)
+    {
+        internal string? LocalizedName => Manager
+            .GetString($"Filters_{nameof(SortVideoBy)}_{sortBy.Name}");
+    }
+
     extension(TaskSource source)
     {
         internal string? LocalizedName => Manager
@@ -51,5 +63,11 @@ internal static class LocalizationExtensions
     {
         internal string? LocalizedName => Manager
             .GetString($"Filters_{nameof(VideoType)}_{type.Name}");
+    }
+
+    extension(ViewStatus status)
+    {
+        internal string? LocalizedName => Manager
+            .GetString($"Filters_{nameof(ViewStatus)}_{status.Name}");
     }
 }

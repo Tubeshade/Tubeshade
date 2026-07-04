@@ -51,18 +51,6 @@
     <data name="Tasks" xml:space="preserve">
         <value>Tasks</value>
     </data>
-    <data name="Filters_Viewed" xml:space="preserve">
-        <value>Viewed</value>
-    </data>
-    <data name="Filters_Viewed_All" xml:space="preserve">
-        <value>All</value>
-    </data>
-    <data name="Filters_Viewed_Viewed" xml:space="preserve">
-        <value>Viewed</value>
-    </data>
-    <data name="Filters_Viewed_NotViewed" xml:space="preserve">
-        <value>Not viewed</value>
-    </data>
     <data name="Filters_VideoType" xml:space="preserve">
         <value>Video type</value>
     </data>
@@ -473,5 +461,20 @@
     </data>
     <data name="Filters_SortVideoBy_downloaded_at" xml:space="preserve">
         <value>Downloaded</value>
+    </data>
+    <data name="Filters_ViewStatus" xml:space="preserve">
+        <value>Viewed</value>
+    </data>
+    <data name="Filters_ViewStatus_All" xml:space="preserve">
+        <value>All</value>
+    </data>
+    <data name="Filters_ViewStatus_viewed" xml:space="preserve">
+        <value>Viewed</value>
+    </data>
+    <data name="Filters_ViewStatus_not_viewed" xml:space="preserve">
+        <value>Not viewed</value>
+    </data>
+    <data name="Filters_ViewStatus_partially_viewed" xml:space="preserve">
+        <value>Partially viewed</value>
     </data>
 </root>

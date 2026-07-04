@@ -13,11 +13,13 @@
         </div>
 
         <div class="col-12">
-            <label asp-for="Viewed" hidden="hidden">@SharedResources.Filters_Viewed</label>
+            <label asp-for="Viewed" hidden="hidden">@SharedResources.Filters_ViewStatus</label>
             <select asp-for="Viewed" class="form-select">
-                <option value="">@SharedResources.Filters_Viewed_All</option>
-                <option value="@true">@SharedResources.Filters_Viewed_Viewed</option>
-                <option value="@false">@SharedResources.Filters_Viewed_NotViewed</option>
+                <option value="">@SharedResources.Filters_ViewStatus_All</option>
+                @foreach (var status in ViewStatus.List)
+                {
+                    <option value="@status.Name">@status.LocalizedName</option>
+                }
             </select>
         </div>
 
@@ -47,9 +49,7 @@
                 <option value="">@SharedResources.Filters_Availability_Any</option>
                 @foreach (var availability in ExternalAvailability.List)
                 {
-                    <option value="@availability.Name">
-                        @SharedResources.ResourceManager.GetString($"Filters_Availability_{availability.Name}")
-                    </option>
+                    <option value="@availability.Name">@availability.LocalizedName</option>
                 }
             </select>
         </div>
@@ -59,9 +59,7 @@
             <select asp-for="SortBy" class="form-select">
                 @foreach (var sortBy in SortVideoBy.List)
                 {
-                    <option value="@sortBy.Name" selected="@(Model.SortBy == sortBy)">
-                        @SharedResources.ResourceManager.GetString($"Filters_SortVideoBy_{sortBy.Name}")
-                    </option>
+                    <option value="@sortBy.Name">@sortBy.LocalizedName</option>
                 }
             </select>
         </div>
@@ -71,9 +69,7 @@
             <select asp-for="SortDirection" class="form-select">
                 @foreach (var direction in SortDirection.List)
                 {
-                    <option value="@direction.Name" selected="@(Model.SortDirection == direction)">
-                        @SharedResources.ResourceManager.GetString($"Filters_SortDirection_{direction.Name}")
-                    </option>
+                    <option value="@direction.Name">@direction.LocalizedName</option>
                 }
             </select>
         </div>

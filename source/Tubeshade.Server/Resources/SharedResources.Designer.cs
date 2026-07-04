@@ -611,36 +611,45 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Viewed.
         /// </summary>
-        public static string Filters_Viewed {
+        public static string Filters_ViewStatus {
             get {
-                return ResourceManager.GetString("Filters_Viewed", resourceCulture);
+                return ResourceManager.GetString("Filters_ViewStatus", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to All.
         /// </summary>
-        public static string Filters_Viewed_All {
+        public static string Filters_ViewStatus_All {
             get {
-                return ResourceManager.GetString("Filters_Viewed_All", resourceCulture);
+                return ResourceManager.GetString("Filters_ViewStatus_All", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Not viewed.
         /// </summary>
-        public static string Filters_Viewed_NotViewed {
+        public static string Filters_ViewStatus_not_viewed {
             get {
-                return ResourceManager.GetString("Filters_Viewed_NotViewed", resourceCulture);
+                return ResourceManager.GetString("Filters_ViewStatus_not_viewed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Partially viewed.
+        /// </summary>
+        public static string Filters_ViewStatus_partially_viewed {
+            get {
+                return ResourceManager.GetString("Filters_ViewStatus_partially_viewed", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Viewed.
         /// </summary>
-        public static string Filters_Viewed_Viewed {
+        public static string Filters_ViewStatus_viewed {
             get {
-                return ResourceManager.GetString("Filters_Viewed_Viewed", resourceCulture);
+                return ResourceManager.GetString("Filters_ViewStatus_viewed", resourceCulture);
             }
         }
         

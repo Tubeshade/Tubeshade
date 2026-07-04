@@ -49,7 +49,7 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
-    public bool? Viewed { get; set; }
+    public ViewStatus? Viewed { get; set; }
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]

@@ -21,7 +21,7 @@ public sealed class VideoParameters : IAccessParameters, IPaginatedParameters
     /// <inheritdoc />
     public required int Offset { get; init; }
 
-    public bool? Viewed { get; init; }
+    public ViewStatus? Viewed { get; init; }
 
     public string? Query { get; init; }
 

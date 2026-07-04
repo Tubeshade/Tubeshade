@@ -10,7 +10,7 @@ namespace Tubeshade.Server.Pages.Videos;
 
 public interface IVideoPage : IPaginatedDataPage<VideoModel>
 {
-    bool? Viewed { get; set; }
+    ViewStatus? Viewed { get; set; }
 
     string? Query { get; set; }
 
@@ -47,7 +47,7 @@ public interface IVideoPage : IPaginatedDataPage<VideoModel>
 
         if (page.Viewed is null && !page.Request.Query.ContainsKey(nameof(page.Viewed)))
         {
-            page.Viewed = false;
+            page.Viewed = ViewStatus.NotViewed;
         }
 
         if (page.SortBy is null && !page.Request.Query.ContainsKey(nameof(page.SortBy)))

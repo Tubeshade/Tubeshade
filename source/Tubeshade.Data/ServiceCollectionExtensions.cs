@@ -35,6 +35,9 @@ public static class ServiceCollectionExtensions
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ImageType>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<VideoType>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<VideoContainerType>());
+            SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<ViewStatus>());
+            SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SortVideoBy>());
+            SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SortDirection>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentCategory>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<SegmentAction>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<PlayerClient>());
