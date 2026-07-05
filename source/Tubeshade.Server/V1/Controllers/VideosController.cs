@@ -5,7 +5,6 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
 using Htmx;
@@ -22,7 +21,6 @@ using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Configuration.Auth;
-using Tubeshade.Server.Pages.Videos;
 using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.V1.Controllers;
@@ -162,43 +160,19 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Thumbnail")]
-    [ResponseCache(CacheProfileName = CacheProfiles.Static)]
     public async Task<IActionResult> GetThumbnail(Guid id, CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        ImageFileEntity? image;
 
-        var video = await _repository.GetAsync(id, userId, transaction);
-        var thumbnail = await _imageFileRepository.FindVideoThumbnail(id, userId, Access.Read, transaction);
-        if (thumbnail is null)
+        await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
         {
-            return NotFound();
+            image = await _imageFileRepository.FindVideoThumbnail(id, User.GetUserId(), Access.Read, transaction);
+            await transaction.CommitAsync(cancellationToken);
         }
 
-        var path = video.GetFilePath(thumbnail.StoragePath);
-        if (!System.IO.File.Exists(path))
-        {
-            return NotFound();
-        }
-
-        var file = new FileInfo(path);
-        var contentType = file.Extension switch
-        {
-            ".jpg" or ".jpeg" => MediaTypeNames.Image.Jpeg,
-            ".webp" => MediaTypeNames.Image.Webp,
-            _ => throw new InvalidOperationException($"Unexpected thumbnail extension '{file.Extension}'"),
-        };
-
-        var etag = thumbnail is {HashAlgorithm.Name: not HashAlgorithm.Names.Placeholder, Hash: { } hash}
-            ? $"\"{Convert.ToBase64String(hash)}\""
-            : $"\"thumbnail_{id}_{file.LastWriteTimeUtc.ToString(CultureInfo.InvariantCulture)}\"";
-
-        var stream = file.OpenRead();
-        return File(
-            stream,
-            contentType,
-            file.LastWriteTimeUtc,
-            new EntityTagHeaderValue(new StringSegment(etag)));
+        return image is null
+            ? NotFound()
+            : RedirectToAction("Get", "Images", new { version = "1.0", id = image.Id });
     }
 
     [HttpGet("Subtitles")]

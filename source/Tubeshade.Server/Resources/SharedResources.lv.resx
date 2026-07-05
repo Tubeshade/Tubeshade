@@ -470,4 +470,10 @@
     <data name="Filters_ViewStatus_viewed" xml:space="preserve">
         <value>Skatīts</value>
     </data>
+    <data name="Channel_Subscribers" xml:space="preserve">
+        <value>{0} abonenti</value>
+    </data>
+    <data name="Channel_Videos" xml:space="preserve">
+        <value>{0} video</value>
+    </data>
 </root>

@@ -477,4 +477,10 @@
     <data name="Filters_ViewStatus_partially_viewed" xml:space="preserve">
         <value>Partially viewed</value>
     </data>
+    <data name="Channel_Subscribers" xml:space="preserve">
+        <value>{0} subscribers</value>
+    </data>
+    <data name="Channel_Videos" xml:space="preserve">
+        <value>{0} videos</value>
+    </data>
 </root>

@@ -13,6 +13,91 @@ namespace Tubeshade.Data.Tasks;
 
 public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepositoryBase<TaskEntity>(connection)
 {
+    // lang=sql
+    private const string RunningTasksQuery =
+        $"""
+         WITH accessible AS
+                  (SELECT libraries.id
+                   FROM media.libraries
+                            INNER JOIN identity.owners ON owners.id = libraries.owner_id
+                            INNER JOIN identity.ownerships ON
+                       ownerships.owner_id = owners.id AND
+                       ownerships.user_id = @{nameof(TaskParameters.UserId)} AND
+                       (ownerships.access = @{nameof(TaskParameters.Access)} OR ownerships.access = 'owner'))
+
+         SELECT filtered_tasks.id,
+                filtered_tasks.type,
+                filtered_tasks.library_id,
+                filtered_tasks.channel_id,
+                filtered_tasks.video_id,
+                filtered_tasks.url,
+                task_runs.id                         AS RunId,
+                task_runs.state                      AS RunState,
+                task_runs.source,
+                task_runs.created_at                 AS RunCreatedAt,
+                task_run_progress.value,
+                task_run_progress.target,
+                task_run_progress.rate,
+                task_run_progress.remaining_duration,
+                task_run_results.result,
+                task_run_results.message,
+                CASE
+                    WHEN filtered_tasks.type = 'index' AND filtered_tasks.video_id IS NOT NULL THEN
+                        (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
+
+                    WHEN filtered_tasks.type = 'index' AND filtered_tasks.channel_id IS NOT NULL AND filtered_tasks.url IS NULL THEN
+                        (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
+                    
+                    WHEN filtered_tasks.type = 'index' THEN
+                        filtered_tasks.url
+
+                    WHEN filtered_tasks.type = 'download_video' THEN
+                        (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
+
+                    WHEN filtered_tasks.type = 'scan_channel' THEN
+                        (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
+
+                    WHEN filtered_tasks.type = 'youtube_feed_update' THEN
+                        (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
+
+                    ELSE
+                        libraries.name
+                    END                              AS Name,
+                count                                AS {nameof(RunningTaskEntity.TotalCount)}
+         FROM (SELECT tasks.id,
+                      tasks.type,
+                      tasks.library_id,
+                      tasks.channel_id,
+                      tasks.video_id,
+                      tasks.url,
+                      tasks.created_at,
+                      MAX(COALESCE(task_run_results.created_at, 'infinity')) AS result_created,
+                      MAX(task_runs.created_at)        AS run_created,
+                      count(*) OVER ()                 AS count
+               FROM tasks.tasks
+                        INNER JOIN media.libraries ON tasks.library_id = libraries.id
+                        INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
+                        LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
+                        LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+               WHERE (libraries.id IN (SELECT id FROM accessible))
+                 AND (@{nameof(TaskParameters.LibraryId)} IS NULL OR libraries.id = @{nameof(TaskParameters.LibraryId)})
+                 AND ((@{nameof(TaskParameters.Source)}::tasks.task_source IS NULL AND (tasks.type != '{TaskType.Names.YouTubeFeedUpdate}' OR @{nameof(TaskParameters.TaskRunId)} IS NOT NULL)) OR task_runs.source = @{nameof(TaskParameters.Source)})
+                 AND (@{nameof(TaskParameters.State)}::tasks.run_state IS NULL OR task_runs.state = @{nameof(TaskParameters.State)})
+                 AND (@{nameof(TaskParameters.Result)}::tasks.task_result IS NULL OR task_run_results.result = @{nameof(TaskParameters.Result)})
+                 AND (@{nameof(TaskParameters.TaskRunId)} IS NULL OR task_runs.id = @{nameof(TaskParameters.TaskRunId)})
+                 AND (@{nameof(TaskParameters.Type)}::tasks.task_type IS NULL OR tasks.type = @{nameof(TaskParameters.Type)})
+                 AND (@{nameof(TaskParameters.Url)} IS NULL OR tasks.url = @{nameof(TaskParameters.Url)})
+                 AND tasks.type != '{TaskType.Names.ReindexVideos}'
+               GROUP BY tasks.id, tasks.created_at
+               ORDER BY result_created DESC, run_created DESC, tasks.created_at DESC
+               OFFSET @{nameof(TaskParameters.Offset)} LIMIT @{nameof(TaskParameters.Limit)}) filtered_tasks
+                  INNER JOIN media.libraries ON filtered_tasks.library_id = libraries.id
+                  INNER JOIN tasks.task_runs ON filtered_tasks.id = task_runs.task_id
+                  LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
+                  LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+         ORDER BY task_run_results.created_at DESC, task_runs.created_at DESC, filtered_tasks.created_at DESC;
+         """;
+
     /// <inheritdoc />
     protected override string TableName => "tasks.tasks";
 
@@ -253,93 +338,17 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         TaskParameters parameters,
         CancellationToken cancellationToken)
     {
-        var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             WITH accessible AS
-                      (SELECT libraries.id
-                       FROM media.libraries
-                                INNER JOIN identity.owners ON owners.id = libraries.owner_id
-                                INNER JOIN identity.ownerships ON
-                           ownerships.owner_id = owners.id AND
-                           ownerships.user_id = @{nameof(parameters.UserId)} AND
-                           (ownerships.access = @{nameof(parameters.Access)} OR ownerships.access = 'owner'))
+        var command = new CommandDefinition(RunningTasksQuery, parameters, cancellationToken: cancellationToken);
+        var enumerable = await Connection.QueryAsync<RunningTaskEntity>(command);
+        return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
+    }
 
-             SELECT filtered_tasks.id,
-                    filtered_tasks.type,
-                    filtered_tasks.library_id,
-                    filtered_tasks.channel_id,
-                    filtered_tasks.video_id,
-                    filtered_tasks.url,
-                    task_runs.id                         AS RunId,
-                    task_runs.state                      AS RunState,
-                    task_runs.source,
-                    task_runs.created_at                 AS RunCreatedAt,
-                    task_run_progress.value,
-                    task_run_progress.target,
-                    task_run_progress.rate,
-                    task_run_progress.remaining_duration,
-                    task_run_results.result,
-                    task_run_results.message,
-                    CASE
-                        WHEN filtered_tasks.type = 'index' AND filtered_tasks.video_id IS NOT NULL THEN
-                            (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
-
-                        WHEN filtered_tasks.type = 'index' AND filtered_tasks.channel_id IS NOT NULL AND filtered_tasks.url IS NULL THEN
-                            (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
-                        
-                        WHEN filtered_tasks.type = 'index' THEN
-                            filtered_tasks.url
-
-                        WHEN filtered_tasks.type = 'download_video' THEN
-                            (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
-
-                        WHEN filtered_tasks.type = 'scan_channel' THEN
-                            (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
-
-                        WHEN filtered_tasks.type = 'youtube_feed_update' THEN
-                            (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
-
-                        ELSE
-                            libraries.name
-                        END                              AS Name,
-                    count                                AS {nameof(RunningTaskEntity.TotalCount)}
-             FROM (SELECT tasks.id,
-                          tasks.type,
-                          tasks.library_id,
-                          tasks.channel_id,
-                          tasks.video_id,
-                          tasks.url,
-                          tasks.created_at,
-                          MAX(COALESCE(task_run_results.created_at, 'infinity')) AS result_created,
-                          MAX(task_runs.created_at)        AS run_created,
-                          count(*) OVER ()                 AS count
-                   FROM tasks.tasks
-                            INNER JOIN media.libraries ON tasks.library_id = libraries.id
-                            INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
-                            LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
-                            LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-                   WHERE (libraries.id IN (SELECT id FROM accessible))
-                     AND (@{nameof(parameters.LibraryId)} IS NULL OR libraries.id = @{nameof(parameters.LibraryId)})
-                     AND ((@{nameof(parameters.Source)}::tasks.task_source IS NULL AND (tasks.type != '{TaskType.Names.YouTubeFeedUpdate}' OR @{nameof(parameters.TaskRunId)} IS NOT NULL)) OR task_runs.source = @{nameof(parameters.Source)})
-                     AND (@{nameof(parameters.State)}::tasks.run_state IS NULL OR task_runs.state = @{nameof(parameters.State)})
-                     AND (@{nameof(parameters.Result)}::tasks.task_result IS NULL OR task_run_results.result = @{nameof(parameters.Result)})
-                     AND (@{nameof(parameters.TaskRunId)} IS NULL OR task_runs.id = @{nameof(parameters.TaskRunId)})
-                     AND (@{nameof(parameters.Type)}::tasks.task_type IS NULL OR tasks.type = @{nameof(parameters.Type)})
-                     AND (@{nameof(parameters.Url)} IS NULL OR tasks.url = @{nameof(parameters.Url)})
-                     AND tasks.type != '{TaskType.Names.ReindexVideos}'
-                   GROUP BY tasks.id, tasks.created_at
-                   ORDER BY result_created DESC, run_created DESC, tasks.created_at DESC
-                   OFFSET @{nameof(parameters.Offset)} LIMIT @{nameof(parameters.Limit)}) filtered_tasks
-                      INNER JOIN media.libraries ON filtered_tasks.library_id = libraries.id
-                      INNER JOIN tasks.task_runs ON filtered_tasks.id = task_runs.task_id
-                      LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
-                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-             ORDER BY task_run_results.created_at DESC, task_runs.created_at DESC, filtered_tasks.created_at DESC;
-             """,
-            parameters,
-            cancellationToken: cancellationToken);
-
+    public async ValueTask<List<RunningTaskEntity>> GetRunningTasks(
+        TaskParameters parameters,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var command = new CommandDefinition(RunningTasksQuery, parameters, transaction, cancellationToken: cancellationToken);
         var enumerable = await Connection.QueryAsync<RunningTaskEntity>(command);
         return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
     }

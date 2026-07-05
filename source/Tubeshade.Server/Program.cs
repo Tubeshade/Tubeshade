@@ -152,6 +152,7 @@ internal static class Program
             .AddHostedService<ApplicationMigrationService>()
             .AddScoped<FileMetadataMigration>()
             .AddScoped<TrackFileMigration>()
+            .AddScoped<ChannelImagesMigration>()
             .AddScoped<TaskService>()
             .AddScoped<ChannelService>()
             .AddScoped<VideoService>()

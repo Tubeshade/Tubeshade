@@ -312,4 +312,16 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(98, Information, "Not indexing video due to too many recent feed updates")]
     internal static partial void FeedUpdateRateLimited(this ILogger logger);
+
+    [LoggerMessage(99, Information, "Indexing channel {ExternalId}")]
+    internal static partial void IndexingChannel(this ILogger logger, string externalId);
+
+    [LoggerMessage(100, Debug, "Downloading thumbnails")]
+    internal static partial void DownloadingThumbnails(this ILogger logger);
+
+    [LoggerMessage(101, Debug, "Channel image already exists")]
+    internal static partial void ExistingChannelImage(this ILogger logger);
+
+    [LoggerMessage(102, Information, "Creating channel {ImageType} image")]
+    internal static partial void CreatingChannelImage(this ILogger logger, string imageType);
 }

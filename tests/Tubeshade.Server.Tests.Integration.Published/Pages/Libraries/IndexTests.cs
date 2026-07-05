@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Playwright;
 using NUnit.Framework;
@@ -63,7 +62,7 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
         await Page.GetByText("Channels").ClickAsync();
         (await Page.TitleAsync()).Should().Be($"Channels - {name} - Tubeshade");
 
-        await Page.GetByText("Computerphile").ClickAsync();
+        await Page.GetByRole(AriaRole.Link).GetByTitle("Computerphile").ClickAsync();
         (await Page.TitleAsync()).Should().Be($"Computerphile - {name} - Tubeshade");
 
         await Page.GetByText("Settings").ClickAsync();
@@ -108,6 +107,6 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
 
         await Page.GetByText("Channels").ClickAsync();
         (await Page.TitleAsync()).Should().Be($"Channels - {name} - Tubeshade");
-        await Page.GetByText(DateTimeOffset.Now.ToString("yyyy-MM-dd")).WaitForAsync();
+        await Page.GetByText("Unsubscribe").WaitForAsync();
     }
 }

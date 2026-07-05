@@ -71,7 +71,15 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
               FROM media.videos
                   INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
                   INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
-                  INNER JOIN media.video_images ON videos.id = video_images.video_id)
+                  INNER JOIN media.video_images ON videos.id = video_images.video_id
+              
+              UNION ALL
+              
+              SELECT channel_images.image_id
+              FROM media.channels
+                  INNER JOIN media.library_channels ON library_channels.channel_id = channels.id AND library_channels."primary"
+                  INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
+                  INNER JOIN media.channel_images ON channels.id = channel_images.channel_id)
          """;
 
     /// <inheritdoc />
@@ -91,7 +99,15 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
               FROM media.videos
                   INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
                   INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
-                  INNER JOIN media.video_images ON videos.id = video_images.video_id)
+                  INNER JOIN media.video_images ON videos.id = video_images.video_id
+
+              UNION ALL
+              
+              SELECT channel_images.image_id
+              FROM media.channels
+                  INNER JOIN media.library_channels ON library_channels.channel_id = channels.id AND library_channels."primary"
+                  INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
+                  INNER JOIN media.channel_images ON channels.id = channel_images.channel_id)
          """;
 
     /// <inheritdoc />
@@ -155,7 +171,8 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
                  INNER JOIN media.video_images ON image_files.id = video_images.image_id
                  INNER JOIN accessible ON image_files.id = accessible.image_id
              WHERE {AccessFilter} AND
-                   video_images.video_id = @{nameof(parameters.VideoId)};
+                   video_images.video_id = @{nameof(parameters.VideoId)}
+             ORDER BY image_files.width, image_files.height;
              """,
             parameters,
             transaction,
@@ -163,5 +180,72 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
 
         var enumerable = await Connection.QueryAsync<ImageFileEntity>(command);
         return enumerable as List<ImageFileEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<int> LinkToChannelAsync(Guid id, Guid channelId, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             INSERT INTO media.channel_images (channel_id, image_id)
+             VALUES (@{nameof(channelId)}, @{nameof(id)});
+             """,
+            new { id, channelId },
+            transaction);
+
+        return await Connection.ExecuteAsync(command);
+    }
+
+    public async ValueTask<List<ImageFileEntity>> GetForChannel(
+        Guid channelId,
+        Guid userId,
+        Access access,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken = default)
+    {
+        var parameters = new GetVideoParameters(channelId, userId, access);
+
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             {AccessCte}
+
+             {SelectSql}
+                 INNER JOIN media.channel_images ON image_files.id = channel_images.image_id
+                 INNER JOIN accessible ON image_files.id = accessible.image_id
+             WHERE {AccessFilter} AND
+                   channel_images.channel_id = @{nameof(parameters.VideoId)}
+             ORDER BY image_files.width, image_files.height;
+             """,
+            parameters,
+            transaction,
+            cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<ImageFileEntity>(command);
+        return enumerable as List<ImageFileEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<string?> GetPath(Guid id, NpgsqlTransaction transaction, CancellationToken cancellationToken)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             SELECT channels.storage_path
+             FROM media.channels
+                INNER JOIN media.channel_images ON channels.id = channel_images.channel_id
+             WHERE channel_images.image_id = @{nameof(id)}
+                
+             UNION ALL
+
+             SELECT videos.storage_path
+             FROM media.videos
+                INNER JOIN media.video_images ON videos.id = video_images.video_id
+             WHERE video_images.image_id = @{nameof(id)};
+             """,
+            new { id },
+            transaction,
+            cancellationToken: cancellationToken);
+
+        return await Connection.QuerySingleOrDefaultAsync<string>(command);
     }
 }

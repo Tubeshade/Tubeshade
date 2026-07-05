@@ -121,12 +121,13 @@ public sealed class YoutubeIndexingService
                 data,
                 transaction,
                 tempDirectory,
-                source, cookiesService,
+                source,
+                cookiesService,
                 cancellationToken);
         }
         else if (data.ResultType is MetadataType.Playlist)
         {
-            await IndexChannel(channel, data, cookieFilepath, cancellationToken);
+            await IndexChannel(channel, data, userId, cookieFilepath, transaction, cancellationToken);
         }
         else
         {
@@ -156,14 +157,18 @@ public sealed class YoutubeIndexingService
             throw new InvalidOperationException("Missing channel details");
         }
 
-        var channel = await _channelRepository.FindByExternalId(externalId, userId, Access.Read, transaction);
+        var channel = await _channelRepository.FindByExternalId(externalId, userId, Access.Modify, transaction);
         if (channel is not null)
         {
-            return channel;
+            channel.ModifiedByUserId = userId;
+            channel.SubscriberCount = (int?)data.ChannelFollowerCount;
+            await _channelRepository.UpdateAsync(channel, transaction);
+
+            return await _channelRepository.GetAsync(channel.Id, userId, transaction);
         }
 
         var availability = ExternalAvailability.Public;
-        return await _channelService.Create(libraryId, userId, name, externalId, externalUrl, availability, transaction);
+        return await _channelService.Create(libraryId, userId, name, externalId, externalUrl, availability, (int?)data.ChannelFollowerCount, transaction);
     }
 
     private async ValueTask<Guid> IndexVideo(
@@ -434,7 +439,7 @@ public sealed class YoutubeIndexingService
                 cancellationToken);
         }
 
-        await CreateOrUpdateThumbnail(url, directory, cookieFilepath, userId, video, transaction, cancellationToken);
+        await CreateOrUpdateVideoThumbnail(url, directory, cookieFilepath, userId, video, transaction, cancellationToken);
 
         if (isExistingVideo && !(videoData.LiveStatus is LiveStatus.WasLive && files.Any(file => file.DownloadedAt is not null)))
         {
@@ -472,7 +477,7 @@ public sealed class YoutubeIndexingService
         return video.Id;
     }
 
-    private async ValueTask CreateOrUpdateThumbnail(
+    private async ValueTask CreateOrUpdateVideoThumbnail(
         string url,
         DirectoryInfo directory,
         string? cookieFilepath,
@@ -486,16 +491,12 @@ public sealed class YoutubeIndexingService
         var fileName = $"thumbnail_{video.Id:N}";
         await _ytdlpWrapper.DownloadThumbnail(url, directory.FullName, fileName, cookieFilepath, cancellationToken);
 
-        var thumbnails = directory.EnumerateFiles($"{fileName}.*").ToArray();
-        if (thumbnails is [])
+        var file = directory.EnumerateFiles($"{fileName}.*").ToArray() switch
         {
-            throw new Exception("Could not find downloaded thumbnail");
-        }
-
-        if (thumbnails is not [var file])
-        {
-            throw new Exception("Multiple thumbnails");
-        }
+            [] => throw new Exception("Could not find downloaded image"),
+            [var singleFile] => singleFile,
+            _ => throw new Exception("Multiple images"),
+        };
 
         var response = await _ffmpegService.AnalyzeFile(file.FullName, cancellationToken);
         if (response.Streams is not [var stream])
@@ -566,18 +567,85 @@ public sealed class YoutubeIndexingService
     private async ValueTask IndexChannel(
         ChannelEntity channel,
         VideoData videoData,
+        Guid userId,
         string? cookieFilepath,
+        NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Indexing channel");
+        using var scope = _logger.BeginScope("{ChannelId}", channel.Id);
+        _logger.IndexingChannel(channel.ExternalId);
 
-        _logger.LogDebug("Downloading thumbnails for channel {ChannelId}", channel.Id);
-
-        await _ytdlpWrapper.DownloadChannelThumbnails(
-            videoData.ChannelUrl ?? throw new InvalidOperationException("Missing channel Url"),
+        _logger.DownloadingThumbnails();
+        await _ytdlpWrapper.DownloadThumbnails(
+            channel.ExternalUrl,
             channel.StoragePath,
             cookieFilepath,
             cancellationToken);
+
+        var directory = new DirectoryInfo(channel.StoragePath);
+        var existingImages = await _imageFileRepository.GetForChannel(channel.Id, userId, Access.Read, transaction, cancellationToken);
+
+        foreach (var thumbnail in videoData.Thumbnails ?? [])
+        {
+            var file = directory.EnumerateFiles($"thumbnail.{thumbnail.Id}.*").ToArray() switch
+            {
+                [] => throw new Exception("Could not find downloaded image"),
+                [var singleFile] => singleFile,
+                _ => throw new Exception("Multiple images"),
+            };
+
+            var hashAlgorithm = HashAlgorithm.Default;
+            var hashData = await hashAlgorithm.ComputeHashAsync(file, cancellationToken);
+
+            if (existingImages.Any(image => image.Hash.SequenceEqual(hashData)))
+            {
+                _logger.ExistingChannelImage();
+                continue;
+            }
+
+            var response = await _ffmpegService.AnalyzeFile(file.FullName, cancellationToken);
+            if (response.Streams is not [var stream])
+            {
+                throw new InvalidOperationException("Unexpected image file format");
+            }
+
+            if (stream is not { Width: { } width, Height: { } height })
+            {
+                throw new InvalidOperationException("Could not extract image resolution");
+            }
+
+            var type = thumbnail.Id switch
+            {
+                "avatar_uncropped" => ImageType.Thumbnail,
+                "banner_uncropped" => ImageType.Banner,
+                _ => height >= width ? ImageType.Thumbnail : ImageType.Banner,
+            };
+
+            _logger.CreatingChannelImage(type.Name);
+
+            var image = new ImageFileEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                StoragePath = file.Name,
+                StorageSize = file.Length,
+                Type = type,
+                Width = width,
+                Height = height,
+                HashAlgorithm = hashAlgorithm,
+                Hash = hashData,
+            };
+
+            var imageFileId = await _imageFileRepository.AddAsync(image, transaction);
+            await _imageFileRepository.LinkToChannelAsync(imageFileId!.Value, channel.Id, transaction);
+            existingImages.Add(image);
+
+            var destinationFileName = Path.Combine(channel.StoragePath, file.Name);
+            if (!string.Equals(destinationFileName, file.FullName, StringComparison.Ordinal))
+            {
+                file.MoveTo(destinationFileName, true);
+            }
+        }
     }
 
     public ValueTask ScanChannel(Guid libraryId,

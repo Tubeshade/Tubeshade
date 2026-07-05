@@ -1,0 +1,11 @@
+﻿@model IEnumerable<ChannelModel>
+
+<section id="channel">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 475px), 1fr))"
+         class="row g-2 mb-2">
+        @foreach (var channel in Model.OrderBy(channel => channel.Channel.Name))
+        {
+            <partial name="Channels/_ChannelCard" model="@channel"/>
+        }
+    </div>
+</section>

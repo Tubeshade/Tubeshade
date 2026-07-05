@@ -56,6 +56,7 @@ public sealed class FileMetadataMigration : IApplicationMigration
                     Limit = 1,
                     Offset = 0,
                 },
+                transaction,
                 cancellationToken);
 
             if (tasks is [])

@@ -1,0 +1,73 @@
+﻿@model Tubeshade.Server.Pages.Channels.ChannelModel
+
+<div class="col" id="channel-@Model.Channel.Id">
+    <div class="card">
+        <div class="row g-0">
+            <div class="d-flex justify-content-center align-items-center" style="width: 160px; height: 160px">
+                <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId"
+                   asp-route-channelId="@Model.Channel.Id">
+                    @if (Model.Thumbnails is not [])
+                    {
+                        <img class="img-fluid card-img" loading="lazy"
+                             alt="@Model.Channel.Name" title="@Model.Channel.Name"
+                             src="@Url.Action("Get", "Images", new { version = "1.0", id = Model.Thumbnails.Last().Id })"
+                             srcset="@string.Join(", ", Model.Thumbnails.Select(image => $"{Url.Action("Get", "Images", new { version = "1.0", id = image.Id })} {image.Width}w"))"/>
+                    }
+                    else
+                    {
+                        @Model.Channel.Name
+                    }
+                </a>
+            </div>
+
+            <div class="col">
+                <div class="card-body p-2 d-flex flex-column h-100">
+                    <h5 class="card-title text-truncate" title="@Model.Channel.Name">@Model.Channel.Name</h5>
+
+                    <div class="card-text d-flex flex-column gap-1 justify-content-center flex-fill">
+                        <a href="@Model.Channel.ExternalUrl">
+                            @Model.Channel.Availability.LocalizedName
+                        </a>
+                        <div class="d-flex flex-row justify-content-between">
+                            @if (Model.Channel.SubscriberCount is { } subscriberCount)
+                            {
+                                <span>@string.Format(SharedResources.Channel_Subscribers, subscriberCount)</span>
+                            }
+                            @if (Model.VideoCount is { } videoCount)
+                            {
+                                <span>@string.Format(SharedResources.Channel_Videos, videoCount)</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="flex-fill"></div>
+
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        @if (Model.Channel.SubscribedAt.HasValue)
+                        {
+                            <button hx-post="" hx-page-handler="Unsubscribe" hx-route-channelId="@Model.Channel.Id"
+                                    hx-target="#channel-@Model.Channel.Id" hx-swap="outerHTML"
+                                    type="button" class="btn btn-primary w-auto">
+                                @SharedResources.Button_Unsubscribe
+                            </button>
+                        }
+                        else
+                        {
+                            <button hx-post="" hx-page-handler="Subscribe" hx-route-channelId="@Model.Channel.Id"
+                                    hx-target="#channel-@Model.Channel.Id" hx-swap="outerHTML"
+                                    type="button" class="btn btn-primary">
+                                @SharedResources.Button_Subscribe
+                            </button>
+                        }
+
+                        <button hx-post="" hx-page-handler="Scan" hx-route-channelId="@Model.Channel.Id"
+                                hx-swap="none"
+                                type="button" class="btn btn-secondary">
+                            @SharedResources.Button_Scan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

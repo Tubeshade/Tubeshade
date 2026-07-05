@@ -48,8 +48,8 @@ public interface IYtdlpWrapper
         string? cookieFilepath,
         CancellationToken cancellationToken);
 
-    ValueTask DownloadChannelThumbnails(
-        string channelUrl,
+    ValueTask DownloadThumbnails(
+        string url,
         string path,
         string? cookieFilepath,
         CancellationToken cancellationToken);

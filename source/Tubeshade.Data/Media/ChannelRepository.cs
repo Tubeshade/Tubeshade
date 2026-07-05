@@ -48,7 +48,8 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
         name = @Name,
         storage_path = @StoragePath,
         external_id = @ExternalId,
-        subscribed_at = @SubscribedAt
+        subscribed_at = @SubscribedAt,
+        subscriber_count = @SubscriberCount
         """;
 
     public async ValueTask<List<ChannelEntity>> GetSubscribedForLibrary(

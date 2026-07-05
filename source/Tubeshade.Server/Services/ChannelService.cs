@@ -33,10 +33,11 @@ public sealed class ChannelService
         string name,
         string externalId,
         string externalUrl,
+        int? subscriberCount,
         ExternalAvailability availability)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
-        var channel = await Create(libraryId, userId, name, externalId, externalUrl, availability, transaction);
+        var channel = await Create(libraryId, userId, name, externalId, externalUrl, availability, subscriberCount, transaction);
         await transaction.CommitAsync();
 
         return channel;
@@ -49,6 +50,7 @@ public sealed class ChannelService
         string externalId,
         string externalUrl,
         ExternalAvailability availability,
+        int? subscriberCount,
         NpgsqlTransaction transaction)
     {
         var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
@@ -65,6 +67,7 @@ public sealed class ChannelService
                 ExternalId = externalId,
                 ExternalUrl = externalUrl,
                 Availability = availability,
+                SubscriberCount = subscriberCount,
             },
             transaction);
 

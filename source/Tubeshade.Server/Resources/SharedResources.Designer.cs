@@ -258,6 +258,24 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} subscribers.
+        /// </summary>
+        public static string Channel_Subscribers {
+            get {
+                return ResourceManager.GetString("Channel_Subscribers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} videos.
+        /// </summary>
+        public static string Channel_Videos {
+            get {
+                return ResourceManager.GetString("Channel_Videos", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Channels.
         /// </summary>
         public static string Channels {

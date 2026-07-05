@@ -33,6 +33,7 @@ public sealed class ApplicationMigrationService : BackgroundService
 
         await ApplyMigration<FileMetadataMigration>(nameof(FileMetadataMigration), stoppingToken);
         await ApplyMigration<TrackFileMigration>(nameof(TrackFileMigration), stoppingToken);
+        await ApplyMigration<ChannelImagesMigration>(nameof(ChannelImagesMigration), stoppingToken);
 
         _logger.ApplicationMigrationsApplied();
     }

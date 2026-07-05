@@ -16,6 +16,8 @@ _Latest build from master branch._
   ([#293](https://github.com/Tubeshade/Tubeshade/pull/293))
 - Partially viewed video filter
   ([#235](https://github.com/Tubeshade/Tubeshade/issues/235))
+- Save channel banners and thumbnails
+  ([#179](https://github.com/Tubeshade/Tubeshade/issues/179))
 
 ### Changed
 

@@ -234,20 +234,20 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
     }
 
     /// <inheritdoc />
-    public async ValueTask DownloadChannelThumbnails(
-        string channelUrl,
+    public async ValueTask DownloadThumbnails(
+        string url,
         string path,
         string? cookieFilepath,
         CancellationToken cancellationToken)
     {
         var optionSet = GetDefaultOptions(cookieFilepath);
-        optionSet.Output = "thumbnail:thumbnail.%(ext)s";
+        optionSet.Output = "thumbnail.%(ext)s";
         optionSet.Paths = path;
         optionSet.SkipDownload = true;
         optionSet.WriteAllThumbnails = true;
         optionSet.PlaylistItems = "0";
 
-        var result = await _ytdlp.RunAsync(channelUrl, optionSet, cancellationToken);
+        var result = await _ytdlp.RunAsync(url, optionSet, cancellationToken);
 
         if (result.ErrorOutput is { Length: > 0 } errorOutput)
         {
