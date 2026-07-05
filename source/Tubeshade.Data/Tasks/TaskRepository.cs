@@ -45,7 +45,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     WHEN filtered_tasks.type = 'index' AND filtered_tasks.video_id IS NOT NULL THEN
                         (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
 
-                    WHEN filtered_tasks.type = 'index' AND filtered_tasks.channel_id IS NOT NULL AND filtered_tasks.url IS NULL THEN
+                    WHEN filtered_tasks.type = 'index' AND filtered_tasks.channel_id IS NOT NULL AND task_runs.source != 'webhook' THEN
                         (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
                     
                     WHEN filtered_tasks.type = 'index' THEN

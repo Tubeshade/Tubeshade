@@ -38,6 +38,8 @@ _Latest build from master branch._
   ([#290](https://github.com/Tubeshade/Tubeshade/pull/290))
 - Delete downloadable files for unavailable videos
   ([#293](https://github.com/Tubeshade/Tubeshade/pull/293))
+- Display channel name for channel indexing tasks
+  ([#299](https://github.com/Tubeshade/Tubeshade/pull/299))
 
 ## [0.1.6] - 2026-04-24
 

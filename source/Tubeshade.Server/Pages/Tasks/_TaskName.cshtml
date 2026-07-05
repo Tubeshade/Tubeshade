@@ -10,7 +10,7 @@
             <span>"@Model.Name"</span>
         </a>
     }
-    else if (Model is { ChannelId: { } channelId, Url: null })
+    else if (Model is { ChannelId: { } channelId } && Model.Runs.All(run => run.Source != TaskSource.Webhook))
     {
         <a asp-page="/Channels/Channel" asp-route-channelId="@channelId">
             <span>"@Model.Name"</span>
