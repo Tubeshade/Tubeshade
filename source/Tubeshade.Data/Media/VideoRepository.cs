@@ -159,7 +159,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(parameters.Query)}))
                AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
                AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
-             ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name}, videos.id
+             ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, videos.id
              LIMIT @{nameof(parameters.Limit)}
              OFFSET @{nameof(parameters.Offset)};
              """,
@@ -506,7 +506,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.NotViewed}' AND (video_viewed_by_users.viewed IS NULL OR video_viewed_by_users.viewed = FALSE))
                     OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.PartiallyViewed}' AND video_viewed_by_users.viewed IS FALSE AND video_viewed_by_users.position > 10 AND video_viewed_by_users.position < EXTRACT(EPOCH FROM (videos.duration - '10 seconds'::interval))))
            AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
-         ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name}, videos.id
+         ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, videos.id
          LIMIT @{nameof(parameters.Limit)}
          OFFSET @{nameof(parameters.Offset)};
          """;
