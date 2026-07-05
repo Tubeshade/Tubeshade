@@ -14,10 +14,7 @@ ARG DOTNET_RUNTIME
 
 WORKDIR /tubeshade
 
-ADD --checksum="sha256:bf8aac79b72287a6d2043074415132558b43743a8f9461a22b0141e90f16ce66" --chmod="+xr-w" https://github.com/yt-dlp/yt-dlp/releases/download/2026.06.09/yt-dlp_linux /usr/bin/yt-dlp
-ADD --checksum="sha256:96c9c73fc05ea57603bc28d8071d41e861bd40bcf2a9f849dd5969ed1a2c8498" --chmod="+r-xw" https://github.com/denoland/deno/releases/download/v2.9.0/deno-x86_64-unknown-linux-gnu.zip /usr/bin/deno.zip
-ADD --checksum="sha256:b8ceec7f76143da172aaf5ebeec0c2d218e5680c063b931586bca48567069b38" --chmod="+r-xw" https://github.com/Brainicism/bgutil-ytdlp-pot-provider/releases/download/1.3.1/bgutil-ytdlp-pot-provider.zip /etc/yt-dlp/plugins/bgutil-ytdlp-pot-provider.zip
-RUN unzip /usr/bin/deno.zip deno -d /usr/bin && rm /usr/bin/deno.zip && chmod +xr-w /usr/bin/deno
+RUN unzip /root/deno.zip deno -d /usr/bin && rm /root/deno.zip && chmod +xr-w /usr/bin/deno
 
 COPY --parents ./.config/dotnet-tools.json ./
 
