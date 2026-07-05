@@ -48,9 +48,12 @@
         </Compile>
     </ItemGroup>
 
-    <Target Name="JavascriptLibraries" BeforeTargets="Build;Publish">
-        <Exec WorkingDirectory="./" Command="npm install" Condition="'$(ContinuousIntegrationBuild)' != 'true'"/>
-        <Exec WorkingDirectory="./" Command="npm ci" Condition="'$(ContinuousIntegrationBuild)' == 'true'"/>
+    <Target Name="JavascriptLibraries"
+            BeforeTargets="Build;Publish"
+            Inputs="package-lock.json"
+            Outputs="wwwroot/lib/htmx.org/dist/js/htmx.min.js">
+
+        <Exec WorkingDirectory="./" Command="npm ci" Condition="'$(ContinuousIntegrationBuild)' != 'true'"/>
 
         <ItemGroup>
             <LibDirectory Include="wwwroot/lib"/>

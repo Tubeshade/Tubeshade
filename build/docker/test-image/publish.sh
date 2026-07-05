@@ -8,8 +8,6 @@ configuration="Debug"
 
 version=$(tr -d '[:space:]' <version)
 
-./build/restore.sh "${project}" "$configuration"
-
 echo "Publishing project ${project} for runtime ${runtime}; build ${build}"
 
 dotnet publish \

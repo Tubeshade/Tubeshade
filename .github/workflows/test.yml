@@ -37,6 +37,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'source/Tubeshade.Server/package-lock.json'
 
+      - name: Install NPM dependencies
+        run: build/npm_ci.sh
+
       - name: Cache NuGet packages
         uses: actions/cache@v5.0.5
         with:
@@ -105,6 +108,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'source/Tubeshade.Server/package-lock.json'
 
+      - name: Install NPM dependencies
+        run: build/npm_ci.sh
+
       - uses: docker/login-action@v4.2.0
         with:
           registry: ghcr.io
@@ -113,9 +119,17 @@ jobs:
 
       - run: echo "BUILD_TAG=-test"
 
+      - name: Restore project
+        run: build/restore.sh "Tubeshade.Server"
+
       - name: Publish project
         id: publish
-        run: build/publish.sh "Tubeshade.Server" "linux-x64" "${{ github.run_number }}" "-test"
+        run: >
+          ./build/publish.sh
+          "Tubeshade.Server"
+          "linux-x64"
+          "${{ github.run_number }}"
+          "-test"
 
       - name: Build debian package
         run: build/debian/build.sh "${{ steps.publish.outputs.artifact }}" "${{ github.run_number }}"

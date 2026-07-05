@@ -10,8 +10,6 @@ version=$(tr -d '[:space:]' <version)
 publish_dir="./source/${project}/bin/Release/net10.0/${runtime}/publish"
 archive_name="${project}_${runtime}.zip"
 
-./build/restore.sh "${project}"
-
 echo "Publishing project ${project} for runtime ${runtime}; build ${build}; tag '${tag}'"
 
 dotnet publish \

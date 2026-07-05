@@ -12,8 +12,24 @@ ARG BUILD_NUMBER
 ARG DOTNET_RUNTIME
 
 WORKDIR /tubeshade
-COPY ./ ./
 
+COPY --parents ./build/*.sh ./
+
+COPY --parents ./source/Tubeshade.Server/package.json ./
+COPY --parents ./source/Tubeshade.Server/package-lock.json ./
+RUN --mount=type=cache,id=npm,target=/root/.npm \
+    ./build/npm_ci.sh
+
+COPY ./nuget.config ./
+COPY ./Tubeshade.slnx ./
+COPY ./global.json ./
+COPY --parents ./**/*.props ./
+COPY --parents ./**/*.csproj ./
+COPY --parents ./**/packages.lock.json ./
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+    ./build/restore.sh "Tubeshade.Server"
+
+COPY ./ ./
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     --mount=type=cache,id=npm,target=/root/.npm \
     ./build/publish.sh "Tubeshade.Server" $DOTNET_RUNTIME $BUILD_NUMBER
