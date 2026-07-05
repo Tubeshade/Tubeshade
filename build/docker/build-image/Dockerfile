@@ -1,4 +1,6 @@
-﻿ARG DOTNET_SDK_VERSION="10.0.301"
+﻿# syntax=docker/dockerfile:1
+
+ARG DOTNET_SDK_VERSION="10.0.301"
 
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_SDK_VERSION}
 
@@ -8,7 +10,8 @@ ADD --checksum="sha256:b8ceec7f76143da172aaf5ebeec0c2d218e5680c063b931586bca4856
 ADD --checksum="sha256:b5400343482820062372e997cc0c9ace18637f8e774cf70b22c58b89b99e9abe" --chmod="+r-xw" https://github.com/Brainicism/bgutil-ytdlp-pot-provider/archive/refs/tags/1.3.1.tar.gz /root/1.3.1.tar.gz
 
 ENV CI=true
-RUN apt-get update && apt-get install -y \
+RUN --mount=type=cache,id=tubeshade_apt,target=/var/cache/apt,sharing=locked \
+    apt-get update && apt-get install -y \
     npm \
     zip \
     lintian \
