@@ -43,7 +43,7 @@
     networks:
       - internal
     healthcheck:
-      test: [ "CMD", "deno", "eval", "--allow-net=localhost:4416", "try { const r = await fetch('http://localhost:4416/ping'); if (!r.ok) Deno.exit(1); } catch { Deno.exit(1); }" ]
+      test: [ "CMD", "deno", "eval", "try { const r = await fetch('http://localhost:4416/ping'); if (!r.ok) Deno.exit(1); } catch { Deno.exit(1); }" ]
       interval: 10s
       retries: 3
       start_period: 10s
