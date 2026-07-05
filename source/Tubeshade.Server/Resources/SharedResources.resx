@@ -483,4 +483,13 @@
     <data name="Channel_Videos" xml:space="preserve">
         <value>{0} videos</value>
     </data>
+    <data name="Filters_SortVideoBy_duration" xml:space="preserve">
+        <value>Duration</value>
+    </data>
+    <data name="Filters_SortVideoBy_storage_size" xml:space="preserve">
+        <value>Size</value>
+    </data>
+    <data name="Filters_SortVideoBy_framerate" xml:space="preserve">
+        <value>Framerate</value>
+    </data>
 </root>

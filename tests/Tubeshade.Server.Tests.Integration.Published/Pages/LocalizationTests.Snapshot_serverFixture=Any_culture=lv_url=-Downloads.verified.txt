@@ -42,11 +42,14 @@
       - option "Publiski"
     - combobox "Kārtot pēc":
       - option "Izveidots"
+      - option "Ilgums"
+      - option "Kadru ātrums"
       - option "Patīk"
       - option "Labots"
       - option "Publicēts" [selected]
       - option "Haotiski"
       - option "Atjaunots"
+      - option "Izmērs"
       - option "Skatījumi"
     - combobox "Kārtošanas virziens":
       - option "Augoši"

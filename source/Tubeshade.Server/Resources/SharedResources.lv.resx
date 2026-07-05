@@ -476,4 +476,13 @@
     <data name="Channel_Videos" xml:space="preserve">
         <value>{0} video</value>
     </data>
+    <data name="Filters_SortVideoBy_duration" xml:space="preserve">
+        <value>Ilgums</value>
+    </data>
+    <data name="Filters_SortVideoBy_storage_size" xml:space="preserve">
+        <value>Izmērs</value>
+    </data>
+    <data name="Filters_SortVideoBy_framerate" xml:space="preserve">
+        <value>Kadru ātrums</value>
+    </data>
 </root>
