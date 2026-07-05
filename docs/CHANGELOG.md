@@ -42,6 +42,8 @@ _Latest build from master branch._
   ([#300](https://github.com/Tubeshade/Tubeshade/pull/300))
 - Sort NULL values last
   ([#301](https://github.com/Tubeshade/Tubeshade/pull/301))
+- Reindex all old videos
+  ([#302](https://github.com/Tubeshade/Tubeshade/issues/302))
 
 ## [0.1.6] - 2026-04-24
 

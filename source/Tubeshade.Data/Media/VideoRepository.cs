@@ -228,7 +228,6 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     (from_publish <= 'P2D' AND from_now >= 'P1D') OR
                     (from_publish <= 'P2M' AND from_now >= 'P1M') OR
                     from_now >= 'P6M') 
-               AND NOT EXISTS(SELECT 1 FROM media.sponsorblock_segments WHERE sponsorblock_segments.video_id = stale_videos.id)
              ORDER BY stale_videos.published_at DESC, stale_videos.id
              LIMIT 5;
              """,
