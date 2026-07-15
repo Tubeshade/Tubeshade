@@ -1,7 +1,7 @@
 ﻿using NodaTime;
 using Tubeshade.Data.Abstractions;
 
-namespace Tubeshade.Data.Media;
+namespace Tubeshade.Data.Media.Channels;
 
 public sealed record ChannelSubscriptionEntity : ModifiableEntity
 {

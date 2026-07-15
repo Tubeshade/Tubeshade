@@ -3,18 +3,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Npgsql;
+using Tubeshade.Data;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Server.Configuration.Auth;
 
 namespace Tubeshade.Server.Pages.Videos;
 
 public sealed class Video : PageModel
 {
+    private readonly NpgsqlConnection _connection;
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
 
-    public Video(VideoRepository videoRepository, ChannelRepository channelRepository)
+    public Video(NpgsqlConnection connection, VideoRepository videoRepository, ChannelRepository channelRepository)
     {
+        _connection = connection;
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
     }
@@ -27,8 +32,11 @@ public sealed class Video : PageModel
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
-        var video = await _videoRepository.GetAsync(VideoId, User.GetUserId(), cancellationToken);
-        var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, cancellationToken);
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var video = await _videoRepository.GetAsync(VideoId, User.GetUserId(), transaction);
+        var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, transaction, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
         return RedirectToPage("/Libraries/Videos/Video", new { libraryId, VideoId, Time });
     }
 }

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Pages.Videos;
@@ -75,7 +76,7 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
     public SortDirection? SortDirection { get; set; }
 
     /// <inheritdoc />
-    public PaginatedData<VideoModel> PageData { get; set; } = null!;
+    public PaginatedData<VideoModel> PageData { get; private set; } = null!;
 
     /// <inheritdoc />
     public List<LibraryEntity> Libraries { get; private set; } = null!;

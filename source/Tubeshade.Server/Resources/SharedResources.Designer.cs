@@ -474,6 +474,78 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Sort by.
+        /// </summary>
+        public static string Filters_SortChannelBy {
+            get {
+                return ResourceManager.GetString("Filters_SortChannelBy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Created.
+        /// </summary>
+        public static string Filters_SortChannelBy_created_at {
+            get {
+                return ResourceManager.GetString("Filters_SortChannelBy_created_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Modified.
+        /// </summary>
+        public static string Filters_SortChannelBy_modified_at {
+            get {
+                return ResourceManager.GetString("Filters_SortChannelBy_modified_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string Filters_SortChannelBy_name {
+            get {
+                return ResourceManager.GetString("Filters_SortChannelBy_name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Random.
+        /// </summary>
+        public static string Filters_SortChannelBy_random {
+            get {
+                return ResourceManager.GetString("Filters_SortChannelBy_random", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Subscribed.
+        /// </summary>
+        public static string Filters_SortChannelBy_subscribed_at {
+            get {
+                return ResourceManager.GetString("Filters_SortChannelBy_subscribed_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Subscribers.
+        /// </summary>
+        public static string Filters_SortChannelBy_subscriber_count {
+            get {
+                return ResourceManager.GetString("Filters_SortChannelBy_subscriber_count", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Videos.
+        /// </summary>
+        public static string Filters_SortChannelBy_video_count {
+            get {
+                return ResourceManager.GetString("Filters_SortChannelBy_video_count", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Sort direction.
         /// </summary>
         public static string Filters_SortDirection {

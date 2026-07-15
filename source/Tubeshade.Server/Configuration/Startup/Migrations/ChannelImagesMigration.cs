@@ -7,6 +7,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Tasks;
 using static System.Data.IsolationLevel;
 
@@ -57,7 +58,7 @@ internal sealed class ChannelImagesMigration : IApplicationMigration
                 continue;
             }
 
-            var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, transaction);
+            var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, transaction, cancellationToken);
             var tasks = await _taskRepository.GetRunningTasks(
                 new TaskParameters
                 {

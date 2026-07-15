@@ -50,7 +50,7 @@ public sealed class Index : PageModel, ITasksPage, INonLibraryPage
     public int? PageIndex { get; set; }
 
     /// <inheritdoc />
-    public PaginatedData<TaskModel> PageData { get; set; } = null!;
+    public PaginatedData<TaskModel> PageData { get; private set; } = null!;
 
     /// <inheritdoc />
     public List<LibraryEntity> Libraries { get; private set; } = null!;

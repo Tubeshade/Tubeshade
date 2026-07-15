@@ -13,6 +13,7 @@ using PubSubHubbub;
 using Tubeshade.Data;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Server.Services;
 using Tubeshade.Server.V1.Models;
 using LoggerExtensions = Tubeshade.Server.Services.LoggerExtensions;
@@ -137,7 +138,7 @@ public sealed class NotificationsController : ControllerBase
         _logger.ReceivedFeedUpdate(channelId, channel.Name);
 
         var userId = await _userRepository.GetSystemUserId(transaction);
-        var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, transaction);
+        var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
         using var reader = new StreamReader(Request.Body, Encoding.UTF8);

@@ -1,11 +1,11 @@
-﻿@model IEnumerable<ChannelModel>
+﻿@model Tubeshade.Server.Pages.Shared.PaginatedData<Tubeshade.Data.Media.Channels.DetailedChannel>
 
 <section id="channel">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 475px), 1fr))"
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 425px), 1fr))"
          class="row g-2 mb-2">
-        @foreach (var channel in Model.OrderBy(channel => channel.Channel.Name))
+        @foreach (var channel in Model.Data)
         {
-            <partial name="Channels/_ChannelCard" model="@channel"/>
+            <partial name="Channels/_ChannelCard" model="@(new ChannelModel(channel, Model.LibraryId))"/>
         }
     </div>
 </section>

@@ -4,7 +4,7 @@ using Dapper;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
 
-namespace Tubeshade.Data.Media;
+namespace Tubeshade.Data.Media.Channels;
 
 public sealed class ChannelSubscriptionRepository(NpgsqlConnection connection)
     : ModifiableRepositoryBase<ChannelSubscriptionEntity>(connection)

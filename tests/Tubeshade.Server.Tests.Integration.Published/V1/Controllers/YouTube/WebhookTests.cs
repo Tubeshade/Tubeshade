@@ -93,7 +93,7 @@ public sealed class WebhookTests(IServerFixture fixture) : PlaywrightTests(fixtu
         await Page.GetByText("Channels").ClickAsync();
         (await Page.TitleAsync()).Should().Be("Channels - Tubeshade");
 
-        await Page.GetByRole(AriaRole.Link, new() { Name = "Create channel" }).ClickAsync();
+        await Page.GetByRole(AriaRole.Link, new() { Name = "+" }).ClickAsync();
         (await Page.TitleAsync()).Should().Be("Create a channel - Tubeshade");
 
         await Page.GetByLabel("Name").FillAsync(name);

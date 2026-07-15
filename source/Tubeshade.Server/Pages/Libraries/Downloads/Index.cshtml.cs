@@ -11,6 +11,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Downloads;
@@ -81,7 +82,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
     public SortDirection? SortDirection { get; set; }
 
     /// <inheritdoc />
-    public PaginatedData<VideoModel> PageData { get; set; } = null!;
+    public PaginatedData<VideoModel> PageData { get; private set; } = null!;
 
     public LibraryEntity Library { get; set; } = null!;
 

@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 
 namespace Tubeshade.Server.Pages.Channels;
 

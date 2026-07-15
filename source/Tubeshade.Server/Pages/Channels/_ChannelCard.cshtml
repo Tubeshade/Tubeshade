@@ -1,17 +1,16 @@
-﻿@model Tubeshade.Server.Pages.Channels.ChannelModel
+﻿@model ChannelModel
 
 <div class="col" id="channel-@Model.Channel.Id">
     <div class="card">
         <div class="row g-0">
-            <div class="d-flex justify-content-center align-items-center" style="width: 160px; height: 160px">
-                <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId"
+            <div class="col-auto d-flex justify-content-center align-items-center" style="aspect-ratio: 1; height: 160px">
+                <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@(Model.LibraryId ?? Model.Channel.PrimaryLibraryId)"
                    asp-route-channelId="@Model.Channel.Id">
-                    @if (Model.Thumbnails is not [])
+                    @if (Model.Channel.Thumbnails is not [])
                     {
                         <img class="img-fluid card-img" loading="lazy"
                              alt="@Model.Channel.Name" title="@Model.Channel.Name"
-                             src="@Url.Action("Get", "Images", new { version = "1.0", id = Model.Thumbnails.Last().Id })"
-                             srcset="@string.Join(", ", Model.Thumbnails.Select(image => $"{Url.Action("Get", "Images", new { version = "1.0", id = image.Id })} {image.Width}w"))"/>
+                             src="@Model.GetThumbnailSource(Url)" srcset="@Model.GetThumbnailSourceSet(Url)"/>
                     }
                     else
                     {
@@ -22,20 +21,17 @@
 
             <div class="col">
                 <div class="card-body p-2 d-flex flex-column h-100">
-                    <h5 class="card-title text-truncate" title="@Model.Channel.Name">@Model.Channel.Name</h5>
+                    <h5 class="card-title" title="@Model.Channel.Name">@Model.Channel.Name</h5>
 
                     <div class="card-text d-flex flex-column gap-1 justify-content-center flex-fill">
                         <a href="@Model.Channel.ExternalUrl">
                             @Model.Channel.Availability.LocalizedName
                         </a>
                         <div class="d-flex flex-row justify-content-between">
+                            <span>@string.Format(SharedResources.Channel_Videos, Model.Channel.VideoCount)</span>
                             @if (Model.Channel.SubscriberCount is { } subscriberCount)
                             {
                                 <span>@string.Format(SharedResources.Channel_Subscribers, subscriberCount)</span>
-                            }
-                            @if (Model.VideoCount is { } videoCount)
-                            {
-                                <span>@string.Format(SharedResources.Channel_Videos, videoCount)</span>
                             }
                         </div>
                     </div>

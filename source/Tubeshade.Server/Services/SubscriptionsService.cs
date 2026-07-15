@@ -9,6 +9,7 @@ using Npgsql;
 using PubSubHubbub;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using static System.StringComparison;
 
 namespace Tubeshade.Server.Services;

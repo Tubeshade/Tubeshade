@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using Ardalis.SmartEnum;
+using Tubeshade.Data.Abstractions;
 
 namespace Tubeshade.Data.Media;
 
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-public sealed class SortVideoBy : SmartEnum<SortVideoBy>, IParsable<SortVideoBy>
+public sealed class SortVideoBy : SmartEnum<SortVideoBy>, ISortBy, IParsable<SortVideoBy>
 {
     private const string DownloadedAtExpression =
         // lang=sql
@@ -32,6 +33,7 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, IParsable<SortVideoBy>
     public static readonly SortVideoBy StorageSize = new(Names.StorageSize, StorageSizeExpression, 10);
     public static readonly SortVideoBy Framerate = new(Names.Framerate, FramerateExpression, 11);
 
+    /// <inheritdoc />
     public string SortExpression { get; }
 
     private SortVideoBy(string name, int value)

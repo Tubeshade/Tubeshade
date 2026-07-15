@@ -485,4 +485,28 @@
     <data name="Filters_SortVideoBy_framerate" xml:space="preserve">
         <value>Kadru ātrums</value>
     </data>
+    <data name="Filters_SortChannelBy" xml:space="preserve">
+        <value>Kārtot pēc</value>
+    </data>
+    <data name="Filters_SortChannelBy_created_at" xml:space="preserve">
+        <value>Izveidots</value>
+    </data>
+    <data name="Filters_SortChannelBy_modified_at" xml:space="preserve">
+        <value>Labots</value>
+    </data>
+    <data name="Filters_SortChannelBy_name" xml:space="preserve">
+        <value>Nosaukums</value>
+    </data>
+    <data name="Filters_SortChannelBy_random" xml:space="preserve">
+        <value>Haotiski</value>
+    </data>
+    <data name="Filters_SortChannelBy_subscribed_at" xml:space="preserve">
+        <value>Abonēts</value>
+    </data>
+    <data name="Filters_SortChannelBy_subscriber_count" xml:space="preserve">
+        <value>Abonētāji</value>
+    </data>
+    <data name="Filters_SortChannelBy_video_count" xml:space="preserve">
+        <value>Video</value>
+    </data>
 </root>

@@ -28,21 +28,21 @@ public sealed class CreateTests(IServerFixture serverFixture) : PlaywrightTests(
             await Page.GetByLabel("Name").FillAsync(Name);
             await Page.GetByLabel("Storage path").FillAsync(ServerFixture.TestDirectory);
 
-            await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Create library" }).ClickAsync();
+            await Page.GetByRole(AriaRole.Button, new() { Name = "Create library" }).ClickAsync();
             (await Page.TitleAsync()).Should().Be($"{Name} - Tubeshade");
         }
 
         await Page.GetByText("Channels").ClickAsync();
         (await Page.TitleAsync()).Should().Be($"Channels - {Name} - Tubeshade");
 
-        await Page.GetByRole(AriaRole.Link, new() { Name = "Create channel" }).ClickAsync();
+        await Page.GetByRole(AriaRole.Link, new() { Name = "+" }).ClickAsync();
         (await Page.TitleAsync()).Should().Be($"Create a channel - {Name} - Tubeshade");
 
         await Page.GetByLabel("Name").FillAsync(Name);
         await Page.GetByLabel("Original ID").FillAsync(Name);
         await Page.GetByLabel("Original URL").FillAsync(Name);
 
-        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Create channel" }).ClickAsync();
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Create channel" }).ClickAsync();
         (await Page.TitleAsync()).Should().Be($"{Name} - {Name} - Tubeshade");
     }
 
@@ -56,14 +56,14 @@ public sealed class CreateTests(IServerFixture serverFixture) : PlaywrightTests(
         await Page.GetByText("Channels").ClickAsync();
         (await Page.TitleAsync()).Should().Be("Channels - Tubeshade");
 
-        await Page.GetByRole(AriaRole.Link, new() { Name = "Create channel" }).ClickAsync();
+        await Page.GetByRole(AriaRole.Link, new() { Name = "+" }).ClickAsync();
         (await Page.TitleAsync()).Should().Be("Create a channel - Tubeshade");
 
         await Page.GetByLabel("Name").FillAsync(Name);
         await Page.GetByLabel("Original ID").FillAsync(Name);
         await Page.GetByLabel("Original URL").FillAsync(Name);
 
-        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Create channel" }).ClickAsync();
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Create channel" }).ClickAsync();
         (await Page.TitleAsync()).Should().Be($"{Name} - {Name} - Tubeshade");
     }
 
@@ -84,7 +84,7 @@ public sealed class CreateTests(IServerFixture serverFixture) : PlaywrightTests(
         await Page.GetByLabel("Published at").FillAsync("2025-12-28T00:00");
         await Page.GetByLabel("Duration").FillAsync("10");
 
-        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Create video" }).ClickAsync();
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Create video" }).ClickAsync();
         (await Page.TitleAsync()).Should().Be($"{Name} - Tubeshade");
     }
 }

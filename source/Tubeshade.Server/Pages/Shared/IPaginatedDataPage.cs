@@ -6,5 +6,5 @@ public interface IPaginatedDataPage<TData>
 
     int? PageIndex { get; set; }
 
-    PaginatedData<TData> PageData { get; set; }
+    PaginatedData<TData> PageData { get; }
 }

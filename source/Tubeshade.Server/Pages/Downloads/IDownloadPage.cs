@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Pages.Videos;
 
@@ -56,7 +57,7 @@ public interface IDownloadPage : IPaginatedDataPage<VideoModel>
 
         if (page.SortDirection is null && !page.Request.Query.ContainsKey(nameof(page.SortDirection)))
         {
-            page.SortDirection = Defaults.SortDirection;
+            page.SortDirection = Defaults.VideoDirection;
         }
     }
 

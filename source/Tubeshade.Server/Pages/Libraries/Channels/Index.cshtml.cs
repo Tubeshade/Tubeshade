@@ -1,94 +1,117 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Htmx;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Tubeshade.Data;
-using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Channels;
+using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.Pages.Libraries.Channels;
 
-public sealed class Index : LibraryPageBase, IChannelsPage
+public sealed class Index : LibraryPageBase, IChannelPage
 {
     private readonly NpgsqlConnection _connection;
     private readonly ChannelRepository _channelRepository;
     private readonly LibraryRepository _libraryRepository;
-    private readonly ImageFileRepository _imageRepository;
     private readonly SubscriptionsService _subscriptionsService;
     private readonly TaskRepository _taskRepository;
 
     public Index(
         ChannelRepository channelRepository,
         LibraryRepository libraryRepository,
-        ImageFileRepository imageRepository,
         NpgsqlConnection connection,
         SubscriptionsService subscriptionsService,
         TaskRepository taskRepository)
     {
         _channelRepository = channelRepository;
         _libraryRepository = libraryRepository;
-        _imageRepository = imageRepository;
         _connection = connection;
         _subscriptionsService = subscriptionsService;
         _taskRepository = taskRepository;
     }
 
     /// <inheritdoc />
-    public List<ChannelModel> Channels { get; private set; } = [];
+    [BindProperty(SupportsGet = true)]
+    public string? Query { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public ExternalAvailability? Availability { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortChannelBy? SortBy { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public SortDirection? SortDirection { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public int? PageSize { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public int? PageIndex { get; set; }
+
+    /// <inheritdoc />
+    public PaginatedData<DetailedChannel> PageData { get; private set; } = null!;
 
     public LibraryEntity Library { get; private set; } = null!;
 
-    public async Task OnGet(CancellationToken cancellationToken)
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
+        var parameters = this.GetChannelParameters(userId, LibraryId);
+
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
         Library = await _libraryRepository.GetAsync(LibraryId, userId, transaction);
-        var channels = await _channelRepository.GetForLibrary(LibraryId, userId, cancellationToken); // todo
-
-        Channels = new(channels.Count);
-        foreach (var channel in channels)
-        {
-            // todo: avoid N+1 queries
-            var model = await ToModel(channel, userId, transaction, cancellationToken);
-            Channels.Add(model);
-        }
+        var channels = await _channelRepository.GetFiltered(parameters, transaction, cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
+
+        var totalCount = channels is [] ? 0 : channels[0].TotalCount;
+        PageData = new PaginatedData<DetailedChannel>
+        {
+            LibraryId = LibraryId,
+            Data = channels,
+            Page = PageIndex ?? Defaults.PageIndex,
+            PageSize = parameters.Limit,
+            TotalCount = totalCount,
+        };
+
+        return Request.IsHtmx()
+            ? Partial("Channels/_FilteredChannels", this)
+            : Page();
     }
 
     /// <inheritdoc />
     public async Task<IActionResult> OnPostSubscribe(Guid channelId)
     {
         var userId = User.GetUserId();
-        var channel = await _subscriptionsService.Subscribe(channelId, userId);
+        _ = await _subscriptionsService.Subscribe(channelId, userId);
 
-        await using var transaction = await _connection.OpenAndBeginTransaction();
-        var model = await ToModel(channel, userId, transaction, CancellationToken.None);
-        await transaction.CommitAsync();
-
-        return Partial("Channels/_ChannelCard", model);
+        var channel = await _channelRepository.GetDetailed(channelId, userId);
+        return Partial("Channels/_ChannelCard", new ChannelModel(channel, LibraryId));
     }
 
     /// <inheritdoc />
     public async Task<IActionResult> OnPostUnsubscribe(Guid channelId)
     {
         var userId = User.GetUserId();
-        var channel = await _subscriptionsService.Unsubscribe(channelId, userId);
+        _ = await _subscriptionsService.Unsubscribe(channelId, userId);
 
-        await using var transaction = await _connection.OpenAndBeginTransaction();
-        var model = await ToModel(channel, userId, transaction, CancellationToken.None);
-        await transaction.CommitAsync();
-
-        return Partial("Channels/_ChannelCard", model);
+        var channel = await _channelRepository.GetDetailed(channelId, userId);
+        return Partial("Channels/_ChannelCard", new ChannelModel(channel, LibraryId));
     }
 
     /// <inheritdoc />
@@ -107,21 +130,5 @@ public sealed class Index : LibraryPageBase, IChannelsPage
         }
 
         return StatusCode(StatusCodes.Status204NoContent);
-    }
-
-    private async Task<ChannelModel> ToModel(
-        ChannelEntity channel,
-        Guid userId,
-        NpgsqlTransaction transaction,
-        CancellationToken cancellationToken)
-    {
-        var images = await _imageRepository.GetForChannel(channel.Id, userId, Access.Read, transaction, cancellationToken);
-        return new()
-        {
-            LibraryId = LibraryId,
-            Channel = channel,
-            Thumbnails = images.Where(image => image.Type == ImageType.Thumbnail).ToList(),
-            Banners = images.Where(image => image.Type == ImageType.Banner).ToList(),
-        };
     }
 }

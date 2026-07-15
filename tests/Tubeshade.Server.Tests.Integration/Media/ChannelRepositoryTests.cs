@@ -7,6 +7,7 @@ using NUnit.Framework;
 using Tubeshade.Data;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Server.Tests.Integration.Fixtures;
 
 namespace Tubeshade.Server.Tests.Integration.Media;

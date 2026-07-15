@@ -44,7 +44,7 @@ public sealed class Index : LibraryPageBase, ITasksPage
     public int? PageIndex { get; set; }
 
     /// <inheritdoc />
-    public PaginatedData<TaskModel> PageData { get; set; } = null!;
+    public PaginatedData<TaskModel> PageData { get; private set; } = null!;
 
     /// <inheritdoc />
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)

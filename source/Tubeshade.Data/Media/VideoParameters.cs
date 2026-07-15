@@ -4,7 +4,7 @@ using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Media;
 
-public sealed class VideoParameters : IAccessParameters, IPaginatedParameters
+public sealed class VideoParameters : IAccessParameters, IPaginatedParameters, ISortingParameters<SortVideoBy>
 {
     public required Guid UserId { get; init; }
 
@@ -31,7 +31,9 @@ public sealed class VideoParameters : IAccessParameters, IPaginatedParameters
 
     public ExternalAvailability? Availability { get; init; }
 
+    /// <inheritdoc />
     public required SortVideoBy SortBy { get; init; }
 
+    /// <inheritdoc />
     public required SortDirection SortDirection { get; init; }
 }

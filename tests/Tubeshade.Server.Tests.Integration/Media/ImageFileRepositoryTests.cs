@@ -10,6 +10,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Server.Tests.Integration.Fixtures;
 
 namespace Tubeshade.Server.Tests.Integration.Media;

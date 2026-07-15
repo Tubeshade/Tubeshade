@@ -20,7 +20,7 @@ public static class PageModelExtensions
         var page = pageModel.PageIndex ?? Defaults.PageIndex;
         var offset = pageSize * page;
 
-        return new VideoParameters
+        return new()
         {
             UserId = userId,
             LibraryId = libraryId,
@@ -33,7 +33,7 @@ public static class PageModelExtensions
             WithFiles = pageModel.WithFiles,
             Availability = pageModel.Availability,
             SortBy = pageModel.SortBy ?? Defaults.VideoOrder,
-            SortDirection = pageModel.SortDirection ?? Defaults.SortDirection,
+            SortDirection = pageModel.SortDirection ?? Defaults.VideoDirection,
         };
     }
 }

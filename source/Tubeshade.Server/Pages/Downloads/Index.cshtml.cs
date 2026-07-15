@@ -12,6 +12,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
@@ -82,7 +83,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
     public SortDirection? SortDirection { get; set; }
 
     /// <inheritdoc />
-    public PaginatedData<VideoModel> PageData { get; set; } = null!;
+    public PaginatedData<VideoModel> PageData { get; private set; } = null!;
 
     [BindProperty(SupportsGet = true)]
     public Guid? ChannelId { get; set; }

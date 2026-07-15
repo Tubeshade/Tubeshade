@@ -5,6 +5,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using SponsorBlock;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Videos;

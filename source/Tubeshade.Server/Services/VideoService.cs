@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using NodaTime;
 using Npgsql;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 
 namespace Tubeshade.Server.Services;
 

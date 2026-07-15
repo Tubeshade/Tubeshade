@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Channels;
 using Tubeshade.Server.Configuration.Auth;
 
 namespace Tubeshade.Server.Pages.Libraries.Videos;
