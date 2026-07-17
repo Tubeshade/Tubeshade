@@ -23,8 +23,8 @@ _Latest build from master branch._
 
 - Update .NET SDK from 10.0.203 to 10.0.302, and runtime from 10.0.7 to 10.0.10
   ([#284](https://github.com/Tubeshade/Tubeshade/pull/284), [#305](https://github.com/Tubeshade/Tubeshade/pull/305))
-- Update yt-dlp from 2026.03.17 to 2026.06.09
-  ([#284](https://github.com/Tubeshade/Tubeshade/pull/284))
+- Update yt-dlp from 2026.03.17 to 2026.07.04
+  ([#284](https://github.com/Tubeshade/Tubeshade/pull/284), [#305](https://github.com/Tubeshade/Tubeshade/pull/305))
 - Ignore no format errors when indexing videos
   ([#285](https://github.com/Tubeshade/Tubeshade/pull/285))
 - Hide subscription tasks by default
