@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Fixed
+
+- Channel filtering query duration
+  ([#307](https://github.com/Tubeshade/Tubeshade/pull/307))
+
 ## [0.1.7] - 2026-07-17
 
 ### Added
