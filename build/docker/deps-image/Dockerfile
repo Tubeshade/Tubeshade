@@ -1,6 +1,6 @@
 ﻿# syntax=docker/dockerfile:1
 
-ARG DOTNET_RUNTIME_VERSION="10.0.9-alpine3.23"
+ARG DOTNET_RUNTIME_VERSION="10.0.10-alpine3.24"
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:${DOTNET_RUNTIME_VERSION}
 

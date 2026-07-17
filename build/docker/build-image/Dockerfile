@@ -1,6 +1,6 @@
 ﻿# syntax=docker/dockerfile:1
 
-ARG DOTNET_SDK_VERSION="10.0.301"
+ARG DOTNET_SDK_VERSION="10.0.302"
 
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_SDK_VERSION}
 
