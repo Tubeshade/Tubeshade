@@ -4,6 +4,8 @@
 
 _Latest build from master branch._
 
+## [0.1.7] - 2026-07-17
+
 ### Added
 
 - Rate limit automatic video indexing
@@ -210,6 +212,8 @@ _Latest build from master branch._
 ## [0.1.0] - 2025-12-06
 
 _Initial release._
+
+[0.1.7]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.7
 
 [0.1.6]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.6
 
