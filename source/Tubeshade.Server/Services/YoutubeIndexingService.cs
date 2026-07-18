@@ -519,11 +519,20 @@ public sealed class YoutubeIndexingService
         await _ytdlpWrapper.DownloadThumbnails(url, directory.FullName, cookieFilepath, cancellationToken);
 
         var files =  thumbnails
-            .Select(thumbnail => directory.EnumerateFiles($"thumbnail.{thumbnail.Id}.*").ToArray() switch
+            .SelectMany(thumbnail =>
             {
-                [] => throw new Exception("Could not find downloaded image"),
-                [var singleFile] => singleFile,
-                _ => throw new Exception("Multiple images"),
+                var files = directory.EnumerateFiles($"thumbnail.{thumbnail.Id}.*").ToArray();
+                if (files.Length > 1)
+                {
+                    throw new Exception("Multiple images");
+                }
+
+                if (files is [])
+                {
+                    _logger.MissingThumbnail(thumbnail.Id, thumbnail.Url);
+                }
+
+                return files;
             })
             .ToArray();
 

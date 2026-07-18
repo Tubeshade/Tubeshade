@@ -318,4 +318,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(105, Information, "Not updating images")]
     internal static partial void NotUpdatingImages(this ILogger logger);
+
+    [LoggerMessage(106, Warning, "Could not find thumbnail {ThumbnailId} ({ExternalUrl})")]
+    internal static partial void MissingThumbnail(this ILogger logger, string? thumbnailId, string externalUrl);
 }
