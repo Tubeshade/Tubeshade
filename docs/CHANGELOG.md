@@ -15,6 +15,8 @@ _Latest build from master branch._
   ([#307](https://github.com/Tubeshade/Tubeshade/pull/307))
 - Broken video sorting options
   ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
+- Truncate channel name in video cards
+  ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
 
 ## [0.1.7] - 2026-07-17
 

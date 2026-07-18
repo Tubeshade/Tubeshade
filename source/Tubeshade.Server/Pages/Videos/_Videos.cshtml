@@ -37,10 +37,11 @@
             <div class="card-body p-2">
                 <h6 class="card-title text-truncate mb-0" title="@video.Video.Name">@video.Video.Name</h6>
 
-                <div class="d-flex d-inline justify-content-between">
+                <div class="d-flex d-inline justify-content-between gap-3">
                     <a asp-page="@(Model.LibraryId is not null ? "/Libraries/Channels/Channel" : "/Channels/Channel")"
-                       asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@video.Video.ChannelId">
-                        <span class="text-truncate">@video.Channel.Name</span>
+                       asp-route-libraryId="@Model.LibraryId" asp-route-channelId="@video.Video.ChannelId"
+                       class="text-truncate">
+                        @video.Channel.Name
                     </a>
                     <form>
                         <input value="@(video.Video.Id)" name="videoId" hidden/>
