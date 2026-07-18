@@ -18,6 +18,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
@@ -39,6 +40,7 @@ public sealed partial class Video : LibraryPageBase
     private readonly ILogger<Video> _logger;
     private readonly TaskService _taskService;
     private readonly TrackFileRepository _trackFileRepository;
+    private readonly ImageFileRepository _imageFileRepository;
 
     public Video(
         VideoRepository videoRepository,
@@ -51,7 +53,8 @@ public sealed partial class Video : LibraryPageBase
         IClock clock,
         ILogger<Video> logger,
         TaskService taskService,
-        TrackFileRepository trackFileRepository)
+        TrackFileRepository trackFileRepository,
+        ImageFileRepository imageFileRepository)
     {
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
@@ -64,6 +67,7 @@ public sealed partial class Video : LibraryPageBase
         _logger = logger;
         _taskService = taskService;
         _trackFileRepository = trackFileRepository;
+        _imageFileRepository = imageFileRepository;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -75,27 +79,31 @@ public sealed partial class Video : LibraryPageBase
     [BindProperty(SupportsGet = true)]
     public double? Time { get; set; }
 
-    public VideoEntity Entity { get; set; } = null!;
+    public VideoEntity Entity { get; private set; } = null!;
 
     public IHtmlContent DescriptionContent { get; private set; } = null!;
 
-    public List<VideoFileEntity> Files { get; set; } = [];
+    public List<VideoFileEntity> Files { get; private set; } = [];
 
-    public List<VideoFileEntity> PlayableFiles { get; set; } = [];
+    public List<VideoFileEntity> PlayableFiles { get; private set; } = [];
 
-    public List<VideoFileEntity> DownloadableFiles { get; set; } = [];
+    public List<VideoFileEntity> DownloadableFiles { get; private set; } = [];
 
-    public ChannelEntity Channel { get; set; } = null!;
+    public ImageFileEntity? Poster { get; private set; }
 
-    public LibraryEntity Library { get; set; } = null!;
+    public string? PosterUrl { get; private set; }
 
-    public decimal PlaybackSpeed { get; set; } = 1.0m;
+    public ChannelEntity Channel { get; private set; } = null!;
 
-    public TrackFileEntity? Chapters { get; set; }
+    public LibraryEntity Library { get; private set; } = null!;
 
-    public List<TrackFileEntity> Subtitles { get; set; } = [];
+    public decimal PlaybackSpeed { get; private set; } = 1.0m;
 
-    public bool HasSponsorBlockSegments { get; set; }
+    public TrackFileEntity? Chapters { get; private set; }
+
+    public List<TrackFileEntity> Subtitles { get; private set; } = [];
+
+    public bool HasSponsorBlockSegments { get; private set; }
 
     public async Task OnGet(CancellationToken cancellationToken)
     {
@@ -106,6 +114,8 @@ public sealed partial class Video : LibraryPageBase
         Files = await _videoRepository.GetFilesAsync(VideoId, userId, transaction, cancellationToken);
         PlayableFiles = Files.Where(file => file.DownloadedAt is not null || file.TempPath is not null).ToList();
         DownloadableFiles = Files.Where(file => file.DownloadedAt is null && file.TempPath is null).ToList();
+
+        var images = await _imageFileRepository.GetForVideo(VideoId, userId, Access.Read, transaction, cancellationToken);
 
         Channel = await _channelRepository.GetAsync(Entity.ChannelId, userId, transaction);
         Library = await _libraryRepository.GetAsync(LibraryId, userId, transaction);
@@ -125,6 +135,17 @@ public sealed partial class Video : LibraryPageBase
 
         DescriptionContent = await FormatDescription(userId, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+
+        Poster = images
+            .Where(image => image.Type == ImageType.Thumbnail)
+            .OrderByDescending(image => image.Width)
+            .ThenByDescending(image => image.StorageSize)
+            .FirstOrDefault();
+
+        if (Poster is not null)
+        {
+            PosterUrl = Url.Action("Get", "Images", new { version = "1.0", id = Poster.Id });
+        }
     }
 
     public async Task<IActionResult> OnPostViewed(string? viewed, Guid videoId)

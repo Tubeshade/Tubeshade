@@ -19,6 +19,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Services;
@@ -160,13 +161,16 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpGet("Thumbnail")]
+    [Obsolete("Get specific image by id instead")]
     public async Task<IActionResult> GetThumbnail(Guid id, CancellationToken cancellationToken)
     {
         ImageFileEntity? image;
 
         await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
         {
-            image = await _imageFileRepository.FindVideoThumbnail(id, User.GetUserId(), Access.Read, transaction);
+            var images = await _imageFileRepository.GetForVideo(id, User.GetUserId(), Access.Read, transaction, cancellationToken);
+            image = images.LastOrDefault(file => file.Type == ImageType.Thumbnail);
+
             await transaction.CommitAsync(cancellationToken);
         }
 

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
-using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Preferences;
 
 namespace Tubeshade.Server.Tests.Integration.Published.V1.Controllers.YouTube;

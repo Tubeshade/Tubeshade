@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Mime;
 using System.Text.RegularExpressions;
 using NodaTime;
 using NodaTime.Text;
@@ -73,6 +74,13 @@ public static partial class StringExtensions
 
         return true;
     }
+
+    public static string GetImageMediaType(this string extension) => extension.ToUpperInvariant() switch
+    {
+        ".JPG" or ".JPEG" => MediaTypeNames.Image.Jpeg,
+        ".WEBP" => MediaTypeNames.Image.Webp,
+        _ => throw new InvalidOperationException($"Unexpected image extension '{extension}'"),
+    };
 
     [GeneratedRegex(@"^\s*(\d{0,2}:?\d{1,2}:\d{2})\s{1,}(.*)$")]
     private static partial Regex TimestampRegex();

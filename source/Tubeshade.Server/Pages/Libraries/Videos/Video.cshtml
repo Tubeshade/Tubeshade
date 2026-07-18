@@ -2,6 +2,7 @@
 @using System.Globalization
 @using NodaTime.Text
 @using Tubeshade.Server.Pages.Shared
+@using Tubeshade.Server.Services
 @model Video
 @{
     ViewData["Title"] = Model.Entity.Name;
@@ -15,7 +16,7 @@
 <div class="row">
     <div class="col-md-12 col-lg">
         <video id="video" controls="@(Model.PlayableFiles is not [])" playsinline preload="metadata" width="100%"
-               poster="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })"
+               poster="@Model.PosterUrl"
                disabled="@(Model.PlayableFiles is [])">
 
             @foreach (var file in Model.PlayableFiles)
@@ -242,25 +243,28 @@
         }
 
         if ("mediaSession" in navigator) {
-            // since thumbnail endpoint requires authentication, the artwork source cannot be simply set to the url of the thumbnail
-            // we need to fetch it within the page context, and encode it into a data url
-            fetch("@Url.ActionLink("GetThumbnail", "Videos", new { version = "1.0", id = Model.VideoId })")
-                .then(response => response.blob())
-                .then(blob => {
-                    const blobUrl = URL.createObjectURL(blob);
-                    navigator.mediaSession.metadata = new MediaMetadata({
-                        title: @Html.Raw(Model.Entity.Name.ToJson()),
-                        album: @Html.Raw(Model.Library.Name.ToJson()),
-                        artist: @Html.Raw(Model.Channel.Name.ToJson()),
-                        artwork: [
-                            {
-                                src: blobUrl,
-                                type: "image/jpeg",
-                                sizes: "512x512"
-                            }
-                        ],
+            const posterUrl = @Html.Raw(Model.PosterUrl?.ToJson());
+            if (posterUrl !== null) {
+                // since thumbnail endpoint requires authentication, the artwork source cannot be simply set to the url of the thumbnail
+                // we need to fetch it within the page context, and encode it into a data url
+                fetch(posterUrl)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const blobUrl = URL.createObjectURL(blob);
+                        navigator.mediaSession.metadata = new MediaMetadata({
+                            title: @Html.Raw(Model.Entity.Name.ToJson()),
+                            album: @Html.Raw(Model.Library.Name.ToJson()),
+                            artist: @Html.Raw(Model.Channel.Name.ToJson()),
+                            artwork: [
+                                {
+                                    src: blobUrl,
+                                    type: "@(System.IO.Path.GetExtension(Model.Poster?.StoragePath)?.GetImageMediaType())",
+                                    sizes: "@($"{Model.Poster?.Width}x{Model.Poster?.Height}")"
+                                }
+                            ],
+                        });
                     });
-                });
+            }
 
             navigator.mediaSession.setActionHandler("play", () => video.play());
             navigator.mediaSession.setActionHandler("pause", () => video.pause());

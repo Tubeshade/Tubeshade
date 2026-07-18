@@ -12,7 +12,7 @@ using FluentAssertions;
 using Microsoft.Playwright;
 using NUnit.Framework;
 using PubSubHubbub.Models;
-using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Tests.Integration.Published.Fixtures;

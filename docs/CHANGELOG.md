@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Added
+
+- Download video thumbnails in multiple resolutions
+  ([#308](https://github.com/Tubeshade/Tubeshade/pull/308))
+
 ### Fixed
 
 - Channel filtering query duration

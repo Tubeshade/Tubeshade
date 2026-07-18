@@ -1,4 +1,4 @@
-﻿using Tubeshade.Data.Media;
+﻿using Tubeshade.Data.Media.Videos;
 using YoutubeDLSharp.Metadata;
 using static YoutubeDLSharp.Metadata.LiveStatus;
 

@@ -10,6 +10,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Pages.Videos;
 

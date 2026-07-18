@@ -2,7 +2,7 @@
 using FluentAssertions;
 using Microsoft.Playwright;
 using NUnit.Framework;
-using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Tests.Integration.Published.Fixtures;
 
 namespace Tubeshade.Server.Tests.Integration.Published.Pages.Channels;

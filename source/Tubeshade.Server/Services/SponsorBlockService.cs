@@ -10,6 +10,7 @@ using SponsorBlock;
 using Tubeshade.Data;
 using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Tasks;
 
 namespace Tubeshade.Server.Services;

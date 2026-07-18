@@ -12,6 +12,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Tests.Integration.Fixtures;
 
 namespace Tubeshade.Server.Tests.Integration.Media;
@@ -156,7 +157,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             await transaction.CommitAsync();
         }
 
-        var allVideos = await repository.GetFiltered(
+        var allVideos = await repository.GetFilteredDetailed(
             new VideoParameters
             {
                 SortBy = SortVideoBy.PublishedAt,
@@ -168,7 +169,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
                 Viewed = null,
             });
 
-        var viewedVideos = await repository.GetFiltered(
+        var viewedVideos = await repository.GetFilteredDetailed(
             new VideoParameters
             {
                 SortBy = SortVideoBy.PublishedAt,
@@ -180,7 +181,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
                 Viewed = ViewStatus.Viewed,
             });
 
-        var notViewedVideos = await repository.GetFiltered(
+        var notViewedVideos = await repository.GetFilteredDetailed(
             new VideoParameters
             {
                 SortBy = SortVideoBy.PublishedAt,

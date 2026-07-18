@@ -11,6 +11,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Pages.Videos;
@@ -18,6 +19,7 @@ using Tubeshade.Server.Services.Ffmpeg;
 using Tubeshade.Server.Services.Migrations;
 using YoutubeDLSharp.Metadata;
 using static System.Data.IsolationLevel;
+using static System.StringComparison;
 using static YoutubeDLSharp.Metadata.Availability;
 
 namespace Tubeshade.Server.Services;
@@ -440,7 +442,7 @@ public sealed class YoutubeIndexingService
                 cancellationToken);
         }
 
-        await CreateOrUpdateVideoThumbnail(url, directory, cookieFilepath, userId, video, transaction, cancellationToken);
+        await CreateOrUpdateVideoThumbnails(url, videoData, directory, cookieFilepath, userId, video, transaction, cancellationToken);
 
         if (isExistingVideo && !(videoData.LiveStatus is LiveStatus.WasLive && files.Any(file => file.DownloadedAt is not null)))
         {
@@ -478,8 +480,9 @@ public sealed class YoutubeIndexingService
         return video.Id;
     }
 
-    private async ValueTask CreateOrUpdateVideoThumbnail(
+    private async ValueTask CreateOrUpdateVideoThumbnails(
         string url,
+        VideoData videoData,
         DirectoryInfo directory,
         string? cookieFilepath,
         Guid userId,
@@ -487,82 +490,85 @@ public sealed class YoutubeIndexingService
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
-        _logger.DownloadingThumbnail();
-
-        var fileName = $"thumbnail_{video.Id:N}";
-        await _ytdlpWrapper.DownloadThumbnail(url, directory.FullName, fileName, cookieFilepath, cancellationToken);
-
-        var file = directory.EnumerateFiles($"{fileName}.*").ToArray() switch
+        var existingImages = await _imageFileRepository.GetForVideo(video.Id, userId, Access.Read, transaction, cancellationToken);
+        if (existingImages.SingleOrDefault(image => image.StoragePath.Contains(video.Id.ToString("N"), OrdinalIgnoreCase)) is { } singleImage)
         {
-            [] => throw new Exception("Could not find downloaded image"),
-            [var singleFile] => singleFile,
-            _ => throw new Exception("Multiple images"),
-        };
+            var folderPath = await _imageFileRepository.GetPath(singleImage.Id, transaction, cancellationToken);
+            await _imageFileRepository.DeleteAsync(singleImage.Id, userId, transaction);
+            existingImages.Remove(singleImage);
 
-        var response = await _ffmpegService.AnalyzeFile(file.FullName, cancellationToken);
-        if (response.Streams is not [var stream])
-        {
-            throw new InvalidOperationException("Unexpected image file format");
-        }
-
-        if (stream is not { Width: { } width, Height: { } height })
-        {
-            throw new InvalidOperationException("Could not extract image resolution");
-        }
-
-        var existing = await _imageFileRepository.FindVideoThumbnail(video.Id, userId, Access.Modify, transaction);
-        if (existing is not null && existing.Width >= width)
-        {
-            _logger.ExistingThumbnail();
-            return;
-        }
-
-        var hashAlgorithm = HashAlgorithm.Default;
-        var hashData = await hashAlgorithm.ComputeHashAsync(file, cancellationToken);
-
-        if (existing is null)
-        {
-            _logger.CreatingThumbnail();
-
-            var imageFileId = await _imageFileRepository.AddAsync(
-                new()
-                {
-                    CreatedByUserId = userId,
-                    ModifiedByUserId = userId,
-                    StoragePath = file.Name,
-                    StorageSize = file.Length,
-                    Type = ImageType.Thumbnail,
-                    Width = width,
-                    Height = height,
-                    HashAlgorithm = hashAlgorithm,
-                    Hash = hashData,
-                },
-                transaction);
-
-            await _imageFileRepository.LinkToVideoAsync(imageFileId!.Value, video.Id, userId, transaction);
-        }
-        else
-        {
-            _logger.UpdatingExistingThumbnail(existing.Id);
-
-            existing.ModifiedByUserId = userId;
-            existing.StoragePath = file.Name;
-            existing.StorageSize = file.Length;
-            existing.Type = ImageType.Thumbnail;
-            existing.Width = width;
-            existing.Height = height;
-            existing.HashAlgorithm = hashAlgorithm;
-            existing.Hash = hashData;
-
-            var count = await _imageFileRepository.UpdateAsync(existing, transaction);
-            if (count is 0)
+            var path = Path.Combine(folderPath!, singleImage.StoragePath);
+            if (File.Exists(path))
             {
-                throw new InvalidOperationException("Failed to update existing thumbnail");
+                File.Delete(path);
             }
         }
 
-        var destinationFileName = Path.Combine(video.StoragePath, file.Name);
-        file.MoveTo(destinationFileName, true);
+        var thumbnails = videoData
+            .Thumbnails?
+            .Where(thumbnail => thumbnail.Url.Contains("default"))
+            .ToArray() ?? [];
+
+        if (existingImages.Count == thumbnails.Length)
+        {
+            _logger.NotUpdatingImages();
+            return;
+        }
+
+        _logger.DownloadingThumbnails();
+        await _ytdlpWrapper.DownloadThumbnails(url, directory.FullName, cookieFilepath, cancellationToken);
+
+        var files =  thumbnails
+            .Select(thumbnail => directory.EnumerateFiles($"thumbnail.{thumbnail.Id}.*").ToArray() switch
+            {
+                [] => throw new Exception("Could not find downloaded image"),
+                [var singleFile] => singleFile,
+                _ => throw new Exception("Multiple images"),
+            })
+            .ToArray();
+
+        foreach (var file in files)
+        {
+            var hashAlgorithm = HashAlgorithm.Default;
+            var hashData = await hashAlgorithm.ComputeHashAsync(file, cancellationToken);
+
+            if (existingImages.SingleOrDefault(image => image.Hash.SequenceEqual(hashData)) is { } existing)
+            {
+                _logger.ExistingVideoImage(existing.Id);
+                continue;
+            }
+
+            var response = await _ffmpegService.AnalyzeFile(file.FullName, cancellationToken);
+            if (response.Streams is not [{ Width: { } width, Height: { } height }])
+            {
+                throw new InvalidOperationException("Unexpected image file format");
+            }
+
+            _logger.CreatingVideoThumbnail();
+
+            var image = new ImageFileEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                StoragePath = file.Name,
+                StorageSize = file.Length,
+                Type = ImageType.Thumbnail,
+                Width = width,
+                Height = height,
+                HashAlgorithm = hashAlgorithm,
+                Hash = hashData,
+            };
+
+            var imageFileId = await _imageFileRepository.AddAsync(image, transaction);
+            await _imageFileRepository.LinkToVideoAsync(imageFileId!.Value, video.Id, userId, transaction);
+            existingImages.Add(image);
+
+            var destinationFileName = Path.Combine(video.StoragePath, file.Name);
+            if (!string.Equals(destinationFileName, file.FullName, Ordinal))
+            {
+                file.MoveTo(destinationFileName, true);
+            }
+        }
     }
 
     private async ValueTask IndexChannel(
@@ -576,6 +582,13 @@ public sealed class YoutubeIndexingService
         using var scope = _logger.BeginScope("{ChannelId}", channel.Id);
         _logger.IndexingChannel(channel.ExternalId);
 
+        var existingImages = await _imageFileRepository.GetForChannel(channel.Id, userId, Access.Read, transaction, cancellationToken);
+        if (existingImages.Count == videoData.Thumbnails?.Length)
+        {
+            _logger.NotUpdatingImages();
+            return;
+        }
+
         _logger.DownloadingThumbnails();
         await _ytdlpWrapper.DownloadThumbnails(
             channel.ExternalUrl,
@@ -584,7 +597,6 @@ public sealed class YoutubeIndexingService
             cancellationToken);
 
         var directory = new DirectoryInfo(channel.StoragePath);
-        var existingImages = await _imageFileRepository.GetForChannel(channel.Id, userId, Access.Read, transaction, cancellationToken);
 
         foreach (var thumbnail in videoData.Thumbnails ?? [])
         {
@@ -605,14 +617,9 @@ public sealed class YoutubeIndexingService
             }
 
             var response = await _ffmpegService.AnalyzeFile(file.FullName, cancellationToken);
-            if (response.Streams is not [var stream])
+            if (response.Streams is not [{ Width: { } width, Height: { } height}])
             {
                 throw new InvalidOperationException("Unexpected image file format");
-            }
-
-            if (stream is not { Width: { } width, Height: { } height })
-            {
-                throw new InvalidOperationException("Could not extract image resolution");
             }
 
             var type = thumbnail.Id switch
@@ -642,7 +649,7 @@ public sealed class YoutubeIndexingService
             existingImages.Add(image);
 
             var destinationFileName = Path.Combine(channel.StoragePath, file.Name);
-            if (!string.Equals(destinationFileName, file.FullName, StringComparison.Ordinal))
+            if (!string.Equals(destinationFileName, file.FullName, Ordinal))
             {
                 file.MoveTo(destinationFileName, true);
             }

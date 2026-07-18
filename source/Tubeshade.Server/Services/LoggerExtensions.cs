@@ -166,15 +166,6 @@ internal static partial class LoggerExtensions
     [LoggerMessage(49, Information, "Updating scheduler period from {OldSchedulerPeriod} to {SchedulerPeriod}")]
     internal static partial void SchedulerPeriodChanged(this ILogger logger, TimeSpan oldSchedulerPeriod, TimeSpan schedulerPeriod);
 
-    [LoggerMessage(50, Debug, "Thumbnail already exists in the same or higher resolution")]
-    internal static partial void ExistingThumbnail(this ILogger logger);
-
-    [LoggerMessage(51, Debug, "Creating new thumbnail for video")]
-    internal static partial void CreatingThumbnail(this ILogger logger);
-
-    [LoggerMessage(52, Debug, "Updating existing thumbnail {ThumbnailId}")]
-    internal static partial void UpdatingExistingThumbnail(this ILogger logger, Guid thumbnailId);
-
     [LoggerMessage(53, Trace, "Video already existed, not downloading")]
     internal static partial void NotDownloadingExistingVideo(this ILogger logger);
 
@@ -250,12 +241,6 @@ internal static partial class LoggerExtensions
     [LoggerMessage(77, Debug, "Video {VideoId} is still live, not downloading")]
     internal static partial void NotDownloadingLiveVideo(this ILogger logger, Guid videoId);
 
-    [LoggerMessage(78, Warning, "Thumbnail {ExternalUrl} not found")]
-    internal static partial void ThumbnailNotFound(this ILogger logger, string externalUrl);
-
-    [LoggerMessage(79, Debug, "Downloading thumbnail")]
-    internal static partial void DownloadingThumbnail(this ILogger logger);
-
     [LoggerMessage(80, Debug, "Found existing video for {ExternalUrl}, stopping channel scan")]
     internal static partial void ChannelScanExistingVideo(this ILogger logger, string externalUrl);
 
@@ -324,4 +309,13 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(102, Information, "Creating channel {ImageType} image")]
     internal static partial void CreatingChannelImage(this ILogger logger, string imageType);
+
+    [LoggerMessage(103, Debug, "Video image already exists {ImageId}")]
+    internal static partial void ExistingVideoImage(this ILogger logger, Guid imageId);
+
+    [LoggerMessage(104, Information, "Creating video thumbnail")]
+    internal static partial void CreatingVideoThumbnail(this ILogger logger);
+
+    [LoggerMessage(105, Information, "Not updating images")]
+    internal static partial void NotUpdatingImages(this ILogger logger);
 }

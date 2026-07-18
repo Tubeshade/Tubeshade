@@ -5,7 +5,7 @@ using Dapper;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
 
-namespace Tubeshade.Data.Media;
+namespace Tubeshade.Data.Media.Videos;
 
 public sealed class VideoFileRepository(NpgsqlConnection connection)
     : ModifiableRepositoryBase<VideoFileEntity>(connection)

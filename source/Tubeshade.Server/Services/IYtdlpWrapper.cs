@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Preferences;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
@@ -39,13 +39,6 @@ public interface IYtdlpWrapper
         IEnumerable<string> formats,
         string? cookieFilepath,
         PlayerClient? client,
-        CancellationToken cancellationToken);
-
-    ValueTask DownloadThumbnail(
-        string url,
-        string path,
-        string fileNameWithoutExtension,
-        string? cookieFilepath,
         CancellationToken cancellationToken);
 
     ValueTask DownloadThumbnails(

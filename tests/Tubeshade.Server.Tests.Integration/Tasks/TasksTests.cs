@@ -12,6 +12,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Tests.Integration.Fixtures;
 

@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using SponsorBlock;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Videos;
@@ -41,31 +42,32 @@ public static class VideoEntityExtensions
                 ? Path.Combine(video.StoragePath, fileName)
                 : Path.Combine(Path.GetDirectoryName(video.StoragePath) ?? string.Empty, fileName);
         }
+    }
 
-        private VideoModel MapToModel(
-            List<SponsorBlockSegmentEntity> segments,
-            Dictionary<Guid, ChannelEntity> channels)
+    private static VideoModel MapToModel(
+        this DetailedVideo video,
+        List<SponsorBlockSegmentEntity> segments,
+        Dictionary<Guid, ChannelEntity> channels)
+    {
+        var skippedDuration = segments
+            .Where(segment => segment.VideoId == video.Id && segment.Category != SegmentCategory.Filler)
+            .GetTotalDuration();
+
+        var actualDuration = video.Duration is { } duration
+            ? (duration - skippedDuration).Normalize()
+            : null;
+
+        return new VideoModel
         {
-            var skippedDuration = segments
-                .Where(segment => segment.VideoId == video.Id && segment.Category != SegmentCategory.Filler)
-                .GetTotalDuration();
-
-            var actualDuration = video.Duration is { } duration
-                ? (duration - skippedDuration).Normalize()
-                : null;
-
-            return new VideoModel
-            {
-                Video = video,
-                ActualDuration = actualDuration,
-                Channel = channels[video.ChannelId], // todo: this probably should be done in SQL instead of in-memory
-            };
-        }
+            Video = video,
+            ActualDuration = actualDuration,
+            Channel = channels[video.ChannelId], // todo: this probably should be done in SQL instead of in-memory
+        };
     }
 
     [LinqTunnel]
     public static IEnumerable<VideoModel> MapToModels(
-        this IEnumerable<VideoEntity> videos,
+        this IEnumerable<DetailedVideo> videos,
         List<SponsorBlockSegmentEntity> segments,
         List<ChannelEntity> channels)
     {

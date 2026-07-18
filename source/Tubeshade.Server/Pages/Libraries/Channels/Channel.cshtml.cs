@@ -9,6 +9,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Pages.Videos;
@@ -90,7 +91,7 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
 
         Library = await _libraryRepository.GetAsync(LibraryId, userId, cancellationToken);
         Entity = await _channelRepository.GetAsync(ChannelId, userId, cancellationToken);
-        var videos = await _videoRepository.GetFiltered(parameters, cancellationToken);
+        var videos = await _videoRepository.GetFilteredDetailed(parameters, cancellationToken);
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);
 
         var videoIds = videos.Select(video => video.Id).ToArray();

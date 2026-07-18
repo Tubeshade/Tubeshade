@@ -2,7 +2,7 @@
 using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.AccessControl;
 
-namespace Tubeshade.Data.Media;
+namespace Tubeshade.Data.Media.Videos;
 
 public sealed class VideoParameters : IAccessParameters, IPaginatedParameters, ISortingParameters<SortVideoBy>
 {
@@ -36,4 +36,6 @@ public sealed class VideoParameters : IAccessParameters, IPaginatedParameters, I
 
     /// <inheritdoc />
     public required SortDirection SortDirection { get; init; }
+
+    public bool Downloadable { get; internal set; }
 }

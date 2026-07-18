@@ -13,6 +13,7 @@ using Tubeshade.Data.Dapper;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Migrations;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;

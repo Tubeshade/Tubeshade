@@ -11,6 +11,7 @@ using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Tests.Integration.Fixtures;
 
 namespace Tubeshade.Server.Tests.Integration.Media;
@@ -137,20 +138,23 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var image = await repository.FindVideoThumbnail(_videoId, _userId, Access.Read, transaction);
+            var image = (await repository.GetForVideo(_videoId, _userId, Access.Read, transaction))
+                .Should()
+                .ContainSingle()
+                .Subject;
 
-            image.Should().NotBeNull();
-            image!.Id.Should().Be(fileId);
+            image.Id.Should().Be(fileId);
 
             image.Width += 1;
             await repository.UpdateAsync(image, transaction);
-            var updatedImage = await repository.FindVideoThumbnail(_videoId, _userId, Access.Read, transaction);
-
-            updatedImage.Should().NotBeNull();
-            updatedImage!.Width.Should().Be(image.Width);
+            (await repository.GetForVideo(_videoId, _userId, Access.Read, transaction))
+                .Should()
+                .ContainSingle()
+                .Which.Width.Should()
+                .Be(image.Width);
 
             await repository.DeleteAsync(image, transaction);
-            (await repository.FindVideoThumbnail(_videoId, _userId, Access.Read, transaction)).Should().BeNull();
+            (await repository.GetForVideo(_videoId, _userId, Access.Read, transaction)).Should().BeEmpty();
         }
     }
 }

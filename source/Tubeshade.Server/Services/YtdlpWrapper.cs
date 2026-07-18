@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Server.Configuration;
 using YoutubeDLSharp;
@@ -201,36 +201,6 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 return videoFormats;
             })
             .ToArray();
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DownloadThumbnail(
-        string url,
-        string path,
-        string fileNameWithoutExtension,
-        string? cookieFilepath,
-        CancellationToken cancellationToken)
-    {
-        var optionSet = GetDefaultOptions(cookieFilepath);
-        optionSet.Output = $"{fileNameWithoutExtension}.%(ext)s";
-        optionSet.Paths = path;
-        optionSet.WriteThumbnail = true;
-        optionSet.SkipDownload = true;
-        optionSet.IgnoreNoFormatsError = true;
-
-        var result = await _ytdlp.RunAsync(url, optionSet, cancellationToken);
-
-        if (result.ErrorOutput is { Length: > 0 } errorOutput)
-        {
-            _logger.StandardError(
-                _ytdlp.Path,
-                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
-        }
-
-        if (!result.Success)
-        {
-            throw new(string.Join(Environment.NewLine, result.ErrorOutput));
-        }
     }
 
     /// <inheritdoc />

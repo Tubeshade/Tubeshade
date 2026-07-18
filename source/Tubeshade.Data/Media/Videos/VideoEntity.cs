@@ -2,9 +2,9 @@
 using NodaTime;
 using Tubeshade.Data.Abstractions;
 
-namespace Tubeshade.Data.Media;
+namespace Tubeshade.Data.Media.Videos;
 
-public sealed record VideoEntity : ModifiableEntity, IOwnableEntity, INamedEntity
+public record VideoEntity : ModifiableEntity, IOwnableEntity, INamedEntity
 {
     /// <inheritdoc />
     public Guid OwnerId { get; set; }

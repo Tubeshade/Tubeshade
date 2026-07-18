@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Ardalis.SmartEnum;
 
-namespace Tubeshade.Data.Media;
+namespace Tubeshade.Data.Media.Videos;
 
 public sealed class VideoType : SmartEnum<VideoType>, IParsable<VideoType>
 {

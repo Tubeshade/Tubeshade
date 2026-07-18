@@ -1,6 +1,6 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Tubeshade.Data.Media;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Pages.Shared;
 
 namespace Tubeshade.Server.Pages.Videos;

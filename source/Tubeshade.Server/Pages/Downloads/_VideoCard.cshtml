@@ -4,12 +4,20 @@
 <div class="col" id="card-@(Model.Video.Id)">
     <div class="card">
         <div class="row g-0">
-            <div class="col-sm">
-                <a asp-page="/Videos/Video" asp-route-videoId="@Model.Video.Id">
-                    <img
-                        src="@Url.Action("GetThumbnail", "Videos", new { version = "1.0", id = Model.Video.Id })"
-                        loading="lazy" alt="@Model.Video.Name" title="@Model.Video.Name"
-                        class="img-fluid card-img w-100 tubeshade-video-thumbnail"/>
+            <div class="col-sm" style="aspect-ratio: 16 / 9">
+                <a asp-page="/Videos/Video" asp-route-videoId="@Model.Video.Id"
+                   class="@(Model.Video.Thumbnails is [] ? "tubeshade-missing-thumbnail" : string.Empty)">
+                    @if (Model.Video.Thumbnails is not [])
+                    {
+                        <img class="img-fluid card-img w-100 tubeshade-video-thumbnail" loading="lazy"
+                             alt="@Model.Video.Name" title="@Model.Video.Name"
+                             src="@Model.GetThumbnailSource(Url)" srcset="@Model.GetThumbnailSourceSet(Url)"
+                             sizes="auto"/>
+                    }
+                    else
+                    {
+                        @Model.Video.Name
+                    }
                 </a>
             </div>
 

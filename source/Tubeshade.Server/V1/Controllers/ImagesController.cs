@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
-using System.Net.Mime;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -15,6 +14,7 @@ using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Configuration.Auth;
+using Tubeshade.Server.Services;
 
 namespace Tubeshade.Server.V1.Controllers;
 
@@ -58,12 +58,6 @@ public sealed class ImagesController : ControllerBase
         }
 
         var file = new FileInfo(path);
-        var contentType = file.Extension.ToUpperInvariant() switch
-        {
-            ".JPG" or ".JPEG" => MediaTypeNames.Image.Jpeg,
-            ".WEBP" => MediaTypeNames.Image.Webp,
-            _ => throw new InvalidOperationException($"Unexpected image extension '{file.Extension}'"),
-        };
 
         var etag = image is { HashAlgorithm.Name: not HashAlgorithm.Names.Placeholder, Hash: { } hash }
             ? $"\"{Convert.ToBase64String(hash)}\""
@@ -72,7 +66,7 @@ public sealed class ImagesController : ControllerBase
         var stream = file.OpenRead();
         return File(
             stream,
-            contentType,
+            file.Extension.GetImageMediaType(),
             file.LastWriteTimeUtc,
             new EntityTagHeaderValue(new StringSegment(etag)));
     }

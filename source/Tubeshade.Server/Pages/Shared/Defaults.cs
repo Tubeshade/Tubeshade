@@ -1,5 +1,6 @@
 ﻿using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Videos;
 
 namespace Tubeshade.Server.Pages.Shared;
 

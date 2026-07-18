@@ -127,32 +127,6 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
         return await Connection.ExecuteAsync(command);
     }
 
-    public async ValueTask<ImageFileEntity?> FindVideoThumbnail(
-        Guid videoId,
-        Guid userId,
-        Access access,
-        NpgsqlTransaction transaction)
-    {
-        var parameters = new GetVideoParameters(videoId, userId, access);
-
-        var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             {AccessCte}
-
-             {SelectSql}
-                 INNER JOIN media.video_images ON image_files.id = video_images.image_id
-                 INNER JOIN accessible ON image_files.id = accessible.image_id
-             WHERE {AccessFilter} AND
-                   video_images.video_id = @{nameof(parameters.VideoId)} AND
-                   image_files.type = 'thumbnail';
-             """,
-            parameters,
-            transaction);
-
-        return await Connection.QuerySingleOrDefaultAsync<ImageFileEntity>(command);
-    }
-
     public async ValueTask<List<ImageFileEntity>> GetForVideo(
         Guid videoId,
         Guid userId,
