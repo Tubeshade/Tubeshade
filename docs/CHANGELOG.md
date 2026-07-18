@@ -13,6 +13,8 @@ _Latest build from master branch._
 
 - Channel filtering query duration
   ([#307](https://github.com/Tubeshade/Tubeshade/pull/307))
+- Broken video sorting options
+  ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
 
 ## [0.1.7] - 2026-07-17
 
