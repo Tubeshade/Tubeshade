@@ -491,18 +491,6 @@ public sealed class YoutubeIndexingService
         CancellationToken cancellationToken)
     {
         var existingImages = await _imageFileRepository.GetForVideo(video.Id, userId, Access.Read, transaction, cancellationToken);
-        if (existingImages.SingleOrDefault(image => image.StoragePath.Contains(video.Id.ToString("N"), OrdinalIgnoreCase)) is { } singleImage)
-        {
-            var folderPath = await _imageFileRepository.GetPath(singleImage.Id, transaction, cancellationToken);
-            await _imageFileRepository.DeleteAsync(singleImage.Id, userId, transaction);
-            existingImages.Remove(singleImage);
-
-            var path = Path.Combine(folderPath!, singleImage.StoragePath);
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
-        }
 
         var thumbnails = videoData
             .Thumbnails?
