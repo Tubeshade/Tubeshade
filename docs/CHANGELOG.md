@@ -9,6 +9,11 @@ _Latest build from master branch._
 - Download video thumbnails in multiple resolutions
   ([#308](https://github.com/Tubeshade/Tubeshade/pull/308))
 
+### Changed
+
+- Reduce maximum video card size to increase density
+  ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
+
 ### Fixed
 
 - Channel filtering query duration

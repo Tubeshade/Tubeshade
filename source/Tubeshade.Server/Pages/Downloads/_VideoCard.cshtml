@@ -36,10 +36,10 @@
                         @if (Model is { ActualDuration: { } actualDuration, Video.Duration: { } duration })
                         {
                             <span> - </span>
-                            <span>@(HumanReadablePeriodPattern.Instance.Format(duration))</span>
+                            <span>@(RoundedHumanReadablePeriodPattern.TwoPlaces.Format(duration))</span>
                             @if (duration != actualDuration)
                             {
-                                <span>(@(HumanReadablePeriodPattern.Instance.Format(actualDuration)))</span>
+                                <span>(@(RoundedHumanReadablePeriodPattern.TwoPlaces.Format(actualDuration)))</span>
                             }
                         }
                     </div>
