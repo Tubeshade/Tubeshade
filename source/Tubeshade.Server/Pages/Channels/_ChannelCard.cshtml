@@ -8,9 +8,10 @@
                    asp-route-channelId="@Model.Channel.Id">
                     @if (Model.Channel.Thumbnails is not [])
                     {
-                        <img class="img-fluid card-img" loading="lazy"
+                        <img class="img-fluid card-img"
                              alt="@Model.Channel.Name" title="@Model.Channel.Name"
-                             src="@Model.GetThumbnailSource(Url)" srcset="@Model.GetThumbnailSourceSet(Url)"/>
+                             src="@Model.GetThumbnailSource(Url)" srcset="@Model.GetThumbnailSourceSet(Url)"
+                             sizes="160px">
                     }
                     else
                     {

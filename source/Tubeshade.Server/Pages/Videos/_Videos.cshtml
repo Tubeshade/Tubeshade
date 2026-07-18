@@ -13,10 +13,10 @@
                    class="@(video.Video.Thumbnails is [] ? "tubeshade-missing-thumbnail" : string.Empty)">
                     @if (video.Video.Thumbnails is not [])
                     {
-                        <img class="card-img-top tubeshade-video-thumbnail" loading="lazy"
+                        <img class="card-img-top tubeshade-video-thumbnail"
                              alt="@video.Video.Name" title="@video.Video.Name"
                              src="@video.GetThumbnailSource(Url)" srcset="@video.GetThumbnailSourceSet(Url)"
-                             sizes="auto"/>
+                             sizes="(max-width: 575px) 535px, (max-width: 639px) 640px, (max-width: 1219px) 480px, 320px"/>
                     }
                     else
                     {
