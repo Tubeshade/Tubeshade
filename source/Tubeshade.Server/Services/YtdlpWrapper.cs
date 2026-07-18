@@ -214,6 +214,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         optionSet.Output = "thumbnail.%(ext)s";
         optionSet.Paths = path;
         optionSet.SkipDownload = true;
+        optionSet.IgnoreNoFormatsError = true;
         optionSet.WriteAllThumbnails = true;
         optionSet.PlaylistItems = "0";
 
