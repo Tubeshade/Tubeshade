@@ -523,11 +523,11 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                   WHERE (videos.id IN (SELECT id FROM accessible))
                     AND videos.ignored_at IS NULL
                     AND (@{nameof(parameters.Downloadable)} = FALSE OR NOT EXISTS(SELECT 1 FROM downloading WHERE downloading.video_id = videos.id))
-                    AND ((@{nameof(parameters.WithFiles)} = TRUE AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NOT NULL)) OR
+                    AND ((@{nameof(parameters.WithFiles)} = TRUE AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND (downloaded_at IS NULL = @{nameof(parameters.Downloadable)}))) OR
                          (@{nameof(parameters.WithFiles)} = FALSE AND NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)) OR
                          (@{nameof(parameters.WithFiles)} IS NULL AND
                           (
-                              EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NOT NULL) OR
+                              EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND (downloaded_at IS NULL = @{nameof(parameters.Downloadable)})) OR
                               NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)
                           )
                          )
