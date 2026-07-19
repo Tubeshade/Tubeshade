@@ -24,6 +24,8 @@ _Latest build from master branch._
   ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
 - Downloading thumbnails for videos without available formats
   ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
+- Correctly link thumbnails when indexing multiple videos
+  ([#312](https://github.com/Tubeshade/Tubeshade/pull/312))
 
 ## [0.1.7] - 2026-07-17
 

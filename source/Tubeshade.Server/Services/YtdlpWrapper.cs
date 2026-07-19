@@ -206,12 +206,13 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
     /// <inheritdoc />
     public async ValueTask DownloadThumbnails(
         string url,
+        string prefix,
         string path,
         string? cookieFilepath,
         CancellationToken cancellationToken)
     {
         var optionSet = GetDefaultOptions(cookieFilepath);
-        optionSet.Output = "thumbnail.%(ext)s";
+        optionSet.Output = $"{prefix}.%(ext)s";
         optionSet.Paths = path;
         optionSet.SkipDownload = true;
         optionSet.IgnoreNoFormatsError = true;

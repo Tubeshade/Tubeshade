@@ -504,15 +504,18 @@ public sealed class YoutubeIndexingService
         }
 
         _logger.DownloadingThumbnails();
-        await _ytdlpWrapper.DownloadThumbnails(url, directory.FullName, cookieFilepath, cancellationToken);
+        var fileNamePrefix = $"thumbnail_{video.Id:N}";
+        await _ytdlpWrapper.DownloadThumbnails(url, fileNamePrefix, directory.FullName, cookieFilepath, cancellationToken);
 
         var files =  thumbnails
             .SelectMany(thumbnail =>
             {
-                var files = directory.EnumerateFiles($"thumbnail.{thumbnail.Id}.*").ToArray();
+                var pattern = $"{fileNamePrefix}.{thumbnail.Id}.*";
+                var files = directory.EnumerateFiles(pattern).ToArray();
                 if (files.Length > 1)
                 {
-                    throw new Exception("Multiple images");
+                    var fileNames = string.Join(", ", files.Select(file => $"'{file.Name}'"));
+                    throw new Exception($"Found multiple image files matching the pattern {pattern}: {fileNames}");
                 }
 
                 if (files is [])
@@ -587,8 +590,11 @@ public sealed class YoutubeIndexingService
         }
 
         _logger.DownloadingThumbnails();
+
+        var fileNamePrefix = $"thumbnail_{channel.Id:N}";
         await _ytdlpWrapper.DownloadThumbnails(
             channel.ExternalUrl,
+            fileNamePrefix,
             channel.StoragePath,
             cookieFilepath,
             cancellationToken);
@@ -597,11 +603,13 @@ public sealed class YoutubeIndexingService
 
         foreach (var thumbnail in videoData.Thumbnails ?? [])
         {
-            var file = directory.EnumerateFiles($"thumbnail.{thumbnail.Id}.*").ToArray() switch
+            var pattern = $"{fileNamePrefix}.{thumbnail.Id}.*";
+            var file = directory.EnumerateFiles(pattern).ToArray() switch
             {
-                [] => throw new Exception("Could not find downloaded image"),
+                [] => throw new Exception($"Could not find downloaded image for {thumbnail.Id} ({thumbnail.Url})"),
                 [var singleFile] => singleFile,
-                _ => throw new Exception("Multiple images"),
+                var files => throw new Exception(
+                    $"Found multiple image files matching the pattern {pattern}: {string.Join(", ", files.Select(file => $"'{file.Name}'"))}"),
             };
 
             var hashAlgorithm = HashAlgorithm.Default;
