@@ -216,6 +216,15 @@ public sealed class TaskService
         }
     }
 
+    public async ValueTask DeleteOldTasks(CancellationToken cancellationToken)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var count = await _taskRepository.DeleteOldTasks(transaction, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        _logger.DeletedOldTasks(count);
+    }
+
     private static IEnumerable<TaskModel> GroupTasks(IEnumerable<RunningTaskEntity> runningTasks)
     {
         return runningTasks

@@ -95,7 +95,7 @@ public sealed class SchedulerService : BackgroundService
         }
     }
 
-    public Instant GetNextTime(string cron, Instant currentTime, int seed)
+    public static Instant GetNextTime(string cron, Instant currentTime, int seed)
     {
         var expression = CronExpression.Parse(cron, seed);
         if (expression.GetNextOccurrence(currentTime.ToDateTimeUtc()) is { } nextTime)

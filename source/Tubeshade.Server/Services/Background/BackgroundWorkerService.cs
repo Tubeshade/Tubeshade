@@ -293,6 +293,12 @@ public sealed class BackgroundWorkerService : BackgroundService
             var service = provider.GetRequiredService<TrackFileService>();
             await service.RefreshTrackFiles(libraryId, userId, taskRepository, taskRunId, cancellationToken);
         }
+        else if (task.Type == TaskType.DeleteTasks)
+        {
+            await taskRepository.StartTaskRun(taskRunId, cancellationToken);
+            var service = provider.GetRequiredService<TaskService>();
+            await service.DeleteOldTasks(cancellationToken);
+        }
     }
 
     private static async ValueTask<SemaphoreSlimExtensions.SemaphoreScope> LockAsync(

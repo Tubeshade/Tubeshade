@@ -321,4 +321,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(106, Warning, "Could not find thumbnail {ThumbnailId} ({ExternalUrl})")]
     internal static partial void MissingThumbnail(this ILogger logger, string? thumbnailId, string externalUrl);
+
+    [LoggerMessage(107, Information, "Deleted {Count} old tasks")]
+    internal static partial void DeletedOldTasks(this ILogger logger, int count);
 }

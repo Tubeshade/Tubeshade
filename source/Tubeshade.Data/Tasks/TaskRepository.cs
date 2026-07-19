@@ -348,7 +348,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
-        var command = new CommandDefinition(RunningTasksQuery, parameters, transaction, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(RunningTasksQuery, parameters, transaction,
+            cancellationToken: cancellationToken);
         var enumerable = await Connection.QueryAsync<RunningTaskEntity>(command);
         return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
     }
@@ -478,6 +479,35 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         }
 
         await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async ValueTask<int> DeleteOldTasks(NpgsqlTransaction transaction, CancellationToken cancellationToken)
+    {
+        // lang=sql
+        const string sql =
+            """
+            WITH successful AS
+                (
+                    SELECT tasks.id
+                    FROM tasks.tasks
+                    WHERE NOT EXISTS(SELECT 1
+                                     FROM tasks.task_runs
+                                         LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+                                     WHERE task_id = tasks.id
+                                       AND (task_run_results.result IS NULL OR
+                                            task_run_results.result != 'successful' OR
+                                            task_run_results.created_at > CURRENT_TIMESTAMP - '1 month'::interval))
+                      AND EXISTS(SELECT 1 FROM tasks.task_runs WHERE task_id = tasks.id)
+                      AND NOT EXISTS(SELECT 1 FROM tasks.schedules WHERE task_id = tasks.id)
+                )
+
+            DELETE
+            FROM tasks.tasks
+            WHERE tasks.id IN (SELECT id FROM successful);
+            """;
+
+        var command = new CommandDefinition(sql, null, transaction, cancellationToken: cancellationToken);
+        return await Connection.ExecuteAsync(command);
     }
 
     private async ValueTask FinishTaskRun(Guid taskRunId, NpgsqlTransaction transaction)
