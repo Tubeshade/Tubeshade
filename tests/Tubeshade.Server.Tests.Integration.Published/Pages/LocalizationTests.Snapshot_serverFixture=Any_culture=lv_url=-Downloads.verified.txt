@@ -47,6 +47,7 @@
       - option "Patīk"
       - option "Labots"
       - option "Publicēts" [selected]
+      - option "Atbilstība"
       - option "Haotiski"
       - option "Atjaunots"
       - option "Izmērs"

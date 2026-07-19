@@ -47,6 +47,7 @@
       - option "Likes"
       - option "Modified"
       - option "Published" [selected]
+      - option "Relevance"
       - option "Random"
       - option "Refreshed"
       - option "Size"

@@ -426,7 +426,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                   INNER JOIN identity.ownerships ON
                       ownerships.owner_id = owners.id AND
                       ownerships.user_id = @{nameof(parameters.UserId)} AND
-                      (ownerships.access = @{nameof(parameters.Access)} OR ownerships.access = 'owner'))
+                      (ownerships.access = @{nameof(parameters.Access)} OR ownerships.access = 'owner')),
+
+             parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query)
 
          SELECT videos.id,
                 videos.created_at,
@@ -451,11 +453,12 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 videos.ignored_at,
                 videos.ignored_by_user_id,
                 videos.type,
-                video_viewed_by_users.viewed,
-                video_viewed_by_users.position,
+                viewed.viewed,
+                viewed.position,
                 count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
          FROM media.videos
-             LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(parameters.UserId)}
+             LEFT OUTER JOIN media.video_viewed_by_users viewed ON videos.id = viewed.video_id AND viewed.user_id = @{nameof(parameters.UserId)}
+             CROSS JOIN parameters
              INNER JOIN media.channels ON videos.channel_id = channels.id
              INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
          WHERE (videos.id IN (SELECT id FROM accessible))
@@ -471,12 +474,12 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                )
            AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
            AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
-           AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(parameters.Query)}))
+           AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ query)
            AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
            AND (@{nameof(parameters.Viewed)}::media.view_status IS NULL
-                    OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.Viewed}' AND video_viewed_by_users.viewed = TRUE)
-                    OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.NotViewed}' AND (video_viewed_by_users.viewed IS NULL OR video_viewed_by_users.viewed = FALSE))
-                    OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.PartiallyViewed}' AND video_viewed_by_users.viewed IS FALSE AND video_viewed_by_users.position > 10 AND video_viewed_by_users.position < EXTRACT(EPOCH FROM (videos.duration - '10 seconds'::interval))))
+                    OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.Viewed}' AND viewed.viewed = TRUE)
+                    OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.NotViewed}' AND (viewed.viewed IS NULL OR viewed.viewed = FALSE))
+                    OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.PartiallyViewed}' AND viewed.viewed IS FALSE AND viewed.position > 10 AND viewed.position < EXTRACT(EPOCH FROM (videos.duration - '10 seconds'::interval))))
            AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
          ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, videos.id
          LIMIT @{nameof(parameters.Limit)}
@@ -502,6 +505,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                       LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
                   WHERE tasks.type = '{TaskType.Names.DownloadVideo}'
                     AND task_run_results.id IS NULL),
+         
+             parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query),
 
              filtered AS
                  (SELECT videos.id,
@@ -527,11 +532,13 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                          videos.ignored_at,
                          videos.ignored_by_user_id,
                          videos.type,
-                         video_viewed_by_users.viewed,
-                         video_viewed_by_users.position,
-                         count(*) OVER() AS count
+                         viewed.viewed,
+                         viewed.position,
+                         count(*) OVER() AS count,
+                         videos.searchable_index_value AS searchable_index_value
                   FROM media.videos
-                      LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(parameters.UserId)}
+                      LEFT OUTER JOIN media.video_viewed_by_users viewed ON videos.id = viewed.video_id AND viewed.user_id = @{nameof(parameters.UserId)}
+                      CROSS JOIN parameters
                       INNER JOIN media.channels ON videos.channel_id = channels.id
                       INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
                   WHERE (videos.id IN (SELECT id FROM accessible))
@@ -548,12 +555,12 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                         )
                     AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
                     AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
-                    AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ websearch_to_tsquery('english', @{nameof(parameters.Query)}))
+                    AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ query)
                     AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
                     AND (@{nameof(parameters.Viewed)}::media.view_status IS NULL
-                             OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.Viewed}' AND video_viewed_by_users.viewed = TRUE)
-                             OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.NotViewed}' AND (video_viewed_by_users.viewed IS NULL OR video_viewed_by_users.viewed = FALSE))
-                             OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.PartiallyViewed}' AND video_viewed_by_users.viewed IS FALSE AND video_viewed_by_users.position > 10 AND video_viewed_by_users.position < EXTRACT(EPOCH FROM (videos.duration - '10 seconds'::interval))))
+                             OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.Viewed}' AND viewed.viewed = TRUE)
+                             OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.NotViewed}' AND (viewed.viewed IS NULL OR viewed.viewed = FALSE))
+                             OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.PartiallyViewed}' AND viewed.viewed IS FALSE AND viewed.position > 10 AND viewed.position < EXTRACT(EPOCH FROM (videos.duration - '10 seconds'::interval))))
                     AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
                   ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, videos.id
                   LIMIT @{nameof(parameters.Limit)}
@@ -599,6 +606,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 image_files.hash,
                 image_files.storage_size
          FROM filtered videos
+             CROSS JOIN parameters
              LEFT JOIN media.video_images ON videos.id = video_images.video_id
              LEFT JOIN media.image_files ON video_images.image_id = image_files.id
          ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, videos.id;

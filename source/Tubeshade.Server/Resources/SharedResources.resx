@@ -516,4 +516,7 @@
     <data name="Filters_SortChannelBy_name" xml:space="preserve">
         <value>Name</value>
     </data>
+    <data name="Filters_SortVideoBy_query" xml:space="preserve">
+        <value>Relevance</value>
+    </data>
 </root>

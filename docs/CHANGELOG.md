@@ -8,6 +8,8 @@ _Latest build from master branch._
 
 - Download video thumbnails in multiple resolutions
   ([#308](https://github.com/Tubeshade/Tubeshade/pull/308))
+- Video sorting by query relevance
+  ([#313](https://github.com/Tubeshade/Tubeshade/pull/313))
 
 ### Changed
 

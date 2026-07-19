@@ -509,4 +509,7 @@
     <data name="Filters_SortChannelBy_video_count" xml:space="preserve">
         <value>Video</value>
     </data>
+    <data name="Filters_SortVideoBy_query" xml:space="preserve">
+        <value>Atbilstība</value>
+    </data>
 </root>

@@ -645,6 +645,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Relevance.
+        /// </summary>
+        public static string Filters_SortVideoBy_query {
+            get {
+                return ResourceManager.GetString("Filters_SortVideoBy_query", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Random.
         /// </summary>
         public static string Filters_SortVideoBy_random {

@@ -373,4 +373,129 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             unlocked.Select(id => id.Id).Should().BeEquivalentTo([withUnlockedSegments, withMixedSegments]);
         }
     }
+
+    [Test]
+    public async Task SortByQuery()
+    {
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<VideoRepository>();
+        var fileRepository = scope.ServiceProvider.GetRequiredService<VideoFileRepository>();
+
+        Guid nameId;
+        Guid descriptionId;
+
+        await using (var transaction = await connection.OpenAndBeginTransaction())
+        {
+            nameId = (await repository.AddAsync(
+                new()
+                {
+                    CreatedByUserId = _userId,
+                    ModifiedByUserId = _userId,
+                    OwnerId = _userId,
+                    Name = "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+                    Description = string.Empty,
+                    Categories = [],
+                    Tags = [],
+                    Type = VideoType.Video,
+                    ChannelId = _channelId,
+                    StoragePath = string.Empty,
+                    ExternalId = string.Empty,
+                    ExternalUrl = "https://example.org",
+                    PublishedAt = SystemClock.Instance.GetCurrentInstant(),
+                    RefreshedAt = SystemClock.Instance.GetCurrentInstant(),
+                    Availability = ExternalAvailability.Public,
+                    Duration = Period.FromMinutes(10),
+                },
+                transaction))!.Value;
+
+            await fileRepository.AddAsync(
+                new VideoFileEntity
+                {
+                    CreatedByUserId = _userId,
+                    ModifiedByUserId = _userId,
+                    OwnerId = _userId,
+                    VideoId = nameId,
+                    StoragePath = string.Empty,
+                    Type = VideoContainerType.Mp4,
+                    Width = 0,
+                    Height = 0,
+                    Framerate = 0,
+                    DownloadedByUserId = _userId,
+                    DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
+                },
+                transaction);
+
+            descriptionId = (await repository.AddAsync(
+                new()
+                {
+                    CreatedByUserId = _userId,
+                    ModifiedByUserId = _userId,
+                    OwnerId = _userId,
+                    Name = Guid.NewGuid().ToString("N"),
+                    Description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+                    Categories = [],
+                    Tags = [],
+                    Type = VideoType.Video,
+                    ChannelId = _channelId,
+                    StoragePath = string.Empty,
+                    ExternalId = string.Empty,
+                    ExternalUrl = "https://example.org",
+                    PublishedAt = SystemClock.Instance.GetCurrentInstant(),
+                    RefreshedAt = SystemClock.Instance.GetCurrentInstant(),
+                    Availability = ExternalAvailability.Public,
+                    Duration = Period.FromMinutes(10),
+                },
+                transaction))!.Value;
+
+            await fileRepository.AddAsync(
+                new VideoFileEntity
+                {
+                    CreatedByUserId = _userId,
+                    ModifiedByUserId = _userId,
+                    OwnerId = _userId,
+                    VideoId = descriptionId,
+                    StoragePath = string.Empty,
+                    Type = VideoContainerType.Mp4,
+                    Width = 0,
+                    Height = 0,
+                    Framerate = 0,
+                    DownloadedByUserId = _userId,
+                    DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
+                },
+                transaction);
+
+            await repository.MarkAsWatched(descriptionId, _userId, transaction);
+
+            await transaction.CommitAsync();
+        }
+
+        var descending = await repository.GetFilteredDetailed(
+            new VideoParameters
+            {
+                SortBy = SortVideoBy.Query,
+                SortDirection = SortDirection.Descending,
+                UserId = _userId,
+                LibraryId = _libraryId,
+                Limit = 24,
+                Offset = 0,
+                Query = "Lorem ipsum",
+            });
+
+        var ascending = await repository.GetFilteredDetailed(
+            new VideoParameters
+            {
+                SortBy = SortVideoBy.Query,
+                SortDirection = SortDirection.Ascending,
+                UserId = _userId,
+                LibraryId = _libraryId,
+                Limit = 24,
+                Offset = 0,
+                Query = "Lorem ipsum",
+            });
+
+        using var assertionScope = new AssertionScope();
+        descending.Select(video => video.Id).Should().Equal(nameId, descriptionId);
+        ascending.Select(video => video.Id).Should().Equal(descriptionId, nameId);
+    }
 }

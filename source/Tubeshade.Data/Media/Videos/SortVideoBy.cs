@@ -20,6 +20,8 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, ISortBy, IParsable<Sor
         // lang=sql
         "(SELECT MAX(video_files.framerate) FROM media.video_files WHERE video_files.video_id = videos.id)";
 
+    private const string QueryExpression = "ts_rank(searchable_index_value, query)";
+
     // Probably going to regret this at some point, but ORDER BY random() works for the current table sizes
     public static readonly SortVideoBy Random = new(Names.Random, "random()", 1);
     public static readonly SortVideoBy CreatedAt = new(Names.CreatedAt, 2);
@@ -32,6 +34,7 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, ISortBy, IParsable<Sor
     public static readonly SortVideoBy Duration = new(Names.Duration, 9);
     public static readonly SortVideoBy StorageSize = new(Names.StorageSize, StorageSizeExpression, 10);
     public static readonly SortVideoBy Framerate = new(Names.Framerate, FramerateExpression, 11);
+    public static readonly SortVideoBy Query = new(Names.Query, QueryExpression, 12);
 
     /// <inheritdoc />
     public string SortExpression { get; }
@@ -61,6 +64,7 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, ISortBy, IParsable<Sor
         public const string Duration = "duration";
         public const string StorageSize = "storage_size";
         public const string Framerate = "framerate";
+        public const string Query = "query";
     }
 
     /// <inheritdoc />
