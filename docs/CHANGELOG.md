@@ -10,6 +10,8 @@ _Latest build from master branch._
   ([#308](https://github.com/Tubeshade/Tubeshade/pull/308))
 - Video sorting by query relevance
   ([#313](https://github.com/Tubeshade/Tubeshade/pull/313))
+- Delete old successful tasks
+  ([#38](https://github.com/Tubeshade/Tubeshade/issues/38))
 
 ### Changed
 
