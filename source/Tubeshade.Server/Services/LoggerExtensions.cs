@@ -46,7 +46,7 @@ internal static partial class LoggerExtensions
     [LoggerMessage(9, Debug, "{Count} task runs are blocking {TaskRunId}")]
     internal static partial void BlockingTaskRuns(this ILogger logger, int count, Guid taskRunId);
 
-    [LoggerMessage(10, Debug, "Removed task run {finishedTaskRunId} which was blocking {taskRunId}, {Count} remaining")]
+    [LoggerMessage(10, Trace, "Removed task run {finishedTaskRunId} which was blocking {taskRunId}, {Count} remaining")]
     internal static partial void RemovedBlockingTaskRun(this ILogger logger, Guid finishedTaskRunId, Guid taskRunId, int count);
 
     [LoggerMessage(11, Trace, "Removed task run {finishedTaskRunId} which was not blocking {taskRunId}")]
