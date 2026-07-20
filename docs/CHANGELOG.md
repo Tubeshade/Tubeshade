@@ -12,6 +12,8 @@ _Latest build from master branch._
   ([#313](https://github.com/Tubeshade/Tubeshade/pull/313))
 - Delete old successful tasks
   ([#38](https://github.com/Tubeshade/Tubeshade/issues/38))
+- Next/previous track actions control video chapters
+  ([#316](https://github.com/Tubeshade/Tubeshade/pull/316))
 
 ### Changed
 
