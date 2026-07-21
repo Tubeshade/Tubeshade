@@ -20,7 +20,7 @@ _Latest build from master branch._
 - Reduce maximum video card size to increase density
   ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
 - Restyle downloadable video cards similar to regular videos
-  ([#317](https://github.com/Tubeshade/Tubeshade/pull/317))
+  ([#318](https://github.com/Tubeshade/Tubeshade/pull/318))
 
 ### Fixed
 
@@ -34,6 +34,8 @@ _Latest build from master branch._
   ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
 - Correctly link thumbnails when indexing multiple videos
   ([#312](https://github.com/Tubeshade/Tubeshade/pull/312))
+- Remove redundant query parameters from requests
+  ([#319](https://github.com/Tubeshade/Tubeshade/pull/319))
 
 ## [0.1.7] - 2026-07-17
 

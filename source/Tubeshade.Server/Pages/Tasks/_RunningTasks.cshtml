@@ -3,7 +3,7 @@
 @model ITasksPage
 
 <section hx-get="" hx-page-handler="" hx-trigger="every 2s" hx-swap="outerHTML" id="tasks"
-         hx-include="#filter" hx-params="*">
+         hx-include="#filter" hx-params="not __Invariant">
     <table class="table">
         <thead>
         <tr>
