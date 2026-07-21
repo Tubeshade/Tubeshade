@@ -115,26 +115,6 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         return StatusCode(StatusCodes.Status200OK);
     }
 
-    public async Task<IActionResult> OnPostScan(Guid videoId)
-    {
-        var userId = User.GetUserId();
-
-        await using var transaction = await _connection.OpenAndBeginTransaction();
-        var video = await _videoRepository.FindAsync(videoId, userId, Access.Modify, transaction);
-        if (video is null)
-        {
-            return NotFound();
-        }
-
-        var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, transaction);
-
-        await _taskService.IndexVideo(userId, libraryId, video, TaskSource.User, transaction);
-        await transaction.CommitAsync();
-
-        Response.Htmx(headers => headers.WithTrigger(Triggers.Refresh));
-        return StatusCode(StatusCodes.Status200OK);
-    }
-
     /// <inheritdoc />
     public async Task<IActionResult> OnPostIgnore(Guid videoId)
     {

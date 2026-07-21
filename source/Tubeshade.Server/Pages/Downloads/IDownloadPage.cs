@@ -64,7 +64,5 @@ public interface IDownloadPage : IPaginatedDataPage<VideoModel>
 
     Task<IActionResult> OnPostStartDownload(Guid videoId);
 
-    Task<IActionResult> OnPostScan(Guid videoId);
-
     Task<IActionResult> OnPostIgnore(Guid videoId);
 }

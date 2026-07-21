@@ -1,11 +1,71 @@
-﻿@model IDownloadPage
+﻿@using NodaTime.Text
+@model IDownloadPage
 
 <section id="downloadable-videos">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 625px), 1fr))"
-         class="row g-2 mb-2">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))">
         @foreach (var video in Model.PageData.Data)
         {
-            <partial name="Downloads/_VideoCard" model="@video"/>
+            <div class="card m-1" id="card-@(video.Video.Id)">
+                <div class="position-relative" style="aspect-ratio: 16 / 9">
+                    <a asp-page="@(Model.PageData.LibraryId is not null ? "/Libraries/Videos/Video" : "/Videos/Video")"
+                       asp-route-libraryId="@Model.PageData.LibraryId" asp-route-videoId="@video.Video.Id"
+                       class="@(video.Video.Thumbnails is [] ? "tubeshade-missing-thumbnail" : string.Empty)">
+                        @if (video.Video.Thumbnails is not [])
+                        {
+                            <img class="card-img-top tubeshade-video-thumbnail"
+                                 alt="@video.Video.Name" title="@video.Video.Name"
+                                 src="@video.GetThumbnailSource(Url)" srcset="@video.GetThumbnailSourceSet(Url)"
+                                 sizes="(max-width: 557px) 510px, (max-width: 820px) 380px, (max-width: 1080px) 320px, 280px"/>
+                        }
+                        else
+                        {
+                            @video.Video.Name
+                        }
+                    </a>
+                </div>
+
+                <div class="card-body p-2">
+                    <h6 class="card-title text-truncate mb-0" title="@video.Video.Name">@video.Video.Name</h6>
+
+                    <div class="d-flex d-inline justify-content-between gap-3">
+                        <a asp-page="@(Model.PageData.LibraryId is not null ? "/Libraries/Channels/Channel" : "/Channels/Channel")"
+                           asp-route-libraryId="@Model.PageData.LibraryId" asp-route-channelId="@video.Video.ChannelId"
+                           class="text-truncate">
+                            @video.Channel.Name
+                        </a>
+                    </div>
+
+                    <div class="d-flex d-inline justify-content-between">
+                        <time datetime="@InstantPattern.General.Format(video.Video.PublishedAt)">
+                            @LocalDatePattern.Iso.Format(video.Video.PublishedAt.InUtc().Date)
+                        </time>
+                        <div>
+                            @if (video is { ActualDuration: { } actualDuration, Video.Duration: { } duration })
+                            {
+                                <span>@(RoundedHumanReadablePeriodPattern.TwoPlaces.Format(duration))</span>
+                                @if (duration != actualDuration)
+                                {
+                                    <span>(@(RoundedHumanReadablePeriodPattern.TwoPlaces.Format(actualDuration)))</span>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <button hx-post="" hx-page-handler="StartDownload" hx-route-videoId="@video.Video.Id"
+                                hx-swap="delete" hx-target="#card-@video.Video.Id"
+                                class="btn btn-success" type="button">
+                            @SharedResources.Button_Download
+                        </button>
+
+                        <button hx-post="" hx-page-handler="Ignore" hx-route-videoId="@video.Video.Id"
+                                hx-swap="delete" hx-target="#card-@video.Video.Id"
+                                class="btn btn-secondary" type="button">
+                            @SharedResources.Button_Ignore
+                        </button>
+                    </div>
+                </div>
+            </div>
         }
     </div>
 

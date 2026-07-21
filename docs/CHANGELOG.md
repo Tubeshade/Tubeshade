@@ -19,6 +19,8 @@ _Latest build from master branch._
 
 - Reduce maximum video card size to increase density
   ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
+- Restyle downloadable video cards similar to regular videos
+  ([#317](https://github.com/Tubeshade/Tubeshade/pull/317))
 
 ### Fixed
 
@@ -203,7 +205,7 @@ _Latest build from master branch._
   ([#186](https://github.com/Tubeshade/Tubeshade/issues/186))
 - Correctly select video thumbnail when scanning a channel
   ([#220](https://github.com/Tubeshade/Tubeshade/issues/220))
-- Fixed default JS runtime parameter in docker image 
+- Fixed default JS runtime parameter in docker image
   ([#219](https://github.com/Tubeshade/Tubeshade/pull/219))
 
 ## [0.1.2] - 2025-12-14
