@@ -22,6 +22,7 @@ using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Configuration.Startup;
 using Tubeshade.Server.Configuration.Startup.Migrations;
+using Tubeshade.Server.Pages;
 using Tubeshade.Server.Services;
 using Tubeshade.Server.Services.Background;
 using Tubeshade.Server.Services.Ffmpeg;
@@ -86,6 +87,7 @@ internal static class Program
             {
                 options.ModelBinderProviders.Insert(0, new NodaTimeBindingProvider());
                 options.CacheProfiles.AddTubeshadeProfiles();
+                options.Filters.Add(new HtmxPageCachingFilter());
             })
             .AddXmlSerializerFormatters()
             .AddJsonOptions(options =>
