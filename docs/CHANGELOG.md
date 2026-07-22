@@ -38,6 +38,8 @@ _Latest build from master branch._
   ([#312](https://github.com/Tubeshade/Tubeshade/pull/312))
 - Remove redundant query parameters from requests
   ([#319](https://github.com/Tubeshade/Tubeshade/pull/319))
+- Update channel metadata during all indexing tasks
+  ([#321](https://github.com/Tubeshade/Tubeshade/pull/321))
 
 ## [0.1.7] - 2026-07-17
 

@@ -112,6 +112,8 @@ public sealed class YoutubeIndexingService
             ? await _channelRepository.GetAsync(channelId.Value, userId, transaction)
             : await GetChannel(libraryId, userId, data, transaction);
 
+        await UpdateChannel(channel, data, userId, transaction);
+
         var result = new UrlIndexingResult { ChannelId = channel.Id };
 
         if (data.ResultType is MetadataType.Video)
@@ -163,15 +165,32 @@ public sealed class YoutubeIndexingService
         var channel = await _channelRepository.FindByExternalId(externalId, userId, Access.Modify, transaction);
         if (channel is not null)
         {
-            channel.ModifiedByUserId = userId;
-            channel.SubscriberCount = (int?)data.ChannelFollowerCount;
-            await _channelRepository.UpdateAsync(channel, transaction);
-
-            return await _channelRepository.GetAsync(channel.Id, userId, transaction);
+            return channel;
         }
 
         var availability = ExternalAvailability.Public;
         return await _channelService.Create(libraryId, userId, name, externalId, externalUrl, availability, (int?)data.ChannelFollowerCount, transaction);
+    }
+
+    private async ValueTask UpdateChannel(
+        ChannelEntity channel,
+        VideoData data,
+        Guid userId,
+        NpgsqlTransaction transaction)
+    {
+        if (data.ChannelFollowerCount is not { } channelFollowerCount)
+        {
+            return;
+        }
+
+        channel.ModifiedByUserId = userId;
+        channel.SubscriberCount = (int)channelFollowerCount;
+
+        var updated = await _channelRepository.UpdateAsync(channel, transaction);
+        if (updated is 0)
+        {
+            throw new InvalidOperationException("Failed to update channel details");
+        }
     }
 
     private async ValueTask<Guid> IndexVideo(
@@ -766,6 +785,13 @@ public sealed class YoutubeIndexingService
                 allVideos ? null : count,
                 cookiesFilepath,
                 cancellationToken);
+
+            if (playlists.Count is 0)
+            {
+                await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+                await UpdateChannel(channel, playlistData, userId, transaction);
+                await transaction.CommitAsync(cancellationToken);
+            }
 
             playlists.Add(type, playlistData);
         }
