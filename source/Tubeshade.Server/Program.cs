@@ -52,6 +52,11 @@ internal static class Program
             .BindConfiguration(SchedulerOptions.SectionName)
             .ValidateOnStart();
 
+        builder.Services
+            .AddOptions<WebhookOptions>()
+            .BindConfiguration(WebhookOptions.SectionName)
+            .ValidateOnStart();
+
         builder.Services.AddRazorPages();
 
         builder.Services.AddAuthenticationAndAuthorization(builder.Configuration);

@@ -20,6 +20,19 @@ public sealed class YoutubePostChecker
         _httpClient = httpClient;
     }
 
+    public async ValueTask<bool> IsYouTubePost2(string videoUrl, CancellationToken cancellationToken)
+    {
+        if (await IsYouTubePost(videoUrl, cancellationToken))
+        {
+            return true;
+        }
+
+        // posts cannot be identified immediately after receiving the notification, retry a moment later
+        await Task.Delay(5_000, cancellationToken);
+
+        return await IsYouTubePost(videoUrl, cancellationToken);
+    }
+
     public async ValueTask<bool> IsYouTubePost(string videoUrl, CancellationToken cancellationToken)
     {
         if (!Uri.TryCreate(videoUrl, UriKind.Absolute, out var uri))

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NodaTime;
 using Npgsql;
 using PubSubHubbub.Models;
@@ -14,6 +15,7 @@ using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
+using Tubeshade.Server.Configuration;
 using YoutubeDLSharp.Metadata;
 
 namespace Tubeshade.Server.Services;
@@ -23,6 +25,7 @@ public sealed class YoutubeWebhookService
     private static readonly XmlSerializer FeedSerializer = new(typeof(Feed));
 
     private readonly ILogger<YoutubeWebhookService> _logger;
+    private readonly IOptionsMonitor<WebhookOptions> _options;
     private readonly NpgsqlConnection _connection;
     private readonly VideoRepository _videoRepository;
     private readonly PreferencesRepository _preferencesRepository;
@@ -34,6 +37,7 @@ public sealed class YoutubeWebhookService
 
     public YoutubeWebhookService(
         ILogger<YoutubeWebhookService> logger,
+        IOptionsMonitor<WebhookOptions> options,
         NpgsqlConnection connection,
         VideoRepository videoRepository,
         PreferencesRepository preferencesRepository,
@@ -44,6 +48,7 @@ public sealed class YoutubeWebhookService
         IClock clock)
     {
         _logger = logger;
+        _options = options;
         _connection = connection;
         _videoRepository = videoRepository;
         _preferencesRepository = preferencesRepository;
@@ -135,18 +140,13 @@ public sealed class YoutubeWebhookService
             return;
         }
 
-        if (await _postChecker.IsYouTubePost(videoUrl, cancellationToken))
+        if (_options.CurrentValue.CheckForPosts)
         {
-            _logger.SkippingPost();
-            return;
-        }
-
-        // posts cannot be identified immediately after receiving the notification, retry a moment later
-        await Task.Delay(5_000, cancellationToken);
-        if (await _postChecker.IsYouTubePost(videoUrl, cancellationToken))
-        {
-            _logger.SkippingPost();
-            return;
+            if (await _postChecker.IsYouTubePost2(videoUrl, cancellationToken))
+            {
+                _logger.SkippingPost();
+                return;
+            }
         }
 
         switch (preferences)

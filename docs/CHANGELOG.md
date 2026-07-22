@@ -14,6 +14,8 @@ _Latest build from master branch._
   ([#38](https://github.com/Tubeshade/Tubeshade/issues/38))
 - Next/previous track actions control video chapters
   ([#316](https://github.com/Tubeshade/Tubeshade/pull/316))
+- Option to disable post check for webhooks
+  ([#320](https://github.com/Tubeshade/Tubeshade/pull/320))
 
 ### Changed
 
