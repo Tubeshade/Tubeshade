@@ -39,7 +39,7 @@ _Latest build from master branch._
 - Correctly link thumbnails when indexing multiple videos
   ([#312](https://github.com/Tubeshade/Tubeshade/pull/312))
 - Remove redundant query parameters from requests
-  ([#319](https://github.com/Tubeshade/Tubeshade/pull/319))
+  ([#319](https://github.com/Tubeshade/Tubeshade/pull/319), [#321](https://github.com/Tubeshade/Tubeshade/pull/321))
 - Update channel metadata during all indexing tasks
   ([#321](https://github.com/Tubeshade/Tubeshade/pull/321))
 
