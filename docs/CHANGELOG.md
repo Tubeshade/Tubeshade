@@ -23,6 +23,8 @@ _Latest build from master branch._
   ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
 - Restyle downloadable video cards similar to regular videos
   ([#318](https://github.com/Tubeshade/Tubeshade/pull/318))
+- Format counts from YouTube to 3 significant figures
+  ([#321](https://github.com/Tubeshade/Tubeshade/pull/321))
 
 ### Fixed
 

@@ -1,4 +1,5 @@
-﻿@model ChannelModel
+﻿@using System.Globalization
+@model ChannelModel
 
 <div class="col" id="channel-@Model.Channel.Id">
     <div class="card">
@@ -32,7 +33,7 @@
                             <span>@string.Format(SharedResources.Channel_Videos, Model.Channel.VideoCount)</span>
                             @if (Model.Channel.SubscriberCount is { } subscriberCount)
                             {
-                                <span>@string.Format(SharedResources.Channel_Subscribers, subscriberCount)</span>
+                                <span>@string.Format(SharedResources.Channel_Subscribers, subscriberCount.FormatCount(CultureInfo.CurrentCulture))</span>
                             }
                         </div>
                     </div>

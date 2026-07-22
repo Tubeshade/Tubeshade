@@ -128,13 +128,13 @@
     @if (Model.Entity.ViewCount is { } viewCount)
     {
         <div class="col-auto">
-            @(string.Format(SharedResources.Video_Views, viewCount))
+            @(string.Format(SharedResources.Video_Views, viewCount.FormatCount(CultureInfo.CurrentCulture)))
         </div>
     }
     @if (Model.Entity.LikeCount is { } likeCount)
     {
         <div class="col-auto">
-            @(string.Format(SharedResources.Video_Likes, likeCount))
+            @(string.Format(SharedResources.Video_Likes, likeCount.FormatCount(CultureInfo.CurrentCulture)))
         </div>
     }
 </div>

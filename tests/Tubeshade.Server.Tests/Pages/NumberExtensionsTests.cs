@@ -20,4 +20,22 @@ public sealed class NumberExtensionsTests
     {
         value.FormatSize(minimumMultiplier, CultureInfo.InvariantCulture).Should().Be(expected);
     }
+
+    [TestCase(1, "1")]
+    [TestCase(999, "999")]
+    [TestCase(1_000, "1K")]
+    [TestCase(1_005, "1.01K")]
+    [TestCase(1_557, "1.56K")]
+    [TestCase(999_431, "999K")]
+    [TestCase(999_999, "1M")]
+    [TestCase(1_000_000, "1M")]
+    [TestCase(1_234_000, "1.23M")]
+    [TestCase(1_789_000, "1.79M")]
+    [TestCase(999_478_523, "999M")]
+    [TestCase(999_538_523, "1B")]
+    [TestCase(1_999_538_523, "2B")]
+    public void FormatCount(decimal value, string expected)
+    {
+        value.FormatCount(CultureInfo.InvariantCulture).Should().Be(expected);
+    }
 }
