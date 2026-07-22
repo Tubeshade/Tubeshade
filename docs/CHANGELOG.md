@@ -22,7 +22,7 @@ _Latest build from master branch._
 - Reduce maximum video card size to increase density
   ([#311](https://github.com/Tubeshade/Tubeshade/pull/311))
 - Restyle downloadable video cards similar to regular videos
-  ([#318](https://github.com/Tubeshade/Tubeshade/pull/318))
+  ([#318](https://github.com/Tubeshade/Tubeshade/pull/318), [#321](https://github.com/Tubeshade/Tubeshade/pull/321))
 - Format counts from YouTube to 3 significant figures
   ([#321](https://github.com/Tubeshade/Tubeshade/pull/321))
 
