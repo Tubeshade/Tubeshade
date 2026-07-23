@@ -4,6 +4,8 @@
 
 _Latest build from master branch._
 
+## [0.1.8] - 2026-07-23
+
 ### Added
 
 - Download video thumbnails in multiple resolutions
@@ -251,6 +253,8 @@ _Latest build from master branch._
 ## [0.1.0] - 2025-12-06
 
 _Initial release._
+
+[0.1.8]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.8
 
 [0.1.7]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.7
 
