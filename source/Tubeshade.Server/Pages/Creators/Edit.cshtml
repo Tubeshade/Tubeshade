@@ -1,0 +1,12 @@
+﻿@page "~/Creators/{creatorId:guid}/Edit/{handler?}"
+@model Edit
+@{
+    ViewData["Title"] = Model.Entity.Name;
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="Model"/>
+}
+
+<partial name="Creators/_EditCreator" for="EditCreator"/>

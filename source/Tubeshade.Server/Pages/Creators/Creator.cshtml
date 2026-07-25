@@ -1,0 +1,23 @@
+﻿@page "~/Creators/{creatorId:guid}/{handler?}"
+@model Creator
+@{
+    ViewData["Title"] = Model.Entity.Name;
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="Model"/>
+}
+
+<div class="d-flex justify-content-between">
+    <h2>@Model.Entity.Name</h2>
+
+    <a asp-page="/Creators/Edit" asp-route-creatorId="@Model.CreatorId"
+       class="btn btn-success my-1" title="@SharedResources.Button_UpdateCreator">
+        <span class="visually-hidden">@SharedResources.Button_UpdateCreator</span>✎
+    </a>
+</div>
+
+<partial name="Channels/_ChannelFilters" model="Model"/>
+
+<partial name="Channels/_FilteredChannels" model="Model"/>

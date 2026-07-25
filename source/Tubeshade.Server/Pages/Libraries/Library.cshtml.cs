@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Creators;
 using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
@@ -23,19 +25,22 @@ public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
+    private readonly CreatorRepository _creatorRepository;
 
     public Library(
         LibraryRepository repository,
         VideoRepository videoRepository,
         NpgsqlConnection connection,
         ChannelRepository channelRepository,
-        SponsorBlockSegmentRepository segmentRepository)
+        SponsorBlockSegmentRepository segmentRepository,
+        CreatorRepository creatorRepository)
     {
         _repository = repository;
         _videoRepository = videoRepository;
         _connection = connection;
         _channelRepository = channelRepository;
         _segmentRepository = segmentRepository;
+        _creatorRepository = creatorRepository;
     }
 
     /// <inheritdoc />
@@ -68,6 +73,10 @@ public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
+    public Guid? CreatorId { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public SortVideoBy? SortBy { get; set; }
 
     /// <inheritdoc />
@@ -75,9 +84,12 @@ public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
     public SortDirection? SortDirection { get; set; }
 
     /// <inheritdoc />
+    public List<CreatorEntity> Creators { get; private set; } = [];
+
+    /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; private set; } = null!;
 
-    public LibraryEntity Entity { get; set; } = null!;
+    public LibraryEntity Entity { get; private set; } = null!;
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
@@ -86,8 +98,8 @@ public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
 
         Entity = await _repository.GetAsync(LibraryId, userId, cancellationToken);
         var videos = await _videoRepository.GetFilteredDetailed(parameters, cancellationToken);
-
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);
+        Creators = await _creatorRepository.GetAsync(userId, cancellationToken);
 
         var videoIds = videos.Select(video => video.Id).ToArray();
         var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);

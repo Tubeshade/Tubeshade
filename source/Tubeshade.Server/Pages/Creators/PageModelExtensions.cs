@@ -1,18 +1,17 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Tubeshade.Data.Media.Videos;
+using Tubeshade.Data.Media.Creators;
 using Tubeshade.Server.Pages.Shared;
 
-namespace Tubeshade.Server.Pages.Videos;
+namespace Tubeshade.Server.Pages.Creators;
 
 public static class PageModelExtensions
 {
-    public static VideoParameters GetVideoParameters<TPage>(
+    public static CreatorParameters GetCreatorParameters<TPage>(
         this TPage pageModel,
         Guid userId,
-        Guid? libraryId,
-        Guid? channelId)
-        where TPage : PageModel, IVideoPage
+        Guid? libraryId)
+        where TPage : PageModel, ICreatorPage
     {
         pageModel.ApplyDefaultFilters(pageModel);
 
@@ -24,17 +23,11 @@ public static class PageModelExtensions
         {
             UserId = userId,
             LibraryId = libraryId,
-            CreatorId = pageModel.CreatorId,
-            ChannelId = channelId,
             Limit = pageSize,
             Offset = offset,
-            Viewed = pageModel.Viewed,
             Query = pageModel.Query,
-            Type = pageModel.Type,
-            WithFiles = pageModel.WithFiles,
-            Availability = pageModel.Availability,
-            SortBy = pageModel.SortBy ?? Defaults.VideoOrder,
-            SortDirection = pageModel.SortDirection ?? Defaults.VideoDirection,
+            SortBy = pageModel.SortBy ?? Defaults.CreatorOrder,
+            SortDirection = pageModel.SortDirection ?? Defaults.CreatorDirection,
         };
     }
 }

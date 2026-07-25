@@ -10,6 +10,7 @@
                     @if (Model.Channel.Thumbnails is not [])
                     {
                         <img class="img-fluid card-img"
+                             style="aspect-ratio: 1; height: 160px"
                              loading="lazy" decoding="async"
                              alt="@Model.Channel.Name" title="@Model.Channel.Name"
                              src="@Model.GetThumbnailSource(Url)" srcset="@Model.GetThumbnailSourceSet(Url)"

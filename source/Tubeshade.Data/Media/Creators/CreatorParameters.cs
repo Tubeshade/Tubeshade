@@ -2,9 +2,9 @@
 using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.AccessControl;
 
-namespace Tubeshade.Data.Media.Channels;
+namespace Tubeshade.Data.Media.Creators;
 
-public sealed class ChannelParameters : IAccessParameters, IPaginatedParameters, ISortingParameters<SortChannelBy>
+public sealed class CreatorParameters : IAccessParameters, IPaginatedParameters, ISortingParameters<SortCreatorBy>
 {
     /// <inheritdoc />
     public Access Access => Access.Read;
@@ -17,18 +17,12 @@ public sealed class ChannelParameters : IAccessParameters, IPaginatedParameters,
 
     public required Guid UserId { get; init; }
 
-    public Guid? Id { get; init; }
-
     public Guid? LibraryId { get; init; }
-
-    public Guid? CreatorId { get; set; }
 
     public string? Query { get; init; }
 
-    public ExternalAvailability? Availability { get; init; }
-
     /// <inheritdoc />
-    public required SortChannelBy SortBy { get; init; }
+    public required SortCreatorBy SortBy { get; init; }
 
     /// <inheritdoc />
     public required SortDirection SortDirection { get; init; }

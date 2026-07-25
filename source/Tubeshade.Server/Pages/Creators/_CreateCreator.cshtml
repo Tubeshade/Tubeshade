@@ -1,0 +1,34 @@
+﻿@model CreateCreatorModel
+
+<form method="post" class="row g-3 mb-3">
+
+    <div class="col-sm-6">
+        <label class="form-label" asp-for="Name">
+            @SharedResources.Creators_Form_Name
+        </label>
+        <input class="form-control" asp-for="Name" type="text"/>
+        <span class="form-text text-danger" asp-validation-for="Name"></span>
+    </div>
+
+    <div class="col-sm-6">
+        <label class="form-label" asp-for="PrimaryChannelId">
+            @SharedResources.Creators_Form_PrimaryChannel
+        </label>
+        <select class="form-control form-select" asp-for="PrimaryChannelId">
+            @foreach (var channel in Model.Channels)
+            {
+                <option value="@channel.Id" selected="@(channel.Id == Model.PrimaryChannelId)">
+                    @channel.Name
+                </option>
+            }
+        </select>
+        <span class="form-text text-danger" asp-validation-for="PrimaryChannelId"></span>
+    </div>
+
+    <div class="col-12 col-sm-4 col-lg-3 col-xxl-2">
+        <button class="btn btn-success w-100" type="submit">
+            @SharedResources.Button_CreateCreator
+        </button>
+    </div>
+
+</form>

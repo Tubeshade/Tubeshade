@@ -96,6 +96,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create creator.
+        /// </summary>
+        public static string Button_CreateCreator {
+            get {
+                return ResourceManager.GetString("Button_CreateCreator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create library.
         /// </summary>
         public static string Button_CreateLibrary {
@@ -231,6 +240,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Update creator.
+        /// </summary>
+        public static string Button_UpdateCreator {
+            get {
+                return ResourceManager.GetString("Button_UpdateCreator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Update preferences.
         /// </summary>
         public static string Button_UpdatePreferences {
@@ -330,6 +348,60 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} channels.
+        /// </summary>
+        public static string Creator_Channels {
+            get {
+                return ResourceManager.GetString("Creator_Channels", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creators.
+        /// </summary>
+        public static string Creators {
+            get {
+                return ResourceManager.GetString("Creators", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a creator.
+        /// </summary>
+        public static string Creators_Create {
+            get {
+                return ResourceManager.GetString("Creators_Create", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Channels.
+        /// </summary>
+        public static string Creators_Form_Channels {
+            get {
+                return ResourceManager.GetString("Creators_Form_Channels", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string Creators_Form_Name {
+            get {
+                return ResourceManager.GetString("Creators_Form_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Primary Channel.
+        /// </summary>
+        public static string Creators_Form_PrimaryChannel {
+            get {
+                return ResourceManager.GetString("Creators_Form_PrimaryChannel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Default.
         /// </summary>
         public static string Default {
@@ -416,6 +488,24 @@ namespace Tubeshade.Server.Resources {
         public static string Filters_Channels_All {
             get {
                 return ResourceManager.GetString("Filters_Channels_All", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creator.
+        /// </summary>
+        public static string Filters_Creator {
+            get {
+                return ResourceManager.GetString("Filters_Creator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to All creators.
+        /// </summary>
+        public static string Filters_Creators_All {
+            get {
+                return ResourceManager.GetString("Filters_Creators_All", resourceCulture);
             }
         }
         
@@ -542,6 +632,60 @@ namespace Tubeshade.Server.Resources {
         public static string Filters_SortChannelBy_video_count {
             get {
                 return ResourceManager.GetString("Filters_SortChannelBy_video_count", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sort By.
+        /// </summary>
+        public static string Filters_SortCreatorBy {
+            get {
+                return ResourceManager.GetString("Filters_SortCreatorBy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Channels.
+        /// </summary>
+        public static string Filters_SortCreatorBy_channel_count {
+            get {
+                return ResourceManager.GetString("Filters_SortCreatorBy_channel_count", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Created at.
+        /// </summary>
+        public static string Filters_SortCreatorBy_created_at {
+            get {
+                return ResourceManager.GetString("Filters_SortCreatorBy_created_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Modified at.
+        /// </summary>
+        public static string Filters_SortCreatorBy_modified_at {
+            get {
+                return ResourceManager.GetString("Filters_SortCreatorBy_modified_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string Filters_SortCreatorBy_name {
+            get {
+                return ResourceManager.GetString("Filters_SortCreatorBy_name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Random.
+        /// </summary>
+        public static string Filters_SortCreatorBy_random {
+            get {
+                return ResourceManager.GetString("Filters_SortCreatorBy_random", resourceCulture);
             }
         }
         

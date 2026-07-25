@@ -1,0 +1,91 @@
+﻿- banner:
+  - navigation:
+    - link "Tubeshade":
+      - /url: /
+    - list:
+      - listitem:
+        - button "Libraries"
+      - listitem:
+        - link "Creators":
+          - /url: /Creators
+      - listitem:
+        - link "Channels":
+          - /url: /Channels
+      - listitem:
+        - link "Downloads":
+          - /url: /Downloads
+      - listitem:
+        - link "Tasks":
+          - /url: /Tasks
+    - list:
+      - listitem:
+        - link "Account":
+          - /url: /Identity/Account/Manage
+      - listitem:
+        - button "Logout"
+- main:
+  - heading "Foo" [level=2]
+  - link "Update creator ✎":
+    - /url: /Creators/Guid_1/Edit
+  - search:
+    - searchbox "Search"
+    - combobox "Availability":
+      - option "Any availability" [selected]
+      - option "Not available"
+      - option "Private"
+      - option "Public"
+    - combobox "Sort by":
+      - option "Created"
+      - option "Modified"
+      - option "Name" [selected]
+      - option "Random"
+      - option "Subscribed"
+      - option "Subscribers"
+      - option "Videos"
+    - combobox "Sort direction":
+      - option "Ascending" [selected]
+      - option "Descending"
+    - spinbutton "Page size"
+    - button "Search 🔎︎"
+    - link "Create channel +":
+      - /url: /Channels/Create
+  - link "Channel 1":
+    - /url: /Libraries/Guid_2/Channels/Guid_3
+  - heading "Channel 1" [level=5]
+  - link "Not available":
+    - /url: Channel 1
+  - text: 0 videos
+  - group:
+    - button "Subscribe"
+    - button "Scan"
+  - link "Channel 4":
+    - /url: /Libraries/Guid_2/Channels/Guid_4
+  - heading "Channel 4" [level=5]
+  - link "Not available":
+    - /url: Channel 4
+  - text: 0 videos
+  - group:
+    - button "Subscribe"
+    - button "Scan"
+  - link "Channel 5":
+    - /url: /Libraries/Guid_2/Channels/Guid_5
+  - heading "Channel 5" [level=5]
+  - link "Not available":
+    - /url: Channel 5
+  - text: 0 videos
+  - group:
+    - button "Subscribe"
+    - button "Scan"
+  - navigation:
+    - text: Showing 1 - 3 from 3
+    - list:
+      - listitem:
+        - link "First":
+          - /url: /Creators/Guid_1?SortBy=name&SortDirection=ASC&PageIndex=0
+      - listitem:
+        - link "1":
+          - /url: /Creators/Guid_1?SortBy=name&SortDirection=ASC&PageIndex=0
+      - listitem:
+        - link "Last":
+          - /url: /Creators/Guid_1?SortBy=name&SortDirection=ASC&PageIndex=0
+- contentinfo: © 2025 - 2026 Tubeshade | v0.1.8

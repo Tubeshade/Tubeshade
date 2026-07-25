@@ -6,6 +6,9 @@
       - listitem:
         - button "Bibliotēkas"
       - listitem:
+        - link "Veidotāji":
+          - /url: /Creators
+      - listitem:
         - link "Kanāli":
           - /url: /Channels
       - listitem:

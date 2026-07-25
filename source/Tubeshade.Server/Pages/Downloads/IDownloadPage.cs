@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Creators;
 using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Pages.Shared;
 using Tubeshade.Server.Pages.Videos;
@@ -13,6 +14,8 @@ namespace Tubeshade.Server.Pages.Downloads;
 
 public interface IDownloadPage : IPaginatedDataPage<VideoModel>
 {
+    Guid? CreatorId { get; set; }
+
     Guid? ChannelId { get; set; }
 
     string? Query { get; set; }
@@ -25,9 +28,11 @@ public interface IDownloadPage : IPaginatedDataPage<VideoModel>
 
     List<ChannelEntity> Channels { get; }
 
-    public SortVideoBy? SortBy { get; set; }
+    SortVideoBy? SortBy { get; set; }
 
-    public SortDirection? SortDirection { get; set; }
+    SortDirection? SortDirection { get; set; }
+
+    List<CreatorEntity> Creators { get; }
 
     Dictionary<string, string?> GetRouteValues(int pageIndex) => new()
     {
@@ -36,6 +41,7 @@ public interface IDownloadPage : IPaginatedDataPage<VideoModel>
         { nameof(Type), Type?.Name },
         { nameof(WithFiles), WithFiles?.ToString() ?? " " },
         { nameof(Availability), Availability?.Name },
+        { nameof(CreatorId), CreatorId?.ToString() },
         { nameof(SortBy), SortBy?.Name ?? " " },
         { nameof(SortDirection), SortDirection?.Name ?? " " },
         { nameof(PageSize), PageSize?.ToString() },

@@ -11,6 +11,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Creators;
 using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Pages.Shared;
@@ -25,19 +26,22 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
     private readonly ChannelRepository _channelRepository;
     private readonly LibraryRepository _libraryRepository;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
+    private readonly CreatorRepository _creatorRepository;
 
     public IndexModel(
         NpgsqlConnection connection,
         VideoRepository videoRepository,
         ChannelRepository channelRepository,
         LibraryRepository libraryRepository,
-        SponsorBlockSegmentRepository segmentRepository)
+        SponsorBlockSegmentRepository segmentRepository,
+        CreatorRepository creatorRepository)
     {
         _connection = connection;
         _videoRepository = videoRepository;
         _channelRepository = channelRepository;
         _libraryRepository = libraryRepository;
         _segmentRepository = segmentRepository;
+        _creatorRepository = creatorRepository;
     }
 
     /// <inheritdoc />
@@ -70,6 +74,10 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
+    public Guid? CreatorId { get; set; }
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
     public SortVideoBy? SortBy { get; set; }
 
     /// <inheritdoc />
@@ -82,6 +90,9 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
     /// <inheritdoc />
     public List<LibraryEntity> Libraries { get; private set; } = null!;
 
+    /// <inheritdoc />
+    public List<CreatorEntity> Creators { get; private set; } = [];
+
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
@@ -91,6 +102,7 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
 
         var videos = await _videoRepository.GetFilteredDetailed(parameters, cancellationToken);
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);
+        Creators = await _creatorRepository.GetAsync(userId, cancellationToken);
 
         var videoIds = videos.Select(video => video.Id).ToArray();
         var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);

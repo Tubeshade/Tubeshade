@@ -519,4 +519,52 @@
     <data name="Filters_SortVideoBy_query" xml:space="preserve">
         <value>Relevance</value>
     </data>
+    <data name="Button_CreateCreator" xml:space="preserve">
+        <value>Create creator</value>
+    </data>
+    <data name="Button_UpdateCreator" xml:space="preserve">
+        <value>Update creator</value>
+    </data>
+    <data name="Creators_Form_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Creators_Form_PrimaryChannel" xml:space="preserve">
+        <value>Primary Channel</value>
+    </data>
+    <data name="Creators_Form_Channels" xml:space="preserve">
+        <value>Channels</value>
+    </data>
+    <data name="Filters_SortCreatorBy" xml:space="preserve">
+        <value>Sort By</value>
+    </data>
+    <data name="Filters_SortCreatorBy_random" xml:space="preserve">
+        <value>Random</value>
+    </data>
+    <data name="Filters_SortCreatorBy_created_at" xml:space="preserve">
+        <value>Created at</value>
+    </data>
+    <data name="Filters_SortCreatorBy_modified_at" xml:space="preserve">
+        <value>Modified at</value>
+    </data>
+    <data name="Filters_SortCreatorBy_channel_count" xml:space="preserve">
+        <value>Channels</value>
+    </data>
+    <data name="Filters_SortCreatorBy_name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Creator_Channels" xml:space="preserve">
+        <value>{0} channels</value>
+    </data>
+    <data name="Creators_Create" xml:space="preserve">
+        <value>Create a creator</value>
+    </data>
+    <data name="Creators" xml:space="preserve">
+        <value>Creators</value>
+    </data>
+    <data name="Filters_Creator" xml:space="preserve">
+        <value>Creator</value>
+    </data>
+    <data name="Filters_Creators_All" xml:space="preserve">
+        <value>All creators</value>
+    </data>
 </root>

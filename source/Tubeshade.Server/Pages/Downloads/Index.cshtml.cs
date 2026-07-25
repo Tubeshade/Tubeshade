@@ -13,6 +13,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Creators;
 using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
@@ -31,6 +32,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
     private readonly IClock _clock;
     private readonly SponsorBlockSegmentRepository _segmentRepository;
     private readonly TaskService _taskService;
+    private readonly CreatorRepository _creatorRepository;
 
     public Index(
         NpgsqlConnection connection,
@@ -40,7 +42,8 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         ChannelRepository channelRepository,
         IClock clock,
         SponsorBlockSegmentRepository segmentRepository,
-        TaskService taskService)
+        TaskService taskService,
+        CreatorRepository creatorRepository)
     {
         _connection = connection;
         _videoRepository = videoRepository;
@@ -49,6 +52,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         _clock = clock;
         _segmentRepository = segmentRepository;
         _taskService = taskService;
+        _creatorRepository = creatorRepository;
     }
 
     /// <inheritdoc />
@@ -84,7 +88,14 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
     public SortDirection? SortDirection { get; set; }
 
     /// <inheritdoc />
+    public List<CreatorEntity> Creators { get; private set; } = [];
+
+    /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; private set; } = null!;
+
+    /// <inheritdoc />
+    [BindProperty(SupportsGet = true)]
+    public Guid? CreatorId { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public Guid? ChannelId { get; set; }
@@ -92,7 +103,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
     /// <inheritdoc />
     public List<LibraryEntity> Libraries { get; private set; } = [];
 
-    public List<ChannelEntity> Channels { get; set; } = [];
+    public List<ChannelEntity> Channels { get; private set; } = [];
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
@@ -146,6 +157,8 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         Channels = (await _channelRepository.GetAsync(userId, cancellationToken))
             .OrderBy(channel => channel.Name)
             .ToList();
+
+        Creators = await _creatorRepository.GetAsync(userId, cancellationToken);
 
         var videos = await _videoRepository.GetDownloadableVideos(parameters, cancellationToken);
 

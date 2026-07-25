@@ -24,6 +24,7 @@ public static class PageModelExtensions
         {
             UserId = userId,
             LibraryId = libraryId,
+            CreatorId = pageModel.CreatorId,
             ChannelId = channelId,
             Limit = pageSize,
             Offset = offset,

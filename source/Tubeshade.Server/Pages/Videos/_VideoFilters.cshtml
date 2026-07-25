@@ -55,6 +55,20 @@
             </select>
         </div>
 
+        @if (Model.Creators is not [])
+        {
+            <div class="col-12">
+                <label asp-for="CreatorId" hidden="hidden">@SharedResources.Filters_Creator</label>
+                <select asp-for="CreatorId" class="form-select">
+                    <option value="">@SharedResources.Filters_Creators_All</option>
+                    @foreach (var creator in Model.Creators)
+                    {
+                        <option value="@creator.Id">@creator.Name</option>
+                    }
+                </select>
+            </div>
+        }
+
         <div class="col-12">
             <label asp-for="SortBy" hidden="hidden">@SharedResources.Filters_SortVideoBy</label>
             <select asp-for="SortBy" class="form-select">

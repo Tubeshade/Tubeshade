@@ -1,0 +1,76 @@
+﻿@model ICreatorPage
+
+<div class="row g-2 mb-2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))">
+    @foreach (var (index, creator) in Model.PageData.Data.Index())
+    {
+        <div class="col">
+            <div class="card" id="creator-@creator.Id">
+                <div class="row g-0">
+                    <div class="col-auto d-flex justify-content-center align-items-center"
+                         style="aspect-ratio: 1; height: 160px">
+                        <a asp-page="/Creators/Creator" asp-route-creatorId="@creator.Id"
+                           class="@(creator.Thumbnails is [] ? "tubeshade-missing-thumbnail" : string.Empty)">
+                            @if (creator.Thumbnails is not [])
+                            {
+                                <img class="img-fluid card-img"
+                                     style="aspect-ratio: 1; height: 160px"
+                                     loading="lazy" decoding="async" fetchpriority="@(index < 7 ? "high" : "low")"
+                                     alt="@creator.Name" title="@creator.Name"
+                                     src="@creator.Thumbnails.GetSource(Url)" srcset="@creator.Thumbnails.GetSourceSet(Url)"
+                                     sizes="auto, 160px"/>
+                            }
+                            else
+                            {
+                                @creator.Name
+                            }
+                        </a>
+                    </div>
+
+                    <div class="col">
+                        <div class="card-body p-2 d-flex flex-column">
+                            <h6 class="card-title text-truncate mb-0" title="@creator.Name">@creator.Name</h6>
+
+                            <div class="card-text d-flex flex-column gap-1 justify-content-center flex-fill">
+                                <div class="d-flex flex-row justify-content-between">
+                                    <span>@string.Format(SharedResources.Creator_Channels, creator.ChannelCount)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<nav class="text-center">
+    <span>
+        @(string.Format(SharedResources.Pagination_PageSummary, Model.PageData.StartIndex, Model.PageData.EndIndex, Model.PageData.TotalCount))
+    </span>
+
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
+            <a asp-all-route-data="@(Model.GetRouteValues(0))"
+               class="page-link">
+                @SharedResources.Pagination_First
+            </a>
+        </li>
+
+        @foreach (var index in Model.PageData.DisplayedPages)
+        {
+            <li class="page-item @(index - 1 == Model.PageData.Page ? "active" : string.Empty)">
+                <a asp-all-route-data="@(Model.GetRouteValues(index - 1))"
+                   class="page-link" aria-current="page">
+                    @index
+                </a>
+            </li>
+        }
+
+        <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
+            <a asp-all-route-data="@(Model.GetRouteValues(Model.PageData.PageCount - 1))"
+               class="page-link">
+                @SharedResources.Pagination_Last
+            </a>
+        </li>
+    </ul>
+</nav>

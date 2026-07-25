@@ -1,0 +1,12 @@
+﻿@page "~/Creators/Create/{handler?}"
+@model Create
+@{
+    ViewData["Title"] = SharedResources.Creators_Create;
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="Model"/>
+}
+
+<partial name="Creators/_CreateCreator" for="CreateCreator"/>

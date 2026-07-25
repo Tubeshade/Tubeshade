@@ -13,6 +13,8 @@ public sealed class VideoParameters : IAccessParameters, IPaginatedParameters, I
 
     public Guid? LibraryId { get; init; }
 
+    public Guid? CreatorId { get; init; }
+
     public Guid? ChannelId { get; init; }
 
     /// <inheritdoc />

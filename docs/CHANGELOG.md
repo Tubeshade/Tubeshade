@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Added
+
+- Creators for grouping channels
+  ([#108](https://github.com/Tubeshade/Tubeshade/issues/108))
+
 ## [0.1.8] - 2026-07-23
 
 ### Added

@@ -251,6 +251,7 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
              WHERE {AccessFilter}
                AND (@{nameof(parameters.Id)} IS NULL OR channels.id = @{nameof(parameters.Id)})
                AND (@{nameof(parameters.LibraryId)} IS NULL OR EXISTS(SELECT 1 FROM media.library_channels WHERE library_id = @{nameof(parameters.LibraryId)} AND channel_id = channels.id))
+               AND (@{nameof(parameters.CreatorId)} IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_id = @{nameof(parameters.CreatorId)} AND channel_id = channels.id))
                AND (@{nameof(parameters.Query)} IS NULL OR channels.name @@ websearch_to_tsquery('english', @{nameof(parameters.Query)}))
                AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR channels.availability = @{nameof(parameters.Availability)})
              ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, channels.id

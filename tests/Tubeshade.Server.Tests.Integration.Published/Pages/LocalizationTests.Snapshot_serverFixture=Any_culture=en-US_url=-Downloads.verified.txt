@@ -6,6 +6,9 @@
       - listitem:
         - button "Libraries"
       - listitem:
+        - link "Creators":
+          - /url: /Creators
+      - listitem:
         - link "Channels":
           - /url: /Channels
       - listitem:
