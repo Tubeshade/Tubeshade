@@ -59,6 +59,7 @@
       - option "Augoši"
       - option "Dilstoši" [selected]
     - button "🔎︎"
+  - list
   - navigation:
     - text: Redzams 1 - 0 no 0
     - list:

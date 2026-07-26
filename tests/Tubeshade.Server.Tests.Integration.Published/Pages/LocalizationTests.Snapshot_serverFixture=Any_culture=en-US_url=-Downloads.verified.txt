@@ -59,6 +59,7 @@
       - option "Ascending"
       - option "Descending" [selected]
     - button "🔎︎"
+  - list
   - navigation:
     - text: Showing 1 - 0 from 0
     - list:
