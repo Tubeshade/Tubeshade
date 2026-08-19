@@ -342,11 +342,16 @@ public sealed class YoutubeIndexingService
                 continue;
             }
 
-            var formatIds = data.FormatId!.Split('+');
+            if (data.FormatId is not { } formatId)
+            {
+                throw new InvalidOperationException($"Video format data is missing FormatId for filter '{format}'");
+            }
+
+            var formatIds = formatId.Split('+');
             var formats = formatIds
-                .Select(formatId =>
+                .Select(id =>
                 {
-                    var matching = data.Formats.Where(formatData => formatData.FormatId == formatId).ToArray();
+                    var matching = data.Formats.Where(formatData => formatData.FormatId == id).ToArray();
                     if (matching is [var single])
                     {
                         return single;
@@ -354,10 +359,10 @@ public sealed class YoutubeIndexingService
 
                     if (matching is [])
                     {
-                        throw new InvalidOperationException($"Could not find format by id {formatId}");
+                        throw new InvalidOperationException($"Could not find format by id {id}");
                     }
 
-                    throw new InvalidOperationException($"Found multiple formats by id {formatId}");
+                    throw new InvalidOperationException($"Found multiple formats by id {id}");
                 })
                 .ToArray();
 
@@ -389,12 +394,16 @@ public sealed class YoutubeIndexingService
             var matchingFiles = files
                 .Where(file =>
                     file.Width == videoFormat.Width &&
-                    Math.Round(file.Framerate) >= (decimal)Math.Round(videoFormat.FrameRate!.Value))
+                    Math.Round(file.Framerate) >= (decimal)Math.Round(videoFormat.FrameRate ?? throw new InvalidOperationException("Video format is missing frame rate")))
                 .ToArray();
 
             if (matchingFiles is [])
             {
                 _logger.CreatingFileForFormat(format);
+                if (videoFormat is not { Width: { } width, Height: { } height, FrameRate: { } frameRate })
+                {
+                    throw new InvalidOperationException("Video format data is missing required data");
+                }
 
                 var fileId = await _videoFileRepository.AddAsync(
                     new VideoFileEntity
@@ -403,11 +412,11 @@ public sealed class YoutubeIndexingService
                         ModifiedByUserId = userId,
                         OwnerId = library.OwnerId,
                         VideoId = video.Id,
-                        StoragePath = $"video_{videoFormat.Height}.{containerType.Name}",
+                        StoragePath = $"video_{height}.{containerType.Name}",
                         Type = containerType,
-                        Width = videoFormat.Width!.Value,
-                        Height = videoFormat.Height!.Value,
-                        Framerate = (decimal)videoFormat.FrameRate!.Value,
+                        Width = width,
+                        Height = height,
+                        Framerate = (decimal)frameRate,
                     },
                     transaction);
 
