@@ -1,6 +1,7 @@
 ﻿using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Media.Creators;
+using Tubeshade.Data.Media.Playlists;
 using Tubeshade.Data.Media.Videos;
 
 namespace Tubeshade.Server.Pages.Shared;
@@ -21,4 +22,7 @@ internal static class Defaults
 
     internal static readonly SortCreatorBy CreatorOrder = SortCreatorBy.CreatorName;
     internal static readonly SortDirection CreatorDirection = SortDirection.Ascending;
+
+    internal static readonly SortPlaylistBy PlaylistOrder = SortPlaylistBy.PlaylistName;
+    internal static readonly SortDirection PlaylistDirection = SortDirection.Ascending;
 }

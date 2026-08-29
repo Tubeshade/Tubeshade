@@ -15,6 +15,8 @@ public sealed class TaskModel
 
     public required Guid? ChannelId { get; init; }
 
+    public required Guid? PlaylistId { get; init; }
+
     public required Guid? VideoId { get; init; }
 
     public required string? Url { get; init; }

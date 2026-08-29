@@ -1,0 +1,12 @@
+﻿@page "~/Creators/{handler?}"
+@model Index
+@{
+    ViewData["Title"] = SharedResources.Creators;
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="Model"/>
+}
+
+<partial name="Creators/_Creators" model="Model"/>

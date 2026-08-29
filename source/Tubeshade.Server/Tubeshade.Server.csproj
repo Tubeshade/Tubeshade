@@ -48,6 +48,10 @@
         </Compile>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Pages\Libraries\Playlists\" />
+    </ItemGroup>
+
     <Target Name="JavascriptLibraries"
             BeforeTargets="Build;Publish"
             Inputs="package-lock.json"

@@ -324,4 +324,28 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(107, Information, "Deleted {Count} old tasks")]
     internal static partial void DeletedOldTasks(this ILogger logger, int count);
+
+    [LoggerMessage(108, Information, "Not creating a new playlist scan task for {PlaylistId} because at least one already exists")]
+    internal static partial void SkippingPlaylistScan(this ILogger logger, Guid playlistId);
+
+    [LoggerMessage(109, Debug, "Indexing playlist {ExternalId}")]
+    internal static partial void IndexingPlaylist(this ILogger logger, string externalId);
+
+    [LoggerMessage(110, Information, "Creating playlist image")]
+    internal static partial void CreatingPlaylistImage(this ILogger logger);
+
+    [LoggerMessage(111, Debug, "Playlist image already exists")]
+    internal static partial void ExistingPlaylistImage(this ILogger logger);
+
+    [LoggerMessage(112, Debug, "Creating playlist {Name} ({ExternalId})")]
+    internal static partial void CreatingPlaylist(this ILogger logger, string name, string externalId);
+
+    [LoggerMessage(113, Debug, "Scanning playlist {PlaylistId} with {Count} entries")]
+    internal static partial void ScanningPlaylist(this ILogger logger, Guid playlistId, int count);
+
+    [LoggerMessage(114, Warning, "Failed to index playlist entry {Url}: {Error}")]
+    internal static partial void PlaylistScanFailedVideo(this ILogger logger, string url, string error);
+
+    [LoggerMessage(115, Debug, "Scanning {Count} subscribed playlists")]
+    internal static partial void ScanningSubscribedPlaylists(this ILogger logger, int count);
 }

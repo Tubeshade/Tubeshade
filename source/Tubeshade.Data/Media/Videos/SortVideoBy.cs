@@ -22,6 +22,14 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, ISortBy, IParsable<Sor
 
     private const string QueryExpression = "ts_rank(searchable_index_value, query)";
 
+    private const string PlaylistOrderExpression =
+        // lang=sql
+        """
+        (SELECT playlist_videos."order"
+         FROM media.playlist_videos
+         WHERE playlist_videos.video_id = videos.id AND playlist_videos.playlist_id = @PlaylistId)
+        """;
+
     // Probably going to regret this at some point, but ORDER BY random() works for the current table sizes
     public static readonly SortVideoBy Random = new(Names.Random, "random()", 1);
     public static readonly SortVideoBy CreatedAt = new(Names.CreatedAt, 2);
@@ -35,6 +43,9 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, ISortBy, IParsable<Sor
     public static readonly SortVideoBy StorageSize = new(Names.StorageSize, StorageSizeExpression, 10);
     public static readonly SortVideoBy Framerate = new(Names.Framerate, FramerateExpression, 11);
     public static readonly SortVideoBy Query = new(Names.Query, QueryExpression, 12);
+
+    /// <summary>Only meaningful when the videos are filtered by <see cref="VideoParameters.PlaylistId"/>.</summary>
+    public static readonly SortVideoBy PlaylistOrder = new(Names.PlaylistOrder, PlaylistOrderExpression, 13);
 
     /// <inheritdoc />
     public string SortExpression { get; }
@@ -65,6 +76,7 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, ISortBy, IParsable<Sor
         public const string StorageSize = "storage_size";
         public const string Framerate = "framerate";
         public const string Query = "query";
+        public const string PlaylistOrder = "playlist_order";
     }
 
     /// <inheritdoc />

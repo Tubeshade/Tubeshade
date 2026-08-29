@@ -29,6 +29,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                 filtered_tasks.type,
                 filtered_tasks.library_id,
                 filtered_tasks.channel_id,
+                filtered_tasks.playlist_id,
                 filtered_tasks.video_id,
                 filtered_tasks.url,
                 task_runs.id                         AS RunId,
@@ -57,6 +58,9 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                     WHEN filtered_tasks.type = 'scan_channel' THEN
                         (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
 
+                    WHEN filtered_tasks.type = 'scan_playlist' THEN
+                        (SELECT name FROM media.playlists WHERE id = filtered_tasks.playlist_id)
+
                     WHEN filtered_tasks.type = 'youtube_feed_update' THEN
                         (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
 
@@ -68,6 +72,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                       tasks.type,
                       tasks.library_id,
                       tasks.channel_id,
+                      tasks.playlist_id,
                       tasks.video_id,
                       tasks.url,
                       tasks.created_at,
@@ -104,8 +109,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos, payload) 
-         VALUES (@{nameof(TaskEntity.CreatedByUserId)}, @{nameof(TaskEntity.ModifiedByUserId)}, @{nameof(TaskEntity.OwnerId)}, @{nameof(TaskEntity.Type)}, @{nameof(TaskEntity.UserId)}, @{nameof(TaskEntity.LibraryId)}, @{nameof(TaskEntity.ChannelId)}, @{nameof(TaskEntity.VideoId)}, @{nameof(TaskEntity.Url)}, @{nameof(TaskEntity.AllVideos)}, @{nameof(TaskEntity.Payload)})
+         INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, playlist_id, video_id, url, all_videos, payload)
+         VALUES (@{nameof(TaskEntity.CreatedByUserId)}, @{nameof(TaskEntity.ModifiedByUserId)}, @{nameof(TaskEntity.OwnerId)}, @{nameof(TaskEntity.Type)}, @{nameof(TaskEntity.UserId)}, @{nameof(TaskEntity.LibraryId)}, @{nameof(TaskEntity.ChannelId)}, @{nameof(TaskEntity.PlaylistId)}, @{nameof(TaskEntity.VideoId)}, @{nameof(TaskEntity.Url)}, @{nameof(TaskEntity.AllVideos)}, @{nameof(TaskEntity.Payload)})
          RETURNING id;
          """;
 
@@ -122,6 +127,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                user_id,
                library_id,
                channel_id,
+               playlist_id,
                video_id,
                url,
                all_videos,
@@ -136,6 +142,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              user_id = @{nameof(TaskEntity.UserId)},
              library_id = @{nameof(TaskEntity.LibraryId)},
              channel_id = @{nameof(TaskEntity.ChannelId)},
+             playlist_id = @{nameof(TaskEntity.PlaylistId)},
              video_id = @{nameof(TaskEntity.VideoId)},
              url = @{nameof(TaskEntity.Url)},
              all_videos = @{nameof(TaskEntity.AllVideos)},
@@ -387,6 +394,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                  OR (tasks.channel_id IN (SELECT id FROM matching_channels))
                  OR (@{nameof(parameters.VideoId)} IS NOT NULL AND tasks.video_id = @{nameof(parameters.VideoId)})
                  OR (@{nameof(parameters.ChannelId)} IS NOT NULL AND tasks.channel_id = @{nameof(parameters.ChannelId)})
+                 OR (@{nameof(parameters.PlaylistId)} IS NOT NULL AND tasks.playlist_id = @{nameof(parameters.PlaylistId)})
                  OR (@{nameof(parameters.Url)} IS NOT NULL AND tasks.url = @{nameof(parameters.Url)})
                  OR (@{nameof(parameters.Type)} = tasks.type AND tasks.type = '{TaskType.Names.ReindexVideos}'));
              """,
@@ -421,6 +429,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                          @{nameof(task.UserId)} AS user_id,
                          @{nameof(task.LibraryId)} AS library_id,
                          @{nameof(task.ChannelId)} AS channel_id,
+                         @{nameof(task.PlaylistId)} AS playlist_id,
                          @{nameof(task.VideoId)} AS video_id,
                          @{nameof(task.Url)} AS url,
                          @{nameof(task.AllVideos)} AS all_videos,
@@ -434,10 +443,11 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                                       AND tasks.type = @{nameof(task.Type)}
                                       AND (tasks.video_id IN (SELECT id FROM matching_videos)
                                         OR tasks.url IN (SELECT external_url FROM matching_videos)
-                                       OR (@{nameof(task.Url)} IS NOT NULL AND tasks.url = @{nameof(task.Url)}))))
+                                       OR (@{nameof(task.Url)} IS NOT NULL AND tasks.url = @{nameof(task.Url)})
+                                       OR (@{nameof(task.PlaylistId)} IS NOT NULL AND tasks.playlist_id = @{nameof(task.PlaylistId)}))))
 
-             INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos, payload) 
-             SELECT created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, video_id, url, all_videos, payload FROM new_task
+             INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, playlist_id, video_id, url, all_videos, payload)
+             SELECT created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, playlist_id, video_id, url, all_videos, payload FROM new_task
              RETURNING id;
              """,
             task,

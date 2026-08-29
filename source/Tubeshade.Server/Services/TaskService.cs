@@ -155,6 +155,31 @@ public sealed class TaskService
         await _taskRepository.TriggerTask(taskId, source, userId, transaction);
     }
 
+    public async ValueTask ScanPlaylist(Guid userId, Guid libraryId, Guid playlistId, bool allVideos, TaskSource source)
+    {
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        await ScanPlaylist(userId, libraryId, playlistId, allVideos, source, transaction);
+        await transaction.CommitAsync();
+    }
+
+    public async ValueTask ScanPlaylist(
+        Guid userId,
+        Guid libraryId,
+        Guid playlistId,
+        bool allVideos,
+        TaskSource source,
+        NpgsqlTransaction transaction)
+    {
+        var task = TaskEntity.ScanPlaylist(libraryId, userId, playlistId, allVideos);
+        if (await _taskRepository.TryAddTask(task, transaction) is not { } taskId)
+        {
+            _logger.SkippingPlaylistScan(playlistId);
+            return;
+        }
+
+        await _taskRepository.TriggerTask(taskId, source, userId, transaction);
+    }
+
     public async ValueTask DownloadVideo(Guid userId, Guid libraryId, Guid videoId, TaskSource source)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
@@ -241,6 +266,7 @@ public sealed class TaskService
                     Name = task.Name,
                     LibraryId = task.LibraryId,
                     ChannelId = task.ChannelId,
+                    PlaylistId = task.PlaylistId,
                     VideoId = task.VideoId,
                     Url = task.Url,
                     TotalCount = task.TotalCount,

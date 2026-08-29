@@ -10,6 +10,8 @@ public sealed class BlockingTaskParameters
 
     public required Guid? ChannelId { get; init; }
 
+    public required Guid? PlaylistId { get; init; }
+
     public required TaskType Type { get; init; }
 
     public required Guid RunId { get; init; }
@@ -19,6 +21,7 @@ public sealed class BlockingTaskParameters
         Url = task.Url,
         VideoId = task.VideoId,
         ChannelId = task.ChannelId,
+        PlaylistId = task.PlaylistId,
         Type = task.Type,
         RunId = taskRunId,
     };
