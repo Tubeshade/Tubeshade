@@ -1,0 +1,12 @@
+@page "~/Playlists/Create/{handler?}"
+@model Create
+@{
+    ViewData["Title"] = SharedResources.Playlists_Create;
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="@Model"/>
+}
+
+<partial name="Playlists/_CreatePlaylist" for="CreatePlaylist"/>

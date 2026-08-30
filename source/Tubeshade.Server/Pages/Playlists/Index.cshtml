@@ -1,7 +1,7 @@
-﻿@page "~/Creators/{handler?}"
+﻿@page "~/Playlists/{handler?}"
 @model Index
 @{
-    ViewData["Title"] = SharedResources.Creators;
+    ViewData["Title"] = SharedResources.Playlists;
 }
 
 @section Navigation
@@ -9,4 +9,4 @@
     <partial name="Shared/_Navigation" model="Model"/>
 }
 
-<partial name="Creators/_Creators" model="Model"/>
+<partial name="Playlists/_Playlists" model="Model"/>

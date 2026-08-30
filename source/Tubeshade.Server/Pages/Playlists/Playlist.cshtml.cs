@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Htmx;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Npgsql;
@@ -107,8 +108,7 @@ public sealed class Playlist : PageModel, IVideoPage, INonLibraryPage
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var parameters = this.GetVideoParameters(userId, null, null);
-        // parameters.CreatorId = CreatorId;
+        var parameters = this.GetVideoParameters(userId, null, PlaylistId);
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
@@ -140,8 +140,20 @@ public sealed class Playlist : PageModel, IVideoPage, INonLibraryPage
     }
 
     /// <inheritdoc />
-    public Task<IActionResult> OnPostViewed(string? viewed, Guid videoId)
+    public async Task<IActionResult> OnPostViewed(string? viewed, Guid videoId)
     {
-        throw new NotImplementedException();
+        var userId = User.GetUserId();
+        await using var transaction = await _connection.OpenAndBeginTransaction();
+        if (viewed is not null)
+        {
+            await _videoRepository.MarkAsWatched(videoId, userId, transaction);
+        }
+        else
+        {
+            await _videoRepository.MarkAsNotWatched(videoId, userId, transaction);
+        }
+
+        await transaction.CommitAsync();
+        return StatusCode(StatusCodes.Status200OK);
     }
 }

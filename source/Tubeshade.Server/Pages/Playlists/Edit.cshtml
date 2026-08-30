@@ -1,0 +1,12 @@
+@page "~/Playlists/{playlistId:guid}/Edit/{handler?}"
+@model Edit
+@{
+    ViewData["Title"] = Model.Entity.Name;
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="Model"/>
+}
+
+<partial name="Playlists/_EditPlaylist" for="EditPlaylist"/>

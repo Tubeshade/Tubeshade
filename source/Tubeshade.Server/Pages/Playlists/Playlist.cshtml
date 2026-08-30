@@ -1,4 +1,4 @@
-﻿@page "~/Creators/{creatorId:guid}/{handler?}"
+﻿@page "~/Playlists/{playlistId:guid}/{handler?}"
 @model Playlist
 @{
     ViewData["Title"] = Model.Entity.Name;
@@ -12,12 +12,12 @@
 <div class="d-flex justify-content-between">
     <h2>@Model.Entity.Name</h2>
 
-    <a asp-page="/Creators/Edit" asp-route-creatorId="@Model.CreatorId"
-       class="btn btn-success my-1" title="@SharedResources.Button_UpdateCreator">
-        <span class="visually-hidden">@SharedResources.Button_UpdateCreator</span>✎
+    <a asp-page="/Playlists/Edit" asp-route-playlistId="@Model.PlaylistId"
+       class="btn btn-success my-1" title="@SharedResources.Button_UpdatePlaylist">
+        <span class="visually-hidden">@SharedResources.Button_UpdatePlaylist</span>✎
     </a>
 </div>
 
-<partial name="Channels/_ChannelFilters" model="Model"/>
+<partial name="Videos/_VideoFilters" model="Model"/>
 
-<partial name="Channels/_FilteredChannels" model="Model"/>
+<partial name="Videos/_FilteredVideos" model="Model"/>
