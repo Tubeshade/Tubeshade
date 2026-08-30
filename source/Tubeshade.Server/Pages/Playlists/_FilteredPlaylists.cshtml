@@ -1,0 +1,76 @@
+@model IPlaylistPage
+
+<div class="row g-2 mb-2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(425px, 1fr))">
+    @foreach (var (index, playlist) in Model.PageData.Data.Index())
+    {
+        <div class="col" id="playlist-@playlist.Id">
+            <div class="card">
+                <div class="row g-0">
+                    <div class="col-auto d-flex justify-content-center align-items-center"
+                         style="aspect-ratio: 1; height: 160px">
+                        <a asp-page="/Playlists/Playlist" asp-route-playlistId="@playlist.Id"
+                           class="@(playlist.Thumbnails is [] ? "tubeshade-missing-thumbnail" : string.Empty)">
+                            @if (playlist.Thumbnails is not [])
+                            {
+                                <img class="img-fluid card-img"
+                                     style="aspect-ratio: 1; height: 160px"
+                                     loading="lazy" decoding="async" fetchpriority="@(index < 7 ? "high" : "low")"
+                                     alt="@playlist.Name" title="@playlist.Name"
+                                     src="@playlist.Thumbnails.GetSource(Url)" srcset="@playlist.Thumbnails.GetSourceSet(Url)"
+                                     sizes="auto, 160px"/>
+                            }
+                            else
+                            {
+                                @playlist.Name
+                            }
+                        </a>
+                    </div>
+
+                    <div class="col">
+                        <div class="card-body p-2 d-flex flex-column">
+                            <h6 class="card-title text-truncate mb-0" title="@playlist.Name">@playlist.Name</h6>
+
+                            <div class="card-text d-flex flex-column gap-1 justify-content-center flex-fill">
+                                <div class="d-flex flex-row justify-content-between">
+                                    <span>@string.Format(SharedResources.Playlist_Videos, playlist.VideoCount)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<nav class="text-center">
+    <span>
+        @(string.Format(SharedResources.Pagination_PageSummary, Model.PageData.StartIndex, Model.PageData.EndIndex, Model.PageData.TotalCount))
+    </span>
+
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(Model.PageData.IsFirst ? "disabled" : string.Empty)">
+            <a asp-all-route-data="@(Model.GetRouteValues(0))"
+               class="page-link">
+                @SharedResources.Pagination_First
+            </a>
+        </li>
+
+        @foreach (var index in Model.PageData.DisplayedPages)
+        {
+            <li class="page-item @(index - 1 == Model.PageData.Page ? "active" : string.Empty)">
+                <a asp-all-route-data="@(Model.GetRouteValues(index - 1))"
+                   class="page-link" aria-current="page">
+                    @index
+                </a>
+            </li>
+        }
+
+        <li class="page-item @(Model.PageData.IsLast ? "disabled" : string.Empty)">
+            <a asp-all-route-data="@(Model.GetRouteValues(Model.PageData.PageCount - 1))"
+               class="page-link">
+                @SharedResources.Pagination_Last
+            </a>
+        </li>
+    </ul>
+</nav>

@@ -2,6 +2,7 @@
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Media.Creators;
+using Tubeshade.Data.Media.Playlists;
 using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
@@ -54,6 +55,12 @@ internal static class LocalizationExtensions
     {
         internal string? LocalizedName => Manager
             .GetString($"Filters_{nameof(SortCreatorBy)}_{sortBy.Name}");
+    }
+
+    extension(SortPlaylistBy sortBy)
+    {
+        internal string? LocalizedName => Manager
+            .GetString($"Filters_{nameof(SortPlaylistBy)}_{sortBy.Name}");
     }
 
     extension(TaskSource source)

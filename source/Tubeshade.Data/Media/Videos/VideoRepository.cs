@@ -475,6 +475,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
            AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
            AND (@{nameof(parameters.CreatorId)} IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_channels.channel_id = videos.channel_id AND creator_id = @{nameof(parameters.CreatorId)}))
            AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
+           AND (@{nameof(parameters.PlaylistId)} IS NULL OR EXISTS(SELECT 1 FROM media.playlist_videos WHERE playlist_videos.video_id = videos.id AND playlist_id = @{nameof(parameters.PlaylistId)}))
            AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ query)
            AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
            AND (@{nameof(parameters.Viewed)}::media.view_status IS NULL
@@ -557,6 +558,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
                     AND (@{nameof(parameters.CreatorId)} IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_channels.channel_id = videos.channel_id AND creator_id = @{nameof(parameters.CreatorId)}))
                     AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
+                    AND (@{nameof(parameters.PlaylistId)} IS NULL OR EXISTS(SELECT 1 FROM media.playlist_videos WHERE playlist_videos.video_id = videos.id AND playlist_id = @{nameof(parameters.PlaylistId)}))
                     AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ query)
                     AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
                     AND (@{nameof(parameters.Viewed)}::media.view_status IS NULL

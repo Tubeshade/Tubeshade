@@ -7,4 +7,6 @@ public sealed class UrlIndexingResult
     public required Guid ChannelId { get; init; }
 
     public Guid? VideoId { get; set; }
+
+    public Guid? PlaylistId { get; set; }
 }

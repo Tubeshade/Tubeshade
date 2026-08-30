@@ -1,0 +1,12 @@
+﻿@page "~/Playlists/{handler?}"
+@model Index
+@{
+    ViewData["Title"] = SharedResources.Playlists;
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="Model"/>
+}
+
+<partial name="Playlists/_Playlists" model="Model"/>

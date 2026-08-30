@@ -567,4 +567,55 @@
     <data name="Filters_Creators_All" xml:space="preserve">
         <value>All creators</value>
     </data>
+    <data name="Playlists" xml:space="preserve">
+        <value>Playlists</value>
+    </data>
+    <data name="Playlists_Create" xml:space="preserve">
+        <value>Create a playlist</value>
+    </data>
+    <data name="Button_CreatePlaylist" xml:space="preserve">
+        <value>Create playlist</value>
+    </data>
+    <data name="Button_UpdatePlaylist" xml:space="preserve">
+        <value>Update playlist</value>
+    </data>
+    <data name="Playlists_Form_Name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Playlists_Form_Library" xml:space="preserve">
+        <value>Library</value>
+    </data>
+    <data name="Playlists_Form_ExternalId" xml:space="preserve">
+        <value>Original ID</value>
+    </data>
+    <data name="Playlists_Form_ExternalUrl" xml:space="preserve">
+        <value>Original URL</value>
+    </data>
+    <data name="Playlist_Videos" xml:space="preserve">
+        <value>{0} videos</value>
+    </data>
+    <data name="Filters_SortPlaylistBy" xml:space="preserve">
+        <value>Sort by</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_random" xml:space="preserve">
+        <value>Random</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_created_at" xml:space="preserve">
+        <value>Created</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_modified_at" xml:space="preserve">
+        <value>Modified</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_subscribed_at" xml:space="preserve">
+        <value>Subscribed</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_refreshed_at" xml:space="preserve">
+        <value>Refreshed</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_video_count" xml:space="preserve">
+        <value>Videos</value>
+    </data>
 </root>

@@ -74,12 +74,19 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
                   INNER JOIN media.video_images ON videos.id = video_images.video_id
               
               UNION ALL
-              
+
               SELECT channel_images.image_id
               FROM media.channels
                   INNER JOIN media.library_channels ON library_channels.channel_id = channels.id AND library_channels."primary"
                   INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
-                  INNER JOIN media.channel_images ON channels.id = channel_images.channel_id)
+                  INNER JOIN media.channel_images ON channels.id = channel_images.channel_id
+
+              UNION ALL
+
+              SELECT playlist_images.image_id
+              FROM media.playlists
+                  INNER JOIN accessible_libraries ON playlists.library_id = accessible_libraries.id
+                  INNER JOIN media.playlist_images ON playlists.id = playlist_images.playlist_id)
          """;
 
     /// <inheritdoc />
@@ -102,12 +109,19 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
                   INNER JOIN media.video_images ON videos.id = video_images.video_id
 
               UNION ALL
-              
+
               SELECT channel_images.image_id
               FROM media.channels
                   INNER JOIN media.library_channels ON library_channels.channel_id = channels.id AND library_channels."primary"
                   INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
-                  INNER JOIN media.channel_images ON channels.id = channel_images.channel_id)
+                  INNER JOIN media.channel_images ON channels.id = channel_images.channel_id
+
+              UNION ALL
+
+              SELECT playlist_images.image_id
+              FROM media.playlists
+                  INNER JOIN accessible_libraries ON playlists.library_id = accessible_libraries.id
+                  INNER JOIN media.playlist_images ON playlists.id = playlist_images.playlist_id)
          """;
 
     /// <inheritdoc />
@@ -199,6 +213,49 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
         return enumerable as List<ImageFileEntity> ?? enumerable.ToList();
     }
 
+    public async ValueTask<int> LinkToPlaylistAsync(Guid id, Guid playlistId, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             INSERT INTO media.playlist_images (playlist_id, image_id)
+             VALUES (@{nameof(playlistId)}, @{nameof(id)});
+             """,
+            new { id, playlistId },
+            transaction);
+
+        return await Connection.ExecuteAsync(command);
+    }
+
+    public async ValueTask<List<ImageFileEntity>> GetForPlaylist(
+        Guid playlistId,
+        Guid userId,
+        Access access,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken = default)
+    {
+        var parameters = new GetVideoParameters(playlistId, userId, access);
+
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             {AccessCte}
+
+             {SelectSql}
+                 INNER JOIN media.playlist_images ON image_files.id = playlist_images.image_id
+                 INNER JOIN accessible ON image_files.id = accessible.image_id
+             WHERE {AccessFilter} AND
+                   playlist_images.playlist_id = @{nameof(parameters.VideoId)}
+             ORDER BY image_files.width, image_files.height;
+             """,
+            parameters,
+            transaction,
+            cancellationToken: cancellationToken);
+
+        var enumerable = await Connection.QueryAsync<ImageFileEntity>(command);
+        return enumerable as List<ImageFileEntity> ?? enumerable.ToList();
+    }
+
     public async ValueTask<string?> GetPath(Guid id, NpgsqlTransaction transaction, CancellationToken cancellationToken)
     {
         var command = new CommandDefinition(
@@ -214,7 +271,14 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
              SELECT videos.storage_path
              FROM media.videos
                 INNER JOIN media.video_images ON videos.id = video_images.video_id
-             WHERE video_images.image_id = @{nameof(id)};
+             WHERE video_images.image_id = @{nameof(id)}
+
+             UNION ALL
+
+             SELECT playlists.storage_path
+             FROM media.playlists
+                INNER JOIN media.playlist_images ON playlists.id = playlist_images.playlist_id
+             WHERE playlist_images.image_id = @{nameof(id)};
              """,
             new { id },
             transaction,

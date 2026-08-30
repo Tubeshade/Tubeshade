@@ -1705,5 +1705,95 @@ namespace Tubeshade.Server.Resources {
                 return ResourceManager.GetString("Videos_Create_Tags", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Playlists.
+        /// </summary>
+        public static string Playlists {
+            get {
+                return ResourceManager.GetString("Playlists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a playlist.
+        /// </summary>
+        public static string Playlists_Create {
+            get {
+                return ResourceManager.GetString("Playlists_Create", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string Playlists_Form_Name {
+            get {
+                return ResourceManager.GetString("Playlists_Form_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Library.
+        /// </summary>
+        public static string Playlists_Form_Library {
+            get {
+                return ResourceManager.GetString("Playlists_Form_Library", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Playlist ID.
+        /// </summary>
+        public static string Playlists_Form_ExternalId {
+            get {
+                return ResourceManager.GetString("Playlists_Form_ExternalId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Playlist URL.
+        /// </summary>
+        public static string Playlists_Form_ExternalUrl {
+            get {
+                return ResourceManager.GetString("Playlists_Form_ExternalUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create playlist.
+        /// </summary>
+        public static string Button_CreatePlaylist {
+            get {
+                return ResourceManager.GetString("Button_CreatePlaylist", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update playlist.
+        /// </summary>
+        public static string Button_UpdatePlaylist {
+            get {
+                return ResourceManager.GetString("Button_UpdatePlaylist", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Videos.
+        /// </summary>
+        public static string Playlist_Videos {
+            get {
+                return ResourceManager.GetString("Playlist_Videos", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sort.
+        /// </summary>
+        public static string Filters_SortPlaylistBy {
+            get {
+                return ResourceManager.GetString("Filters_SortPlaylistBy", resourceCulture);
+            }
+        }
     }
 }

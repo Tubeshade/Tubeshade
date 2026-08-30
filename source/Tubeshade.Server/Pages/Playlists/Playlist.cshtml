@@ -1,0 +1,23 @@
+﻿@page "~/Playlists/{playlistId:guid}/{handler?}"
+@model Playlist
+@{
+    ViewData["Title"] = Model.Entity.Name;
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="Model"/>
+}
+
+<div class="d-flex justify-content-between">
+    <h2>@Model.Entity.Name</h2>
+
+    <a asp-page="/Playlists/Edit" asp-route-playlistId="@Model.PlaylistId"
+       class="btn btn-success my-1" title="@SharedResources.Button_UpdatePlaylist">
+        <span class="visually-hidden">@SharedResources.Button_UpdatePlaylist</span>✎
+    </a>
+</div>
+
+<partial name="Videos/_VideoFilters" model="Model"/>
+
+<partial name="Videos/_FilteredVideos" model="Model"/>
