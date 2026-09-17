@@ -36,7 +36,7 @@ public sealed class Index : PageModel, INonLibraryPage, IFormLayout
     }
 
     /// <inheritdoc />
-    public List<LibraryEntity> Libraries => Entities;
+    public IReadOnlyList<LibraryEntity> Libraries => Entities;
 
     public List<LibraryEntity> Entities { get; set; } = [];
 

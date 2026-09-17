@@ -83,6 +83,19 @@ internal class GetSingleExternalParameters : GetParameters
     public string ExternalId { get; }
 }
 
+internal class GetSingleLibraryExternalParameters : GetParameters
+{
+    public GetSingleLibraryExternalParameters(string externalId, Guid libraryId, Guid userId, Access access)
+        : base(userId, access)
+    {
+        ExternalId = externalId;
+        LibraryId = libraryId;
+    }
+
+    public string ExternalId { get; }
+    public Guid LibraryId { get; }
+}
+
 internal class GetSingleParameters : GetParameters
 {
     public GetSingleParameters(Guid id, Guid userId, Access access)

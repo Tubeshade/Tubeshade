@@ -10,6 +10,12 @@
             <span>"@Model.Name"</span>
         </a>
     }
+    else if (Model.PlaylistId is { } playlistId)
+    {
+        <a asp-page="/Playlists/Playlist" asp-route-playlistId="@playlistId">
+            <span>"@Model.Name"</span>
+        </a>
+    }
     else if (Model is { ChannelId: { } channelId } && Model.Runs.All(run => run.Source != TaskSource.Webhook))
     {
         <a asp-page="/Channels/Channel" asp-route-channelId="@channelId">
@@ -24,6 +30,12 @@
 else if (Model.Type == TaskType.DownloadVideo && Model.VideoId is { } videoId)
 {
     <a asp-page="/Videos/Video" asp-route-videoId="@videoId">
+        <span>"@Model.Name"</span>
+    </a>
+}
+else if (Model.Type == TaskType.ScanPlaylist && Model.PlaylistId is { } playlistId)
+{
+    <a asp-page="/Playlists/Playlist" asp-route-playlistId="@playlistId">
         <span>"@Model.Name"</span>
     </a>
 }

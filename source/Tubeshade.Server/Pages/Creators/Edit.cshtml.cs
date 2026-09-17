@@ -49,7 +49,7 @@ public sealed class Edit : PageModel, IFormLayout, INonLibraryPage
     public EditCreatorModel? EditCreator { get; set; }
 
     /// <inheritdoc />
-    public List<LibraryEntity> Libraries { get; private set; } = [];
+    public IReadOnlyList<LibraryEntity> Libraries { get; private set; } = [];
 
     public CreatorEntity Entity { get; private set; } = null!;
 

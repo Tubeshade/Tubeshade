@@ -40,8 +40,6 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
         _timeZoneProvider = timeZoneProvider;
     }
 
-    public LibraryEntity Entity { get; set; } = null!;
-
     /// <inheritdoc />
     [BindProperty]
     public UpdatePreferencesModel? UpdatePreferencesModel { get; set; }
@@ -53,7 +51,7 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
     {
         var userId = User.GetUserId();
 
-        Entity = await _repository.GetAsync(LibraryId, userId, cancellationToken);
+        Library = await _repository.GetAsync(LibraryId, userId, cancellationToken);
 
         var preferences = await _preferencesRepository.FindForLibrary(LibraryId, userId, cancellationToken);
         var effective = await _preferencesRepository.GetEffectiveForLibrary(LibraryId, userId, cancellationToken) ?? new();

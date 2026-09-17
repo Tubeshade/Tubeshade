@@ -1,0 +1,18 @@
+@model Tubeshade.Data.Media.Playlists.PlaylistEntity
+
+<div id="playlist-subscribe" class="d-flex align-items-center">
+    @if (Model.SubscribedAt.HasValue)
+    {
+        <button hx-post="" hx-page-handler="Unsubscribe" hx-target="#playlist-subscribe" hx-swap="outerHTML"
+                type="button" class="btn btn-primary">
+            @SharedResources.Button_Unsubscribe
+        </button>
+    }
+    else
+    {
+        <button hx-post="" hx-page-handler="Subscribe" hx-target="#playlist-subscribe" hx-swap="outerHTML"
+                type="button" class="btn btn-primary">
+            @SharedResources.Button_Subscribe
+        </button>
+    }
+</div>

@@ -46,7 +46,7 @@ public static class VideoEntityExtensions
 
     private static VideoModel MapToModel(
         this DetailedVideo video,
-        List<SponsorBlockSegmentEntity> segments,
+        IReadOnlyList<SponsorBlockSegmentEntity> segments,
         Dictionary<Guid, ChannelEntity> channels)
     {
         var skippedDuration = segments
@@ -68,8 +68,8 @@ public static class VideoEntityExtensions
     [LinqTunnel]
     public static IEnumerable<VideoModel> MapToModels(
         this IEnumerable<DetailedVideo> videos,
-        List<SponsorBlockSegmentEntity> segments,
-        List<ChannelEntity> channels)
+        IReadOnlyList<SponsorBlockSegmentEntity> segments,
+        IReadOnlyList<ChannelEntity> channels)
     {
         var channelDictionary = channels.ToDictionary(channel => channel.Id);
         return videos.Select(video => video.MapToModel(segments, channelDictionary));

@@ -519,6 +519,9 @@
     <data name="Filters_SortVideoBy_query" xml:space="preserve">
         <value>Relevance</value>
     </data>
+    <data name="Filters_SortVideoBy_playlist_order" xml:space="preserve">
+        <value>Playlist</value>
+    </data>
     <data name="Button_CreateCreator" xml:space="preserve">
         <value>Create creator</value>
     </data>
@@ -566,5 +569,38 @@
     </data>
     <data name="Filters_Creators_All" xml:space="preserve">
         <value>All creators</value>
+    </data>
+    <data name="Playlists" xml:space="preserve">
+        <value>Playlists</value>
+    </data>
+    <data name="Playlist_Videos" xml:space="preserve">
+        <value>{0} videos</value>
+    </data>
+    <data name="Filters_SortPlaylistBy" xml:space="preserve">
+        <value>Sort by</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_random" xml:space="preserve">
+        <value>Random</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_created_at" xml:space="preserve">
+        <value>Created</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_modified_at" xml:space="preserve">
+        <value>Modified</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_subscribed_at" xml:space="preserve">
+        <value>Subscribed</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_name" xml:space="preserve">
+        <value>Name</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_refreshed_at" xml:space="preserve">
+        <value>Refreshed</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_video_count" xml:space="preserve">
+        <value>Videos</value>
+    </data>
+    <data name="Tasks_Type_scan_playlist" xml:space="preserve">
+        <value>Scan playlist</value>
     </data>
 </root>

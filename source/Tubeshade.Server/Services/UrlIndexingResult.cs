@@ -4,7 +4,9 @@ namespace Tubeshade.Server.Services;
 
 public sealed class UrlIndexingResult
 {
-    public required Guid ChannelId { get; init; }
+    public Guid? ChannelId { get; set; }
 
     public Guid? VideoId { get; set; }
+
+    public Guid? PlaylistId { get; set; }
 }

@@ -26,7 +26,7 @@ public sealed class TaskRun : PageModel, ITaskRunPage, INonLibraryPage
     }
 
     /// <inheritdoc />
-    public List<LibraryEntity> Libraries { get; private set; } = null!;
+    public IReadOnlyList<LibraryEntity> Libraries { get; private set; } = null!;
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]

@@ -1,0 +1,24 @@
+﻿@page "~/Playlists/{playlistId:guid}/{handler?}"
+@model Playlist
+@{
+    ViewData["Title"] = Model.Entity.Name;
+}
+
+@section Navigation
+{
+    <partial name="Shared/_Navigation" model="Model"/>
+}
+
+<div class="d-flex justify-content-between">
+    <h2>@Model.Entity.Name</h2>
+
+    <div class="d-flex align-items-center gap-2">
+        <partial name="Playlists/_SubscribePlaylist" model="Model.Entity"/>
+    </div>
+</div>
+
+<partial name="Videos/_VideoFilters" model="Model"/>
+
+<section id="videos">
+    <partial name="Videos/_FilteredVideos" model="Model"/>
+</section>

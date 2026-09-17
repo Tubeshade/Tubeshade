@@ -19,8 +19,6 @@ public sealed class Create : LibraryPageBase, IFormLayout
         _channelService = channelService;
     }
 
-    public LibraryEntity Library { get; set; } = null!;
-
     [BindProperty]
     public CreateChannelModel? CreateChannel { get; set; }
 

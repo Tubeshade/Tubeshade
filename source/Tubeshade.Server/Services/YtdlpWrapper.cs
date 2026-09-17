@@ -77,17 +77,17 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
         }
 
-        if (!fetchResult.Success || fetchResult.Data?.Entries is null)
+        if (fetchResult is not { Success: true, Data: { Entries: { } entries } data })
         {
             throw new(string.Join(Environment.NewLine, fetchResult.ErrorOutput));
         }
 
-        if (fetchResult.Data.Entries.Any(data => data.ResultType is not MetadataType.Url))
+        if (entries.Any(entry => entry.ResultType is not MetadataType.Url))
         {
             throw new NotSupportedException("Playlist entry is not a url, despite specifying flat playlist");
         }
 
-        return fetchResult.Data;
+        return data;
     }
 
     /// <inheritdoc />

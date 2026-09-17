@@ -75,7 +75,7 @@ public sealed class Creator : PageModel, IChannelPage, INonLibraryPage
     public PaginatedData<DetailedChannel> PageData { get; private set; } = null!;
 
     /// <inheritdoc />
-    public List<LibraryEntity> Libraries { get; private set; } = [];
+    public IReadOnlyList<LibraryEntity> Libraries { get; private set; } = [];
 
     public CreatorEntity Entity { get; private set; } = null!;
 

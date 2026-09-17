@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Tubeshade.Data.Abstractions;
 
 namespace Tubeshade.Data.Tasks;
@@ -15,6 +15,8 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
     public Guid? LibraryId { get; set; }
 
     public Guid? ChannelId { get; set; }
+
+    public Guid? PlaylistId { get; set; }
 
     public Guid? VideoId { get; set; }
 
@@ -43,6 +45,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         UserId = userId,
         LibraryId = libraryId,
         ChannelId = channelId,
+        PlaylistId = null,
         VideoId = videoId,
         Url = url,
         AllVideos = false,
@@ -58,6 +61,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         UserId = userId,
         LibraryId = libraryId,
         ChannelId = channelId,
+        PlaylistId = null,
         VideoId = null,
         Url = null,
         AllVideos = false,
@@ -73,6 +77,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         UserId = userId,
         LibraryId = libraryId,
         ChannelId = null,
+        PlaylistId = null,
         VideoId = videoId,
         Url = null,
         AllVideos = false,
@@ -88,6 +93,23 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         UserId = userId,
         LibraryId = libraryId,
         ChannelId = channelId,
+        PlaylistId = null,
+        VideoId = null,
+        Url = null,
+        AllVideos = allVideos,
+        Payload = null,
+    };
+
+    public static TaskEntity ScanPlaylist(Guid libraryId, Guid userId, Guid playlistId, bool allVideos) => new()
+    {
+        CreatedByUserId = userId,
+        ModifiedByUserId = userId,
+        OwnerId = userId,
+        Type = TaskType.ScanPlaylist,
+        UserId = userId,
+        LibraryId = libraryId,
+        ChannelId = null,
+        PlaylistId = playlistId,
         VideoId = null,
         Url = null,
         AllVideos = allVideos,
@@ -118,6 +140,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         UserId = userId,
         LibraryId = libraryId,
         ChannelId = null,
+        PlaylistId = null,
         VideoId = null,
         Url = null,
         AllVideos = false,

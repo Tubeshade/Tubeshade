@@ -1,0 +1,23 @@
+using System;
+using NodaTime;
+using Tubeshade.Data.Abstractions;
+
+namespace Tubeshade.Data.Media.Playlists;
+
+public record PlaylistEntity : ModifiableEntity, INamedEntity
+{
+    public required Guid LibraryId { get; set; }
+
+    public required string StoragePath { get; set; }
+
+    public required string ExternalId { get; set; }
+
+    public required string ExternalUrl { get; set; }
+
+    /// <inheritdoc />
+    public required string Name { get; set; }
+
+    public required Instant RefreshedAt { get; set; }
+
+    public Instant? SubscribedAt { get; set; }
+}

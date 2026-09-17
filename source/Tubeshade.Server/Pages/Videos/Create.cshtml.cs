@@ -40,7 +40,7 @@ public sealed class Create : PageModel, INonLibraryPage, IFormLayout
     }
 
     /// <inheritdoc />
-    public List<LibraryEntity> Libraries { get; private set;  } = [];
+    public IReadOnlyList<LibraryEntity> Libraries { get; private set;  } = [];
 
     [BindProperty]
     public CreateVideoModel? CreateVideo { get; set; }

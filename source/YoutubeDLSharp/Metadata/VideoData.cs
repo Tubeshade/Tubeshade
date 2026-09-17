@@ -266,4 +266,7 @@ public sealed class VideoData
 
     [JsonPropertyName("columns")]
     public long? StoryboardFragmentColumns { get; set; }
+
+    [JsonPropertyName("playlist_count")]
+    public long? PlaylistCount { get; set; }
 }

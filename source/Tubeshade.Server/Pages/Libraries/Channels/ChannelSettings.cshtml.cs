@@ -47,9 +47,7 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
     [BindProperty(SupportsGet = true)]
     public Guid ChannelId { get; set; }
 
-    public LibraryEntity Library { get; set; } = null!;
-
-    public ChannelEntity Entity { get; set; } = null!;
+    public ChannelEntity Entity { get; private set; } = null!;
 
     [BindProperty]
     public UpdatePreferencesModel? UpdatePreferencesModel { get; set; }
@@ -57,9 +55,9 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
     [BindProperty]
     public Guid? NewLibraryId { get; set; }
 
-    public List<LibraryEntity> Libraries { get; set; } = [];
+    public List<LibraryEntity> Libraries { get; private set; } = [];
 
-    public List<LibraryEntity> OtherLibraries { get; set; } = [];
+    public List<LibraryEntity> OtherLibraries { get; private set; } = [];
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {

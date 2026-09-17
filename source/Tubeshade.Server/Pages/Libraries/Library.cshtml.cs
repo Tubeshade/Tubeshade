@@ -84,19 +84,17 @@ public sealed class Library : LibraryPageBase, IVideoPage, IPageWithSettings
     public SortDirection? SortDirection { get; set; }
 
     /// <inheritdoc />
-    public List<CreatorEntity> Creators { get; private set; } = [];
+    public IReadOnlyList<CreatorEntity> Creators { get; private set; } = [];
 
     /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; private set; } = null!;
-
-    public LibraryEntity Entity { get; private set; } = null!;
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
         var parameters = this.GetVideoParameters(userId, LibraryId, null);
 
-        Entity = await _repository.GetAsync(LibraryId, userId, cancellationToken);
+        Library = await _repository.GetAsync(LibraryId, userId, cancellationToken);
         var videos = await _videoRepository.GetFilteredDetailed(parameters, cancellationToken);
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);
         Creators = await _creatorRepository.GetAsync(userId, cancellationToken);

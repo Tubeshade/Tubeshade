@@ -25,7 +25,7 @@ public sealed class Create : PageModel, IFormLayout, INonLibraryPage
     public CreateChannelModel? CreateChannel { get; set; }
 
     /// <inheritdoc />
-    public List<LibraryEntity> Libraries { get; private set; } = [];
+    public IReadOnlyList<LibraryEntity> Libraries { get; private set; } = [];
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {

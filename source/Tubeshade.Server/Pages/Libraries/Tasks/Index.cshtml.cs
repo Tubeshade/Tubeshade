@@ -25,8 +25,6 @@ public sealed class Index : LibraryPageBase, ITasksPage
         _taskService = taskService;
     }
 
-    public LibraryEntity Library { get; set; } = null!;
-
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
     public TaskSource? Source { get; set; }

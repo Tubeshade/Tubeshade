@@ -168,6 +168,7 @@ public sealed class BackgroundWorkerService : BackgroundService
                 cancellationToken);
 
             task.ChannelId = result.ChannelId;
+            task.PlaylistId = result.PlaylistId;
             task.VideoId = result.VideoId;
             await taskRepository.UpdateAsync(task);
         }
@@ -219,6 +220,27 @@ public sealed class BackgroundWorkerService : BackgroundService
             await service.ScanChannel(
                 libraryId,
                 task.ChannelId!.Value,
+                task.AllVideos,
+                userId,
+                taskRepository,
+                taskRunId,
+                scopedDirectory.Directory,
+                source,
+                cookieService,
+                cancellationToken);
+        }
+        else if (task.Type == TaskType.ScanPlaylist)
+        {
+            using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
+            using var scopedDirectory = _fileSystemService.CreateTemporaryDirectory(TaskRunPrefix, taskRunId);
+
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            var service = provider.GetRequiredService<YoutubeIndexingService>();
+            var cookieService = cookiesServiceFactory.Create(userId, libraryId, scopedDirectory.Directory, cancellationToken);
+
+            await service.ScanPlaylist(
+                libraryId,
+                task.PlaylistId!.Value,
                 task.AllVideos,
                 userId,
                 taskRepository,

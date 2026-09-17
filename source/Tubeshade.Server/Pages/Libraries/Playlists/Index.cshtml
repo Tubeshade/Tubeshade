@@ -1,0 +1,12 @@
+﻿@page "~/Libraries/{libraryId:guid}/Playlists/{handler?}"
+@model Index
+@{
+    ViewData["Title"] = $"{SharedResources.Playlists} - {Model.Library.Name}";
+}
+
+@section Navigation
+{
+    <partial name="Libraries/_LibraryNavigation" for="Library"/>
+}
+
+<partial name="Playlists/_Playlists" model="Model"/>

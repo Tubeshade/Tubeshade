@@ -88,7 +88,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
     public SortDirection? SortDirection { get; set; }
 
     /// <inheritdoc />
-    public List<CreatorEntity> Creators { get; private set; } = [];
+    public IReadOnlyList<CreatorEntity> Creators { get; private set; } = [];
 
     /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; private set; } = null!;
@@ -101,9 +101,9 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
     public Guid? ChannelId { get; set; }
 
     /// <inheritdoc />
-    public List<LibraryEntity> Libraries { get; private set; } = [];
+    public IReadOnlyList<LibraryEntity> Libraries { get; private set; } = [];
 
-    public List<ChannelEntity> Channels { get; private set; } = [];
+    public IReadOnlyList<ChannelEntity> Channels { get; private set; } = [];
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {

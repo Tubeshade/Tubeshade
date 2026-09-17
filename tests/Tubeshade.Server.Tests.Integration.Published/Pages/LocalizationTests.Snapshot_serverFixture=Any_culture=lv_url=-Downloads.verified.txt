@@ -12,6 +12,9 @@
         - link "Kanāli":
           - /url: /Channels
       - listitem:
+        - link "Saraksti":
+          - /url: /Playlists
+      - listitem:
         - link "Lejupielādes":
           - /url: /Downloads
       - listitem:

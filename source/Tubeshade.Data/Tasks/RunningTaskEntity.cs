@@ -10,6 +10,7 @@ public sealed record RunningTaskEntity
 
     public Guid? LibraryId { get; init; }
     public Guid? ChannelId { get; init; }
+    public Guid? PlaylistId { get; init; }
     public Guid? VideoId { get; init; }
     public string? Url { get; init; }
 

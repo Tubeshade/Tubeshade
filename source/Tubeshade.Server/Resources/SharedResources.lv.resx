@@ -512,6 +512,9 @@
     <data name="Filters_SortVideoBy_query" xml:space="preserve">
         <value>Atbilstība</value>
     </data>
+    <data name="Filters_SortVideoBy_playlist_order" xml:space="preserve">
+        <value>Saraksts</value>
+    </data>
     <data name="Creators_Form_Name" xml:space="preserve">
         <value>Nosaukums</value>
     </data>
@@ -559,5 +562,38 @@
     </data>
     <data name="Filters_Creators_All" xml:space="preserve">
         <value>Visi veidotāji</value>
+    </data>
+    <data name="Playlists" xml:space="preserve">
+        <value>Saraksti</value>
+    </data>
+    <data name="Playlist_Videos" xml:space="preserve">
+        <value>{0} video</value>
+    </data>
+    <data name="Filters_SortPlaylistBy" xml:space="preserve">
+        <value>Kārtot pēc</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_random" xml:space="preserve">
+        <value>Haotiski</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_created_at" xml:space="preserve">
+        <value>Izveidots</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_modified_at" xml:space="preserve">
+        <value>Labots</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_subscribed_at" xml:space="preserve">
+        <value>Abonēts</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_name" xml:space="preserve">
+        <value>Nosaukums</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_refreshed_at" xml:space="preserve">
+        <value>Atjaunots</value>
+    </data>
+    <data name="Filters_SortPlaylistBy_video_count" xml:space="preserve">
+        <value>Video</value>
+    </data>
+    <data name="Tasks_Type_scan_playlist" xml:space="preserve">
+        <value>Skanēt sarakstu</value>
     </data>
 </root>

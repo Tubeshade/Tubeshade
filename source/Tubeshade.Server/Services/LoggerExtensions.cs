@@ -327,4 +327,31 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(108, Information, "Skipping upcoming video {ExternalUrl} during channel scan")]
     internal static partial void SkippingUpcomingVideo(this ILogger logger, string externalUrl);
+
+    [LoggerMessage(109, Information, "Not creating a new playlist scan task for {PlaylistId} because at least one already exists")]
+    internal static partial void SkippingPlaylistScan(this ILogger logger, Guid playlistId);
+
+    [LoggerMessage(110, Debug, "Indexing playlist {ExternalId}")]
+    internal static partial void IndexingPlaylist(this ILogger logger, string externalId);
+
+    [LoggerMessage(111, Information, "Creating playlist image")]
+    internal static partial void CreatingPlaylistImage(this ILogger logger);
+
+    [LoggerMessage(112, Debug, "Playlist image already exists")]
+    internal static partial void ExistingPlaylistImage(this ILogger logger);
+
+    [LoggerMessage(113, Debug, "Creating playlist {Name} ({ExternalId})")]
+    internal static partial void CreatingPlaylist(this ILogger logger, string name, string externalId);
+
+    [LoggerMessage(114, Information, "Scanning playlist {PlaylistId} with {Count} entries")]
+    internal static partial void ScanningPlaylist(this ILogger logger, Guid playlistId, int count);
+
+    [LoggerMessage(115, Warning, "Failed to index playlist entry {Url}: {Error}")]
+    internal static partial void PlaylistScanFailedVideo(this ILogger logger, string url, string error);
+
+    [LoggerMessage(116, Debug, "Scanning {Count} subscribed playlists")]
+    internal static partial void ScanningSubscribedPlaylists(this ILogger logger, int count);
+
+    [LoggerMessage(117, Information, "Not scanning playlist {PlaylistId} because it contains the same videos")]
+    internal static partial void PlaylistVideosUnchanged(this ILogger logger, Guid playlistId);
 }

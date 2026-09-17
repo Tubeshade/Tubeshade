@@ -87,9 +87,7 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
     public SortDirection? SortDirection { get; set; }
 
     /// <inheritdoc />
-    public List<CreatorEntity> Creators { get; private set; } = null!;
-
-    public LibraryEntity Library { get; private set; } = null!;
+    public IReadOnlyList<CreatorEntity> Creators { get; private set; } = null!;
 
     /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; private set; } = null!;

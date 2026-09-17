@@ -1,12 +1,12 @@
 ﻿@page "~/Libraries/{libraryId:guid}/{handler?}"
 @model Library
 @{
-    ViewData["Title"] = Model.Entity.Name;
+    ViewData["Title"] = Model.Library.Name;
 }
 
 @section Navigation
 {
-    <partial name="_LibraryNavigation" for="Entity"/>
+    <partial name="_LibraryNavigation" for="Library"/>
 }
 
 <partial name="Videos/_VideoFilters" model="@Model"/>

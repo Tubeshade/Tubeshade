@@ -11,6 +11,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Data.Media.Playlists;
 using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
@@ -38,6 +39,7 @@ public sealed class YoutubeIndexingService
     private readonly ILogger<YoutubeIndexingService> _logger;
     private readonly LibraryRepository _libraryRepository;
     private readonly ChannelRepository _channelRepository;
+    private readonly PlaylistRepository _playlistRepository;
     private readonly VideoRepository _videoRepository;
     private readonly VideoFileRepository _videoFileRepository;
     private readonly ImageFileRepository _imageFileRepository;
@@ -51,12 +53,14 @@ public sealed class YoutubeIndexingService
     private readonly SponsorBlockService _sponsorBlockService;
     private readonly FfmpegService _ffmpegService;
     private readonly ChannelService _channelService;
+    private readonly PlaylistService _playlistService;
     private readonly VideoService _videoService;
     private readonly TrackFileService _trackFileService;
 
     public YoutubeIndexingService(
         ILogger<YoutubeIndexingService> logger,
         ChannelRepository channelRepository,
+        PlaylistRepository playlistRepository,
         VideoRepository videoRepository,
         VideoFileRepository videoFileRepository,
         ImageFileRepository imageFileRepository,
@@ -70,12 +74,15 @@ public sealed class YoutubeIndexingService
         SponsorBlockService sponsorBlockService,
         FfmpegService ffmpegService,
         ChannelService channelService,
+        PlaylistService playlistService,
         VideoService videoService,
         TrackFileRepository trackFileRepository,
         TrackFileService trackFileService)
     {
         _logger = logger;
         _channelRepository = channelRepository;
+        _playlistRepository = playlistRepository;
+        _playlistService = playlistService;
         _videoRepository = videoRepository;
         _clock = clock;
         _libraryRepository = libraryRepository;
@@ -108,36 +115,47 @@ public sealed class YoutubeIndexingService
         var data = await _ytdlpWrapper.FetchUnknownUrlData(url, cookieFilepath, cancellationToken);
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var channel = channelId is not null
-            ? await _channelRepository.GetAsync(channelId.Value, userId, transaction)
-            : await GetChannel(libraryId, userId, data, transaction);
+        var result = new UrlIndexingResult();
 
-        await UpdateChannel(channel, data, userId, transaction);
-
-        var result = new UrlIndexingResult { ChannelId = channel.Id };
-
-        if (data.ResultType is MetadataType.Video)
+        if (data.ResultType is MetadataType.Playlist && data.Id != data.ChannelId)
         {
-            result.VideoId = await IndexVideo(
-                url,
-                channel,
-                libraryId,
-                userId,
-                data,
-                transaction,
-                tempDirectory,
-                source,
-                cookiesService,
-                cancellationToken);
-        }
-        else if (data.ResultType is MetadataType.Playlist)
-        {
-            await IndexChannel(channel, data, userId, cookieFilepath, transaction, cancellationToken);
+            var playlist = await IndexPlaylist(libraryId, userId, data, cookieFilepath, transaction, cancellationToken);
+            result.PlaylistId = playlist.Id;
+
+            await _taskService.ScanPlaylist(userId, libraryId, playlist.Id, false, source, transaction);
         }
         else
         {
-            throw new InvalidOperationException(
-                $"Unexpected metadata type when downloading video: {data.ResultType}");
+            var channel = channelId is not null
+                ? await _channelRepository.GetAsync(channelId.Value, userId, transaction)
+                : await GetChannel(libraryId, userId, data, transaction);
+
+            await UpdateChannel(channel, data, userId, transaction);
+
+            result.ChannelId = channel.Id;
+
+            if (data.ResultType is MetadataType.Video)
+            {
+                result.VideoId = await IndexVideo(
+                    url,
+                    channel,
+                    libraryId,
+                    userId,
+                    data,
+                    transaction,
+                    tempDirectory,
+                    source,
+                    cookiesService,
+                    cancellationToken);
+            }
+            else if (data.ResultType is MetadataType.Playlist)
+            {
+                await IndexChannel(channel, data, userId, cookieFilepath, transaction, cancellationToken);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Unexpected metadata type when downloading video: {data.ResultType}");
+            }
         }
 
         await transaction.CommitAsync(cancellationToken);
@@ -689,6 +707,282 @@ public sealed class YoutubeIndexingService
         }
     }
 
+    private async ValueTask<PlaylistEntity> IndexPlaylist(
+        Guid libraryId,
+        Guid userId,
+        VideoData data,
+        string? cookieFilepath,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        if (data.Id is not { } externalId ||
+            data.WebpageUrl is not { } externalUrl)
+        {
+            throw new InvalidOperationException("Missing playlist details");
+        }
+
+        var name = data.Title;
+
+        var playlist = await _playlistRepository.FindByExternalId(externalId, libraryId, userId, Access.Modify, transaction)
+                       ?? await _playlistService.Create(libraryId, userId, name, externalId, externalUrl, transaction);
+
+        using var scope = _logger.BeginScope("{PlaylistId}", playlist.Id);
+        _logger.IndexingPlaylist(playlist.ExternalId);
+
+        playlist.Name = name;
+        playlist.ExternalUrl = externalUrl;
+        playlist.RefreshedAt = _clock.GetCurrentInstant();
+        playlist.ModifiedByUserId = userId;
+
+        var updated = await _playlistRepository.UpdateAsync(playlist, transaction);
+        if (updated is 0)
+        {
+            throw new InvalidOperationException("Failed to update playlist details");
+        }
+
+        await IndexPlaylistImages(playlist, data, userId, cookieFilepath, transaction, cancellationToken);
+        return playlist;
+    }
+
+    private async ValueTask IndexPlaylistImages(
+        PlaylistEntity playlist,
+        VideoData data,
+        Guid userId,
+        string? cookieFilepath,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        var existingImages = await _imageFileRepository.GetForPlaylist(playlist.Id, userId, Access.Read, transaction, cancellationToken);
+        if (existingImages.Count == data.Thumbnails?.Length)
+        {
+            _logger.NotUpdatingImages();
+            return;
+        }
+
+        _logger.DownloadingThumbnails();
+
+        var fileNamePrefix = $"thumbnail_{playlist.Id:N}";
+        await _ytdlpWrapper.DownloadThumbnails(
+            playlist.ExternalUrl,
+            fileNamePrefix,
+            playlist.StoragePath,
+            cookieFilepath,
+            cancellationToken);
+
+        var directory = new DirectoryInfo(playlist.StoragePath);
+
+        foreach (var thumbnail in data.Thumbnails ?? [])
+        {
+            var pattern = $"{fileNamePrefix}.{thumbnail.Id}.*";
+            var file = directory.EnumerateFiles(pattern).ToArray() switch
+            {
+                [] => null,
+                [var singleFile] => singleFile,
+                var files => throw new Exception(
+                    $"Found multiple image files matching the pattern {pattern}: {string.Join(", ", files.Select(match => $"'{match.Name}'"))}"),
+            };
+
+            if (file is null)
+            {
+                _logger.MissingThumbnail(thumbnail.Id, playlist.ExternalUrl);
+                continue;
+            }
+
+            var hashAlgorithm = HashAlgorithm.Default;
+            var hashData = await hashAlgorithm.ComputeHashAsync(file, cancellationToken);
+
+            if (existingImages.Any(image => image.Hash.SequenceEqual(hashData)))
+            {
+                _logger.ExistingPlaylistImage();
+                continue;
+            }
+
+            var response = await _ffmpegService.AnalyzeFile(file.FullName, cancellationToken);
+            if (response.Streams is not [{ Width: { } width, Height: { } height }])
+            {
+                throw new InvalidOperationException("Unexpected image file format");
+            }
+
+            _logger.CreatingPlaylistImage();
+
+            var image = new ImageFileEntity
+            {
+                CreatedByUserId = userId,
+                ModifiedByUserId = userId,
+                StoragePath = file.Name,
+                StorageSize = file.Length,
+                Type = height >= width ? ImageType.Thumbnail : ImageType.Banner,
+                Width = width,
+                Height = height,
+                HashAlgorithm = hashAlgorithm,
+                Hash = hashData,
+            };
+
+            var imageFileId = await _imageFileRepository.AddAsync(image, transaction);
+            await _imageFileRepository.LinkToPlaylistAsync(imageFileId!.Value, playlist.Id, transaction);
+            existingImages.Add(image);
+
+            var destinationFileName = Path.Combine(playlist.StoragePath, file.Name);
+            if (!string.Equals(destinationFileName, file.FullName, Ordinal))
+            {
+                file.MoveTo(destinationFileName, true);
+            }
+        }
+    }
+
+    public async ValueTask ScanPlaylist(
+        Guid libraryId,
+        Guid playlistId,
+        bool allVideos,
+        Guid userId,
+        TaskRepository taskRepository,
+        Guid taskRunId,
+        DirectoryInfo directory,
+        TaskSource source,
+        CookiesService cookiesService,
+        CancellationToken cancellationToken,
+        bool reportProgress = true)
+    {
+        var cookiesFilepath = await cookiesService.RefreshCookieFile();
+
+        PlaylistEntity playlist;
+        string[] existingUrls;
+        await using (var transaction = await _connection.OpenAndBeginTransaction(RepeatableRead, cancellationToken))
+        {
+            playlist = await _playlistRepository.GetAsync(playlistId, userId, transaction);
+            existingUrls = (await _playlistRepository.GetVideoUrls(playlistId, transaction, cancellationToken)).ToArray();
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+
+        using var scope = _logger.BeginScope("{PlaylistId}", playlist.Id);
+
+        // the whole point of a playlist is its ordering, so the entries are always fetched in full
+        var playlistData = await _ytdlpWrapper.FetchPlaylistEntryUrls(
+            playlist.ExternalUrl,
+            null,
+            cookiesFilepath,
+            cancellationToken);
+
+        if (playlistData.Entries is not { } entries)
+        {
+            throw new InvalidOperationException("Playlist is missing entries");
+        }
+
+        var newUrls = entries.Select(entry => entry.Url).ToArray();
+        if (existingUrls.SequenceEqual(newUrls))
+        {
+            _logger.PlaylistVideosUnchanged(playlistId);
+            await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+
+            playlist.Name = playlistData.Title;
+            playlist.RefreshedAt = _clock.GetCurrentInstant();
+            playlist.ModifiedByUserId = userId;
+            await _playlistRepository.UpdateAsync(playlist, transaction);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            return;
+        }
+
+        _logger.ScanningPlaylist(playlist.Id, entries.Length);
+
+        if (reportProgress)
+        {
+            await taskRepository.InitializeTaskProgress(taskRunId, entries.Length);
+        }
+
+        var startTime = _clock.GetCurrentInstant();
+        var videoIds = new List<Guid>(entries.Length);
+
+        foreach (var (index, entry) in entries.Index())
+        {
+            if (entry.Url is not { } url)
+            {
+                throw new InvalidOperationException("Playlist entry is missing the Url");
+            }
+
+            await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+
+            var existing = await _videoRepository.FindByExternalUrl(url, userId, Access.Read, transaction);
+            if (existing is not null && !allVideos)
+            {
+                videoIds.Add(existing.Id);
+                await transaction.CommitAsync(cancellationToken);
+                await ReportPlaylistProgress(taskRepository, taskRunId, startTime, entries.Length, index, reportProgress);
+                continue;
+            }
+
+            cookiesFilepath = await cookiesService.RefreshCookieFile();
+            var videoResult = await _ytdlpWrapper.FetchVideoData(url, cookiesFilepath, cancellationToken);
+            if (videoResult is not { Success: true, Data: { } data })
+            {
+                _logger.PlaylistScanFailedVideo(url, string.Join(Environment.NewLine, videoResult.ErrorOutput));
+
+                // Keep the already indexed entry if refreshing it fails, so that transient errors do not
+                // remove previously indexed videos from the playlist.
+                if (existing is not null)
+                {
+                    videoIds.Add(existing.Id);
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+                await ReportPlaylistProgress(taskRepository, taskRunId, startTime, entries.Length, index, reportProgress);
+                continue;
+            }
+
+            var channel = await GetChannel(libraryId, userId, data, transaction);
+            await UpdateChannel(channel, data, userId, transaction);
+
+            var videoId = await IndexVideo(
+                url,
+                channel,
+                libraryId,
+                userId,
+                data,
+                transaction,
+                directory,
+                source,
+                cookiesService,
+                cancellationToken);
+
+            videoIds.Add(videoId);
+
+            await transaction.CommitAsync(cancellationToken);
+            await ReportPlaylistProgress(taskRepository, taskRunId, startTime, entries.Length, index, reportProgress);
+        }
+
+        await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
+        {
+            await _playlistRepository.ReplaceVideos(playlist.Id, videoIds.ToArray(), transaction, cancellationToken);
+
+            playlist.Name = playlistData.Title;
+            playlist.RefreshedAt = _clock.GetCurrentInstant();
+            playlist.ModifiedByUserId = userId;
+            await _playlistRepository.UpdateAsync(playlist, transaction);
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+    }
+
+    private async ValueTask ReportPlaylistProgress(
+        TaskRepository taskRepository,
+        Guid taskRunId,
+        Instant startTime,
+        int totalCount,
+        int index,
+        bool reportProgress)
+    {
+        if (!reportProgress)
+        {
+            return;
+        }
+
+        var currentIndex = index + 1;
+        var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
+        await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
+    }
+
     public ValueTask ScanChannel(Guid libraryId,
         Guid channelId,
         bool allVideos,
@@ -714,24 +1008,36 @@ public sealed class YoutubeIndexingService
         CancellationToken cancellationToken)
     {
         List<ChannelEntity> channels;
+        List<PlaylistEntity> playlists;
 
         await using (var transaction = await _connection.OpenAndBeginTransaction(RepeatableRead, cancellationToken))
         {
             channels = await _channelRepository.GetSubscribedForLibrary(libraryId, userId, transaction);
+            playlists = await _playlistRepository.GetSubscribedForLibrary(libraryId, userId, transaction);
             await transaction.CommitAsync(cancellationToken);
         }
 
-        await taskRepository.InitializeTaskProgress(taskRunId, channels.Count);
+        var totalCount = channels.Count + playlists.Count;
+        await taskRepository.InitializeTaskProgress(taskRunId, totalCount);
         _logger.ScanningSubscribedChannels(channels.Count);
+        _logger.ScanningSubscribedPlaylists(playlists.Count);
 
         var startTime = _clock.GetCurrentInstant();
-        var totalCount = channels.Count;
 
         foreach (var (index, channel) in channels.Index())
         {
             await ScanChannelCore(libraryId, channel.Id, false, true, userId, taskRepository, taskRunId, tempDirectory, source, cookiesService, cancellationToken, false);
 
             var currentIndex = index + 1;
+            var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
+            await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
+        }
+
+        foreach (var (index, playlist) in playlists.Index())
+        {
+            await ScanPlaylist(libraryId, playlist.Id, false, userId, taskRepository, taskRunId, tempDirectory, source, cookiesService, cancellationToken, false);
+
+            var currentIndex = channels.Count + index + 1;
             var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
             await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
         }

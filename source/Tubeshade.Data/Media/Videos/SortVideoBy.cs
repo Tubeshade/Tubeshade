@@ -36,6 +36,9 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, ISortBy, IParsable<Sor
     public static readonly SortVideoBy Framerate = new(Names.Framerate, FramerateExpression, 11);
     public static readonly SortVideoBy Query = new(Names.Query, QueryExpression, 12);
 
+    /// <summary>Only meaningful when the videos are filtered by <see cref="VideoParameters.PlaylistId"/>.</summary>
+    public static readonly SortVideoBy PlaylistOrder = new(Names.PlaylistOrder, "playlist_order", 13);
+
     /// <inheritdoc />
     public string SortExpression { get; }
 
@@ -65,6 +68,7 @@ public sealed class SortVideoBy : SmartEnum<SortVideoBy>, ISortBy, IParsable<Sor
         public const string StorageSize = "storage_size";
         public const string Framerate = "framerate";
         public const string Query = "query";
+        public const string PlaylistOrder = "playlist_order";
     }
 
     /// <inheritdoc />

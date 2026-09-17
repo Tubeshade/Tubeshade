@@ -40,7 +40,7 @@ public sealed class Index : PageModel, IChannelPage, INonLibraryPage
     }
 
     /// <inheritdoc />
-    public List<LibraryEntity> Libraries { get; private set; } = [];
+    public IReadOnlyList<LibraryEntity> Libraries { get; private set; } = [];
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]

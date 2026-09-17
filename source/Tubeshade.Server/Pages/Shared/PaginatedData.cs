@@ -10,7 +10,7 @@ public sealed class PaginatedData<T>
 
     public required Guid? LibraryId { get; init; }
 
-    public required List<T> Data { get; init; }
+    public required IReadOnlyList<T> Data { get; init; }
 
     public required int Page { get; set; }
 

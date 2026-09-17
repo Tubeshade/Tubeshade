@@ -35,13 +35,11 @@ public sealed class Edit : LibraryPageBase
     [BindProperty(SupportsGet = true)]
     public Guid VideoId { get; set; }
 
-    public VideoEntity Entity { get; set; } = null!;
+    public VideoEntity Entity { get; private set; } = null!;
 
-    public List<VideoFileEntity> Files { get; set; } = [];
+    public List<VideoFileEntity> Files { get; private set; } = [];
 
-    public ChannelEntity Channel { get; set; } = null!;
-
-    public LibraryEntity Library { get; set; } = null!;
+    public ChannelEntity Channel { get; private set; } = null!;
 
     public async Task OnGet(CancellationToken cancellationToken)
     {

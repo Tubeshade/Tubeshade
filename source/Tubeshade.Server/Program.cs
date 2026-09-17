@@ -162,6 +162,7 @@ internal static class Program
             .AddScoped<ChannelImagesMigration>()
             .AddScoped<TaskService>()
             .AddScoped<ChannelService>()
+            .AddScoped<PlaylistService>()
             .AddScoped<VideoService>()
             .AddScoped<SponsorBlockService>()
             .AddScoped<WebVideoTextTracksService>()

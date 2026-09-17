@@ -26,13 +26,13 @@ public interface IDownloadPage : IPaginatedDataPage<VideoModel>
 
     ExternalAvailability? Availability { get; set; }
 
-    List<ChannelEntity> Channels { get; }
+    IReadOnlyList<ChannelEntity> Channels { get; }
 
     SortVideoBy? SortBy { get; set; }
 
     SortDirection? SortDirection { get; set; }
 
-    List<CreatorEntity> Creators { get; }
+    IReadOnlyList<CreatorEntity> Creators { get; }
 
     Dictionary<string, string?> GetRouteValues(int pageIndex) => new()
     {

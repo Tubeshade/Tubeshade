@@ -28,7 +28,7 @@ public interface IVideoPage : IPaginatedDataPage<VideoModel>
 
     SortDirection? SortDirection { get; set; }
 
-    List<CreatorEntity> Creators { get; }
+    IReadOnlyList<CreatorEntity> Creators { get; }
 
     Dictionary<string, string?> GetRouteValues(int pageIndex) => new()
     {
@@ -54,17 +54,17 @@ public interface IVideoPage : IPaginatedDataPage<VideoModel>
 
         if (page.Viewed is null && !page.Request.Query.ContainsKey(nameof(page.Viewed)))
         {
-            page.Viewed = ViewStatus.NotViewed;
+            page.Viewed = page is IPlaylistVideoPage ? null : ViewStatus.NotViewed;
         }
 
         if (page.SortBy is null && !page.Request.Query.ContainsKey(nameof(page.SortBy)))
         {
-            page.SortBy = Defaults.VideoOrder;
+            page.SortBy = page is IPlaylistVideoPage ? Defaults.PlaylistVideoOrder : Defaults.VideoOrder;
         }
 
         if (page.SortDirection is null && !page.Request.Query.ContainsKey(nameof(page.SortDirection)))
         {
-            page.SortDirection = Defaults.VideoDirection;
+            page.SortDirection = page is IPlaylistVideoPage ? Defaults.PlaylistVideoDirection : Defaults.VideoDirection;
         }
     }
 

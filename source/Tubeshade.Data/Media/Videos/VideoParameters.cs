@@ -17,6 +17,8 @@ public sealed class VideoParameters : IAccessParameters, IPaginatedParameters, I
 
     public Guid? ChannelId { get; init; }
 
+    public Guid? PlaylistId { get; init; }
+
     /// <inheritdoc />
     public required int Limit { get; init; }
 

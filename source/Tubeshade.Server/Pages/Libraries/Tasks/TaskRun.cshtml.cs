@@ -24,8 +24,6 @@ public sealed class TaskRun : LibraryPageBase, ITaskRunPage
         _taskService = taskService;
     }
 
-    public LibraryEntity Library { get; set; } = null!;
-
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
     public Guid TaskRunId { get; set; }

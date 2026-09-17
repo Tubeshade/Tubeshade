@@ -87,13 +87,10 @@ public sealed class Index : LibraryPageBase, IDownloadPage
     public SortDirection? SortDirection { get; set; }
 
     /// <inheritdoc />
-    [BindProperty(SupportsGet = true)]
-    public List<CreatorEntity> Creators { get; private set; } = null!;
+    public IReadOnlyList<CreatorEntity> Creators { get; private set; } = null!;
 
     /// <inheritdoc />
     public PaginatedData<VideoModel> PageData { get; private set; } = null!;
-
-    public LibraryEntity Library { get; private set; } = null!;
 
     /// <inheritdoc />
     [BindProperty(SupportsGet = true)]
@@ -102,7 +99,8 @@ public sealed class Index : LibraryPageBase, IDownloadPage
     [BindProperty(SupportsGet = true)]
     public Guid? ChannelId { get; set; }
 
-    public List<ChannelEntity> Channels { get; private set; } = [];
+    /// <inheritdoc />
+    public IReadOnlyList<ChannelEntity> Channels { get; private set; } = [];
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {

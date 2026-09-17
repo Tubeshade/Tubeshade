@@ -455,9 +455,11 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 videos.type,
                 viewed.viewed,
                 viewed.position,
+                playlist_videos."order" AS playlist_order,
                 count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
          FROM media.videos
              LEFT OUTER JOIN media.video_viewed_by_users viewed ON videos.id = viewed.video_id AND viewed.user_id = @{nameof(parameters.UserId)}
+             LEFT OUTER JOIN media.playlist_videos ON playlist_videos.video_id = videos.id AND playlist_videos.playlist_id = @{nameof(parameters.PlaylistId)}
              CROSS JOIN parameters
              INNER JOIN media.channels ON videos.channel_id = channels.id
              INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
@@ -475,6 +477,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
            AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
            AND (@{nameof(parameters.CreatorId)} IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_channels.channel_id = videos.channel_id AND creator_id = @{nameof(parameters.CreatorId)}))
            AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
+           AND (@{nameof(parameters.PlaylistId)} IS NULL OR playlist_videos."order" IS NOT NULL)
            AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ query)
            AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
            AND (@{nameof(parameters.Viewed)}::media.view_status IS NULL
@@ -487,9 +490,11 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
          OFFSET @{nameof(parameters.Offset)};
          """;
 
-    private static string GetFilteredDetailedVideosQuery(VideoParameters parameters) =>
-        // lang=sql
-        $"""
+    private static string GetFilteredDetailedVideosQuery(VideoParameters parameters)
+    {
+        return
+            // lang=sql
+            $"""
          WITH accessible AS
              (SELECT videos.id
               FROM media.videos
@@ -535,10 +540,12 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                          videos.type,
                          viewed.viewed,
                          viewed.position,
+                         playlist_videos."order" AS playlist_order,
                          count(*) OVER() AS count,
                          videos.searchable_index_value AS searchable_index_value
                   FROM media.videos
                       LEFT OUTER JOIN media.video_viewed_by_users viewed ON videos.id = viewed.video_id AND viewed.user_id = @{nameof(parameters.UserId)}
+                      LEFT OUTER JOIN media.playlist_videos ON playlist_videos.video_id = videos.id AND playlist_videos.playlist_id = @{nameof(parameters.PlaylistId)}
                       CROSS JOIN parameters
                       INNER JOIN media.channels ON videos.channel_id = channels.id
                       INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
@@ -557,6 +564,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                     AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
                     AND (@{nameof(parameters.CreatorId)} IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_channels.channel_id = videos.channel_id AND creator_id = @{nameof(parameters.CreatorId)}))
                     AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
+                    AND (@{nameof(parameters.PlaylistId)} IS NULL OR playlist_videos."order" IS NOT NULL)
                     AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ query)
                     AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
                     AND (@{nameof(parameters.Viewed)}::media.view_status IS NULL
@@ -594,6 +602,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 videos.viewed,
                 videos.position,
                 videos.count AS {nameof(VideoEntity.TotalCount)},
+                videos.playlist_order,
 
                 image_files.id,
                 image_files.created_at,
@@ -613,13 +622,14 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              LEFT JOIN media.image_files ON video_images.image_id = image_files.id
          ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, videos.id;
          """;
+    }
 
     private async ValueTask<List<DetailedVideo>> GetDetailed(CommandDefinition command)
     {
         var enumerable = await Connection.QueryAsync<DetailedVideo, ImageFileEntity?, DetailedVideo>(command, MapSplitRow);
 
         return enumerable
-            .GroupBy(video => video.Id)
+            .GroupBy(video => (video.Id, video.PlaylistOrder))
             .Select(grouping =>
             {
                 var video = grouping.First();

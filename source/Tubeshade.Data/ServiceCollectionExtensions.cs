@@ -14,6 +14,7 @@ using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Media.Creators;
+using Tubeshade.Data.Media.Playlists;
 using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Migrations;
 using Tubeshade.Data.Preferences;
@@ -83,6 +84,7 @@ public static class ServiceCollectionExtensions
                 .AddScoped<ChannelRepository>()
                 .AddScoped<CreatorRepository>()
                 .AddScoped<VideoRepository>()
+                .AddScoped<PlaylistRepository>()
                 .AddScoped<VideoFileRepository>()
                 .AddScoped<ImageFileRepository>()
                 .AddScoped<TrackFileRepository>()

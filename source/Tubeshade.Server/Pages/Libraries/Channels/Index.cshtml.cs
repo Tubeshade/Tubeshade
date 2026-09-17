@@ -65,8 +65,6 @@ public sealed class Index : LibraryPageBase, IChannelPage
     /// <inheritdoc />
     public PaginatedData<DetailedChannel> PageData { get; private set; } = null!;
 
-    public LibraryEntity Library { get; private set; } = null!;
-
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();

@@ -7,5 +7,5 @@ namespace Tubeshade.Server.Pages.Shared;
 public interface INonLibraryPage
 {
     /// <summary>Gets a collection of all available libraries.</summary>
-    List<LibraryEntity> Libraries { get; }
+    IReadOnlyList<LibraryEntity> Libraries { get; }
 }

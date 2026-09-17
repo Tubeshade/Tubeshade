@@ -1,15 +1,15 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Preferences/{handler?}"
 @model LibrarySettings
 @{
-    ViewData["Title"] = $"{SharedResources.Preferences} - {Model.Entity.Name}";
+    ViewData["Title"] = $"{SharedResources.Preferences} - {Model.Library.Name}";
 }
 
 @section Navigation
 {
-    <partial name="_LibraryNavigation" for="Entity"/>
+    <partial name="_LibraryNavigation" for="Library"/>
 }
 
-<h2>@Model.Entity.Name</h2>
+<h2>@Model.Library.Name</h2>
 <hr/>
 
 <section id="channel-preferences">

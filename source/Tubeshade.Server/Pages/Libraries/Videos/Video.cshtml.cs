@@ -95,8 +95,6 @@ public sealed partial class Video : LibraryPageBase
 
     public ChannelEntity Channel { get; private set; } = null!;
 
-    public LibraryEntity Library { get; private set; } = null!;
-
     public decimal PlaybackSpeed { get; private set; } = 1.0m;
 
     public TrackFileEntity? Chapters { get; private set; }

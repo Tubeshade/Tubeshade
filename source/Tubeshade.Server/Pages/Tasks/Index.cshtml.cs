@@ -53,7 +53,7 @@ public sealed class Index : PageModel, ITasksPage, INonLibraryPage
     public PaginatedData<TaskModel> PageData { get; private set; } = null!;
 
     /// <inheritdoc />
-    public List<LibraryEntity> Libraries { get; private set; } = null!;
+    public IReadOnlyList<LibraryEntity> Libraries { get; private set; } = null!;
 
     /// <inheritdoc />
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)

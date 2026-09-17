@@ -88,10 +88,10 @@ public sealed class IndexModel : PageModel, IVideoPage, INonLibraryPage
     public PaginatedData<VideoModel> PageData { get; private set; } = null!;
 
     /// <inheritdoc />
-    public List<LibraryEntity> Libraries { get; private set; } = null!;
+    public IReadOnlyList<LibraryEntity> Libraries { get; private set; } = null!;
 
     /// <inheritdoc />
-    public List<CreatorEntity> Creators { get; private set; } = [];
+    public IReadOnlyList<CreatorEntity> Creators { get; private set; } = [];
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {

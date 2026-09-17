@@ -719,6 +719,78 @@ namespace Tubeshade.Server.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Sort by.
         /// </summary>
+        public static string Filters_SortPlaylistBy {
+            get {
+                return ResourceManager.GetString("Filters_SortPlaylistBy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Created.
+        /// </summary>
+        public static string Filters_SortPlaylistBy_created_at {
+            get {
+                return ResourceManager.GetString("Filters_SortPlaylistBy_created_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Modified.
+        /// </summary>
+        public static string Filters_SortPlaylistBy_modified_at {
+            get {
+                return ResourceManager.GetString("Filters_SortPlaylistBy_modified_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string Filters_SortPlaylistBy_name {
+            get {
+                return ResourceManager.GetString("Filters_SortPlaylistBy_name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Random.
+        /// </summary>
+        public static string Filters_SortPlaylistBy_random {
+            get {
+                return ResourceManager.GetString("Filters_SortPlaylistBy_random", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Refreshed.
+        /// </summary>
+        public static string Filters_SortPlaylistBy_refreshed_at {
+            get {
+                return ResourceManager.GetString("Filters_SortPlaylistBy_refreshed_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Subscribed.
+        /// </summary>
+        public static string Filters_SortPlaylistBy_subscribed_at {
+            get {
+                return ResourceManager.GetString("Filters_SortPlaylistBy_subscribed_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Videos.
+        /// </summary>
+        public static string Filters_SortPlaylistBy_video_count {
+            get {
+                return ResourceManager.GetString("Filters_SortPlaylistBy_video_count", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sort by.
+        /// </summary>
         public static string Filters_SortVideoBy {
             get {
                 return ResourceManager.GetString("Filters_SortVideoBy", resourceCulture);
@@ -776,6 +848,15 @@ namespace Tubeshade.Server.Resources {
         public static string Filters_SortVideoBy_modified_at {
             get {
                 return ResourceManager.GetString("Filters_SortVideoBy_modified_at", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Playlist.
+        /// </summary>
+        public static string Filters_SortVideoBy_playlist_order {
+            get {
+                return ResourceManager.GetString("Filters_SortVideoBy_playlist_order", resourceCulture);
             }
         }
         
@@ -1100,6 +1181,24 @@ namespace Tubeshade.Server.Resources {
         public static string Pagination_PageSummary {
             get {
                 return ResourceManager.GetString("Pagination_PageSummary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} videos.
+        /// </summary>
+        public static string Playlist_Videos {
+            get {
+                return ResourceManager.GetString("Playlist_Videos", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Playlists.
+        /// </summary>
+        public static string Playlists {
+            get {
+                return ResourceManager.GetString("Playlists", resourceCulture);
             }
         }
         
@@ -1496,6 +1595,15 @@ namespace Tubeshade.Server.Resources {
         public static string Tasks_Type_scan_channel {
             get {
                 return ResourceManager.GetString("Tasks_Type_scan_channel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scan playlist.
+        /// </summary>
+        public static string Tasks_Type_scan_playlist {
+            get {
+                return ResourceManager.GetString("Tasks_Type_scan_playlist", resourceCulture);
             }
         }
         

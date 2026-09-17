@@ -1,0 +1,54 @@
+﻿- banner:
+  - navigation:
+    - link "Tubeshade":
+      - /url: /
+    - list:
+      - listitem:
+        - button "Libraries"
+      - listitem:
+        - link "Creators":
+          - /url: /Creators
+      - listitem:
+        - link "Channels":
+          - /url: /Channels
+      - listitem:
+        - link "Playlists":
+          - /url: /Playlists
+      - listitem:
+        - link "Downloads":
+          - /url: /Downloads
+      - listitem:
+        - link "Tasks":
+          - /url: /Tasks
+    - list:
+      - listitem:
+        - link "Account":
+          - /url: /Identity/Account/Manage
+      - listitem:
+        - button "Logout"
+- main:
+  - search:
+    - searchbox "Search"
+    - combobox "Sort by":
+      - option "Created"
+      - option "Modified"
+      - option "Name" [selected]
+      - option "Random"
+      - option "Refreshed"
+      - option "Subscribed"
+      - option "Videos"
+    - combobox "Sort direction":
+      - option "Ascending" [selected]
+      - option "Descending"
+    - spinbutton "Page size"
+    - button "Search 🔎︎"
+  - navigation:
+    - text: Showing 1 - 0 from 0
+    - list:
+      - listitem:
+        - link "First":
+          - /url: /Playlists?SortBy=name&SortDirection=ASC&PageIndex=0
+      - listitem:
+        - link "Last":
+          - /url: /Playlists?SortBy=name&SortDirection=ASC&PageIndex=-1
+- contentinfo: © 2025 - 2026 Tubeshade | v0.1.8

@@ -12,6 +12,9 @@
         - link "Channels":
           - /url: /Channels
       - listitem:
+        - link "Playlists":
+          - /url: /Playlists
+      - listitem:
         - link "Downloads":
           - /url: /Downloads
       - listitem:
