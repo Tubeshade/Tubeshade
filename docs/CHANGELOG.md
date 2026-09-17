@@ -14,6 +14,11 @@ _Latest build from master branch._
 - Update .NET SDK from 10.0.302 to 10.0.400, and runtime from 10.0.10 to 10.0.11
   ([#325](https://github.com/Tubeshade/Tubeshade/pull/325))
 
+### Fixed
+
+- Skip upcoming premiere videos during channel scan
+  ([#329](https://github.com/Tubeshade/Tubeshade/pull/329))
+
 ## [0.1.8] - 2026-07-23
 
 ### Added

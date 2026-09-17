@@ -324,4 +324,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(107, Information, "Deleted {Count} old tasks")]
     internal static partial void DeletedOldTasks(this ILogger logger, int count);
+
+    [LoggerMessage(108, Information, "Skipping upcoming video {ExternalUrl} during channel scan")]
+    internal static partial void SkippingUpcomingVideo(this ILogger logger, string externalUrl);
 }

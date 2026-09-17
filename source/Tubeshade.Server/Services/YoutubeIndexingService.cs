@@ -847,14 +847,20 @@ public sealed class YoutubeIndexingService
 
                 cookiesFilepath = await cookiesService.RefreshCookieFile();
                 var videoResult = await _ytdlpWrapper.FetchVideoData(video.Url, cookiesFilepath, cancellationToken);
-                if (!videoResult.Success)
-                {
-                    _logger.ChannelScanFailedVideo(video.Url, string.Join(Environment.NewLine, videoResult.ErrorOutput));
-                    await transaction.CommitAsync(cancellationToken);
-                    continue;
-                }
 
-                await IndexVideo(video.Url, channel, libraryId, userId, videoResult.Data, transaction, directory, source, cookiesService, cancellationToken, type);
+                if (videoResult is not { Success: true, Data: { Url: { } url } data })
+                {
+                    var errorMessage = string.Join(Environment.NewLine, videoResult.ErrorOutput);
+                    _logger.ChannelScanFailedVideo(video.Url, errorMessage);
+                }
+                else if (data.LiveStatus is LiveStatus.IsUpcoming)
+                {
+                    _logger.SkippingUpcomingVideo(url);
+                }
+                else
+                {
+                    await IndexVideo(url, channel, libraryId, userId, data, transaction, directory, source, cookiesService, cancellationToken, type);
+                }
 
                 if (reportProgress)
                 {
