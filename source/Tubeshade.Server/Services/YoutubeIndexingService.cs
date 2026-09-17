@@ -823,13 +823,13 @@ public sealed class YoutubeIndexingService
 
             foreach (var (index, video) in playlistData.Entries.Index())
             {
-                if (video.Url is null)
+                if (video.Url is not { } url)
                 {
                     throw new InvalidOperationException("Playlist entry is missing the Url");
                 }
 
                 await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-                var existing = await _videoRepository.FindByExternalUrl(video.Url, userId, Access.Read, transaction);
+                var existing = await _videoRepository.FindByExternalUrl(url, userId, Access.Read, transaction);
                 if (existing is not null && breakOnExisting)
                 {
                     _logger.ChannelScanExistingVideo(existing.ExternalUrl);
@@ -846,12 +846,12 @@ public sealed class YoutubeIndexingService
                 }
 
                 cookiesFilepath = await cookiesService.RefreshCookieFile();
-                var videoResult = await _ytdlpWrapper.FetchVideoData(video.Url, cookiesFilepath, cancellationToken);
+                var videoResult = await _ytdlpWrapper.FetchVideoData(url, cookiesFilepath, cancellationToken);
 
-                if (videoResult is not { Success: true, Data: { Url: { } url } data })
+                if (videoResult is not { Success: true, Data: { } data })
                 {
                     var errorMessage = string.Join(Environment.NewLine, videoResult.ErrorOutput);
-                    _logger.ChannelScanFailedVideo(video.Url, errorMessage);
+                    _logger.ChannelScanFailedVideo(url, errorMessage);
                 }
                 else if (data.LiveStatus is LiveStatus.IsUpcoming)
                 {
