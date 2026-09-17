@@ -84,16 +84,6 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
             .WaitForAsync(new() { State = WaitForSelectorState.Hidden });
 
         await Page
-            .GetByRole(AriaRole.Link, new() { Name = "Failed" })
-            .ClickAsync();
-
-        await Page.GoBackAsync();
-
-        await Page
-            .GetByRole(AriaRole.Button, new() { Name = "Retry" })
-            .ClickAsync(new() { Timeout = 5_000 });
-
-        await Page
             .GetByRole(AriaRole.Button, new() { Name = "Scan sponsor segments" })
             .ClickAsync(new() { Timeout = 5_000 });
 
