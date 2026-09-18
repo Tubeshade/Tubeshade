@@ -11,6 +11,7 @@ public sealed class RoundedHumanReadablePeriodPattern : IPattern<Period>
     public const int MaximumPlaces = 4;
 
     public static readonly RoundedHumanReadablePeriodPattern TwoPlaces = new(2);
+    private static readonly Duration MinimumDuration = Duration.FromSeconds(1);
 
     private readonly int _places;
 
@@ -35,6 +36,11 @@ public sealed class RoundedHumanReadablePeriodPattern : IPattern<Period>
         if (value.Equals(Period.Zero))
         {
             return builder;
+        }
+
+        if (value.ToDuration() < MinimumDuration)
+        {
+            return builder.Append("1s");
         }
 
         Span<PeriodValue> values = stackalloc[]

@@ -10,6 +10,8 @@ public sealed class FormatTestCaseSource : IEnumerable<TestCaseData<Period, int,
     /// <inheritdoc />
     public IEnumerator<TestCaseData<Period, int, string>> GetEnumerator()
     {
+        yield return new(new PeriodBuilder().Build(), 2, "");
+        yield return new(new PeriodBuilder { Milliseconds = 799 }.Build(), 2, "1s");
         yield return new(new PeriodBuilder { Seconds = 10 }.Build(), 2, "10s");
         yield return new(new PeriodBuilder { Seconds = 10 }.Build(), 4, "10s");
         yield return new(new PeriodBuilder { Minutes = 1 }.Build(), 2, "1m");
