@@ -29,6 +29,7 @@ public sealed class BackgroundWorkerService : BackgroundService
     private readonly SemaphoreSlim _indexLock;
     private readonly SemaphoreSlim _downloadLock;
     private readonly SemaphoreSlim _sponsorBlockLock;
+    private readonly SemaphoreSlim _pubSubLock;
 
     public BackgroundWorkerService(
         IServiceProvider serviceProvider,
@@ -44,6 +45,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         _indexLock = new(_options.IndexTaskLimit);
         _downloadLock = new(_options.DownloadTaskLimit);
         _sponsorBlockLock = new(_options.SponsorBlockTaskLimit);
+        _pubSubLock = new(1);
     }
 
     internal async ValueTask<bool> CancelTaskRun(Guid taskRunId)
@@ -279,7 +281,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.RefreshSubscriptions)
         {
-            using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
+            using var scope = await LockAsync(_pubSubLock, taskRepository, taskRunId, cancellationToken);
             var service = provider.GetRequiredService<SubscriptionsService>();
             await service.RefreshSubscriptions(cancellationToken);
         }

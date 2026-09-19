@@ -30,7 +30,7 @@ public static class ServiceCollectionExtensions
                 client.BaseAddress = options.BaseUrl;
             })
             .AddTransientHttpErrorPolicy(builder => builder
-                .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(1), 5)));
+                .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(1), 3)));
 
         return services;
     }
