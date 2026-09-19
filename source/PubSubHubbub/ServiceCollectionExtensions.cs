@@ -1,6 +1,9 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Contrib.WaitAndRetry;
 
 namespace PubSubHubbub;
 
@@ -25,7 +28,9 @@ public static class ServiceCollectionExtensions
             {
                 var options = provider.GetRequiredService<IOptionsMonitor<PubSubHubbubOptions>>().CurrentValue;
                 client.BaseAddress = options.BaseUrl;
-            });
+            })
+            .AddTransientHttpErrorPolicy(builder => builder
+                .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(1), 5)));
 
         return services;
     }

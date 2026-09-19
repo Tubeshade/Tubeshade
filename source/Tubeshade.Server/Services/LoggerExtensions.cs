@@ -354,4 +354,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(117, Information, "Not scanning playlist {PlaylistId} because it contains the same videos")]
     internal static partial void PlaylistVideosUnchanged(this ILogger logger, Guid playlistId);
+
+    [LoggerMessage(118, Warning, "Failed to refresh subscription {SubscriptionId}")]
+    internal static partial void PubSubFailedSubscription(this ILogger logger, Exception exception, Guid subscriptionId);
 }

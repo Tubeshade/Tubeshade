@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PubSubHubbub;
@@ -13,7 +14,12 @@ public sealed class PubSubHubbubClient
         _httpClient = httpClient;
     }
 
-    public async ValueTask Subscribe(Uri callback, Uri topic, string? secret, string? verifyToken)
+    public async ValueTask Subscribe(
+        Uri callback,
+        Uri topic,
+        string? secret,
+        string? verifyToken,
+        CancellationToken cancellationToken = default)
     {
         var content = new SubscriptionRequest
         {
@@ -25,7 +31,7 @@ public sealed class PubSubHubbubClient
             VerifyToken = verifyToken,
         }.ToContent();
 
-        using var response = await _httpClient.PostAsync(new Uri("/subscribe", UriKind.Relative), content);
+        using var response = await _httpClient.PostAsync(new Uri("/subscribe", UriKind.Relative), content, cancellationToken);
         response.EnsureSuccessStatusCode();
     }
 

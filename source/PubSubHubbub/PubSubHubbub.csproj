@@ -3,7 +3,9 @@
     <ItemGroup>
         <PackageReference Include="Ardalis.SmartEnum"/>
         <PackageReference Include="Microsoft.Extensions.Http"/>
+        <PackageReference Include="Microsoft.Extensions.Http.Polly"/>
         <PackageReference Include="NodaTime"/>
+        <PackageReference Include="Polly.Contrib.WaitAndRetry"/>
     </ItemGroup>
 
 </Project>

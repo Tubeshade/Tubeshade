@@ -144,11 +144,19 @@ public sealed class SubscriptionsService
     {
         await foreach (var subscription in _channelSubscriptionRepository.GetExpiringUnbufferedAsync().WithCancellation(cancellationToken))
         {
-            await _pubSubHubbubClient.Subscribe(
-                new(subscription.Callback, UriKind.Absolute),
-                new(subscription.Topic, UriKind.Absolute),
-                subscription.Secret,
-                subscription.VerifyToken);
+            try
+            {
+                await _pubSubHubbubClient.Subscribe(
+                    new(subscription.Callback, UriKind.Absolute),
+                    new(subscription.Topic, UriKind.Absolute),
+                    subscription.Secret,
+                    subscription.VerifyToken,
+                    cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                _logger.PubSubFailedSubscription(exception, subscription.Id);
+            }
         }
     }
 }
