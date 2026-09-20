@@ -22,15 +22,15 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "IBf7lbovvjGWVWXZX5cJ/cO0WXbId0Zq4BuSeT94mGZuOAP66oMeH9PTBZ9Jpp3Jb6jtK0qm/NyUbPRo1gC/wQ=="
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "xi+BDjFpW+Sb+MHFHaH6Y/gV9I8BluFwRXc1QyCdoZbIK26eNiBeFuMTe/FMwc33G1wdHCyDg7CVTmb8OdQrMQ=="
       },
       "NodaTime": {
         "type": "Direct",
-        "requested": "[3.3.3, )",
-        "resolved": "3.3.3",
-        "contentHash": "EwouHZv99j5hraq34yQqvCQGDR59dynxPHlxFm2vY/sw2N2aR8cFel29ZxPqohjBWp9Qsnld7QCY+7uZ2PESGg=="
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "iLaEeOFjWHVibXmHa8WOMTkZdxvzTH6b7qNYts7cBmSfttCDenguHvEJsuAQGBDPV4LSA+7c0nyt4A0AR6z6zQ=="
       },
       "NodaTime.Serialization.SystemTextJson": {
         "type": "Direct",

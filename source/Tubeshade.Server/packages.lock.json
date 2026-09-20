@@ -49,33 +49,33 @@
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "Dy9yElSej0rVQL8LBpCLatWTKXNH6h6VBVFmGndTCf1Wge0jSvH9U8mml6ddVDAQ089q1/fDYlhyukHSgx8unQ==",
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "DeE+Bq2OqB3FikFkZk+7gFBeLOQhkSolejLrbi+a9zpfvXtW1Ff6Nd6DIvHXIm+pc4aM4+52vDy3jnuau0qoUQ==",
         "dependencies": {
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
         }
       },
       "Microsoft.AspNetCore.Authentication.OpenIdConnect": {
         "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "LM2J/cxqAB6W1sZ0Lo8sf0AYcnYQWEDTyRQTIxGt/cZ7C24VKugbvux2iswkyAbPC8M4HP7NEqC2cWbvyTWVnQ==",
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "UfkKr9EP+LBgnFfxwkfnZzta7XkalCroZWoxg2yW9dt8iPXO7bJYpcmyFIeM+FLcAlOKZeduP93XhuCcfWaYIQ==",
         "dependencies": {
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
         }
       },
       "Microsoft.Extensions.Hosting.Systemd": {
         "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "qDc27iV5ysvH2j2Hf6DwsN1aZl0YU3HNgYUvtFXEhuHrke5awU5cIvCGaaJCkILgML9rQZG+yjM2nbkv+ZqKog=="
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "WC1u8RbTqJTY/JknZFHX0+TDptgtpoBRc8Kro0xPSwunMql3e1zBxnK+OJbx30ozSCfMpHaYAfaeiVQgM5sizw=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "IBf7lbovvjGWVWXZX5cJ/cO0WXbId0Zq4BuSeT94mGZuOAP66oMeH9PTBZ9Jpp3Jb6jtK0qm/NyUbPRo1gC/wQ=="
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "xi+BDjFpW+Sb+MHFHaH6Y/gV9I8BluFwRXc1QyCdoZbIK26eNiBeFuMTe/FMwc33G1wdHCyDg7CVTmb8OdQrMQ=="
       },
       "NodaTime.Serialization.SystemTextJson": {
         "type": "Direct",
@@ -190,8 +190,8 @@
         "type": "Project",
         "dependencies": {
           "Ardalis.SmartEnum": "[8.2.0, )",
-          "Microsoft.Extensions.Http.Polly": "[10.0.11, )",
-          "NodaTime": "[3.3.3, )",
+          "Microsoft.Extensions.Http.Polly": "[10.0.12, )",
+          "NodaTime": "[3.3.4, )",
           "Polly.Contrib.WaitAndRetry": "[1.1.1, )"
         }
       },
@@ -199,7 +199,7 @@
         "type": "Project",
         "dependencies": {
           "Ardalis.SmartEnum.SystemTextJson": "[8.1.0, )",
-          "Microsoft.Extensions.Http.Polly": "[10.0.11, )",
+          "Microsoft.Extensions.Http.Polly": "[10.0.12, )",
           "Polly.Contrib.WaitAndRetry": "[1.1.1, )"
         }
       },
@@ -207,13 +207,13 @@
         "type": "Project",
         "dependencies": {
           "Ardalis.SmartEnum": "[8.2.0, )",
-          "Dapper": "[2.1.79, )",
-          "NodaTime": "[3.3.3, )",
+          "Dapper": "[2.1.86, )",
+          "NodaTime": "[3.3.4, )",
           "Npgsql.DependencyInjection": "[10.0.3, )",
           "Npgsql.NodaTime": "[10.0.3, )",
           "SponsorBlock": "[1.0.0, )",
-          "dbup-core": "[6.0.15, )",
-          "dbup-postgresql": "[6.1.5, )"
+          "dbup-core": "[6.1.1, )",
+          "dbup-postgresql": "[7.0.1, )"
         }
       },
       "youtubedlsharp": {
@@ -222,7 +222,7 @@
       "ytdlp": {
         "type": "Project",
         "dependencies": {
-          "NodaTime": "[3.3.3, )",
+          "NodaTime": "[3.3.4, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )",
           "YoutubeDLSharp": "[1.0.0, )"
         }
@@ -244,31 +244,31 @@
       },
       "Dapper": {
         "type": "CentralTransitive",
-        "requested": "[2.1.79, )",
-        "resolved": "2.1.79",
-        "contentHash": "8YijbzgTfmqmQOnVNorYM6K++pxqnW3nJ4aC1sRHzxUA2CcuoJ9gsTem3kgBnPRMc38zZHl4Esb6hAezXIEEuw=="
+        "requested": "[2.1.86, )",
+        "resolved": "2.1.86",
+        "contentHash": "v5wQfl9GfHhfTeFhorWTefa8c1Ev4HO8VF8i8wbSdZkq+P/az+1DTcqpkz8s9lMGyFf9kvoeJ+b2ABShW4cuIA=="
       },
       "dbup-core": {
         "type": "CentralTransitive",
-        "requested": "[6.0.15, )",
-        "resolved": "6.0.15",
-        "contentHash": "w0eaoyVitzgBiHTILEnj23smrbrxZ1nLF7K8uOyG6rvrctRtC0NTuSYHoB/3aq+B9hi9E/DiW9pOtNto5V9P3g=="
+        "requested": "[6.1.1, )",
+        "resolved": "6.1.1",
+        "contentHash": "kgpuyJVEFJHoIj/slnc994Go88aoeZqNDfGHDBr4sh7CsEWwJhOTCt/FJqO4ziUImL5L0NEY0kxxOiNgPKI2Fw=="
       },
       "dbup-postgresql": {
         "type": "CentralTransitive",
-        "requested": "[6.1.5, )",
-        "resolved": "6.1.5",
-        "contentHash": "oIqxqC8f2j6/VLsvzV971sOcTugytrU2sot29GlBFMJQmnkBn3S15mSgA4Qt6fOx9sdbf2rp9yGUtvocBlKu3A==",
+        "requested": "[7.0.1, )",
+        "resolved": "7.0.1",
+        "contentHash": "mRnmENWWPuuMZ538gOd1mZnzucx6FQk0anmw3EABjGfcbp24FDb9QdGepYrDiaM8K9s5/gd49+5cmBOlniH/lg==",
         "dependencies": {
-          "Npgsql": "9.0.4",
-          "dbup-core": "6.0.15"
+          "Npgsql": "10.0.1",
+          "dbup-core": "6.1.1"
         }
       },
       "Microsoft.Extensions.Http.Polly": {
         "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "DIxaTXWdbjRJihAIutpDIgPbpD9PwW8lW0EIawlNH4zs7coCgwPnd9rYlzXYkuKKphnjcKYlo6gXFeg6z15GLg==",
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "guggIopNFSFyQSr+9xc66cjr9ohls5/312T/vRsAryh+NYsqo2f9BxMElEYkOxw8QPqK7/Lo8emi2NDnqo6w4Q==",
         "dependencies": {
           "Polly": "7.2.4",
           "Polly.Extensions.Http": "3.0.0"
@@ -276,9 +276,9 @@
       },
       "NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.3.3, )",
-        "resolved": "3.3.3",
-        "contentHash": "EwouHZv99j5hraq34yQqvCQGDR59dynxPHlxFm2vY/sw2N2aR8cFel29ZxPqohjBWp9Qsnld7QCY+7uZ2PESGg=="
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "iLaEeOFjWHVibXmHa8WOMTkZdxvzTH6b7qNYts7cBmSfttCDenguHvEJsuAQGBDPV4LSA+7c0nyt4A0AR6z6zQ=="
       },
       "Npgsql.DependencyInjection": {
         "type": "CentralTransitive",

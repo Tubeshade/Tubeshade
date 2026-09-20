@@ -13,8 +13,8 @@ _Latest build from master branch._
 
 ### Changed
 
-- Update .NET SDK from 10.0.302 to 10.0.400, and runtime from 10.0.10 to 10.0.11
-  ([#325](https://github.com/Tubeshade/Tubeshade/pull/325))
+- Update .NET SDK from 10.0.400 to 10.0.401, and runtime from 10.0.11 to 10.0.12
+  ([#325](https://github.com/Tubeshade/Tubeshade/pull/325), [#329](https://github.com/Tubeshade/Tubeshade/pull/329))
 
 ### Fixed
 
