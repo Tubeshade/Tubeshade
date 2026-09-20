@@ -65,7 +65,7 @@ public sealed partial class ServerFixture : IServerFixture
             .WithCommand("-c", "full_page_writes=off")
             .Build();
 
-        var potProviderContainer = new ContainerBuilder("brainicism/bgutil-ytdlp-pot-provider:1.3.1-deno")
+        var potProviderContainer = new ContainerBuilder("brainicism/bgutil-ytdlp-pot-provider:2.0.0-deno")
             .WithNetwork(_network)
             .WithHostname(PotHostname)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(4416))

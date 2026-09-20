@@ -53,7 +53,7 @@ mkdir tubeshade/opt/tubeshade/yt-dlp-plugins
 mv bgutil-ytdlp-pot-provider.zip tubeshade/opt/tubeshade/yt-dlp-plugins
 
 mkdir -p tubeshade/opt/bgutil-ytdlp-pot-provider
-tar --extract --gzip --strip-components=1 -C tubeshade/opt/bgutil-ytdlp-pot-provider --file=1.3.1.tar.gz
+tar --extract --gzip --strip-components=1 -C tubeshade/opt/bgutil-ytdlp-pot-provider --file=2.0.0.tar.gz
 (
 	cd tubeshade/opt/bgutil-ytdlp-pot-provider
 	find . -mindepth 1 -maxdepth 1 ! -name 'server' -exec rm -r {} +
