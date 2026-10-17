@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -152,9 +153,15 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
              payload = @{nameof(TaskEntity.Payload)}
          """;
 
+    /// <summary>Finds the task, unless it already has an unfinished task run.</summary>
+    /// <remarks>
+    /// The task must first be locked with <see cref="TryLockTask"/> in a separate statement,
+    /// so that this query sees task runs committed by the previous holder of the lock.
+    /// </remarks>
     public async ValueTask<TaskEntity?> TryDequeueTask(Guid taskId, NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleOrDefaultAsync<TaskEntity>(new CommandDefinition(
+            // lang=sql
             $"""
              {SelectSql}
              WHERE tasks.id = @{nameof(taskId)}
@@ -163,23 +170,103 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                                        LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
                               WHERE task_runs.task_id = tasks.id
                                 AND task_run_results.id IS NULL)
-             ORDER BY tasks.created_at
-             LIMIT 1 FOR UPDATE SKIP LOCKED;
              """,
             new { taskId },
             transaction));
     }
 
-    public async ValueTask<Guid> AddTaskRun(Guid taskId, TaskSource source, NpgsqlTransaction transaction)
+    public async ValueTask AddTaskRun(Guid taskRunId, Guid taskId, TaskSource source, NpgsqlTransaction transaction)
     {
-        return await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+        await Connection.ExecuteAsync(new CommandDefinition(
             $"""
-             INSERT INTO tasks.task_runs (task_id, state, source)
-             VALUES (@{nameof(taskId)}, '{RunState.Names.Queued}', @{nameof(source)})
-             RETURNING id;
+             INSERT INTO tasks.task_runs (id, task_id, state, source)
+             VALUES (@{nameof(taskRunId)}, @{nameof(taskId)}, '{RunState.Names.Queued}', @{nameof(source)});
              """,
-            new { taskId, source },
+            new { taskRunId, taskId, source },
             transaction));
+    }
+
+    /// <summary>Locks the task, unless it is already locked by another transaction.</summary>
+    /// <returns><see langword="true"/> if the task was locked, otherwise <see langword="false"/>.</returns>
+    public async ValueTask<bool> TryLockTask(Guid taskId, NpgsqlTransaction transaction)
+    {
+        // FOR NO KEY UPDATE instead of FOR UPDATE, so that it does not conflict with FOR KEY SHARE locks
+        // taken by foreign key checks, for example when a task is triggered concurrently.
+        var lockedId = await Connection.QuerySingleOrDefaultAsync<Guid?>(new CommandDefinition(
+            $"""
+             SELECT id
+             FROM tasks.tasks
+             WHERE id = @{nameof(taskId)}
+                 FOR NO KEY UPDATE SKIP LOCKED;
+             """,
+            new { taskId },
+            transaction));
+
+        return lockedId is not null;
+    }
+
+    /// <summary>Deletes the task request, unless it was already deleted or is locked by another transaction.</summary>
+    /// <returns>The deleted task request, or <see langword="null"/> if it was not deleted.</returns>
+    public async ValueTask<TaskRequest?> TryDeleteTaskRequest(Guid taskRequestId, NpgsqlTransaction transaction)
+    {
+        return await Connection.QuerySingleOrDefaultAsync<TaskRequest>(new CommandDefinition(
+            $"""
+             DELETE
+             FROM tasks.task_requests
+             WHERE id = (SELECT id
+                         FROM tasks.task_requests
+                         WHERE id = @{nameof(taskRequestId)}
+                             FOR UPDATE SKIP LOCKED)
+             RETURNING task_id, source;
+             """,
+            new { taskRequestId },
+            transaction));
+    }
+
+    /// <summary>
+    /// Deletes the task request, unless it was already deleted.
+    /// If another transaction locked the request, waits for it to finish instead of skipping the request,
+    /// and only deletes the request if the other transaction did not delete it.
+    /// </summary>
+    /// <returns>The deleted task request, or <see langword="null"/> if it was not deleted.</returns>
+    public async ValueTask<TaskRequest?> TryDeleteTaskRequestWaitingForLock(
+        Guid taskRequestId,
+        NpgsqlTransaction transaction)
+    {
+        return await Connection.QuerySingleOrDefaultAsync<TaskRequest>(new CommandDefinition(
+            $"""
+             DELETE
+             FROM tasks.task_requests
+             WHERE id = (SELECT id
+                         FROM tasks.task_requests
+                         WHERE id = @{nameof(taskRequestId)}
+                             FOR UPDATE)
+             RETURNING task_id, source;
+             """,
+            new { taskRequestId },
+            transaction));
+    }
+
+    /// <summary>Finds the task and source of an existing task run.</summary>
+    public async ValueTask<TaskRequest?> FindTaskRunRequest(Guid taskRunId, NpgsqlTransaction transaction)
+    {
+        return await Connection.QuerySingleOrDefaultAsync<TaskRequest>(new CommandDefinition(
+            $"""
+             SELECT task_id, source
+             FROM tasks.task_runs
+             WHERE id = @{nameof(taskRunId)};
+             """,
+            new { taskRunId },
+            transaction));
+    }
+
+    public async ValueTask<List<Guid>> GetTaskRequestIds(CancellationToken cancellationToken)
+    {
+        var ids = await Connection.QueryAsync<Guid>(new CommandDefinition(
+            "SELECT id FROM tasks.task_requests ORDER BY created_at;",
+            cancellationToken: cancellationToken));
+
+        return ids.AsList();
     }
 
     public async ValueTask StartTaskRun(Guid taskRunId, CancellationToken cancellationToken)
@@ -196,18 +283,24 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         Trace.Assert(count is 1);
     }
 
+    /// <summary>Requests the task to be run, unless the task does not exist, for example because it was deleted.</summary>
     public async ValueTask TriggerTask(Guid taskId, TaskSource source, NpgsqlTransaction transaction)
     {
         await Connection.ExecuteAsync(
             // lang=sql
-            $"SELECT pg_notify('{TaskChannels.Created}', concat_ws('|', @{nameof(taskId)}::text, @{nameof(source)}::text));",
+            $"""
+             INSERT INTO tasks.task_requests (task_id, source)
+             SELECT tasks.id, @{nameof(source)}::tasks.task_source
+             FROM tasks.tasks
+             WHERE tasks.id = @{nameof(taskId)};
+             """,
             new { taskId, source },
             transaction);
     }
 
     public async ValueTask TriggerTask(Guid taskId, TaskSource source, Guid userId, NpgsqlTransaction transaction)
     {
-        var notifications = await Connection.QueryAsync(
+        var requestIds = await Connection.QueryAsync<Guid>(
             // lang=sql
             $"""
              WITH accessible AS
@@ -219,15 +312,17 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                      ownerships.user_id = @{nameof(userId)} AND
                      (ownerships.access = 'modify' OR ownerships.access = 'owner'))
 
-             SELECT pg_notify('{TaskChannels.Created}', concat_ws('|', @{nameof(taskId)}::text, @{nameof(source)}::text))
+             INSERT INTO tasks.task_requests (task_id, source)
+             SELECT tasks.id, @{nameof(source)}::tasks.task_source
              FROM tasks.tasks
                   INNER JOIN media.libraries ON tasks.library_id = libraries.id
-             WHERE (libraries.id IN (SELECT id FROM accessible)) AND tasks.id = @{nameof(taskId)};
+             WHERE (libraries.id IN (SELECT id FROM accessible)) AND tasks.id = @{nameof(taskId)}
+             RETURNING id;
              """,
             new { taskId, source, userId },
             transaction);
 
-        if (!notifications.Any())
+        if (!requestIds.Any())
         {
             throw new InvalidOperationException("Failed to trigger task due to missing access");
         }
@@ -437,7 +532,9 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
     public async ValueTask CompleteStuckTasks(CancellationToken cancellationToken)
     {
-        await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
+        // ReadCommitted, so that ON CONFLICT skips results committed concurrently, for example by a previous instance during a rolling restart.
+        // At Serializable, a conflicting result that is not visible to the snapshot fails with a serialization error instead.
+        await using var transaction = await Connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, cancellationToken);
 
         var taskRunIds = await Connection.QueryAsync<Guid>(new(
             """
@@ -455,7 +552,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             await Connection.ExecuteAsync(new(
                 $"""
                  INSERT INTO tasks.task_run_results (run_id, result, message)
-                 VALUES (@{nameof(taskRunId)}, @result, 'Failed because server was stopped unexpectedly');
+                 VALUES (@{nameof(taskRunId)}, @result, 'Failed because server was stopped unexpectedly')
+                 ON CONFLICT (run_id) DO NOTHING;
                  """,
                 new { taskRunId, result = TaskResult.Failed },
                 transaction));
@@ -482,6 +580,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                                             task_run_results.created_at > CURRENT_TIMESTAMP - '1 month'::interval))
                       AND EXISTS(SELECT 1 FROM tasks.task_runs WHERE task_id = tasks.id)
                       AND NOT EXISTS(SELECT 1 FROM tasks.schedules WHERE task_id = tasks.id)
+                      AND NOT EXISTS(SELECT 1 FROM tasks.task_requests WHERE task_id = tasks.id)
                 )
 
             DELETE

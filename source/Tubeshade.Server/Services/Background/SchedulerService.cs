@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Data;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Cronos;
@@ -13,6 +13,7 @@ using Npgsql;
 using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
+using static System.Data.IsolationLevel;
 
 namespace Tubeshade.Server.Services.Background;
 
@@ -54,6 +55,10 @@ public sealed class SchedulerService : BackgroundService
 
         var beforeTick = _clock.GetCurrentInstant();
 
+        // Schedules triggered since beforeTick, so that they are not triggered again
+        // when the next tick covers a failed interval as well.
+        var triggeredScheduleIds = new HashSet<Guid>();
+
         _logger.StartingScheduler(timer.Period);
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
@@ -67,7 +72,7 @@ public sealed class SchedulerService : BackgroundService
 
             try
             {
-                await ProcessScheduleTick(beforeTick, interval, stoppingToken);
+                await ProcessScheduleTick(beforeTick, interval, triggeredScheduleIds, stoppingToken);
             }
             catch (Exception exception) when (!stoppingToken.IsCancellationRequested)
             {
@@ -77,10 +82,15 @@ public sealed class SchedulerService : BackgroundService
             }
 
             beforeTick = afterTick;
+            triggeredScheduleIds.Clear();
         }
     }
 
-    private async Task ProcessScheduleTick(Instant beforeTick, Interval interval, CancellationToken stoppingToken)
+    private async Task ProcessScheduleTick(
+        Instant beforeTick,
+        Interval interval,
+        HashSet<Guid> triggeredScheduleIds,
+        CancellationToken stoppingToken)
     {
         await using var tickScope = _serviceProvider.CreateAsyncScope();
 
@@ -94,7 +104,7 @@ public sealed class SchedulerService : BackgroundService
         {
             using var scheduleScope = _logger.BeginScope("{ScheduleId}", schedule.Id);
             var nextTime = GetNextTime(schedule.CronExpression, beforeTick, schedule.Id.GetHashCode());
-            if (!interval.Contains(nextTime))
+            if (!interval.Contains(nextTime) || triggeredScheduleIds.Contains(schedule.Id))
             {
                 _logger.SkippingSchedule();
                 continue;
@@ -102,10 +112,10 @@ public sealed class SchedulerService : BackgroundService
 
             _logger.StartingScheduledTask(schedule.TaskId);
 
-            // we only use NOTIFY here, so transaction isolation does not matter
-            await using var transaction = await connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, stoppingToken);
+            await using var transaction = await connection.OpenAndBeginTransaction(ReadCommitted, stoppingToken);
             await taskRepository.TriggerTask(schedule.TaskId, TaskSource.Schedule, transaction);
             await transaction.CommitAsync(stoppingToken);
+            triggeredScheduleIds.Add(schedule.Id);
         }
     }
 

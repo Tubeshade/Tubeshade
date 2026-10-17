@@ -101,6 +101,12 @@ public static class ServiceCollectionExtensions
                 var options = provider.GetRequiredService<IOptionsMonitor<DatabaseOptions>>().CurrentValue;
                 var builder = new NpgsqlSlimDataSourceBuilder(options.ConnectionString);
 
+                // This way the keep alive cannot be disabled, but it is needed for listening to notifications
+                if (builder.ConnectionStringBuilder.KeepAlive is 0)
+                {
+                    builder.ConnectionStringBuilder.KeepAlive = 30;
+                }
+
                 builder.EnableTransportSecurity();
                 builder.EnableIntegratedSecurity();
 

@@ -17,6 +17,8 @@ _Latest build from master branch._
   ([#325](https://github.com/Tubeshade/Tubeshade/pull/325), [#333](https://github.com/Tubeshade/Tubeshade/pull/333))
 - Update yt-dlp from 2026.07.04 to 2026.08.19, and other dependencies
   ([#333](https://github.com/Tubeshade/Tubeshade/pull/333))
+- Persist task trigger requests
+  ([#335](https://github.com/Tubeshade/Tubeshade/pull/335))
 
 ### Fixed
 

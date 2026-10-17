@@ -10,6 +10,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Pages.Tasks;
+using Tubeshade.Server.Services.Background;
 
 namespace Tubeshade.Server.Services;
 
@@ -214,7 +215,7 @@ public sealed class TaskService
     }
 
     public async ValueTask WaitForBlockingTasks(
-        ChannelReader<Guid> reader,
+        ChannelReader<Guid?> reader,
         TaskEntity task,
         Guid taskRunId,
         CancellationToken cancellationToken)
@@ -228,7 +229,26 @@ public sealed class TaskService
 
             while (blockingRunIds.Count > 0)
             {
-                var finishedTaskRunId = await reader.ReadAsync(cancellationToken);
+                if (await reader.ReadAsync(cancellationToken) is not { } finishedTaskRunId)
+                {
+                    blockingRunIds = await RetryDelay.RetryAsync(
+                        async _ =>
+                        {
+                            // If the database was restarted, the connection is broken but only fails on first use, after which it is closed.
+                            // It is reopened, instead of letting Dapper open it only for this query, so that it is kept open for status updates.
+                            await _connection.OpenConnection(cancellationToken);
+                            return await _taskRepository.GetBlockingTaskRunIds(parameters, cancellationToken);
+                        },
+                        // The database might still be considered offline after the broken connection failed,
+                        // so opening the connection again can also fail for a while.
+                        RetryDelay.IsTransient,
+                        (exception, delay) => _logger.QueryingBlockingTaskRunsFailed(exception, delay),
+                        cancellationToken);
+
+                    _logger.RequeriedBlockingTaskRuns(blockingRunIds.Count, taskRunId);
+                    continue;
+                }
+
                 if (blockingRunIds.Remove(finishedTaskRunId))
                 {
                     _logger.RemovedBlockingTaskRun(finishedTaskRunId, taskRunId, blockingRunIds.Count);

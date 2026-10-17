@@ -2,9 +2,9 @@
 
 public static class TaskChannels
 {
-    public const string Created = "task_created";
+    public const string Requested = "task_requested";
     public const string Cancel = "cancel_task";
     public const string RunFinished = "task_run_finished";
 
-    public static string[] Names { get; } = [Created, Cancel, RunFinished];
+    public static string[] Names { get; } = [Requested, Cancel, RunFinished];
 }

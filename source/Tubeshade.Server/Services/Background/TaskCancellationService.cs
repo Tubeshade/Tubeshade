@@ -29,12 +29,11 @@ public sealed class TaskCancellationService : BackgroundService
         while (await reader.WaitToReadAsync(stoppingToken))
         {
             var taskRunId = await reader.ReadAsync(stoppingToken);
-            _logger.LogDebug("Cancelling task run {TaskRunId}", taskRunId);
+            _logger.CancellingTaskRun(taskRunId);
 
-            var cancelled = await _backgroundWorkerService.CancelTaskRun(taskRunId);
-            if (!cancelled)
+            if (!await _backgroundWorkerService.CancelTaskRun(taskRunId))
             {
-                _logger.LogDebug("No task run with id {TaskRunId} to cancel", taskRunId);
+                _logger.NoTaskRunToCancel(taskRunId);
             }
         }
     }

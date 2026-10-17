@@ -3,9 +3,9 @@ using System.Threading.Channels;
 
 namespace Tubeshade.Server.Services.Background;
 
-internal readonly struct RunFinishedListener : IDisposable
+internal sealed class RunFinishedListener : IDisposable
 {
-    private readonly Channel<Guid> _channel = Channel.CreateUnbounded<Guid>(new UnboundedChannelOptions
+    private readonly Channel<Guid?> _channel = Channel.CreateUnbounded<Guid?>(new UnboundedChannelOptions
     {
         AllowSynchronousContinuations = true,
         SingleReader = true,
@@ -20,21 +20,30 @@ internal readonly struct RunFinishedListener : IDisposable
         Reader = _channel.Reader;
 
         _taskListenerService.TaskRunFinished += OnTaskRunFinished;
+        _taskListenerService.ListeningResumed += OnListeningResumed;
     }
 
-    internal ChannelReader<Guid> Reader { get; }
+    /// <summary>
+    /// Ids of finished task runs, or <see langword="null"/> if notifications might have been missed,
+    /// in which case the finished task runs need to be queried instead.
+    /// </summary>
+    internal ChannelReader<Guid?> Reader { get; }
 
     /// <inheritdoc />
     public void Dispose()
     {
         _taskListenerService.TaskRunFinished -= OnTaskRunFinished;
+        _taskListenerService.ListeningResumed -= OnListeningResumed;
         _channel.Writer.Complete();
     }
 
     private void OnTaskRunFinished(object? sender, Guid runId)
     {
-        // SingleConsumerUnboundedChannel only fails to write if Writer.Complete() was called.
-        // Even though the event is unsubscribed before completing the writer, the event handler is still called and fails.
         _ = _channel.Writer.TryWrite(runId);
+    }
+
+    private void OnListeningResumed(object? sender, EventArgs args)
+    {
+        _ = _channel.Writer.TryWrite(null);
     }
 }
