@@ -287,57 +287,27 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         Trace.Assert(count is 1);
     }
 
-    public async ValueTask<Guid> CompleteTask(Guid taskRunId, CancellationToken cancellationToken)
+    /// <summary>Saves the result of a task run, unless the task run already has a result.</summary>
+    /// <returns>The id of the saved result, or <see langword="null"/> if the task run already had a result.</returns>
+    public async ValueTask<Guid?> FinishTask(
+        Guid taskRunId,
+        TaskResult result,
+        Exception? exception,
+        CancellationToken cancellationToken)
     {
         await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
         await FinishTaskRun(taskRunId, transaction);
 
-        var id = await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
+        var message = exception?.Message;
+        var id = await Connection.QuerySingleOrDefaultAsync<Guid?>(new CommandDefinition(
             // lang=sql
             $"""
              INSERT INTO tasks.task_run_results (run_id, result, message)
-             VALUES (@{nameof(taskRunId)}, @result, NULL)
+             VALUES (@{nameof(taskRunId)}, @{nameof(result)}, @{nameof(message)})
+             ON CONFLICT (run_id) DO NOTHING
              RETURNING id;
              """,
-            new { taskRunId, result = TaskResult.Successful },
-            transaction));
-
-        await transaction.CommitAsync(cancellationToken);
-        return id;
-    }
-
-    public async ValueTask<Guid> CancelledTask(Guid taskRunId, CancellationToken cancellationToken)
-    {
-        await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
-        await FinishTaskRun(taskRunId, transaction);
-
-        var id = await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
-            // lang=sql
-            $"""
-             INSERT INTO tasks.task_run_results (run_id, result, message)
-             VALUES (@{nameof(taskRunId)}, @result, NULL)
-             RETURNING id;
-             """,
-            new { taskRunId, result = TaskResult.Cancelled },
-            transaction));
-
-        await transaction.CommitAsync(cancellationToken);
-        return id;
-    }
-
-    public async ValueTask<Guid> FailedTask(Guid taskRunId, Exception exception, CancellationToken cancellationToken)
-    {
-        await using var transaction = await Connection.OpenAndBeginTransaction(cancellationToken);
-        await FinishTaskRun(taskRunId, transaction);
-
-        var id = await Connection.QuerySingleAsync<Guid>(new CommandDefinition(
-            // lang=sql
-            $"""
-             INSERT INTO tasks.task_run_results (run_id, result, message)
-             VALUES (@{nameof(taskRunId)}, @result, @message)
-             RETURNING id;
-             """,
-            new { taskRunId, result = TaskResult.Failed, message = exception.Message },
+            new { taskRunId, result, message },
             transaction));
 
         await transaction.CommitAsync(cancellationToken);

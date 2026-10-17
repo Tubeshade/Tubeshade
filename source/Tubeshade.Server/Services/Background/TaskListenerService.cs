@@ -29,6 +29,8 @@ public sealed class TaskListenerService : BackgroundService
     private readonly NpgsqlMultiHostDataSource _dataSource;
     private readonly DatabaseMigrationStartupFilter _migrationStartupFilter;
 
+    private int _connectionAttempt;
+
     internal ChannelReader<CreatedTask> TaskCreated => _taskCreatedChannel.Reader;
 
     internal ChannelReader<Guid> TaskRunCancelled => _channels[TaskChannels.Cancel].Reader;
@@ -52,27 +54,51 @@ public sealed class TaskListenerService : BackgroundService
     {
         await _migrationStartupFilter.MigrationTask.WaitAsync(stoppingToken);
 
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await ListenForNotifications(stoppingToken);
+            }
+            catch (Exception exception) when (!stoppingToken.IsCancellationRequested)
+            {
+                var delay = RetryDelay.GetExponential(_connectionAttempt);
+                _connectionAttempt++;
+                _logger.ListeningToDatabaseNotificationsFailed(exception, delay);
+                await Task.Delay(delay, stoppingToken);
+            }
+        }
+    }
+
+    private async ValueTask ListenForNotifications(CancellationToken stoppingToken)
+    {
         await using var connection = _dataSource.CreateConnection(TargetSessionAttributes.Any);
         await connection.OpenConnection(stoppingToken);
 
         _logger.ListeningToDatabaseNotifications();
         connection.Notification += ConnectionOnNotification;
 
-        foreach (var channel in TaskChannels.Names)
+        try
         {
-            _logger.ListeningToNotificationChannel(channel);
-            await connection.ExecuteAsync($"LISTEN {channel};");
+            foreach (var channel in TaskChannels.Names)
+            {
+                _logger.ListeningToNotificationChannel(channel);
+                await connection.ExecuteAsync($"LISTEN {channel};");
+            }
+
+            _logger.ListeningToDatabaseNotifications(connection.DataSource);
+            _ = _taskCompletionSource.TrySetResult();
+            _connectionAttempt = 0;
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await connection.WaitAsync(stoppingToken);
+            }
         }
-
-        _logger.ListeningToDatabaseNotifications(connection.DataSource);
-        _ = _taskCompletionSource.TrySetResult();
-
-        while (!stoppingToken.IsCancellationRequested)
+        finally
         {
-            await connection.WaitAsync(stoppingToken);
+            connection.Notification -= ConnectionOnNotification;
         }
-
-        connection.Notification -= ConnectionOnNotification;
     }
 
     private void ConnectionOnNotification(object? sender, NpgsqlNotificationEventArgs args)

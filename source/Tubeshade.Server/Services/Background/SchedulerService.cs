@@ -65,33 +65,47 @@ public sealed class SchedulerService : BackgroundService
                 _logger.SchedulerTick();
             }
 
-            await using var tickScope = _serviceProvider.CreateAsyncScope();
-
-            var scheduleRepository = tickScope.ServiceProvider.GetRequiredService<ScheduleRepository>();
-            var schedules = await scheduleRepository.GetWithoutAccessControl(stoppingToken);
-
-            var taskRepository = tickScope.ServiceProvider.GetRequiredService<TaskRepository>();
-            var connection = tickScope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
-
-            foreach (var schedule in schedules)
+            try
             {
-                using var scheduleScope = _logger.BeginScope("{ScheduleId}", schedule.Id);
-                var nextTime = GetNextTime(schedule.CronExpression, beforeTick, schedule.Id.GetHashCode());
-                if (!interval.Contains(nextTime))
-                {
-                    _logger.SkippingSchedule();
-                    continue;
-                }
-
-                _logger.StartingScheduledTask(schedule.TaskId);
-
-                // we only use NOTIFY here, so transaction isolation does not matter
-                await using var transaction = await connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, stoppingToken);
-                await taskRepository.TriggerTask(schedule.TaskId, TaskSource.Schedule, transaction);
-                await transaction.CommitAsync(stoppingToken);
+                await ProcessScheduleTick(beforeTick, interval, stoppingToken);
+            }
+            catch (Exception exception) when (!stoppingToken.IsCancellationRequested)
+            {
+                // beforeTick is not updated, so that the next tick covers the failed interval as well
+                _logger.SchedulerTickFailed(exception);
+                continue;
             }
 
             beforeTick = afterTick;
+        }
+    }
+
+    private async Task ProcessScheduleTick(Instant beforeTick, Interval interval, CancellationToken stoppingToken)
+    {
+        await using var tickScope = _serviceProvider.CreateAsyncScope();
+
+        var scheduleRepository = tickScope.ServiceProvider.GetRequiredService<ScheduleRepository>();
+        var schedules = await scheduleRepository.GetWithoutAccessControl(stoppingToken);
+
+        var taskRepository = tickScope.ServiceProvider.GetRequiredService<TaskRepository>();
+        var connection = tickScope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+
+        foreach (var schedule in schedules)
+        {
+            using var scheduleScope = _logger.BeginScope("{ScheduleId}", schedule.Id);
+            var nextTime = GetNextTime(schedule.CronExpression, beforeTick, schedule.Id.GetHashCode());
+            if (!interval.Contains(nextTime))
+            {
+                _logger.SkippingSchedule();
+                continue;
+            }
+
+            _logger.StartingScheduledTask(schedule.TaskId);
+
+            // we only use NOTIFY here, so transaction isolation does not matter
+            await using var transaction = await connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, stoppingToken);
+            await taskRepository.TriggerTask(schedule.TaskId, TaskSource.Schedule, transaction);
+            await transaction.CommitAsync(stoppingToken);
         }
     }
 

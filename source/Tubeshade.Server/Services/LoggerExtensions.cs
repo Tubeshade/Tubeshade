@@ -357,4 +357,22 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(118, Warning, "Failed to refresh subscription {SubscriptionId}")]
     internal static partial void PubSubFailedSubscription(this ILogger logger, Exception exception, Guid subscriptionId);
+
+    [LoggerMessage(119, Error, "Failed to listen for database notifications, retrying in {RetryDelay}")]
+    internal static partial void ListeningToDatabaseNotificationsFailed(this ILogger logger, Exception exception, TimeSpan retryDelay);
+
+    [LoggerMessage(120, Error, "Scheduler tick failed, retrying on next tick")]
+    internal static partial void SchedulerTickFailed(this ILogger logger, Exception exception);
+
+    [LoggerMessage(121, Error, "Failed to dequeue task {TaskId}")]
+    internal static partial void DequeueTaskFailed(this ILogger logger, Exception exception, Guid taskId);
+
+    [LoggerMessage(122, Error, "Failed to save result of task run {TaskRunId}, retrying in {RetryDelay}")]
+    internal static partial void SavingTaskResultFailed(this ILogger logger, Exception exception, Guid taskRunId, TimeSpan retryDelay);
+
+    [LoggerMessage(123, Error, "Failed to save result of task run {TaskRunId} before shutdown")]
+    internal static partial void SavingTaskResultAborted(this ILogger logger, Exception exception, Guid taskRunId);
+
+    [LoggerMessage(124, Warning, "Task run {TaskRunId} already has a result, {TaskResult} result was not saved")]
+    internal static partial void TaskResultAlreadyExists(this ILogger logger, Guid taskRunId, string taskResult);
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Data;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +12,7 @@ using Tubeshade.Data;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Services.Migrations;
+using static System.Data.IsolationLevel;
 
 namespace Tubeshade.Server.Services.Background;
 
@@ -77,68 +77,104 @@ public sealed class BackgroundWorkerService : BackgroundService
         var taskId = createdTask.Id;
         var taskSource = createdTask.Source;
 
-        await using var scope = _serviceProvider.CreateAsyncScope();
-
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<BackgroundWorkerService>>();
-        using var loggerScope = logger.BeginScope("{TaskId}", taskId);
-        logger.ReceivedCreatedTask(taskId);
-
-        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
-        var taskRepository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
-        var taskService = scope.ServiceProvider.GetRequiredService<TaskService>();
-
-        TaskEntity? task;
         Guid taskRunId;
+        TaskResult result;
+        Exception? taskException;
 
-        using var listener = new RunFinishedListener(_taskListenerService);
-
-        // we only do a single read at the start of the transaction, so ReadCommitted is ok
-        await using (var dequeueTransaction = await connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, cancellationToken))
+        await using (var scope = _serviceProvider.CreateAsyncScope())
         {
-            task = await taskRepository.TryDequeueTask(taskId, dequeueTransaction);
-            if (task is null)
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<BackgroundWorkerService>>();
+            using var loggerScope = logger.BeginScope("{TaskId}", taskId);
+            logger.ReceivedCreatedTask(taskId);
+
+            var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+            var taskRepository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
+            var taskService = scope.ServiceProvider.GetRequiredService<TaskService>();
+
+            using var listener = new RunFinishedListener(_taskListenerService);
+
+            var tuple = await TryDequeueTask(taskId, taskSource, logger, connection, taskRepository, cancellationToken);
+            if (tuple is null)
             {
-                logger.CouldNotDequeueTask(taskId);
                 return;
             }
 
-            logger.AddingTaskRun(taskId);
-            taskRunId = await taskRepository.AddTaskRun(task.Id, taskSource, dequeueTransaction);
-            await dequeueTransaction.CommitAsync(cancellationToken);
+            (var task, taskRunId) = tuple.Value;
+
+            try
+            {
+                var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                var added = _runCancellations.TryAdd(taskRunId, source);
+                Trace.Assert(added);
+
+                await taskService.WaitForBlockingTasks(listener.Reader, task, taskRunId, source.Token);
+
+                var factory = scope.ServiceProvider.GetRequiredService<CookiesServiceFactory>();
+
+                // Separate scope is needed, so that all updates to task status are not within a transaction
+                await using var taskScope = _serviceProvider.CreateAsyncScope();
+                await Execute(task, taskSource, taskScope.ServiceProvider, taskRepository, taskRunId, factory, source.Token);
+                result = TaskResult.Successful;
+                taskException = null;
+            }
+            catch (Exception exception) when (exception is TaskCanceledException or OperationCanceledException)
+            {
+                logger.TaskCancelled(exception);
+                result = TaskResult.Cancelled;
+                taskException = null;
+            }
+            catch (Exception exception)
+            {
+                logger.TaskFailed(exception);
+                result = TaskResult.Failed;
+                taskException = exception;
+            }
+            finally
+            {
+                if (_runCancellations.TryRemove(taskRunId, out var source))
+                {
+                    source.Dispose();
+                }
+            }
         }
+
+        await SaveResult(taskId, taskRunId, result, taskException, cancellationToken);
+    }
+
+    private static async ValueTask<(TaskEntity Task, Guid TaskRunId)?> TryDequeueTask(
+        Guid taskId,
+        TaskSource taskSource,
+        ILogger<BackgroundWorkerService> logger,
+        NpgsqlConnection connection,
+        TaskRepository taskRepository,
+        CancellationToken cancellationToken)
+    {
+        TaskEntity? task;
+        Guid taskRunId;
 
         try
         {
-            var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            var added = _runCancellations.TryAdd(taskRunId, source);
-            Trace.Assert(added);
+            // we only do a single read at the start of the transaction, so ReadCommitted is ok
+            await using var transaction = await connection.OpenAndBeginTransaction(ReadCommitted, cancellationToken);
 
-            await taskService.WaitForBlockingTasks(listener.Reader, task, taskRunId, source.Token);
-
-            var factory = scope.ServiceProvider.GetRequiredService<CookiesServiceFactory>();
-
-            // Separate scope is needed, so that all updates to task status are not within a transaction
-            await using var taskScope = _serviceProvider.CreateAsyncScope();
-            await Execute(task, taskSource, taskScope.ServiceProvider, taskRepository, taskRunId, factory, source.Token);
-            await taskRepository.CompleteTask(taskRunId, source.Token);
-        }
-        catch (Exception exception) when (exception is TaskCanceledException or OperationCanceledException)
-        {
-            logger.TaskCancelled(exception);
-            await taskRepository.CancelledTask(taskRunId, CancellationToken.None);
-        }
-        catch (Exception exception)
-        {
-            logger.TaskFailed(exception);
-            await taskRepository.FailedTask(taskRunId, exception, CancellationToken.None);
-        }
-        finally
-        {
-            if (_runCancellations.TryRemove(taskRunId, out var source))
+            task = await taskRepository.TryDequeueTask(taskId, transaction);
+            if (task is null)
             {
-                source.Dispose();
+                logger.CouldNotDequeueTask(taskId);
+                return null;
             }
+
+            logger.AddingTaskRun(taskId);
+            taskRunId = await taskRepository.AddTaskRun(task.Id, taskSource, transaction);
+            await transaction.CommitAsync(cancellationToken);
         }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.DequeueTaskFailed(exception, taskId);
+            return null;
+        }
+
+        return (task, taskRunId);
     }
 
     private async ValueTask Execute(
@@ -335,5 +371,55 @@ public sealed class BackgroundWorkerService : BackgroundService
         await repository.StartTaskRun(taskRunId, cancellationToken);
 
         return scope;
+    }
+
+    private async ValueTask SaveResult(
+        Guid taskId,
+        Guid taskRunId,
+        TaskResult result,
+        Exception? taskException,
+        CancellationToken stoppingToken)
+    {
+        var attempt = 0;
+
+        var logger = _serviceProvider.GetRequiredService<ILogger<BackgroundWorkerService>>();
+        using var loggerScope = logger.BeginScope("{TaskId}", taskId);
+
+        do
+        {
+            try
+            {
+                await using var scope = _serviceProvider.CreateAsyncScope();
+                var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
+                if (await repository.FinishTask(taskRunId, result, taskException, CancellationToken.None) is null)
+                {
+                    logger.TaskResultAlreadyExists(taskRunId, result.Name);
+                }
+
+                return;
+            }
+            catch (Exception exception)
+            {
+                if (stoppingToken.IsCancellationRequested)
+                {
+                    logger.SavingTaskResultAborted(exception, taskRunId);
+                    return;
+                }
+
+                var delay = RetryDelay.GetExponential(attempt);
+                attempt++;
+
+                logger.SavingTaskResultFailed(exception, taskRunId, delay);
+
+                try
+                {
+                    await Task.Delay(delay, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+            }
+        } while (!stoppingToken.IsCancellationRequested);
     }
 }

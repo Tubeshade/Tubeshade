@@ -22,6 +22,8 @@ _Latest build from master branch._
 
 - Skip upcoming premiere videos during channel scan
   ([#329](https://github.com/Tubeshade/Tubeshade/pull/329), [#330](https://github.com/Tubeshade/Tubeshade/pull/330))
+- Handle transient PostgreSQL connection errors in background services
+  ([#335](https://github.com/Tubeshade/Tubeshade/pull/335))
 
 ## [0.1.8] - 2026-07-23
 

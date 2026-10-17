@@ -109,7 +109,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
             await using (var parallelScope = Fixture.Services.CreateAsyncScope())
             {
                 var parallelRepository = parallelScope.ServiceProvider.GetRequiredService<TaskRepository>();
-                await parallelRepository.CompleteTask(task1RunId, CancellationToken.None);
+                await parallelRepository.FinishTask(task1RunId, TaskResult.Successful, null, CancellationToken.None);
             }
 
             blockingIds = await repository.GetBlockingTaskRunIds(parameters, CancellationToken.None);
@@ -203,10 +203,38 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
             await transaction.CommitAsync();
         }
 
-        await repository.CompleteTask(taskRunId, CancellationToken.None);
+        await repository.FinishTask(taskRunId, TaskResult.Successful, null, CancellationToken.None);
 
         var ids = await Task.WhenAll(AddTask(url1), AddTask(url1), AddTask(url1));
         ids.Should().ContainSingle(id => id.HasValue);
+    }
+
+    [Test]
+    public async Task FinishTaskTwice()
+    {
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
+
+        Guid taskRunId;
+
+        await using (var transaction = await connection.OpenAndBeginTransaction())
+        {
+            var url = $"https://example.org/{Guid.NewGuid():N}";
+            var taskId = await repository.AddTask(TaskEntity.Index(_libraryId, _userId, url), transaction);
+            taskRunId = await repository.AddTaskRun(taskId, TaskSource.User, transaction);
+            await transaction.CommitAsync();
+        }
+
+        var resultId = await repository.FinishTask(taskRunId, TaskResult.Successful, null, CancellationToken.None);
+        var secondResultId =
+            await repository.FinishTask(taskRunId, TaskResult.Failed, new Exception("Retry"), CancellationToken.None);
+
+        using (new AssertionScope())
+        {
+            resultId.Should().NotBeNull();
+            secondResultId.Should().BeNull();
+        }
     }
 
     [Test]
