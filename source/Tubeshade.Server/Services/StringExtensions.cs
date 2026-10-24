@@ -31,7 +31,7 @@ public static partial class StringExtensions
         var regex = TimestampRegex();
         var timestamps = new List<(Duration Timestamp, string Label)>();
 
-        foreach (var line in description.Split(Environment.NewLine))
+        foreach (var line in description.ReplaceLineEndings().Split(Environment.NewLine))
         {
             var match = regex.Match(line);
             if (match.Success)
