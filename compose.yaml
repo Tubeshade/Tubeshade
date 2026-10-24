@@ -45,7 +45,7 @@
       - database:/var/lib/postgresql
 
   pot_provider:
-    image: brainicism/bgutil-ytdlp-pot-provider:2.0.0-deno
+    image: brainicism/bgutil-ytdlp-pot-provider:2.0.1-deno
     networks:
       - internal
     healthcheck:

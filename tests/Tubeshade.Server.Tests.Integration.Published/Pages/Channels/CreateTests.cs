@@ -16,7 +16,6 @@ public sealed class CreateTests(IServerFixture serverFixture) : PlaywrightTests(
     protected override string Username => "test3@example.org";
 
     [Test]
-    [Order(1)]
     public async Task CreateChannelFromLibrary()
     {
         await Page.GotoAsync("/Libraries");
@@ -47,7 +46,7 @@ public sealed class CreateTests(IServerFixture serverFixture) : PlaywrightTests(
     }
 
     [Test]
-    [Order(2)]
+    [DependsOnTest(nameof(CreateChannelFromLibrary))]
     public async Task CreateChannel()
     {
         await Page.GotoAsync("/");
@@ -68,7 +67,7 @@ public sealed class CreateTests(IServerFixture serverFixture) : PlaywrightTests(
     }
 
     [Test]
-    [Order(3)]
+    [DependsOnTest(nameof(CreateChannel))]
     public async Task CreateVideo()
     {
         await Page.GotoAsync("/");

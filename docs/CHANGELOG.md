@@ -13,10 +13,10 @@ _Latest build from master branch._
 
 ### Changed
 
-- Update .NET SDK from 10.0.400 to 10.0.401, and runtime from 10.0.11 to 10.0.12
-  ([#325](https://github.com/Tubeshade/Tubeshade/pull/325), [#333](https://github.com/Tubeshade/Tubeshade/pull/333))
-- Update yt-dlp from 2026.07.04 to 2026.08.19, and other dependencies
-  ([#333](https://github.com/Tubeshade/Tubeshade/pull/333))
+- Update .NET SDK from 10.0.400 to 10.0.402, and runtime from 10.0.11 to 10.0.13
+  ([#325](https://github.com/Tubeshade/Tubeshade/pull/325), [#333](https://github.com/Tubeshade/Tubeshade/pull/333), [#336](https://github.com/Tubeshade/Tubeshade/pull/336))
+- Update yt-dlp from 2026.07.04 to 2026.10.21, and other dependencies
+  ([#333](https://github.com/Tubeshade/Tubeshade/pull/333), [#336](https://github.com/Tubeshade/Tubeshade/pull/336))
 - Persist task trigger requests
   ([#335](https://github.com/Tubeshade/Tubeshade/pull/335))
 
