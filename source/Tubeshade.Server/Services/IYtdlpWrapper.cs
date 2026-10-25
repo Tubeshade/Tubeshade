@@ -37,10 +37,8 @@ public interface IYtdlpWrapper
         CancellationToken cancellationToken);
 
     ValueTask<FormatData[][]> SelectFormats(
-        string videoUrl,
+        string infoJsonFilePath,
         IEnumerable<string> formats,
-        string? cookieFilepath,
-        PlayerClient? client,
         CancellationToken cancellationToken);
 
     ValueTask DownloadThumbnails(
@@ -57,20 +55,19 @@ public interface IYtdlpWrapper
         CancellationToken cancellationToken);
 
     Task<RunResult<string>> DownloadVideo(
-        string videoUrl,
+        string infoJsonFilePath,
         string format,
         VideoContainerType containerType,
         string outputFolder,
         string outputTemplate,
         string? cookieFilepath,
         long? limitRate,
-        PlayerClient? client,
         CancellationToken cancellationToken);
 
     OptionSet GetDownloadFormatArgs(
+        string infoJsonFilePath,
         string format,
         string output,
         string? cookieFilepath,
-        long? limitRate,
-        PlayerClient? client);
+        long? limitRate);
 }

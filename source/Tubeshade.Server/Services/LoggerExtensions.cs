@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
+using NodaTime;
 using PubSubHubbub.Models;
 using Tubeshade.Server.V1.Models;
 using YoutubeDLSharp.Metadata;
@@ -417,4 +418,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(139, Warning, "Failed to remux video file {VideoFileId} stored at {Path}")]
     internal static partial void RemuxingVideoFileFailed(this ILogger logger, Exception exception, Guid videoFileId, string path);
+
+    [LoggerMessage(140, Information, "Fetching data for video {VideoId} again, because the format urls expire at {Expiry}, before the download is expected to finish at {DownloadEnd}")]
+    internal static partial void RefreshingExpiringVideoData(this ILogger logger, Guid videoId, Instant? expiry, Instant? downloadEnd);
 }

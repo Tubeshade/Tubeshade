@@ -141,12 +141,8 @@ public sealed class YoutubeDownloadService
             : YoutubeIndexingService.DefaultVideoFormats;
 
         var cookieFilepath = await cookiesService.RefreshCookieFile();
-        var selectedFormats = await _ytdlpWrapper.SelectFormats(
-            video.ExternalUrl,
-            formatSelectors,
-            cookieFilepath,
-            preferences.PlayerClient,
-            cancellationToken);
+        var dataFile = await FetchDataFile(video, preferences, tempDirectory, cookieFilepath, cancellationToken);
+        var selectedFormats = await _ytdlpWrapper.SelectFormats(dataFile.Path, formatSelectors, cancellationToken);
 
         var totalSize = selectedFormats
             .SelectMany(formats => formats)
@@ -185,28 +181,19 @@ public sealed class YoutubeDownloadService
             }
 
             var fileName = videoFile.StoragePath;
-
-            var limitRate = _options.LimitRate;
-            if (size.HasValue && _options.LimitMultiplier is { } multiplier && video.Duration is { } duration)
-            {
-                var seconds = (decimal)duration.ToDuration().TotalSeconds;
-                var byteRate = (long)Math.Round(size.Value * multiplier / seconds, 0);
-                if (limitRate is null || limitRate.Value > byteRate)
-                {
-                    limitRate = byteRate;
-                }
-            }
+            var limitRate = GetLimitRate(size, video);
 
             cookieFilepath = await cookiesService.RefreshCookieFile();
+            await RefreshExpiringDataFile(dataFile, formats, EstimateDownloadDuration(size, limitRate), video, preferences, cookieFilepath, cancellationToken);
+
             var downloadTask = _ytdlpWrapper.DownloadVideo(
-                video.ExternalUrl,
+                dataFile.Path,
                 string.Join('+', formats.Select(format => format.FormatId)),
                 videoFile.Type,
                 tempDirectory.FullName,
                 $"{Path.GetFileNameWithoutExtension(fileName)}.%(ext)s",
                 cookieFilepath,
                 limitRate,
-                preferences.PlayerClient,
                 cancellationToken);
 
             var timestamp = Stopwatch.GetTimestamp();
@@ -283,6 +270,8 @@ public sealed class YoutubeDownloadService
             File.Delete(cookieFilepath);
         }
 
+        File.Delete(dataFile.Path);
+
         foreach (var tempFile in tempDirectory.EnumerateFiles())
         {
             var targetFilePath = Path.Combine(targetDirectoryPath, tempFile.Name);
@@ -308,12 +297,8 @@ public sealed class YoutubeDownloadService
             : YoutubeIndexingService.DefaultVideoFormats;
 
         var cookieFilepath = await cookiesService.RefreshCookieFile();
-        var selectedFormats = await _ytdlpWrapper.SelectFormats(
-            video.ExternalUrl,
-            formatSelectors,
-            cookieFilepath,
-            preferences.PlayerClient,
-            cancellationToken);
+        var dataFile = await FetchDataFile(video, preferences, tempDirectory, cookieFilepath, cancellationToken);
+        var selectedFormats = await _ytdlpWrapper.SelectFormats(dataFile.Path, formatSelectors, cancellationToken);
 
         var totalSize = selectedFormats
             .SelectMany(formats => formats)
@@ -339,6 +324,7 @@ public sealed class YoutubeDownloadService
                 files,
                 video,
                 targetDirectory,
+                dataFile,
                 cookieFilepath,
                 preferences,
                 totalSize,
@@ -351,6 +337,8 @@ public sealed class YoutubeDownloadService
         {
             File.Delete(cookieFilepath);
         }
+
+        File.Delete(dataFile.Path);
 
         foreach (var tempFile in tempDirectory.EnumerateFiles())
         {
@@ -369,6 +357,7 @@ public sealed class YoutubeDownloadService
         List<VideoFileEntity> files,
         VideoEntity video,
         DirectoryInfo targetDirectory,
+        DataFile dataFile,
         string? cookieFilepath,
         PreferencesEntity preferences,
         decimal? totalSize,
@@ -394,6 +383,7 @@ public sealed class YoutubeDownloadService
                 videoFile,
                 video,
                 targetDirectory,
+                dataFile,
                 cookieFilepath,
                 preferences,
                 totalSize,
@@ -428,6 +418,7 @@ public sealed class YoutubeDownloadService
                 videoFile,
                 video,
                 targetDirectory,
+                dataFile,
                 cookieFilepath,
                 preferences,
                 totalSize,
@@ -448,6 +439,7 @@ public sealed class YoutubeDownloadService
         VideoFileEntity videoFile,
         VideoEntity video,
         DirectoryInfo targetDirectory,
+        DataFile dataFile,
         string? cookieFilepath,
         PreferencesEntity preferences,
         decimal? totalSize,
@@ -463,17 +455,8 @@ public sealed class YoutubeDownloadService
         }
 
         var fileName = videoFile.StoragePath;
-
-        var limitRate = _options.LimitRate;
-        if (size is not 0 && _options.LimitMultiplier is { } multiplier && video.Duration is { } duration)
-        {
-            var seconds = (decimal)duration.ToDuration().TotalSeconds;
-            var byteRate = (long)Math.Round(size * multiplier / seconds, 0);
-            if (limitRate is null || limitRate.Value > byteRate)
-            {
-                limitRate = byteRate;
-            }
-        }
+        var limitRate = GetLimitRate(size, video);
+        await RefreshExpiringDataFile(dataFile, [format], EstimateDownloadDuration(size, limitRate), video, preferences, cookieFilepath, cancellationToken);
 
         await using (var scope = provider.CreateAsyncScope())
         {
@@ -485,14 +468,13 @@ public sealed class YoutubeDownloadService
 
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
         var downloadTask = _ytdlpWrapper.DownloadVideo(
-            video.ExternalUrl,
+            dataFile.Path,
             format.FormatId,
             videoFile.Type,
             tempDirectory.FullName,
             $"{fileNameWithoutExtension}.%(ext)s",
             cookieFilepath,
             limitRate,
-            preferences.PlayerClient,
             cancellationToken);
 
         var timestamp = Stopwatch.GetTimestamp();
@@ -576,6 +558,7 @@ public sealed class YoutubeDownloadService
         VideoFileEntity videoFile,
         VideoEntity video,
         DirectoryInfo targetDirectory,
+        DataFile dataFile,
         string? cookieFilepath,
         PreferencesEntity preferences,
         decimal? totalSize,
@@ -612,49 +595,27 @@ public sealed class YoutubeDownloadService
             throw new Exception($"Failed to create FIFO named pipe {audioFilePath}");
         }
 
-        var audioLimitRate = _options.LimitRate;
-        var videoLimitRate = _options.LimitRate;
-        if (_options.LimitMultiplier is { } multiplier && video.Duration is { } duration)
-        {
-            var seconds = (decimal)duration.ToDuration().TotalSeconds;
-
-            if ((audioFormat.FileSize ?? audioFormat.ApproximateFileSize) is { } audioFormatSize)
-            {
-                var byteRate = (long)Math.Round(audioFormatSize * multiplier / seconds, 0);
-                if (audioLimitRate is null || audioLimitRate.Value > byteRate)
-                {
-                    audioLimitRate = byteRate;
-                }
-            }
-
-            if ((videoFormat.FileSize ?? videoFormat.ApproximateFileSize) is { } videoFormatSize)
-            {
-                var byteRate = (long)Math.Round(videoFormatSize * multiplier / seconds, 0);
-                if (videoLimitRate is null || videoLimitRate.Value > byteRate)
-                {
-                    videoLimitRate = byteRate;
-                }
-            }
-        }
+        var audioSize = audioFormat.FileSize ?? audioFormat.ApproximateFileSize;
+        var videoSize = videoFormat.FileSize ?? videoFormat.ApproximateFileSize;
+        var audioLimitRate = GetLimitRate(audioSize, video);
+        var videoLimitRate = GetLimitRate(videoSize, video);
 
         _logger.SplitFormatLimitRates(videoFile.Id, audioLimitRate, videoLimitRate);
 
-        var audioOptions = _ytdlpWrapper.GetDownloadFormatArgs(
-            audioFormat.FormatId,
-            "-",
-            cookieFilepath,
-            audioLimitRate,
-            preferences.PlayerClient);
+        // audio and video are downloaded at the same time, so the download finishes when the longer one does
+        var downloadDuration = (EstimateDownloadDuration(audioSize, audioLimitRate), EstimateDownloadDuration(videoSize, videoLimitRate)) switch
+        {
+            ({ } audioDuration, { } videoDuration) => Duration.Max(audioDuration, videoDuration),
+            _ => (Duration?)null,
+        };
 
-        var videoOptions = _ytdlpWrapper.GetDownloadFormatArgs(
-            videoFormat.FormatId,
-            "-",
-            cookieFilepath,
-            videoLimitRate,
-            preferences.PlayerClient);
+        await RefreshExpiringDataFile(dataFile, [videoFormat, audioFormat], downloadDuration, video, preferences, cookieFilepath, cancellationToken);
 
-        using var audioProcess = new CancelableProcess(_options.YtdlpPath, audioOptions.ToArguments(video.ExternalUrl), false);
-        using var videoProcess = new CancelableProcess(_options.YtdlpPath, videoOptions.ToArguments(video.ExternalUrl), false);
+        var audioOptions = _ytdlpWrapper.GetDownloadFormatArgs(dataFile.Path, audioFormat.FormatId, "-", cookieFilepath, audioLimitRate);
+        var videoOptions = _ytdlpWrapper.GetDownloadFormatArgs(dataFile.Path, videoFormat.FormatId, "-", cookieFilepath, videoLimitRate);
+
+        using var audioProcess = new CancelableProcess(_options.YtdlpPath, audioOptions.ToArguments(string.Empty), false);
+        using var videoProcess = new CancelableProcess(_options.YtdlpPath, videoOptions.ToArguments(string.Empty), false);
 
         var audioTask = audioProcess.Run(cancellationToken);
         var videoTask = videoProcess.Run(cancellationToken);
@@ -743,6 +704,95 @@ public sealed class YoutubeDownloadService
 
         return size;
     }
+
+    private async ValueTask<DataFile> FetchDataFile(
+        VideoEntity video,
+        PreferencesEntity preferences,
+        DirectoryInfo tempDirectory,
+        string? cookieFilepath,
+        CancellationToken cancellationToken)
+    {
+        var path = DataFile.GetPath(tempDirectory);
+        var data = await FetchVideoData(video, preferences, path, cookieFilepath, cancellationToken);
+
+        return new DataFile(path, preferences.PlayerClient, data);
+    }
+
+    private async ValueTask RefreshExpiringDataFile(
+        DataFile dataFile,
+        FormatData[] formats,
+        Duration? downloadDuration,
+        VideoEntity video,
+        PreferencesEntity preferences,
+        string? cookieFilepath,
+        CancellationToken cancellationToken)
+    {
+        var now = _clock.GetCurrentInstant();
+        var expiry = dataFile.Data.GetExpiry(formats.Select(format => format.FormatId));
+        Instant? downloadEnd = downloadDuration is { } duration
+            ? now + duration * 2 + Duration.FromMinutes(10)
+            : null;
+
+        var isReusable = (expiry, downloadEnd) switch
+        {
+            ({ } expiryTime, _) when expiryTime <= now => false,
+            ({ } expiryTime, { } endTime) => endTime < expiryTime,
+            _ => dataFile.FetchedAt is { } fetchedAt && now - fetchedAt < Duration.FromMinutes(10),
+        };
+
+        if (isReusable)
+        {
+            return;
+        }
+
+        _logger.RefreshingExpiringVideoData(video.Id, expiry, downloadEnd);
+        var data = await FetchVideoData(video, preferences, dataFile.Path, cookieFilepath, cancellationToken);
+        dataFile.Update(preferences.PlayerClient, data);
+    }
+
+    private async ValueTask<VideoData> FetchVideoData(
+        VideoEntity video,
+        PreferencesEntity preferences,
+        string infoJsonFilePath,
+        string? cookieFilepath,
+        CancellationToken cancellationToken)
+    {
+        var result = await _ytdlpWrapper.FetchVideoData(
+            video.ExternalUrl,
+            cookieFilepath,
+            preferences.PlayerClient,
+            infoJsonFilePath,
+            cancellationToken);
+
+        if (result is { Success: true, Data: { Formats: [_, ..] } data })
+        {
+            return data;
+        }
+
+        throw new Exception(string.Join(Environment.NewLine, result.ErrorOutput));
+    }
+
+    private long? GetLimitRate(decimal? size, VideoEntity video)
+    {
+        var limitRate = _options.LimitRate;
+        if (size is not > 0 || _options.LimitMultiplier is not { } multiplier || video.Duration is not { } duration)
+        {
+            return limitRate;
+        }
+
+        var seconds = (decimal)duration.ToDuration().TotalSeconds;
+        var byteRate = (long)Math.Round(size.Value * multiplier / seconds, 0);
+        if (limitRate is null || limitRate.Value > byteRate)
+        {
+            limitRate = byteRate;
+        }
+
+        return limitRate;
+    }
+
+    private static Duration? EstimateDownloadDuration(decimal? size, long? limitRate) => size is > 0 && limitRate is > 0
+        ? Duration.FromSeconds((double)(size.Value / limitRate.Value))
+        : null;
 
     private async ValueTask MoveFileToOutput(
         Guid userId,

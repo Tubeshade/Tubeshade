@@ -21,7 +21,7 @@ _Latest build from master branch._
   ([#335](https://github.com/Tubeshade/Tubeshade/pull/335))
 - Continue retried channel scans from the last completed video
   ([#328](https://github.com/Tubeshade/Tubeshade/issues/328))
-- Fetch video data only once when indexing videos
+- Fetch video data only once when indexing and downloading videos
   ([#342](https://github.com/Tubeshade/Tubeshade/pull/342))
 
 ### Fixed

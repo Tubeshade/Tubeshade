@@ -1065,6 +1065,7 @@
   ],
   Description: Collection of videos featuring Dr Mike Pound,
   Uploader: Computerphile,
+  Epoch: 1785149928,
   UploaderId: @Computerphile,
   UploaderUrl: https://www.youtube.com/@Computerphile,
   Channel: Computerphile,

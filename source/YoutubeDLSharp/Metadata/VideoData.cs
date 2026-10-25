@@ -85,6 +85,9 @@ public sealed class VideoData
     [JsonPropertyName("timestamp")] // date as unix timestamp
     public long? Timestamp { get; set; }
 
+    [JsonPropertyName("epoch")] // extraction time as unix timestamp
+    public long? Epoch { get; set; }
+
     // [JsonPropertyName("upload_date")] // date in UTC (YYYYMMDD).
     // public DateTime? UploadDate { get; set; }
 

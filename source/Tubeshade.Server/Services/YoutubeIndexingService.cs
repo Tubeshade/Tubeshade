@@ -113,8 +113,8 @@ public sealed class YoutubeIndexingService
     {
         var cookieFilepath = await cookiesService.RefreshCookieFile();
         var playerClient = await GetPlayerClient(libraryId, channelId, userId, cancellationToken);
-        var dataFile = DataFile.Create(tempDirectory, playerClient);
-        var data = await _ytdlpWrapper.FetchUnknownUrlData(url, cookieFilepath, playerClient, dataFile.Path, cancellationToken);
+        var dataFilePath = DataFile.GetPath(tempDirectory);
+        var data = await _ytdlpWrapper.FetchUnknownUrlData(url, cookieFilepath, playerClient, dataFilePath, cancellationToken);
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var result = new UrlIndexingResult();
@@ -143,10 +143,9 @@ public sealed class YoutubeIndexingService
                     channel,
                     libraryId,
                     userId,
-                    data,
                     transaction,
                     tempDirectory,
-                    dataFile,
+                    new DataFile(dataFilePath, playerClient, data),
                     source,
                     cookiesService,
                     cancellationToken);
@@ -224,7 +223,6 @@ public sealed class YoutubeIndexingService
         ChannelEntity channel,
         Guid libraryId,
         Guid userId,
-        VideoData videoData,
         NpgsqlTransaction transaction,
         DirectoryInfo directory,
         DataFile dataFile,
@@ -233,6 +231,7 @@ public sealed class YoutubeIndexingService
         CancellationToken cancellationToken,
         VideoType? type = null)
     {
+        var videoData = dataFile.Data;
         var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
         var youtubeVideoId = videoData.Id;
         _logger.IndexingVideo(youtubeVideoId);
@@ -363,7 +362,8 @@ public sealed class YoutubeIndexingService
                 throw new InvalidOperationException(string.Join(Environment.NewLine, result.ErrorOutput));
             }
 
-            videoData = result.Data;
+            dataFile.Update(preferences.PlayerClient, result.Data);
+            videoData = dataFile.Data;
         }
 
         foreach (var format in formatSelectors)
@@ -961,8 +961,8 @@ public sealed class YoutubeIndexingService
             }
 
             cookiesFilepath = await cookiesService.RefreshCookieFile();
-            var dataFile = DataFile.Create(directory, entryPlayerClient);
-            var videoResult = await _ytdlpWrapper.FetchVideoData(url, cookiesFilepath, entryPlayerClient, dataFile.Path, cancellationToken);
+            var dataFilePath = DataFile.GetPath(directory);
+            var videoResult = await _ytdlpWrapper.FetchVideoData(url, cookiesFilepath, entryPlayerClient, dataFilePath, cancellationToken);
             if (videoResult is not { Success: true, Data: { } data })
             {
                 _logger.PlaylistScanFailedVideo(url, string.Join(Environment.NewLine, videoResult.ErrorOutput));
@@ -987,10 +987,9 @@ public sealed class YoutubeIndexingService
                 channel,
                 libraryId,
                 userId,
-                data,
                 transaction,
                 directory,
-                dataFile,
+                new DataFile(dataFilePath, entryPlayerClient, data),
                 source,
                 cookiesService,
                 cancellationToken);
@@ -1214,8 +1213,8 @@ public sealed class YoutubeIndexingService
                 }
 
                 cookiesFilepath = await cookiesService.RefreshCookieFile();
-                var dataFile = DataFile.Create(directory, preferences.PlayerClient);
-                var videoResult = await _ytdlpWrapper.FetchVideoData(url, cookiesFilepath, preferences.PlayerClient, dataFile.Path, cancellationToken);
+                var dataFilePath = DataFile.GetPath(directory);
+                var videoResult = await _ytdlpWrapper.FetchVideoData(url, cookiesFilepath, preferences.PlayerClient, dataFilePath, cancellationToken);
 
                 if (videoResult is not { Success: true, Data: { } data })
                 {
@@ -1228,7 +1227,7 @@ public sealed class YoutubeIndexingService
                 }
                 else
                 {
-                    await IndexVideo(url, channel, libraryId, userId, data, transaction, directory, dataFile, source, cookiesService, cancellationToken, type);
+                    await IndexVideo(url, channel, libraryId, userId, transaction, directory, new DataFile(dataFilePath, preferences.PlayerClient, data), source, cookiesService, cancellationToken, type);
                 }
 
                 await transaction.CommitAsync(cancellationToken);
@@ -1269,11 +1268,5 @@ public sealed class YoutubeIndexingService
             : await _preferencesRepository.GetEffectiveForLibrary(libraryId, userId, cancellationToken);
 
         return preferences?.PlayerClient;
-    }
-
-    private sealed record DataFile(string Path, PlayerClient? PlayerClient)
-    {
-        public static DataFile Create(DirectoryInfo directory, PlayerClient? playerClient) =>
-            new(System.IO.Path.Combine(directory.FullName, "info.json"), playerClient);
     }
 }
