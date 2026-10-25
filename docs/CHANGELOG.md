@@ -36,6 +36,8 @@ _Latest build from master branch._
   ([#295](https://github.com/Tubeshade/Tubeshade/issues/295))
 - Replace images that are downloaded again instead of adding duplicates
   ([#340](https://github.com/Tubeshade/Tubeshade/pull/340))
+- Cancel loading images when filtering
+  ([#76](https://github.com/Tubeshade/Tubeshade/issues/76))
 
 ## [0.1.8] - 2026-07-23
 
