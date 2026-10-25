@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -11,7 +10,6 @@ using Microsoft.Playwright;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using Tubeshade.Server.Services.Background;
-using Tubeshade.Server.Tests.Integration.Published.Fixtures.Firefox;
 
 namespace Tubeshade.Server.Tests.Integration.Published.Fixtures;
 
@@ -22,17 +20,9 @@ public abstract class PlaywrightTests
 {
     public const string DefaultCulture = "en-US";
 
-    private const int DebugPort = 6005;
-    private static int _debugPortOffset;
-
     protected static readonly string Password = Guid.NewGuid().ToString("N");
-    private static readonly SemaphoreSlim SetUpLock = new(1);
     private static readonly ConcurrentDictionary<IServerFixture, SemaphoreSlim> FixtureLocks = new();
     private static readonly ConcurrentDictionary<(IServerFixture, string), bool> Registered = new();
-
-    private static IPlaywright? _playwright;
-
-    private static IPlaywright Playwright => _playwright ?? throw new InvalidOperationException();
 
     private readonly string _browserType;
     private readonly string? _device;
@@ -81,50 +71,16 @@ public abstract class PlaywrightTests
         FixtureLocks.TryAdd(serverFixture, new(1));
     }
 
-    [OneTimeSetUp]
-    public static async Task OneTimeSetUp()
-    {
-        using (await SetUpLock.LockAsync())
-        {
-            _playwright ??= await Microsoft.Playwright.Playwright.CreateAsync();
-        }
-    }
-
     [SetUp]
     public async Task SetUp()
     {
-        var debugPort = DebugPort + Interlocked.Increment(ref _debugPortOffset);
-
-        var browser = await Playwright[_browserType].LaunchAsync(new BrowserTypeLaunchOptions
-        {
-            Args = ["--start-debugger-server", $"{debugPort}"],
-            FirefoxUserPrefs = new Dictionary<string, object>
-            {
-                ["devtools.debugger.remote-enabled"] = true,
-                ["devtools.debugger.prompt-connection"] = false,
-                ["extensions.manifestV3.enabled"] = false,
-            },
-        });
-
-        _browserContext = await browser.NewContextAsync(new BrowserNewContextOptions
+        _browserContext = await ServerSetup.Browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = Fixture.BaseAddress.AbsoluteUri,
             ColorScheme = ColorScheme.Dark,
             Locale = Culture,
             ExtraHTTPHeaders = [new(HeaderNames.AcceptLanguage, Culture)],
         });
-
-        using (var firefoxClient = new FirefoxDebuggerClient(debugPort))
-        {
-            var extensionPath = PathHelper.GetRelativePath("../../../extensions/browser/extension");
-            if (!Directory.Exists(extensionPath))
-            {
-                throw new InvalidOperationException($"Could not resolve correct extension directory {extensionPath}");
-            }
-
-            await firefoxClient.Connect();
-            await firefoxClient.InstallExtension(extensionPath);
-        }
 
         _page = await _browserContext.NewPageAsync();
 
