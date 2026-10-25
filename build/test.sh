@@ -1,12 +1,25 @@
 #!/bin/bash
-set -e
+set -e -o pipefail
 
 configuration=${1:-"Release"}
 
-./build/build.sh "$configuration"
+# The builds below run in parallel, so prefix their output to tell them apart
+prefixed() {
+	prefix=$1
+	shift
+	"$@" 2>&1 | sed -u "s/^/[$prefix] /"
+}
 
-docker build --tag tubeshade-integration-tests ./
-docker build --tag tubeshade-cover-tests --file ./build/docker/test-image/Dockerfile ./
+prefixed build ./build/build.sh "$configuration" &
+build=$!
+prefixed release docker build --tag tubeshade-integration-tests ./ &
+release=$!
+prefixed cover docker build --tag tubeshade-cover-tests --file ./build/docker/test-image/Dockerfile ./ &
+cover=$!
+
+wait $build
+wait $release
+wait $cover
 
 dotnet tool restore
 
