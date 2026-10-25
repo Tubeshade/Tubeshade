@@ -3,6 +3,7 @@
         <PackageVersion Include="Ardalis.SmartEnum" Version="8.2.0"/>
         <PackageVersion Include="Ardalis.SmartEnum.SystemTextJson" Version="8.1.0"/>
         <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1"/>
+        <PackageVersion Include="AwesomeAssertions" Version="9.6.0"/>
         <PackageVersion Include="coverlet.collector" Version="10.1.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -13,8 +14,6 @@
         <PackageVersion Include="dbup-postgresql" Version="7.0.1"/>
         <PackageVersion Include="DotNet.ReproducibleBuilds" Version="2.0.5"/>
         <PackageVersion Include="DotNet.ReproducibleBuilds.Isolated" Version="2.0.5"/>
-        <PackageVersion Include="FluentAssertions" Version="7.0.0"/>
-        <PackageVersion Include="FluentAssertions.NodaTime" Version="2.0.1"/>
         <PackageVersion Include="Htmx" Version="1.12.0"/>
         <PackageVersion Include="Htmx.TagHelpers" Version="1.12.0"/>
         <PackageVersion Include="JetBrains.Annotations" Version="2026.2.0"/>

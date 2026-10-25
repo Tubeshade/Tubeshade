@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using FluentAssertions;
-using FluentAssertions.Execution;
+using AwesomeAssertions;
+using AwesomeAssertions.Execution;
 using NUnit.Framework;
 using Tubeshade.Server.Pages.Libraries.Videos;
 

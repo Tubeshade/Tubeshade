@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using FluentAssertions;
-using FluentAssertions.Execution;
+using AwesomeAssertions;
+using AwesomeAssertions.Execution;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 

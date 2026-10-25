@@ -1,5 +1,5 @@
 ﻿using System;
-using FluentAssertions;
+using AwesomeAssertions;
 using NodaTime;
 using NUnit.Framework;
 using Tubeshade.Server.Services.Background;

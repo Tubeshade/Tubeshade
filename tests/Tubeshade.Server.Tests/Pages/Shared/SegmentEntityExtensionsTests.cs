@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using FluentAssertions;
+using AwesomeAssertions;
 using NodaTime;
 using NUnit.Framework;
 using Tubeshade.Data.Media;

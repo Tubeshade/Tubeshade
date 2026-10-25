@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
-using FluentAssertions;
-using FluentAssertions.Execution;
+using AwesomeAssertions;
+using AwesomeAssertions.Execution;
 using NUnit.Framework;
 using Tubeshade.Server.Tests.Integration.Published.Fixtures;
 

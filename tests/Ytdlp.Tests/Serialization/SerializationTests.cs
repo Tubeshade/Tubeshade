@@ -2,8 +2,8 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
-using FluentAssertions;
-using FluentAssertions.Execution;
+using AwesomeAssertions;
+using AwesomeAssertions.Execution;
 using NUnit.Framework;
 using VerifyNUnit;
 using YoutubeDLSharp.Metadata;

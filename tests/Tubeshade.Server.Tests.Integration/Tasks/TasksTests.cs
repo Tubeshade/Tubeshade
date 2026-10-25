@@ -2,9 +2,9 @@
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using AwesomeAssertions;
+using AwesomeAssertions.Execution;
 using Dapper;
-using FluentAssertions;
-using FluentAssertions.Execution;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using NodaTime;

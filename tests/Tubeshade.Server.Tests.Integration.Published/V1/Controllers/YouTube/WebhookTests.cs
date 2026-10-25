@@ -8,7 +8,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.Playwright;
 using NUnit.Framework;
 using PubSubHubbub.Models;

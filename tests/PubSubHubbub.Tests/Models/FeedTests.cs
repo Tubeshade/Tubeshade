@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 using System.Xml.Serialization;
-using FluentAssertions;
+using AwesomeAssertions;
 using NUnit.Framework;
 using PubSubHubbub.Models;
 

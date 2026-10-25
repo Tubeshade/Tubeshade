@@ -1,5 +1,5 @@
 ﻿using System.Globalization;
-using FluentAssertions;
+using AwesomeAssertions;
 using NUnit.Framework;
 using Tubeshade.Server.Pages;
 

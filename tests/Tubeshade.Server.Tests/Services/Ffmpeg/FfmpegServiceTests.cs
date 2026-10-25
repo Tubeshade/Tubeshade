@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
-using FluentAssertions.Execution;
+using AwesomeAssertions;
+using AwesomeAssertions.Execution;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using Tubeshade.Server.Configuration;

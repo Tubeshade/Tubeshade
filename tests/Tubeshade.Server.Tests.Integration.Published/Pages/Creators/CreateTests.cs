@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.Playwright;
 using NUnit.Framework;
 using Tubeshade.Server.Tests.Integration.Published.Fixtures;
