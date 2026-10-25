@@ -11,12 +11,14 @@ ADD --checksum="sha256:bae71b7971fa22376af57edca8d3487724ac9a8ada56d1cccf07a547b
 
 ENV CI=true
 RUN --mount=type=cache,id=tubeshade_apt,target=/var/cache/apt,sharing=locked \
-    apt-get update && apt-get install -y \
+    apt-get update \
+    && apt-get install -y --no-install-recommends \
     npm \
     zip \
     lintian \
     gettext \
     tree \
-    ffmpeg
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
 LABEL org.opencontainers.image.source=https://github.com/Tubeshade/Tubeshade
