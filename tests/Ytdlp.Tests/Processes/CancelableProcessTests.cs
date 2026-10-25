@@ -50,27 +50,24 @@ public sealed class CancelableProcessTests
         using var process = new CancelableProcess("yt-dlp", _args);
 
         var result = await process.Run();
+        await TestContext.Out.WriteLineAsync(string.Join(Environment.NewLine, process.ErrorLines));
 
         using var scope = new AssertionScope();
 
         result.Should().BeGreaterThan(0);
         process.OutputLines.Should().BeEmpty("standard output should only contain JSON info");
-        if (OperatingSystem.IsWindows())
-        {
-            process.ErrorLines.Should().Contain(
-                "ERROR: [youtube] njX2bu-_Vw4: Sign in to confirm you�re not a bot. " +
+
+        // The reason after "not a bot." comes from YouTube and differs between environments
+        process
+            .ErrorLines.Should()
+            .ContainSingle(line => line.StartsWith("ERROR: "))
+            .Subject.Should()
+            .StartWith("ERROR: [youtube] njX2bu-_Vw4: Sign in to confirm you")
+            .And.Contain(" not a bot. ").And
+            .EndWith(
                 "Use --cookies-from-browser or --cookies for the authentication. " +
                 "See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. " +
                 "Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies");
-        }
-        else
-        {
-            process.ErrorLines.Should().Contain(
-                "ERROR: [youtube] njX2bu-_Vw4: Sign in to confirm you’re not a bot. " +
-                "Use --cookies-from-browser or --cookies for the authentication. " +
-                "See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. " +
-                "Also see  https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies  for tips on effectively exporting YouTube cookies");
-        }
     }
 
     [Test]
@@ -100,6 +97,6 @@ public sealed class CancelableProcessTests
         var finalizer = typeof(CancelableProcess).GetMethod("Finalize", BindingFlags.Instance | BindingFlags.NonPublic);
         finalizer.Should().NotBeNull();
 
-        finalizer!.Invoke(process, null);
+        finalizer.Invoke(process, null);
     }
 }
