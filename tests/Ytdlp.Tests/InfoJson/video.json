@@ -1,0 +1,36 @@
+{
+  "id": "test",
+  "title": "Test video",
+  "extractor": "generic",
+  "extractor_key": "Generic",
+  "webpage_url": "https://example.com/video",
+  "formats": [
+    {
+      "format_id": "video-720",
+      "url": "https://example.com/720.mp4",
+      "ext": "mp4",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "vcodec": "avc1",
+      "acodec": "none"
+    },
+    {
+      "format_id": "video-1080",
+      "url": "https://example.com/1080.mp4",
+      "ext": "mp4",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "vcodec": "avc1",
+      "acodec": "none"
+    },
+    {
+      "format_id": "audio",
+      "url": "https://example.com/audio.m4a",
+      "ext": "m4a",
+      "vcodec": "none",
+      "acodec": "mp4a"
+    }
+  ]
+}

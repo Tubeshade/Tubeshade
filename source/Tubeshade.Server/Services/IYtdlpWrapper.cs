@@ -14,6 +14,8 @@ public interface IYtdlpWrapper
     ValueTask<VideoData> FetchUnknownUrlData(
         string url,
         string? cookieFilepath,
+        PlayerClient? client,
+        string? infoJsonFilePath,
         CancellationToken cancellationToken);
 
     ValueTask<VideoData> FetchPlaylistEntryUrls(
@@ -25,13 +27,13 @@ public interface IYtdlpWrapper
     ValueTask<RunResult<VideoData>> FetchVideoData(
         string videoUrl,
         string? cookieFilepath,
+        PlayerClient? client,
+        string? infoJsonFilePath,
         CancellationToken cancellationToken);
 
-    ValueTask<VideoData> FetchVideoFormatData(
-        string videoUrl,
+    ValueTask<VideoData> SelectVideoFormat(
+        string infoJsonFilePath,
         string format,
-        string? cookieFilepath,
-        PlayerClient? client,
         CancellationToken cancellationToken);
 
     ValueTask<FormatData[][]> SelectFormats(
@@ -46,6 +48,12 @@ public interface IYtdlpWrapper
         string prefix,
         string path,
         string? cookieFilepath,
+        CancellationToken cancellationToken);
+
+    ValueTask DownloadThumbnails(
+        string infoJsonFilePath,
+        string prefix,
+        string path,
         CancellationToken cancellationToken);
 
     Task<RunResult<string>> DownloadVideo(

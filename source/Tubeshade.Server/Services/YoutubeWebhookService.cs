@@ -163,7 +163,7 @@ public sealed class YoutubeWebhookService
 
         // need to invoke yt-dlp because livestreams cannot be identified directly from url
         var cookieFilepath = await cookiesService.RefreshCookieFile();
-        var videoData = await _ytdlpWrapper.FetchUnknownUrlData(videoUrl, cookieFilepath, cancellationToken);
+        var videoData = await _ytdlpWrapper.FetchUnknownUrlData(videoUrl, cookieFilepath, preferences.PlayerClient, null, cancellationToken);
         if (videoData.ResultType is not MetadataType.Video)
         {
             throw new InvalidOperationException($"Unexpected yt-dlp result type {videoData.ResultType}");

@@ -33,16 +33,15 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
     public async ValueTask<VideoData> FetchUnknownUrlData(
         string url,
         string? cookieFilepath,
+        PlayerClient? client,
+        string? infoJsonFilePath,
         CancellationToken cancellationToken)
     {
         _logger.UnknownUrlMetadata(url);
 
-        var optionSet = GetDefaultOptions(cookieFilepath);
-        optionSet.PlaylistItems = "0";
-        optionSet.IgnoreNoFormatsError = true;
-        optionSet.DumpSingleJson = true;
+        var optionSet = GetVideoDataOptions(cookieFilepath, client);
 
-        var result = await _ytdlp.FetchAsync(url, optionSet, cancellationToken);
+        var result = await _ytdlp.FetchAsync(url, optionSet, infoJsonFilePath, cancellationToken);
         if (result.ErrorOutput is { Length: > 0 } errorOutput)
         {
             _logger.StandardError(_ytdlp.Path,
@@ -94,14 +93,13 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
     public async ValueTask<RunResult<VideoData>> FetchVideoData(
         string videoUrl,
         string? cookieFilepath,
+        PlayerClient? client,
+        string? infoJsonFilePath,
         CancellationToken cancellationToken)
     {
-        var optionSet = GetDefaultOptions(cookieFilepath);
-        optionSet.PlaylistItems = "0";
-        optionSet.IgnoreNoFormatsError = true;
-        optionSet.DumpSingleJson = true;
+        var optionSet = GetVideoDataOptions(cookieFilepath, client);
 
-        var result = await _ytdlp.FetchAsync(videoUrl, optionSet, cancellationToken);
+        var result = await _ytdlp.FetchAsync(videoUrl, optionSet, infoJsonFilePath, cancellationToken);
 
         if (result.ErrorOutput is { Length: > 0 } errorOutput)
         {
@@ -114,24 +112,18 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
     }
 
     /// <inheritdoc />
-    public async ValueTask<VideoData> FetchVideoFormatData(
-        string videoUrl,
+    public async ValueTask<VideoData> SelectVideoFormat(
+        string infoJsonFilePath,
         string format,
-        string? cookieFilepath,
-        PlayerClient? client,
         CancellationToken cancellationToken)
     {
-        var optionSet = GetDefaultOptions(cookieFilepath);
+        var optionSet = GetDefaultOptions(null);
+        optionSet.LoadInfoJson = infoJsonFilePath;
         optionSet.Format = format;
-        optionSet.EmbedChapters = true;
         optionSet.IgnoreNoFormatsError = true;
         optionSet.DumpSingleJson = true;
-        if (client is not null)
-        {
-            (optionSet.ExtractorArgs ??= new()).Values.Add($"youtube:player_client={client.Name}");
-        }
 
-        var result = await _ytdlp.FetchAsync(videoUrl, optionSet, cancellationToken);
+        var result = await _ytdlp.FetchAsync(string.Empty, optionSet, cancellationToken);
 
         if (result.ErrorOutput is { Length: > 0 } errorOutput)
         {
@@ -235,6 +227,36 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
     }
 
     /// <inheritdoc />
+    public async ValueTask DownloadThumbnails(
+        string infoJsonFilePath,
+        string prefix,
+        string path,
+        CancellationToken cancellationToken)
+    {
+        var optionSet = GetDefaultOptions(null);
+        optionSet.LoadInfoJson = infoJsonFilePath;
+        optionSet.Output = $"{prefix}.%(ext)s";
+        optionSet.Paths = path;
+        optionSet.SkipDownload = true;
+        optionSet.IgnoreNoFormatsError = true;
+        optionSet.WriteAllThumbnails = true;
+
+        var result = await _ytdlp.RunAsync(string.Empty, optionSet, cancellationToken);
+
+        if (result.ErrorOutput is { Length: > 0 } errorOutput)
+        {
+            _logger.StandardError(
+                _ytdlp.Path,
+                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+        }
+
+        if (!result.Success)
+        {
+            throw new(string.Join(Environment.NewLine, result.ErrorOutput));
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<RunResult<string>> DownloadVideo(
         string videoUrl,
         string format,
@@ -301,6 +323,20 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         optionSet.SubLangs = "all,-live_chat";
         optionSet.EmbedChapters = true;
         optionSet.RecodeVideo = VideoRecodeFormat.None;
+        if (client is not null)
+        {
+            (optionSet.ExtractorArgs ??= new()).Values.Add($"youtube:player_client={client.Name}");
+        }
+
+        return optionSet;
+    }
+
+    private OptionSet GetVideoDataOptions(string? cookieFilepath, PlayerClient? client)
+    {
+        var optionSet = GetDefaultOptions(cookieFilepath);
+        optionSet.PlaylistItems = "0";
+        optionSet.IgnoreNoFormatsError = true;
+        optionSet.DumpSingleJson = true;
         if (client is not null)
         {
             (optionSet.ExtractorArgs ??= new()).Values.Add($"youtube:player_client={client.Name}");
