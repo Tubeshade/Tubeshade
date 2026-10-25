@@ -27,7 +27,7 @@ public sealed class YtdlpOptions
 
     public long? LimitRate { get; set; } = 5 * 1024 * 1024;
 
-    public decimal? LimitMultiplier { get; set; } = 2.5m;
+    public decimal? LimitMultiplier { get; set; } = 20m;
 
     [AllowedValues(null, "brave", "chrome", "chromium", "edge", "firefox", "opera", "safari", "vivaldi", "whale")]
     public string? CookiesFromBrowser { get; set; }

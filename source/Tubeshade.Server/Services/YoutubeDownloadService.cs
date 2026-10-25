@@ -190,10 +190,10 @@ public sealed class YoutubeDownloadService
             if (size.HasValue && _options.LimitMultiplier is { } multiplier && video.Duration is { } duration)
             {
                 var seconds = (decimal)duration.ToDuration().TotalSeconds;
-                var bitrate = (long)Math.Round(size.Value * 8 * multiplier / seconds, 0);
-                if (limitRate is null || limitRate.Value > bitrate)
+                var byteRate = (long)Math.Round(size.Value * multiplier / seconds, 0);
+                if (limitRate is null || limitRate.Value > byteRate)
                 {
-                    limitRate = bitrate;
+                    limitRate = byteRate;
                 }
             }
 
@@ -468,10 +468,10 @@ public sealed class YoutubeDownloadService
         if (size is not 0 && _options.LimitMultiplier is { } multiplier && video.Duration is { } duration)
         {
             var seconds = (decimal)duration.ToDuration().TotalSeconds;
-            var bitrate = (long)Math.Round(size * 8 * multiplier / seconds, 0);
-            if (limitRate is null || limitRate.Value > bitrate)
+            var byteRate = (long)Math.Round(size * multiplier / seconds, 0);
+            if (limitRate is null || limitRate.Value > byteRate)
             {
-                limitRate = bitrate;
+                limitRate = byteRate;
             }
         }
 
@@ -620,19 +620,19 @@ public sealed class YoutubeDownloadService
 
             if ((audioFormat.FileSize ?? audioFormat.ApproximateFileSize) is { } audioFormatSize)
             {
-                var bitrate = (long)Math.Round(audioFormatSize * 8 * multiplier / seconds, 0);
-                if (audioLimitRate is null || audioLimitRate.Value > bitrate)
+                var byteRate = (long)Math.Round(audioFormatSize * multiplier / seconds, 0);
+                if (audioLimitRate is null || audioLimitRate.Value > byteRate)
                 {
-                    audioLimitRate = bitrate;
+                    audioLimitRate = byteRate;
                 }
             }
 
             if ((videoFormat.FileSize ?? videoFormat.ApproximateFileSize) is { } videoFormatSize)
             {
-                var bitrate = (long)Math.Round(videoFormatSize * 8 * multiplier / seconds, 0);
-                if (videoLimitRate is null || videoLimitRate.Value > bitrate)
+                var byteRate = (long)Math.Round(videoFormatSize * multiplier / seconds, 0);
+                if (videoLimitRate is null || videoLimitRate.Value > byteRate)
                 {
-                    videoLimitRate = bitrate;
+                    videoLimitRate = byteRate;
                 }
             }
         }

@@ -44,6 +44,8 @@ _Latest build from master branch._
   ([#341](https://github.com/Tubeshade/Tubeshade/pull/341))
 - Mark videos that became private as private instead of not available
   ([#342](https://github.com/Tubeshade/Tubeshade/pull/342))
+- Limit the download rate to the configured multiple of the video bit-rate, instead of 8 times that
+  ([#342](https://github.com/Tubeshade/Tubeshade/pull/342))
 
 ## [0.1.8] - 2026-07-23
 
