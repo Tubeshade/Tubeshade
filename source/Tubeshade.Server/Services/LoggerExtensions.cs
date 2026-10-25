@@ -402,4 +402,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(134, Error, "Failed to dequeue task request {TaskRequestId}, giving up until the request is queued again")]
     internal static partial void DequeueTaskAborted(this ILogger logger, Exception exception, Guid taskRequestId);
+
+    [LoggerMessage(135, Information, "Continuing scan of channel {ChannelId} after {CompletedCount} of {TotalCount} videos completed by a previous run")]
+    internal static partial void ContinuingChannelScan(this ILogger logger, Guid channelId, int completedCount, int totalCount);
 }

@@ -19,6 +19,8 @@ _Latest build from master branch._
   ([#333](https://github.com/Tubeshade/Tubeshade/pull/333), [#336](https://github.com/Tubeshade/Tubeshade/pull/336))
 - Persist task trigger requests
   ([#335](https://github.com/Tubeshade/Tubeshade/pull/335))
+- Continue retried channel scans from the last completed video
+  ([#328](https://github.com/Tubeshade/Tubeshade/issues/328))
 
 ### Fixed
 

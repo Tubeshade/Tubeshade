@@ -983,7 +983,7 @@ public sealed class YoutubeIndexingService
         await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
     }
 
-    public ValueTask ScanChannel(Guid libraryId,
+    public async ValueTask ScanChannel(Guid libraryId,
         Guid channelId,
         bool allVideos,
         Guid userId,
@@ -994,7 +994,8 @@ public sealed class YoutubeIndexingService
         CookiesService cookiesService,
         CancellationToken cancellationToken)
     {
-        return ScanChannelCore(libraryId, channelId, allVideos, false, userId, taskRepository, taskRunId, tempDirectory, source, cookiesService, cancellationToken);
+        var completedCount = (int?)await taskRepository.GetPreviousProgress(taskRunId);
+        await ScanChannelCore(libraryId, channelId, allVideos, false, completedCount, userId, taskRepository, taskRunId, tempDirectory, source, cookiesService, cancellationToken);
     }
 
     public async ValueTask ScanSubscriptions(
@@ -1026,7 +1027,7 @@ public sealed class YoutubeIndexingService
 
         foreach (var (index, channel) in channels.Index())
         {
-            await ScanChannelCore(libraryId, channel.Id, false, true, userId, taskRepository, taskRunId, tempDirectory, source, cookiesService, cancellationToken, false);
+            await ScanChannelCore(libraryId, channel.Id, false, true, null, userId, taskRepository, taskRunId, tempDirectory, source, cookiesService, cancellationToken, false);
 
             var currentIndex = index + 1;
             var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
@@ -1048,6 +1049,7 @@ public sealed class YoutubeIndexingService
         Guid channelId,
         bool allVideos,
         bool breakOnExisting,
+        int? completedCount,
         Guid userId,
         TaskRepository taskRepository,
         Guid taskRunId,
@@ -1112,9 +1114,15 @@ public sealed class YoutubeIndexingService
         }
 
         var totalCount = playlists.SelectMany(pair => pair.Value.Entries ?? []).Count();
+        var skippedCount = Math.Min(completedCount ?? 0, totalCount);
+        if (skippedCount is not 0)
+        {
+            _logger.ContinuingChannelScan(channelId, skippedCount, totalCount);
+        }
+
         if (reportProgress)
         {
-            await taskRepository.InitializeTaskProgress(taskRunId, totalCount);
+            await taskRepository.InitializeTaskProgress(taskRunId, totalCount, skippedCount);
         }
 
         var startTime = _clock.GetCurrentInstant();
@@ -1129,6 +1137,11 @@ public sealed class YoutubeIndexingService
 
             foreach (var (index, video) in playlistData.Entries.Index())
             {
+                if (index + indexOffset < skippedCount)
+                {
+                    continue;
+                }
+
                 if (video.Url is not { } url)
                 {
                     throw new InvalidOperationException("Playlist entry is missing the Url");
@@ -1168,14 +1181,14 @@ public sealed class YoutubeIndexingService
                     await IndexVideo(url, channel, libraryId, userId, data, transaction, directory, source, cookiesService, cancellationToken, type);
                 }
 
+                await transaction.CommitAsync(cancellationToken);
+
                 if (reportProgress)
                 {
                     var currentIndex = index + 1 + indexOffset;
-                    var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
+                    var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount - skippedCount, currentIndex - skippedCount);
                     await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
                 }
-
-                await transaction.CommitAsync(cancellationToken);
             }
 
             indexOffset += playlistData.Entries.Length;

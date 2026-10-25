@@ -246,6 +246,56 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
     }
 
     [Test]
+    public async Task GetPreviousProgress()
+    {
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
+        var channelRepository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
+
+        Guid taskId;
+
+        await using (var transaction = await connection.OpenAndBeginTransaction())
+        {
+            var channelId = await CreateChannel(channelRepository, transaction);
+            taskId = await repository.AddTask(TaskEntity.ScanChannel(_libraryId, _userId, channelId, true), transaction);
+            await transaction.CommitAsync();
+        }
+
+        var firstRunId = await AddTaskRun(taskId);
+        (await repository.GetPreviousProgress(firstRunId)).Should().BeNull();
+
+        await repository.InitializeTaskProgress(firstRunId, 10);
+        await repository.UpdateProgress(firstRunId, 4);
+        await repository.FinishTask(firstRunId, TaskResult.Failed, null, CancellationToken.None);
+
+        var secondRunId = await AddTaskRun(taskId);
+        (await repository.GetPreviousProgress(secondRunId)).Should().Be(4);
+        await repository.FinishTask(secondRunId, TaskResult.Cancelled, null, CancellationToken.None);
+
+        // the second run did not report progress, so the progress of the first run is used
+        var thirdRunId = await AddTaskRun(taskId);
+        (await repository.GetPreviousProgress(thirdRunId)).Should().Be(4);
+
+        await repository.InitializeTaskProgress(thirdRunId, 10, 4);
+        await repository.UpdateProgress(thirdRunId, 10);
+        await repository.FinishTask(thirdRunId, TaskResult.Successful, null, CancellationToken.None);
+
+        var fourthRunId = await AddTaskRun(taskId);
+        (await repository.GetPreviousProgress(fourthRunId)).Should().BeNull();
+
+        async Task<Guid> AddTaskRun(Guid id)
+        {
+            // separate transactions, so that the runs are ordered by their creation time
+            await using var transaction = await connection.OpenAndBeginTransaction();
+            var taskRunId = Guid.NewGuid();
+            await repository.AddTaskRun(taskRunId, id, TaskSource.User, transaction);
+            await transaction.CommitAsync();
+            return taskRunId;
+        }
+    }
+
+    [Test]
     public async Task TaskRequestDequeuedOnce()
     {
         await using var scope = Fixture.Services.CreateAsyncScope();

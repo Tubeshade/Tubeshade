@@ -352,14 +352,14 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             transaction);
     }
 
-    public async ValueTask InitializeTaskProgress(Guid taskRunId, decimal target)
+    public async ValueTask InitializeTaskProgress(Guid taskRunId, decimal target, decimal value = 0)
     {
         await Connection.ExecuteAsync(new CommandDefinition(
             $"""
              INSERT INTO tasks.task_run_progress (run_id, value, target) 
-             VALUES (@{nameof(taskRunId)}, 0, @{nameof(target)});
+             VALUES (@{nameof(taskRunId)}, @{nameof(value)}, @{nameof(target)});
              """,
-            new { taskRunId, target }));
+            new { taskRunId, target, value }));
     }
 
     public async ValueTask UpdateProgress(
@@ -380,6 +380,28 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
             new { taskRunId, newValue, rate, remainingDuration }));
 
         Trace.Assert(count is 1);
+    }
+
+    /// <summary>Gets the progress of the latest previous run of the same task that reported progress, unless that run was successful.</summary>
+    /// <remarks>
+    /// Runs that failed before reporting any progress are skipped,
+    /// so that the progress is kept if a retry fails again before reaching the same point.
+    /// </remarks>
+    public async ValueTask<decimal?> GetPreviousProgress(Guid taskRunId)
+    {
+        return await Connection.QuerySingleOrDefaultAsync<decimal?>(new CommandDefinition(
+            // lang=sql
+            $"""
+             SELECT CASE WHEN task_run_results.result = '{TaskResult.Names.Successful}' THEN NULL ELSE task_run_progress.value END
+             FROM tasks.task_runs AS current_run
+                      INNER JOIN tasks.task_runs ON task_runs.task_id = current_run.task_id AND task_runs.created_at < current_run.created_at
+                      INNER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
+                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
+             WHERE current_run.id = @{nameof(taskRunId)}
+             ORDER BY task_runs.created_at DESC
+             LIMIT 1;
+             """,
+            new { taskRunId }));
     }
 
     /// <summary>Saves the result of a task run, unless the task run already has a result.</summary>
