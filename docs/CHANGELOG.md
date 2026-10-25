@@ -28,6 +28,8 @@ _Latest build from master branch._
   ([#329](https://github.com/Tubeshade/Tubeshade/pull/329), [#330](https://github.com/Tubeshade/Tubeshade/pull/330))
 - Handle transient PostgreSQL connection errors in background services
   ([#335](https://github.com/Tubeshade/Tubeshade/pull/335))
+- Download channel images when the channel is created while indexing a video
+  ([#327](https://github.com/Tubeshade/Tubeshade/issues/327))
 
 ## [0.1.8] - 2026-07-23
 

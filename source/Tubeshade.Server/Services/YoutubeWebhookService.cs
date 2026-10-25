@@ -134,7 +134,7 @@ public sealed class YoutubeWebhookService
             }
             else
             {
-                await _taskService.IndexVideo(userId, libraryId, videoUrl, channelId, TaskSource.Webhook, cancellationToken);
+                await _taskService.IndexUrl(userId, libraryId, videoUrl, channelId, TaskSource.Webhook, cancellationToken);
             }
 
             return;
@@ -153,7 +153,7 @@ public sealed class YoutubeWebhookService
         {
             // can index if all remaining video types need to be indexed
             case { VideosCount: > 0 or null, LiveStreamsCount: > 0 or null }:
-                await _taskService.IndexVideo(userId, libraryId, videoUrl, channelId, TaskSource.Webhook, cancellationToken);
+                await _taskService.IndexUrl(userId, libraryId, videoUrl, channelId, TaskSource.Webhook, cancellationToken);
                 return;
 
             case { VideosCount: < 1, LiveStreamsCount: < 1 }:
@@ -178,6 +178,6 @@ public sealed class YoutubeWebhookService
             return;
         }
 
-        await _taskService.IndexVideo(userId, libraryId, videoUrl, channelId, TaskSource.Webhook, cancellationToken);
+        await _taskService.IndexUrl(userId, libraryId, videoUrl, channelId, TaskSource.Webhook, cancellationToken);
     }
 }

@@ -128,7 +128,7 @@ public sealed class YoutubeIndexingService
         {
             var channel = channelId is not null
                 ? await _channelRepository.GetAsync(channelId.Value, userId, transaction)
-                : await GetChannel(libraryId, userId, data, transaction);
+                : await GetChannel(libraryId, userId, data, source, transaction);
 
             await UpdateChannel(channel, data, userId, transaction);
 
@@ -166,6 +166,7 @@ public sealed class YoutubeIndexingService
         Guid libraryId,
         Guid userId,
         VideoData data,
+        TaskSource source,
         NpgsqlTransaction transaction)
     {
         if (data.ChannelId is not { } externalId ||
@@ -187,7 +188,11 @@ public sealed class YoutubeIndexingService
         }
 
         var availability = ExternalAvailability.Public;
-        return await _channelService.Create(libraryId, userId, name, externalId, externalUrl, availability, (int?)data.ChannelFollowerCount, transaction);
+        channel = await _channelService.Create(libraryId, userId, name, externalId, externalUrl, availability, (int?)data.ChannelFollowerCount, transaction);
+
+        await _taskService.IndexUrl(userId, libraryId, channel.ExternalUrl, channel.Id, null, source, transaction);
+
+        return channel;
     }
 
     private async ValueTask UpdateChannel(
@@ -931,7 +936,7 @@ public sealed class YoutubeIndexingService
                 continue;
             }
 
-            var channel = await GetChannel(libraryId, userId, data, transaction);
+            var channel = await GetChannel(libraryId, userId, data, source, transaction);
             await UpdateChannel(channel, data, userId, transaction);
 
             var videoId = await IndexVideo(
@@ -1202,7 +1207,7 @@ public sealed class YoutubeIndexingService
 
         foreach (var (videoId, channelId, videoUrl) in await _videoRepository.GetForReindex(libraryId, transaction))
         {
-            await _taskService.IndexVideo(userId, libraryId, videoUrl, channelId, videoId, source, transaction, cancellationToken);
+            await _taskService.IndexUrl(userId, libraryId, videoUrl, channelId, videoId, source, transaction, cancellationToken);
         }
 
         await transaction.CommitAsync(cancellationToken);

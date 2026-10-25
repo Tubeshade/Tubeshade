@@ -118,38 +118,38 @@ public sealed class TaskService
         await transaction.CommitAsync();
     }
 
-    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, TaskSource source, CancellationToken cancellationToken = default)
+    public async ValueTask IndexUrl(Guid userId, Guid libraryId, string url, TaskSource source, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        await IndexVideo(userId, libraryId, url, null, null, source, transaction, cancellationToken);
+        await IndexUrl(userId, libraryId, url, null, null, source, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
-    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, Guid channelId, TaskSource source, CancellationToken cancellationToken = default)
+    public async ValueTask IndexUrl(Guid userId, Guid libraryId, string url, Guid channelId, TaskSource source, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        await IndexVideo(userId, libraryId, url, channelId, null, source, transaction, cancellationToken);
+        await IndexUrl(userId, libraryId, url, channelId, null, source, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
     public async ValueTask IndexVideo(Guid userId, Guid libraryId, VideoEntity video, TaskSource source, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        await IndexVideo(userId, libraryId, video.ExternalUrl, video.ChannelId, video.Id, source, transaction, cancellationToken);
+        await IndexUrl(userId, libraryId, video.ExternalUrl, video.ChannelId, video.Id, source, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
     public ValueTask IndexVideo(Guid userId, Guid libraryId, VideoEntity video, TaskSource source, NpgsqlTransaction transaction)
     {
-        return IndexVideo(userId, libraryId, video.ExternalUrl, video.ChannelId, video.Id, source, transaction);
+        return IndexUrl(userId, libraryId, video.ExternalUrl, video.ChannelId, video.Id, source, transaction);
     }
 
-    public async ValueTask IndexVideo(Guid userId, Guid libraryId, string url, Guid? channelId, Guid? videoId, TaskSource source, NpgsqlTransaction transaction, CancellationToken cancellationToken = default)
+    public async ValueTask IndexUrl(Guid userId, Guid libraryId, string url, Guid? channelId, Guid? videoId, TaskSource source, NpgsqlTransaction transaction, CancellationToken cancellationToken = default)
     {
         var task = TaskEntity.Index(libraryId, userId, channelId, videoId, url);
         if (await _taskRepository.TryAddTask(task, transaction) is not { } taskId)
         {
-            _logger.SkippingVideoIndexing(url);
+            _logger.SkippingUrlIndexing(url);
             return;
         }
 

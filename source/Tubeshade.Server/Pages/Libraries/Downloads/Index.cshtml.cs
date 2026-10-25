@@ -148,7 +148,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
             return Page();
         }
 
-        await _taskService.IndexVideo(User.GetUserId(), LibraryId, model.Url, TaskSource.User, cancellationToken);
+        await _taskService.IndexUrl(User.GetUserId(), LibraryId, model.Url, TaskSource.User, cancellationToken);
         return RedirectToPage();
     }
 
