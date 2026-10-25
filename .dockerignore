@@ -15,3 +15,5 @@
 .git/
 extensions/
 tests/
+docs/
+.env
