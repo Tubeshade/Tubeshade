@@ -298,11 +298,16 @@
         setPreferredResolution(sourcesSelector, "@Model.FileId");
 
         function onSourcesSelectorChanged() {
+            const source = sourcesSelector.options[sourcesSelector.selectedIndex].value;
+            if (video.currentSrc.endsWith(source)) {
+                return;
+            }
+
             const currentTime = video.currentTime;
             const currentPlaybackRate = video.playbackRate;
             const paused = video.paused;
 
-            video.src = sourcesSelector.options[sourcesSelector.selectedIndex].value;
+            video.src = source;
             video.currentTime = currentTime;
             video.playbackRate = currentPlaybackRate;
             if (!paused) {
