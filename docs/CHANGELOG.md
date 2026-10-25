@@ -34,6 +34,8 @@ _Latest build from master branch._
   ([#317](https://github.com/Tubeshade/Tubeshade/issues/317))
 - Format download progress with the same unit throughout the download
   ([#295](https://github.com/Tubeshade/Tubeshade/issues/295))
+- Replace images that are downloaded again instead of adding duplicates
+  ([#340](https://github.com/Tubeshade/Tubeshade/pull/340))
 
 ## [0.1.8] - 2026-07-23
 

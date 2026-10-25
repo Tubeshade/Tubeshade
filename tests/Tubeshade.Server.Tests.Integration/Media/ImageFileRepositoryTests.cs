@@ -157,4 +157,38 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
             (await repository.GetForVideo(_videoId, _userId, Access.Read, transaction)).Should().BeEmpty();
         }
     }
+
+    [Test]
+    public async Task DeleteChannelImage()
+    {
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<ImageFileRepository>();
+
+        await using var transaction = await connection.OpenAndBeginTransaction();
+
+        var hashAlgorithm = HashAlgorithm.Default;
+        using var content = new MemoryStream(Guid.NewGuid().ToByteArray());
+
+        var fileId = (await repository.AddAsync(
+            new()
+            {
+                CreatedByUserId = _userId,
+                ModifiedByUserId = _userId,
+                StoragePath = string.Empty,
+                Type = ImageType.Thumbnail,
+                Width = 1,
+                Height = 1,
+                HashAlgorithm = hashAlgorithm,
+                Hash = await hashAlgorithm.ComputeHashAsync(content),
+                StorageSize = content.Length,
+            },
+            transaction))!.Value;
+
+        await repository.LinkToChannelAsync(fileId, _channelId, transaction);
+        (await repository.GetForChannel(_channelId, _userId, Access.Read, transaction)).Should().ContainSingle();
+
+        (await repository.DeleteAsync(fileId, _userId, transaction)).Should().Be(1);
+        (await repository.GetForChannel(_channelId, _userId, Access.Read, transaction)).Should().BeEmpty();
+    }
 }

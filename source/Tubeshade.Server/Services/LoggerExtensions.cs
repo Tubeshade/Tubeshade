@@ -405,4 +405,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(135, Information, "Continuing scan of channel {ChannelId} after {CompletedCount} of {TotalCount} videos completed by a previous run")]
     internal static partial void ContinuingChannelScan(this ILogger logger, Guid channelId, int completedCount, int totalCount);
+
+    [LoggerMessage(136, Information, "Replacing image {ImageId}, because its file {StoragePath} was downloaded again")]
+    internal static partial void ReplacingImage(this ILogger logger, Guid imageId, string storagePath);
 }

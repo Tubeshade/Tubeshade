@@ -610,9 +610,8 @@ public sealed class YoutubeIndexingService
                 Hash = hashData,
             };
 
-            var imageFileId = await _imageFileRepository.AddAsync(image, transaction);
-            await _imageFileRepository.LinkToVideoAsync(imageFileId!.Value, video.Id, userId, transaction);
-            existingImages.Add(image);
+            var imageFileId = await AddImage(image, existingImages, transaction);
+            await _imageFileRepository.LinkToVideoAsync(imageFileId, video.Id, userId, transaction);
 
             var destinationFileName = Path.Combine(video.StoragePath, file.Name);
             if (!string.Equals(destinationFileName, file.FullName, Ordinal))
@@ -700,9 +699,8 @@ public sealed class YoutubeIndexingService
                 Hash = hashData,
             };
 
-            var imageFileId = await _imageFileRepository.AddAsync(image, transaction);
-            await _imageFileRepository.LinkToChannelAsync(imageFileId!.Value, channel.Id, transaction);
-            existingImages.Add(image);
+            var imageFileId = await AddImage(image, existingImages, transaction);
+            await _imageFileRepository.LinkToChannelAsync(imageFileId, channel.Id, transaction);
 
             var destinationFileName = Path.Combine(channel.StoragePath, file.Name);
             if (!string.Equals(destinationFileName, file.FullName, Ordinal))
@@ -823,9 +821,8 @@ public sealed class YoutubeIndexingService
                 Hash = hashData,
             };
 
-            var imageFileId = await _imageFileRepository.AddAsync(image, transaction);
-            await _imageFileRepository.LinkToPlaylistAsync(imageFileId!.Value, playlist.Id, transaction);
-            existingImages.Add(image);
+            var imageFileId = await AddImage(image, existingImages, transaction);
+            await _imageFileRepository.LinkToPlaylistAsync(imageFileId, playlist.Id, transaction);
 
             var destinationFileName = Path.Combine(playlist.StoragePath, file.Name);
             if (!string.Equals(destinationFileName, file.FullName, Ordinal))
@@ -833,6 +830,33 @@ public sealed class YoutubeIndexingService
                 file.MoveTo(destinationFileName, true);
             }
         }
+    }
+
+    private async ValueTask<Guid> AddImage(
+        ImageFileEntity image,
+        List<ImageFileEntity> existingImages,
+        NpgsqlTransaction transaction)
+    {
+        var replacedImages = existingImages
+            .Where(existing => string.Equals(existing.StoragePath, image.StoragePath, Ordinal))
+            .ToArray();
+
+        foreach (var replacedImage in replacedImages)
+        {
+            _logger.ReplacingImage(replacedImage.Id, replacedImage.StoragePath);
+
+            var deleted = await _imageFileRepository.DeleteAsync(replacedImage.Id, image.ModifiedByUserId, transaction);
+            if (deleted is 0)
+            {
+                throw new InvalidOperationException($"Failed to delete replaced image {replacedImage.Id}");
+            }
+
+            existingImages.Remove(replacedImage);
+        }
+
+        var imageFileId = await _imageFileRepository.AddAsync(image, transaction);
+        existingImages.Add(image);
+        return imageFileId!.Value;
     }
 
     public async ValueTask ScanPlaylist(
