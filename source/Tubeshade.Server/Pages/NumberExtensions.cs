@@ -13,24 +13,22 @@ public static class NumberExtensions
 
     extension(decimal value)
     {
-        public string FormatSize(int minimumMultiplier, CultureInfo cultureInfo)
+        public string FormatSize(CultureInfo cultureInfo) => value.FormatSize(value, cultureInfo);
+
+        public string FormatSize(decimal reference, CultureInfo cultureInfo)
         {
             var normalized = value;
             var unitIndex = 0;
-            while (normalized >= BinaryMultiplier && unitIndex + 1 < BinaryUnits.Length)
+            while (reference >= BinaryMultiplier && unitIndex + 1 < BinaryUnits.Length)
             {
+                reference /= BinaryMultiplier;
                 normalized /= BinaryMultiplier;
                 unitIndex++;
             }
 
-            if (unitIndex < minimumMultiplier)
-            {
-                return Math.Round(value, 2).ToString(cultureInfo);
-            }
-
             var unit = BinaryUnits[unitIndex];
 
-            return $"{Math.Round(normalized, 2).ToString(cultureInfo)} {unit}";
+            return $"{normalized.ToString("0.##", cultureInfo)} {unit}";
         }
 
         public string FormatCount(CultureInfo cultureInfo)

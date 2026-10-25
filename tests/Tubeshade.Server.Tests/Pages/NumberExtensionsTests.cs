@@ -7,18 +7,24 @@ namespace Tubeshade.Server.Tests.Pages;
 
 public sealed class NumberExtensionsTests
 {
-    [TestCase(1023, 0, "1023 B")]
-    [TestCase(1023, 1, "1023")]
-    [TestCase(10230, 0, "9.99 KiB")]
-    [TestCase(10230, 1, "9.99 KiB")]
-    [TestCase(10230, 2, "10230")]
-    [TestCase(10230000, 0, "9.76 MiB")]
-    [TestCase(10230000, 1, "9.76 MiB")]
-    [TestCase(10230000, 2, "9.76 MiB")]
-    [TestCase(10230000, 3, "10230000")]
-    public void FormatSize(decimal value, int minimumMultiplier, string expected)
+    [TestCase(0, "0 B")]
+    [TestCase(1023, "1023 B")]
+    [TestCase(1024, "1 KiB")]
+    [TestCase(10230, "9.99 KiB")]
+    [TestCase(10230000, "9.76 MiB")]
+    public void FormatSize(decimal value, string expected)
     {
-        value.FormatSize(minimumMultiplier, CultureInfo.InvariantCulture).Should().Be(expected);
+        value.FormatSize(CultureInfo.InvariantCulture).Should().Be(expected);
+    }
+
+    [TestCase(0, 10230000, "0 MiB")]
+    [TestCase(1023, 10230000, "0 MiB")]
+    [TestCase(10230, 10230000, "0.01 MiB")]
+    [TestCase(10230000, 10230000, "9.76 MiB")]
+    [TestCase(10230000, 1023, "10230000 B")]
+    public void FormatSize_WithReference(decimal value, decimal reference, string expected)
+    {
+        value.FormatSize(reference, CultureInfo.InvariantCulture).Should().Be(expected);
     }
 
     [TestCase(1, "1")]

@@ -32,6 +32,8 @@ _Latest build from master branch._
   ([#327](https://github.com/Tubeshade/Tubeshade/issues/327))
 - Show queued and running feed updates on the tasks page
   ([#317](https://github.com/Tubeshade/Tubeshade/issues/317))
+- Format download progress with the same unit throughout the download
+  ([#295](https://github.com/Tubeshade/Tubeshade/issues/295))
 
 ## [0.1.8] - 2026-07-23
 

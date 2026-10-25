@@ -294,6 +294,7 @@ public sealed class TaskService
                         .Select(run => new TaskRunModel
                         {
                             Id = run.RunId,
+                            Type = run.Type,
                             State = run.RunState,
                             Source = run.Source,
                             CreatedAt = run.RunCreatedAt,
