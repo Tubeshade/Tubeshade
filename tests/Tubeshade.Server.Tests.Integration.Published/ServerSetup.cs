@@ -8,10 +8,12 @@ namespace Tubeshade.Server.Tests.Integration.Published;
 [SetUpFixture]
 public static class ServerSetup
 {
+    internal static KeycloakFixture Keycloak { get; } = new("26.8.1-1");
+
     internal static IServerFixture[] Fixtures { get; } =
     [
-        new ServerFixture("Debug with coverage", "tubeshade-cover-tests", "18.6-trixie", "26.8.1-1", true),
-        new ServerFixture("Release", "tubeshade-integration-tests", "18.6-trixie", "26.8.1-1", false),
+        new ServerFixture("Debug with coverage", "tubeshade-cover-tests", "18.6-trixie", Keycloak, true),
+        new ServerFixture("Release", "tubeshade-integration-tests", "18.6-trixie", Keycloak, false),
     ];
 
     internal static BrowserFixture Browser { get; } = new();
@@ -19,16 +21,20 @@ public static class ServerSetup
     [OneTimeSetUp]
     public static Task OneTimeSetUpAsync()
     {
+        Keycloak.Start();
+
         return Task.WhenAll(Fixtures
             .Select(fixture => fixture.InitializeAsync())
             .Append(Browser.InitializeAsync()));
     }
 
     [OneTimeTearDown]
-    public static Task OneTimeTearDownAsync()
+    public static async Task OneTimeTearDownAsync()
     {
-        return Task.WhenAll(Fixtures
+        await Task.WhenAll(Fixtures
             .Select(fixture => fixture.DisposeAsync().AsTask())
             .Append(Browser.DisposeAsync().AsTask()));
+
+        await Keycloak.DisposeAsync();
     }
 }

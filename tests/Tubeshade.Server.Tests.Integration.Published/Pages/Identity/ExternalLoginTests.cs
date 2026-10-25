@@ -12,6 +12,9 @@ public sealed class ExternalLoginTests(IServerFixture fixture) : PlaywrightTests
     /// <inheritdoc />
     protected override bool LogIn => false;
 
+    [OneTimeSetUp]
+    public static Task WaitForKeycloak() => ServerSetup.Keycloak.WaitUntilReadyAsync();
+
     [Test]
     public async Task AddExternalLogin()
     {
