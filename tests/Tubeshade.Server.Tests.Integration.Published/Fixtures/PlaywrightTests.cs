@@ -23,6 +23,7 @@ public abstract class PlaywrightTests
     protected static readonly string Password = Guid.NewGuid().ToString("N");
     private static readonly ConcurrentDictionary<IServerFixture, SemaphoreSlim> FixtureLocks = new();
     private static readonly ConcurrentDictionary<(IServerFixture, string), bool> Registered = new();
+    private static readonly ConcurrentDictionary<(IServerFixture, string), string> StorageStates = new();
 
     private readonly string _browserType;
     private readonly string? _device;
@@ -74,14 +75,20 @@ public abstract class PlaywrightTests
     [SetUp]
     public async Task SetUp()
     {
-        _browserContext = await ServerSetup.Browser.NewContextAsync(new BrowserNewContextOptions
+        var options = new BrowserNewContextOptions
         {
             BaseURL = Fixture.BaseAddress.AbsoluteUri,
             ColorScheme = ColorScheme.Dark,
             Locale = Culture,
             ExtraHTTPHeaders = [new(HeaderNames.AcceptLanguage, Culture)],
-        });
+        };
 
+        if (LogIn)
+        {
+            options.StorageState = await GetStorageState(options);
+        }
+
+        _browserContext = await ServerSetup.Browser.NewContextAsync(options);
         _page = await _browserContext.NewPageAsync();
 
         if (Trace)
@@ -94,13 +101,6 @@ public abstract class PlaywrightTests
                 Title = TraceName,
             });
         }
-
-        if (!LogIn)
-        {
-            return;
-        }
-
-        await UsernamePasswordLogin();
     }
 
     [TearDown]
@@ -140,42 +140,81 @@ public abstract class PlaywrightTests
     {
         using (await LockFixture())
         {
-            if (!Registered.TryGetValue((Fixture, Username), out var registered) || !registered)
+            await Register(Page);
+        }
+
+        await Login(Page);
+    }
+
+    /// <summary>Signs in once per server and user, so that other tests can start already signed in.</summary>
+    private async Task<string> GetStorageState(BrowserNewContextOptions options)
+    {
+        using (await LockFixture())
+        {
+            if (StorageStates.TryGetValue((Fixture, Username), out var storageState))
             {
-                await Page.GotoAsync("/Identity/Account/Register");
-                if (Culture is DefaultCulture)
-                {
-                    (await Page.TitleAsync()).Should().Be("Register - Tubeshade");
-                }
-
-                await Page.GetByLabel("Username").FillAsync(Username);
-                await Page.GetByLabel("Password", new PageGetByLabelOptions { Exact = true }).FillAsync(Password);
-                await Page.GetByLabel("Confirm Password").FillAsync(Password);
-                await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Register" }).ClickAsync();
-
-                if (Culture is DefaultCulture)
-                {
-                    (await Page.TitleAsync()).Should().Be("Home page - Tubeshade");
-                }
-
-                Registered[(Fixture, Username)] = true;
+                return storageState;
             }
+
+            await using var context = await ServerSetup.Browser.NewContextAsync(options);
+            var page = await context.NewPageAsync();
+
+            // Registering also signs in
+            if (!await Register(page))
+            {
+                await Login(page);
+            }
+
+            storageState = await context.StorageStateAsync();
+            StorageStates[(Fixture, Username)] = storageState;
+            return storageState;
+        }
+    }
+
+    // Must be called while holding the fixture lock
+    private async Task<bool> Register(IPage page)
+    {
+        if (Registered.TryGetValue((Fixture, Username), out var registered) && registered)
+        {
+            return false;
         }
 
-        await Page.GotoAsync("/Identity/Account/Login");
+        await page.GotoAsync("/Identity/Account/Register");
+        if (Culture is DefaultCulture)
+        {
+            (await page.TitleAsync()).Should().Be("Register - Tubeshade");
+        }
+
+        await page.GetByLabel("Username").FillAsync(Username);
+        await page.GetByLabel("Password", new PageGetByLabelOptions { Exact = true }).FillAsync(Password);
+        await page.GetByLabel("Confirm Password").FillAsync(Password);
+        await page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Register" }).ClickAsync();
 
         if (Culture is DefaultCulture)
         {
-            (await Page.TitleAsync()).Should().Be("Log in - Tubeshade");
+            (await page.TitleAsync()).Should().Be("Home page - Tubeshade");
         }
 
-        await Page.GetByLabel("Username").FillAsync(Username);
-        await Page.GetByLabel("Password").FillAsync(Password);
-        await Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Log in" }).ClickAsync();
+        Registered[(Fixture, Username)] = true;
+        return true;
+    }
+
+    private async Task Login(IPage page)
+    {
+        await page.GotoAsync("/Identity/Account/Login");
 
         if (Culture is DefaultCulture)
         {
-            (await Page.TitleAsync()).Should().Be("Home page - Tubeshade");
+            (await page.TitleAsync()).Should().Be("Log in - Tubeshade");
+        }
+
+        await page.GetByLabel("Username").FillAsync(Username);
+        await page.GetByLabel("Password").FillAsync(Password);
+        await page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Log in" }).ClickAsync();
+
+        if (Culture is DefaultCulture)
+        {
+            (await page.TitleAsync()).Should().Be("Home page - Tubeshade");
         }
     }
 
