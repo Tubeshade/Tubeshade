@@ -24,13 +24,12 @@ wait $cover
 dotnet tool restore
 
 dotnet test \
-	-p:CollectCoverage=true \
-	-p:BuildInParallel=true \
-	-p:ContinuousIntegrationBuild=false \
-	-p:DebugType=portable \
-	-p:CopyLocalLockFileAssemblies=true \
-	-m:8 \
 	--configuration "$configuration" \
-	--collect:"XPlat Code Coverage" \
-	--logger:"junit;LogFilePath=TestResults/test-result.junit.xml" \
-	--no-build
+	--no-build \
+	--max-parallel-test-modules 8 \
+	--results-directory TestResults \
+	--results-directory-layout per-module \
+	--coverlet \
+	--coverlet-output-format cobertura \
+	--report-spekt-junit \
+	--report-spekt-junit-filename test-result.junit.xml

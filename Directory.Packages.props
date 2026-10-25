@@ -4,10 +4,7 @@
         <PackageVersion Include="Ardalis.SmartEnum.SystemTextJson" Version="8.1.0"/>
         <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1"/>
         <PackageVersion Include="AwesomeAssertions" Version="9.6.0"/>
-        <PackageVersion Include="coverlet.collector" Version="10.1.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageVersion>
+        <PackageVersion Include="coverlet.MTP" Version="10.1.0"/>
         <PackageVersion Include="Cronos" Version="0.13.0"/>
         <PackageVersion Include="Dapper" Version="2.1.89"/>
         <PackageVersion Include="dbup-core" Version="6.1.1"/>
@@ -39,8 +36,9 @@
         <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.13"/>
         <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.13"/>
         <PackageVersion Include="Microsoft.NET.ILLink.Tasks" Version="10.0.13"/>
-        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0"/>
         <PackageVersion Include="Microsoft.Playwright.NUnit" Version="1.64.1"/>
+        <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.5.1"/>
+        <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="2.5.1"/>
         <PackageVersion Include="NodaTime" Version="3.3.6"/>
         <PackageVersion Include="NodaTime.Bogus" Version="3.0.2"/>
         <PackageVersion Include="NodaTime.Serialization.SystemTextJson" Version="1.4.0"/>
