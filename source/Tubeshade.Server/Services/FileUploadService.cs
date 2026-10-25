@@ -94,6 +94,14 @@ public sealed class FileUploadService
             _ => throw new("Unexpected video format")
         };
 
+        if (type == VideoContainerType.Mp4 && !await Mp4Layout.IsStreamable(filePath, cancellationToken))
+        {
+            var remuxedPath = Path.Combine(tempDirectory.Directory.FullName, $"video.{type.Name}");
+            await _ffmpegService.Copy(filePath, remuxedPath, cancellationToken);
+            File.Delete(filePath);
+            filePath = remuxedPath;
+        }
+
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var videoEntity = await _videoRepository.GetAsync(videoId, userId, transaction);
         var videoDirectory = videoEntity.GetDirectoryPath();

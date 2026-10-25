@@ -758,7 +758,7 @@ public sealed class YoutubeDownloadService
 
         var downloadedPath = Path.Combine(tempDirectory.FullName, fileName);
 
-        if (remux)
+        if (remux || (videoFile.Type == VideoContainerType.Mp4 && !await Mp4Layout.IsStreamable(downloadedPath, cancellationToken)))
         {
             var remuxedPath = Path.Combine(
                 tempDirectory.FullName,

@@ -408,4 +408,13 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(136, Information, "Replacing image {ImageId}, because its file {StoragePath} was downloaded again")]
     internal static partial void ReplacingImage(this ILogger logger, Guid imageId, string storagePath);
+
+    [LoggerMessage(137, Information, "Remuxing video file {VideoFileId} stored at {Path}, because its index is not at the start of the file")]
+    internal static partial void RemuxingVideoFile(this ILogger logger, Guid videoFileId, string path);
+
+    [LoggerMessage(138, Information, "Replaced video file {VideoFileId} with remuxed video file {ReplacementVideoFileId}")]
+    internal static partial void RemuxedVideoFile(this ILogger logger, Guid videoFileId, Guid replacementVideoFileId);
+
+    [LoggerMessage(139, Warning, "Failed to remux video file {VideoFileId} stored at {Path}")]
+    internal static partial void RemuxingVideoFileFailed(this ILogger logger, Exception exception, Guid videoFileId, string path);
 }

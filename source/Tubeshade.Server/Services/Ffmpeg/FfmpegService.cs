@@ -187,7 +187,14 @@ public sealed class FfmpegService
         string outputFilePath,
         CancellationToken cancellationToken)
     {
-        var args = new List<string> { "-nostdin", "-y", "-i", $"file:{inputFilePath}", "-c", "copy", outputFilePath };
+        var args = new List<string> { "-nostdin", "-y", "-i", $"file:{inputFilePath}", "-c", "copy" };
+
+        if (outputFilePath.EndsWith("mp4"))
+        {
+            args.AddRange(["-movflags", "+faststart"]);
+        }
+
+        args.Add(outputFilePath);
 
         using var ffmpegProcess = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
         ffmpegProcess.OutputReceived += OnOutputReceived;

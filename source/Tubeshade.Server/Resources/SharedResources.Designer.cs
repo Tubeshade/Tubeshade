@@ -1590,6 +1590,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Remux video files.
+        /// </summary>
+        public static string Tasks_Type_remux_video_files {
+            get {
+                return ResourceManager.GetString("Tasks_Type_remux_video_files", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Scan channel.
         /// </summary>
         public static string Tasks_Type_scan_channel {

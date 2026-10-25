@@ -29,6 +29,7 @@ public sealed class BackgroundWorkerService : BackgroundService
     private readonly SemaphoreSlim _downloadLock;
     private readonly SemaphoreSlim _sponsorBlockLock;
     private readonly SemaphoreSlim _pubSubLock;
+    private readonly SemaphoreSlim _metadataLock;
 
     public BackgroundWorkerService(
         IServiceProvider serviceProvider,
@@ -45,6 +46,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         _downloadLock = new(_options.DownloadTaskLimit);
         _sponsorBlockLock = new(_options.SponsorBlockTaskLimit);
         _pubSubLock = new(1);
+        _metadataLock = new(1);
     }
 
     internal async ValueTask<bool> CancelTaskRun(Guid taskRunId)
@@ -417,6 +419,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.RefreshFileMetadata)
         {
+            using var metadataLock = await _metadataLock.LockAsync(cancellationToken);
             using var scope = await LockAsync(_indexLock, taskRepository, taskRunId, cancellationToken);
 
             var (libraryId, userId) = task.DestructureLibraryTask();
@@ -430,6 +433,14 @@ public sealed class BackgroundWorkerService : BackgroundService
             var (libraryId, userId) = task.DestructureLibraryTask();
             var service = provider.GetRequiredService<TrackFileService>();
             await service.RefreshTrackFiles(libraryId, userId, taskRepository, taskRunId, cancellationToken);
+        }
+        else if (task.Type == TaskType.RemuxVideoFiles)
+        {
+            using var scope = await LockAsync(_metadataLock, taskRepository, taskRunId, cancellationToken);
+
+            var (libraryId, userId) = task.DestructureLibraryTask();
+            var service = provider.GetRequiredService<VideoFileRemuxService>();
+            await service.RemuxVideoFiles(libraryId, userId, taskRepository, taskRunId, cancellationToken);
         }
         else if (task.Type == TaskType.DeleteTasks)
         {

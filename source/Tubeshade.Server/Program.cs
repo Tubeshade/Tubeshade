@@ -160,6 +160,7 @@ internal static class Program
             .AddScoped<FileMetadataMigration>()
             .AddScoped<TrackFileMigration>()
             .AddScoped<ChannelImagesMigration>()
+            .AddScoped<VideoFileRemuxMigration>()
             .AddScoped<TaskService>()
             .AddScoped<ChannelService>()
             .AddScoped<PlaylistService>()
@@ -181,6 +182,7 @@ internal static class Program
             .AddScoped<FileUploadService>()
             .AddScoped<FileMetadataService>()
             .AddScoped<TrackFileService>()
+            .AddScoped<VideoFileRemuxService>()
             .AddSingleton<FfmpegService>()
             .AddSingleton<FileSystemService>()
             .AddPubSubHubbubClient();

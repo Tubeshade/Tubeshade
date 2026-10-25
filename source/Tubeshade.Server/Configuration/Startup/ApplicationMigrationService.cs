@@ -34,6 +34,7 @@ public sealed class ApplicationMigrationService : BackgroundService
         await ApplyMigration<FileMetadataMigration>(nameof(FileMetadataMigration), stoppingToken);
         await ApplyMigration<TrackFileMigration>(nameof(TrackFileMigration), stoppingToken);
         await ApplyMigration<ChannelImagesMigration>(nameof(ChannelImagesMigration), stoppingToken);
+        await ApplyMigration<VideoFileRemuxMigration>(nameof(VideoFileRemuxMigration), stoppingToken);
 
         _logger.ApplicationMigrationsApplied();
     }
