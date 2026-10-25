@@ -30,6 +30,8 @@ _Latest build from master branch._
   ([#335](https://github.com/Tubeshade/Tubeshade/pull/335))
 - Download channel images when the channel is created while indexing a video
   ([#327](https://github.com/Tubeshade/Tubeshade/issues/327))
+- Show queued and running feed updates on the tasks page
+  ([#317](https://github.com/Tubeshade/Tubeshade/issues/317))
 
 ## [0.1.8] - 2026-07-23
 

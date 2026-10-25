@@ -582,6 +582,66 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
             .BeEmpty();
     }
 
+    [Test]
+    public async Task UnfinishedFeedUpdatesShown()
+    {
+        var token = CancellationToken.None;
+
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
+
+        Guid queuedTaskId;
+        Guid runningTaskId;
+        Guid finishedTaskId;
+        Guid finishedRunId;
+
+        await using (var transaction = await connection.OpenAndBeginTransaction(cancellationToken: token))
+        {
+            var channelRepository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
+            var channelId = await CreateChannel(channelRepository, transaction);
+
+            var task = TaskEntity.YouTubeFeedUpdate(_libraryId, _userId, channelId, string.Empty);
+
+            queuedTaskId = await repository.AddTask(task, transaction);
+            await repository.AddTaskRun(Guid.NewGuid(), queuedTaskId, TaskSource.Webhook, transaction);
+
+            runningTaskId = await repository.AddTask(task, transaction);
+            var runningRunId = Guid.NewGuid();
+            await repository.AddTaskRun(runningRunId, runningTaskId, TaskSource.Webhook, transaction);
+            await repository.StartTaskRun(runningRunId, token);
+
+            finishedTaskId = await repository.AddTask(task, transaction);
+            finishedRunId = Guid.NewGuid();
+            await repository.AddTaskRun(finishedRunId, finishedTaskId, TaskSource.Webhook, transaction);
+
+            await transaction.CommitAsync(token);
+        }
+
+        await repository.FinishTask(finishedRunId, TaskResult.Successful, null, token);
+
+        var parameters = new TaskParameters { UserId = _userId, LibraryId = _libraryId, Limit = 100, Offset = 0 };
+        var tasks = await repository.GetRunningTasks(parameters, token);
+
+        var webhookParameters = new TaskParameters
+        {
+            UserId = _userId,
+            LibraryId = _libraryId,
+            Source = TaskSource.Webhook,
+            Limit = 100,
+            Offset = 0
+        };
+        var webhookTasks = await repository.GetRunningTasks(webhookParameters, token);
+
+        using var assertionScope = new AssertionScope();
+
+        tasks.Should().ContainSingle(entity => entity.Id == queuedTaskId);
+        tasks.Should().ContainSingle(entity => entity.Id == runningTaskId);
+        tasks.Should().NotContain(entity => entity.Id == finishedTaskId);
+
+        webhookTasks.Should().ContainSingle(entity => entity.Id == finishedTaskId);
+    }
+
     private async Task<Guid?> AddTask(string url)
     {
         await using var scope = Fixture.Services.CreateAsyncScope();

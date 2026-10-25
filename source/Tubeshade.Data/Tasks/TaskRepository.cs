@@ -90,7 +90,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                         LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
                WHERE (libraries.id IN (SELECT id FROM accessible))
                  AND (@{nameof(TaskParameters.LibraryId)} IS NULL OR libraries.id = @{nameof(TaskParameters.LibraryId)})
-                 AND ((@{nameof(TaskParameters.Source)}::tasks.task_source IS NULL AND (tasks.type != '{TaskType.Names.YouTubeFeedUpdate}' OR @{nameof(TaskParameters.TaskRunId)} IS NOT NULL)) OR task_runs.source = @{nameof(TaskParameters.Source)})
+                 -- finished feed updates are hidden unless filtered by source, but unfinished ones are shown since they take up workers
+                 AND ((@{nameof(TaskParameters.Source)}::tasks.task_source IS NULL AND (tasks.type != '{TaskType.Names.YouTubeFeedUpdate}' OR task_run_results.id IS NULL OR @{nameof(TaskParameters.TaskRunId)} IS NOT NULL)) OR task_runs.source = @{nameof(TaskParameters.Source)})
                  AND (@{nameof(TaskParameters.State)}::tasks.run_state IS NULL OR task_runs.state = @{nameof(TaskParameters.State)})
                  AND (@{nameof(TaskParameters.Result)}::tasks.task_result IS NULL OR task_run_results.result = @{nameof(TaskParameters.Result)})
                  AND (@{nameof(TaskParameters.TaskRunId)} IS NULL OR task_runs.id = @{nameof(TaskParameters.TaskRunId)})
