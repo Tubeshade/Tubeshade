@@ -60,13 +60,15 @@ jobs:
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: coverage
           fail_ci_if_error: true
 
       - name: Gather Test Results
-        uses: codecov/test-results-action@v1.2.1
+        uses: codecov/codecov-action@v7.1.1
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
           fail_ci_if_error: true
 
   test-extension:
