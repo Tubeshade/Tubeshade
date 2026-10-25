@@ -246,6 +246,7 @@ public sealed class YoutubeIndexingService
         {
             Public or Unlisted => ExternalAvailability.Public,
             Private or PremiumOnly or SubscriberOnly or NeedsAuth => ExternalAvailability.Private,
+            null when videoData.IsPrivate => ExternalAvailability.Private,
             null => ExternalAvailability.NotAvailable,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(videoData.Availability),
@@ -264,11 +265,12 @@ public sealed class YoutubeIndexingService
             files.Remove(file);
         }
 
-        if (availability == ExternalAvailability.NotAvailable)
+        // yt-dlp does not return any other metadata for videos that cannot be accessed
+        if (videoData.Availability is null)
         {
             if (video is null)
             {
-                throw new InvalidOperationException("Video is not available");
+                throw new InvalidOperationException($"Video is not available ({availability})");
             }
 
             video.ModifiedAt = currentTime;

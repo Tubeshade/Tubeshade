@@ -13,6 +13,8 @@ namespace Ytdlp;
 
 public sealed class Ytdlp
 {
+    private const string PrivateVideoWarning = "WARNING: [youtube] Private video";
+
     private static readonly string[] SelectedFormatPropertyNames =
     [
         "format_id",
@@ -83,6 +85,9 @@ public sealed class Ytdlp
 
         using (document)
         {
+            videoData.IsPrivate =
+                process.ErrorLines.Any(line => line.StartsWith(PrivateVideoWarning, StringComparison.Ordinal));
+
             // Writing the file is not a yt-dlp failure, so exceptions are not converted to a failed result
             if (infoJsonFilePath is { } path)
             {

@@ -42,6 +42,8 @@ _Latest build from master branch._
   ([#76](https://github.com/Tubeshade/Tubeshade/issues/76))
 - Move the index of MP4 videos to the start of the file
   ([#341](https://github.com/Tubeshade/Tubeshade/pull/341))
+- Mark videos that became private as private instead of not available
+  ([#342](https://github.com/Tubeshade/Tubeshade/pull/342))
 
 ## [0.1.8] - 2026-07-23
 

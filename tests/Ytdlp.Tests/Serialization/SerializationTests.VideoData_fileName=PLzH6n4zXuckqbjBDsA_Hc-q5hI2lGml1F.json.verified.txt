@@ -38,7 +38,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1082.0,
-      ViewCount: 151000
+      ViewCount: 151000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -75,7 +76,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 768.0,
-      ViewCount: 1200000
+      ViewCount: 1200000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -112,7 +114,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1085.0,
-      ViewCount: 364000
+      ViewCount: 364000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -149,7 +152,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 460.0,
-      ViewCount: 5100
+      ViewCount: 5100,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -186,7 +190,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1060.0,
-      ViewCount: 254000
+      ViewCount: 254000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -223,7 +228,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1119.0,
-      ViewCount: 152000
+      ViewCount: 152000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -260,7 +266,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 815.0,
-      ViewCount: 83000
+      ViewCount: 83000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -297,7 +304,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 882.0,
-      ViewCount: 299000
+      ViewCount: 299000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -334,7 +342,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 880.0,
-      ViewCount: 82000
+      ViewCount: 82000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -371,7 +380,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 158.0,
-      ViewCount: 4800
+      ViewCount: 4800,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -408,7 +418,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1198.0,
-      ViewCount: 1500000
+      ViewCount: 1500000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -445,7 +456,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 743.0,
-      ViewCount: 603000
+      ViewCount: 603000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -482,7 +494,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 643.0,
-      ViewCount: 1400000
+      ViewCount: 1400000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -519,7 +532,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 861.0,
-      ViewCount: 235000
+      ViewCount: 235000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -556,7 +570,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1423.0,
-      ViewCount: 117000
+      ViewCount: 117000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -593,7 +608,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1657.0,
-      ViewCount: 164000
+      ViewCount: 164000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -630,7 +646,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 744.0,
-      ViewCount: 122000
+      ViewCount: 122000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -667,7 +684,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 783.0,
-      ViewCount: 31000
+      ViewCount: 31000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -704,7 +722,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 898.0,
-      ViewCount: 695000
+      ViewCount: 695000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -741,7 +760,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1096.0,
-      ViewCount: 146000
+      ViewCount: 146000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -778,7 +798,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1147.0,
-      ViewCount: 477000
+      ViewCount: 477000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -815,7 +836,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 893.0,
-      ViewCount: 124000
+      ViewCount: 124000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -852,7 +874,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1218.0,
-      ViewCount: 155000
+      ViewCount: 155000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -889,7 +912,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 807.0,
-      ViewCount: 182000
+      ViewCount: 182000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -926,7 +950,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1119.0,
-      ViewCount: 134000
+      ViewCount: 134000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -963,7 +988,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 1522.0,
-      ViewCount: 673000
+      ViewCount: 673000,
+      IsPrivate: false
     },
     {
       ResultType: Url,
@@ -1000,7 +1026,8 @@
       ChannelId: UC9-y-6csu5WGm29I7JiwpnA,
       ChannelUrl: https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA,
       Duration: 2339.0,
-      ViewCount: 129000
+      ViewCount: 129000,
+      IsPrivate: false
     }
   ],
   Id: PLzH6n4zXuckqbjBDsA_Hc-q5hI2lGml1F,
@@ -1046,5 +1073,6 @@
   ViewCount: 17329,
   WebpageUrl: https://www.youtube.com/playlist?list=PLzH6n4zXuckqbjBDsA_Hc-q5hI2lGml1F,
   Availability: Public,
+  IsPrivate: false,
   PlaylistCount: 27
 }

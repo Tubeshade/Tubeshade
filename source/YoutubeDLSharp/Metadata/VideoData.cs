@@ -186,6 +186,13 @@ public sealed class VideoData
     [JsonConverter(typeof(JsonStringEnumConverter<Availability>))]
     public Availability? Availability { get; set; }
 
+    /// <summary>
+    /// Whether yt-dlp reported that the video is private, but could not access it.
+    /// In that case <see cref="Availability"/> is <see langword="null"/>, since yt-dlp only reports it as a warning.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsPrivate { get; set; }
+
     [JsonPropertyName("chapters")]
     public ChapterData[]? Chapters { get; set; }
 
