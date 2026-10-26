@@ -14,8 +14,11 @@ WORKDIR /tubeshade
 RUN unzip /root/deno.zip deno -d /usr/bin && \
     rm /root/deno.zip && \
     chmod +xr-w /usr/bin/deno && \
-    mkdir /root/yt-dlp-plugins && \
-    mv /root/bgutil-ytdlp-pot-provider.zip /root/yt-dlp-plugins
+    unzip -q /root/yt-dlp.zip -d /root/yt-dlp && \
+    rm /root/yt-dlp.zip && \
+    chmod +x /root/yt-dlp/yt-dlp_linux && \
+    mkdir /root/yt-dlp/yt-dlp-plugins && \
+    mv /root/bgutil-ytdlp-pot-provider.zip /root/yt-dlp/yt-dlp-plugins
 
 COPY --parents ./.config/dotnet-tools.json ./
 RUN dotnet tool restore
@@ -51,7 +54,7 @@ ENV DOTNET_CHANNEL=$DOTNET_CHANNEL \
     DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
-    Ytdlp__YtdlpPath=/root/yt-dlp \
+    Ytdlp__YtdlpPath=/root/yt-dlp/yt-dlp_linux \
     Ytdlp__FfmpegPath=/usr/bin/ffmpeg \
     Ytdlp__FfprobePath=/usr/bin/ffprobe \
     Ytdlp__JavascriptRuntimePath=deno:/usr/bin/deno

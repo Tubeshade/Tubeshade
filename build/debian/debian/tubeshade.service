@@ -13,7 +13,7 @@ WorkingDirectory=/etc/opt/tubeshade
 Environment="ASPNETCORE_WEBROOT=/opt/tubeshade/wwwroot"
 Environment="ENVIRONMENT=Production"
 Environment="DOTNET_gcServer=0"
-Environment="Ytdlp__YtdlpPath=/opt/tubeshade/yt-dlp"
+Environment="Ytdlp__YtdlpPath=/opt/tubeshade/yt-dlp/yt-dlp_linux"
 Environment="Ytdlp__JavascriptRuntimePath=deno:/opt/tubeshade/deno"
 Environment="Ytdlp__PotBaseUrl=http://localhost:4416"
 

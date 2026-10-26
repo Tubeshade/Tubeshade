@@ -41,16 +41,19 @@ mv changelog.gz $changelog_path
 mkdir -p tubeshade/lib/systemd/system
 cp build/debian/debian/tubeshade.service tubeshade/lib/systemd/system/tubeshade.service
 
-mv yt-dlp tubeshade/opt/tubeshade/yt-dlp
-chmod +x tubeshade/opt/tubeshade/yt-dlp
-chmod go-w tubeshade/opt/tubeshade/yt-dlp
+unzip -q yt-dlp.zip -d tubeshade/opt/tubeshade/yt-dlp
+chmod +x tubeshade/opt/tubeshade/yt-dlp/yt-dlp_linux
+find tubeshade/opt/tubeshade/yt-dlp/_internal -type f -name '*.so*' -exec chmod a-x {} +
+# the release build has RPATH/RUNPATH set to its build directories, which do not exist outside of it
+find tubeshade/opt/tubeshade/yt-dlp/_internal -type f -name '*.so*' -exec chrpath -d {} \; >/dev/null
 
 unzip deno.zip -d tubeshade/opt/tubeshade
 chmod +x tubeshade/opt/tubeshade/deno
 chmod go-w tubeshade/opt/tubeshade/deno
 
-mkdir tubeshade/opt/tubeshade/yt-dlp-plugins
-mv bgutil-ytdlp-pot-provider.zip tubeshade/opt/tubeshade/yt-dlp-plugins
+mkdir tubeshade/opt/tubeshade/yt-dlp/yt-dlp-plugins
+mv bgutil-ytdlp-pot-provider.zip tubeshade/opt/tubeshade/yt-dlp/yt-dlp-plugins
+chmod -R go-w tubeshade/opt/tubeshade/yt-dlp
 
 mkdir -p tubeshade/opt/bgutil-ytdlp-pot-provider
 tar --extract --gzip --strip-components=1 -C tubeshade/opt/bgutil-ytdlp-pot-provider --file=2.0.1.tar.gz

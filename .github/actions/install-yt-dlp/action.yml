@@ -15,17 +15,20 @@ runs:
       name: download yt-dlp
       shell: bash
       run: |
-        URL="https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.21/yt-dlp_linux"
+        URL="https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.21/yt-dlp_linux.zip"
+        ARCHIVE="$RUNNER_TEMP/yt-dlp.zip"
         MAX_RETRY_DELAY=30
-
-        mkdir -p "$HOME/.yt-dlp"
 
         for i in {1..10}
         do
           echo "downloading yt-dlp (attempt: #$i)"
 
-          if curl --connect-timeout 10 -vL "$URL" -o "$HOME/.yt-dlp/yt-dlp"; then
+          if curl --connect-timeout 10 -vL "$URL" -o "$ARCHIVE"; then
+            # tests run yt-dlp from PATH, so the executable is renamed to the usual name
+            unzip -q -o "$ARCHIVE" -d "$HOME/.yt-dlp"
+            mv "$HOME/.yt-dlp/yt-dlp_linux" "$HOME/.yt-dlp/yt-dlp"
             chmod +x "$HOME/.yt-dlp/yt-dlp"
+            rm "$ARCHIVE"
             echo "✅ yt-dlp installed successfully"
             exit 0
           fi
