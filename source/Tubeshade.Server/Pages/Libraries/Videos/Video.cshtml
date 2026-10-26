@@ -75,7 +75,7 @@
                     <label for="playback-rate-input"
                            class="col-4 col-md-3 col-form-label">@SharedResources.Video_Speed</label>
                     <div class="col">
-                        <input id="playback-rate-input" class="form-control" type="number" min="0" step="0.25"
+                        <input id="playback-rate-input" class="form-control" type="number" min="0.25" max="16" step="0.25"
                                value="@Model.PlaybackSpeed"/>
                     </div>
                 </div>
@@ -319,15 +319,22 @@
         playbackRateInput.addEventListener("change", onPlaybackSpeedInputChange, false);
 
         function onPlaybackSpeedInputChange() {
-            if (video.playbackRate !== playbackRateInput.value) {
-                video.playbackRate = playbackRateInput.value;
+            const playbackRate = playbackRateInput.valueAsNumber;
+            // browsers only support a limited range of playback rates, and a rate of 0 stops playback
+            if (isNaN(playbackRate) || playbackRateInput.validity.rangeUnderflow || playbackRateInput.validity.rangeOverflow) {
+                playbackRateInput.value = video.playbackRate;
+                return;
+            }
+
+            if (video.playbackRate !== playbackRate) {
+                video.playbackRate = playbackRate;
             }
         }
 
         video.addEventListener("ratechange", onVideoRateChange, false);
 
         function onVideoRateChange() {
-            if (playbackRateInput.value !== video.playbackRate) {
+            if (playbackRateInput.valueAsNumber !== video.playbackRate) {
                 playbackRateInput.value = video.playbackRate;
             }
         }
