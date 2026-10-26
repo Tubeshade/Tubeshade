@@ -590,6 +590,7 @@ public sealed class YoutubeIndexingService
             })
             .ToArray();
 
+        var createdImageCount = 0;
         foreach (var file in files)
         {
             var hashAlgorithm = HashAlgorithm.Default;
@@ -600,6 +601,8 @@ public sealed class YoutubeIndexingService
                 _logger.ExistingVideoImage(existing.Id);
                 continue;
             }
+
+            createdImageCount++;
 
             var response = await _ffmpegService.AnalyzeFile(file.FullName, cancellationToken);
             if (response.Streams is not [{ Width: { } width, Height: { } height }])
@@ -630,6 +633,11 @@ public sealed class YoutubeIndexingService
             {
                 file.MoveTo(destinationFileName, true);
             }
+        }
+
+        if (createdImageCount is 0 && files is not [])
+        {
+            _logger.RedundantVideoThumbnailDownload(files.Length, video.Id, existingImages.Count);
         }
     }
 
@@ -867,8 +875,9 @@ public sealed class YoutubeIndexingService
         }
 
         var imageFileId = await _imageFileRepository.AddAsync(image, transaction);
+        image.Id = imageFileId!.Value;
         existingImages.Add(image);
-        return imageFileId!.Value;
+        return image.Id;
     }
 
     public async ValueTask ScanPlaylist(

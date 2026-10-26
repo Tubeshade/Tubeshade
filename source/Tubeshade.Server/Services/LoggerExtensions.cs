@@ -421,4 +421,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(140, Information, "Fetching data for video {VideoId} again, because the format urls expire at {Expiry}, before the download is expected to finish at {DownloadEnd}")]
     internal static partial void RefreshingExpiringVideoData(this ILogger logger, Guid videoId, Instant? expiry, Instant? downloadEnd);
+
+    [LoggerMessage(141, Warning, "Downloaded {FileCount} thumbnails for video {VideoId} again, but all of them already exist as {ImageCount} images")]
+    internal static partial void RedundantVideoThumbnailDownload(this ILogger logger, int fileCount, Guid videoId, int imageCount);
 }
