@@ -51,4 +51,4 @@
       - listitem:
         - link "Last":
           - /url: /Playlists?SortBy=name&SortDirection=ASC&PageIndex=-1
-- contentinfo: © 2025 - 2026 Tubeshade | v0.1.8
+- contentinfo: © 2025 - 2026 Tubeshade | v0.1.9

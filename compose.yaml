@@ -1,6 +1,6 @@
 ﻿services:
   tubeshade:
-    image: ${TUBESHADE_IMAGE:-ghcr.io/tubeshade/tubeshade:0.1.8}
+    image: ${TUBESHADE_IMAGE:-ghcr.io/tubeshade/tubeshade:0.1.9}
     build:
       tags:
         - tubeshade-integration-tests
