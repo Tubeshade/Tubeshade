@@ -36,9 +36,12 @@ public sealed class TaskRunModel
         ? Format(target, target)
         : null;
 
-    public string? FormattedRate => Rate is { } rate
-        ? $"{Format(rate, rate)}/s"
-        : null;
+    public string? FormattedRate => Rate switch
+    {
+        null => null,
+        { } rate when Type != TaskType.DownloadVideo && rate > 0 && Math.Round(rate, 2) < 0.45m => $"{Format(1 / rate, 1 / rate)} s",
+        { } rate => $"{Format(rate, rate)}/s",
+    };
 
     public string? FormattedRemaining => Remaining is not null
         ? HumanReadablePeriodPattern.Instance.Format(Remaining)
@@ -46,5 +49,5 @@ public sealed class TaskRunModel
 
     private string Format(decimal value, decimal reference) => Type == TaskType.DownloadVideo
         ? value.FormatSize(reference, CultureInfo.CurrentCulture)
-        : Math.Round(value, 2).ToString(CultureInfo.CurrentCulture);
+        : Math.Round(value, 2).ToString("0.##", CultureInfo.CurrentCulture);
 }

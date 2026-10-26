@@ -41,6 +41,12 @@ public sealed class TaskRunModelTests
         run.FormattedRate.Should().BeNull();
     }
 
+    [TestCase(0, 2000, 0, "0", "2000", "0/s")]
+    [TestCase(0, 2000, 0.001, "0", "2000", "1000 s")]
+    [TestCase(0, 2000, 0.3, "0", "2000", "3.33 s")]
+    [TestCase(0, 2000, 0.444, "0", "2000", "2.25 s")]
+    [TestCase(0, 2000, 0.446, "0", "2000", "0.45/s")]
+    [TestCase(0, 2000, 0.496, "0", "2000", "0.5/s")]
     [TestCase(0, 2000, 0.5, "0", "2000", "0.5/s")]
     [TestCase(1500, 2000, 12.346, "1500", "2000", "12.35/s")]
     public void Count_ShouldFormatAsNumbers(
