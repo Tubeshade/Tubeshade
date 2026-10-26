@@ -27,5 +27,5 @@ public sealed class TextTrackCue
     public static TextTrackCue FromSponsorBlockSegment(SponsorBlockSegmentEntity segment) => new(
         Duration.FromSeconds((double)segment.StartTime),
         Duration.FromSeconds((double)segment.EndTime),
-        segment.Category.Name);
+        $"{segment.Category.Name} {segment.Action.Name}");
 }

@@ -488,15 +488,35 @@
             sponsorBlockTrack.addEventListener("cuechange", onSponsorBlockCueChange);
         }
 
+        // only unmute the video if it was muted because of a segment
+        let mutedBySegment = false;
+
         function onSponsorBlockCueChange(_event) {
             const activeCues = sponsorBlockTrack.track.activeCues;
             let skippableCues = [];
+            let mute = false;
 
             for (let i = 0; i < activeCues.length; i++) {
                 const cue = activeCues[i];
-                if (cue.text !== "filler") {
+                // cached tracks might contain only the category, those segments are skipped
+                const [category, action] = cue.text.split(" ");
+                if (category === "filler") {
+                    continue;
+                }
+
+                if (action === "mute") {
+                    mute = true;
+                } else {
                     skippableCues.push(cue);
                 }
+            }
+
+            if (mute && !video.muted) {
+                video.muted = true;
+                mutedBySegment = true;
+            } else if (!mute && mutedBySegment) {
+                video.muted = false;
+                mutedBySegment = false;
             }
 
             if (skippableCues.length === 0) {
