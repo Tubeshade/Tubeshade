@@ -1,17 +1,16 @@
 #!/bin/sh
 set -e
 
-dotnet_runtime_version=$1
+version=${1:-$(date +%Y-%m-%d)}
 
 image="ghcr.io/tubeshade/tubeshade-runtime-deps"
-version_tag="$image:$dotnet_runtime_version"
+version_tag="$image:$version"
 latest_tag="$image:latest"
 
 docker build \
 	--tag "$version_tag" \
 	--tag "$latest_tag" \
 	--tag "$image" \
-	--build-arg "DOTNET_RUNTIME_VERSION=$dotnet_runtime_version" \
 	./build/docker/deps-image/
 
 docker push	"$version_tag"

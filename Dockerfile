@@ -1,13 +1,12 @@
 ﻿# syntax=docker/dockerfile:1
 
 ARG DOTNET_CHANNEL="10.0"
-ARG DOTNET_SDK_VERSION="${DOTNET_CHANNEL}.402"
-ARG DOTNET_RUNTIME_VERSION="${DOTNET_CHANNEL}.13"
 ARG DOTNET_RUNTIME="linux-musl-x64"
-ARG ALPINE_VERSION="3.24"
+ARG BUILD_IMAGE_VERSION="2026-10-26"
+ARG DEPS_IMAGE_VERSION="2026-10-26"
 ARG BUILD_NUMBER="1"
 
-FROM ghcr.io/tubeshade/tubeshade-build:${DOTNET_SDK_VERSION} AS build
+FROM ghcr.io/tubeshade/tubeshade-build:${BUILD_IMAGE_VERSION} AS build
 ARG BUILD_NUMBER
 ARG DOTNET_RUNTIME
 
@@ -34,7 +33,7 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     --mount=type=cache,id=npm,target=/root/.npm \
     ./build/publish.sh "Tubeshade.Server" $DOTNET_RUNTIME $BUILD_NUMBER
 
-FROM ghcr.io/tubeshade/tubeshade-runtime-deps:${DOTNET_RUNTIME_VERSION}-alpine${ALPINE_VERSION} AS tubeshade
+FROM ghcr.io/tubeshade/tubeshade-runtime-deps:${DEPS_IMAGE_VERSION} AS tubeshade
 ARG DOTNET_CHANNEL
 ARG DOTNET_RUNTIME
 
