@@ -424,4 +424,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(141, Warning, "Downloaded {FileCount} thumbnails for video {VideoId} again, but all of them already exist as {ImageCount} images")]
     internal static partial void RedundantVideoThumbnailDownload(this ILogger logger, int fileCount, Guid videoId, int imageCount);
+
+    [LoggerMessage(142, Warning, "Failed to update SponsorBlock segments for video {VideoId}, using stored segments instead")]
+    internal static partial void SponsorBlockSegmentUpdateFailed(this ILogger logger, Exception exception, Guid videoId);
 }

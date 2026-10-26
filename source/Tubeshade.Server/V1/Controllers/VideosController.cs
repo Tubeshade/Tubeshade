@@ -5,6 +5,7 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Htmx;
@@ -257,8 +258,15 @@ public sealed class VideosController : ControllerBase
             if (segments is [] || segments.Any(segment => !segment.Locked))
             {
                 var video = await _repository.GetAsync(id, userId, transaction);
-                await _sponsorBlockService.UpdateVideoSegments(video, userId, transaction, cancellationToken);
-                segments = await _segmentRepository.GetForVideo(id, userId, transaction);
+                try
+                {
+                    await _sponsorBlockService.UpdateVideoSegments(video, userId, transaction, cancellationToken);
+                    segments = await _segmentRepository.GetForVideo(id, userId, transaction);
+                }
+                catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
+                {
+                    _logger.SponsorBlockSegmentUpdateFailed(exception, id);
+                }
             }
 
             await transaction.CommitAsync(cancellationToken);
