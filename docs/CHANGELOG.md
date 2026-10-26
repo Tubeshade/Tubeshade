@@ -31,7 +31,7 @@ _Latest build from master branch._
 - Handle transient PostgreSQL connection errors in background services
   ([#335](https://github.com/Tubeshade/Tubeshade/pull/335))
 - Download channel images when the channel is created while indexing a video
-  ([#327](https://github.com/Tubeshade/Tubeshade/issues/327))
+  ([#327](https://github.com/Tubeshade/Tubeshade/issues/327), [#343](https://github.com/Tubeshade/Tubeshade/pull/343))
 - Show queued and running feed updates on the tasks page
   ([#317](https://github.com/Tubeshade/Tubeshade/issues/317))
 - Format download progress with the same unit throughout the download

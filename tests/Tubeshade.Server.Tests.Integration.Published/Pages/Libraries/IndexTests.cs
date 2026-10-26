@@ -58,6 +58,7 @@ public sealed class IndexTests(IServerFixture serverFixture) : PlaywrightTests(s
         (await Page.TitleAsync()).Should().Be($"Tasks - {name} - Tubeshade");
 
         await Page.GetByRole(AriaRole.Cell, new() { Name = "Completed" }).WaitForAsync();
+        (await Page.GetByRole(AriaRole.Button, new() { Name = "Cancel" }).CountAsync()).Should().Be(0);
 
         await Page.GetByText("Channels").ClickAsync();
         (await Page.TitleAsync()).Should().Be($"Channels - {name} - Tubeshade");

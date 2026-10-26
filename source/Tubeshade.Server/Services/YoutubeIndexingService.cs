@@ -192,7 +192,10 @@ public sealed class YoutubeIndexingService
         var availability = ExternalAvailability.Public;
         channel = await _channelService.Create(libraryId, userId, name, externalId, externalUrl, availability, (int?)data.ChannelFollowerCount, transaction);
 
-        await _taskService.IndexUrl(userId, libraryId, channel.ExternalUrl, channel.Id, null, source, transaction);
+        if (data.ResultType is MetadataType.Video)
+        {
+            await _taskService.IndexUrl(userId, libraryId, channel.ExternalUrl, channel.Id, null, source, transaction);
+        }
 
         return channel;
     }
