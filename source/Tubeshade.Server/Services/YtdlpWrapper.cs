@@ -122,6 +122,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         optionSet.Format = format;
         optionSet.IgnoreNoFormatsError = true;
         optionSet.DumpSingleJson = true;
+        optionSet.Verbose = false;
 
         var result = await _ytdlp.FetchAsync(string.Empty, optionSet, cancellationToken);
 
@@ -152,6 +153,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             optionSet.LoadInfoJson = infoJsonFilePath;
             optionSet.Format = format;
             optionSet.DumpSingleJson = true;
+            optionSet.Verbose = false;
 
             var result = await _ytdlp.FetchAsync(string.Empty, optionSet, cancellationToken);
             if (result.ErrorOutput is { Length: > 0 } errorOutput)
