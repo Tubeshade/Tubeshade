@@ -119,7 +119,7 @@ public sealed class YoutubeIndexingService
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var result = new UrlIndexingResult();
 
-        if (data.ResultType is MetadataType.Playlist && data.Id != data.ChannelId)
+        if (data.IsPlaylist())
         {
             var playlist = await IndexPlaylist(libraryId, userId, data, cookieFilepath, transaction, cancellationToken);
             result.PlaylistId = playlist.Id;

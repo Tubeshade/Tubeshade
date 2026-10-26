@@ -37,6 +37,57 @@ public sealed class VideoDataExtensionsTests
         Data.GetExpiry(formatIds).Should().BeNull();
     }
 
+    [TestCase("@FortNine", "https://www.youtube.com/@FortNine", TestName = "Channel handle")]
+    [TestCase("UCNSMdQtn1SuFzCZjfK2C7dQ", "https://www.youtube.com/@FortNine/videos", TestName = "Channel handle videos tab")]
+    [TestCase("UCNSMdQtn1SuFzCZjfK2C7dQ", "https://www.youtube.com/@FortNine/playlists", TestName = "Channel handle playlists tab")]
+    [TestCase("UCNSMdQtn1SuFzCZjfK2C7dQ", "https://www.youtube.com/channel/UCNSMdQtn1SuFzCZjfK2C7dQ", TestName = "Channel id")]
+    [TestCase("LinusTechTips", "https://www.youtube.com/c/LinusTechTips", TestName = "Channel custom url")]
+    [TestCase("LinusTechTips", "https://www.youtube.com/user/LinusTechTips", TestName = "Channel legacy username")]
+    [TestCase("LinusTechTips", "https://www.youtube.com/LinusTechTips", TestName = "Channel vanity url")]
+    public void IsPlaylist_Channel_ShouldBeFalse(string id, string webpageUrl)
+    {
+        var data = new VideoData
+        {
+            ResultType = MetadataType.Playlist,
+            Id = id,
+            Title = "FortNine",
+            ChannelId = "UCNSMdQtn1SuFzCZjfK2C7dQ",
+            WebpageUrl = webpageUrl,
+        };
+
+        data.IsPlaylist().Should().BeFalse();
+    }
+
+    [Test]
+    public void IsPlaylist_Playlist_ShouldBeTrue()
+    {
+        var data = new VideoData
+        {
+            ResultType = MetadataType.Playlist,
+            Id = "PLzH6n4zXuckqbjBDsA_Hc-q5hI2lGml1F",
+            Title = "Mike Pound on Computerphile",
+            ChannelId = "UC9-y-6csu5WGm29I7JiwpnA",
+            WebpageUrl = "https://www.youtube.com/playlist?list=PLzH6n4zXuckqbjBDsA_Hc-q5hI2lGml1F",
+        };
+
+        data.IsPlaylist().Should().BeTrue();
+    }
+
+    [Test]
+    public void IsPlaylist_Video_ShouldBeFalse()
+    {
+        var data = new VideoData
+        {
+            ResultType = MetadataType.Video,
+            Id = "PE0p2iHwjVc",
+            Title = "Test video",
+            ChannelId = "UC9-y-6csu5WGm29I7JiwpnA",
+            WebpageUrl = "https://www.youtube.com/watch?v=PE0p2iHwjVc",
+        };
+
+        data.IsPlaylist().Should().BeFalse();
+    }
+
     private static FormatData Format(string formatId, string url) => new()
     {
         FormatId = formatId,

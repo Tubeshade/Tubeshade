@@ -17,6 +17,8 @@ _Latest build from master branch._
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
 - Mute SponsorBlock segments that should be muted, instead of skipping them
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
+- Index channel URLs as channels instead of playlists
+  ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
 
 ## [0.1.9] - 2026-10-26
 

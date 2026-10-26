@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -18,6 +19,11 @@ public static partial class VideoDataExtensions
             { LiveStatus: not (null or None or NotLive) } => VideoType.Livestream,
             _ => VideoType.Video,
         };
+
+        public bool IsPlaylist() =>
+            data is { ResultType: MetadataType.Playlist, WebpageUrl: { } webpageUrl } &&
+            Uri.TryCreate(webpageUrl, UriKind.Absolute, out var uri) &&
+            uri.AbsolutePath is "/playlist";
 
         /// <summary>Gets the earliest time at which the urls of the specified formats expire.</summary>
         /// <param name="formatIds">The ids of the formats.</param>
