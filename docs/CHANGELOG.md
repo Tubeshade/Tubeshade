@@ -9,6 +9,13 @@ _Latest build from master branch._
 - Start loading the preferred video resolution right away instead of switching to it after the page loads
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
 
+### Fixed
+
+- Update SponsorBlock segments that are not locked, instead of only the locked ones
+  ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
+- Check for SponsorBlock segments when opening videos without segments
+  ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
+
 ## [0.1.9] - 2026-10-26
 
 ### Added

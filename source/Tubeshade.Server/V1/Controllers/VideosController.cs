@@ -254,7 +254,7 @@ public sealed class VideosController : ControllerBase
         await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
         {
             segments = await _segmentRepository.GetForVideo(id, userId, transaction);
-            if (segments.Any(segment => !segment.Locked))
+            if (segments is [] || segments.Any(segment => !segment.Locked))
             {
                 var video = await _repository.GetAsync(id, userId, transaction);
                 await _sponsorBlockService.UpdateVideoSegments(video, userId, transaction, cancellationToken);
@@ -264,12 +264,7 @@ public sealed class VideosController : ControllerBase
             await transaction.CommitAsync(cancellationToken);
         }
 
-        if (segments is [])
-        {
-            return NoContent();
-        }
-
-        if (segments.Any(segment => !segment.Locked))
+        if (segments is [] || segments.Any(segment => !segment.Locked))
         {
             DisableResponseCaching();
         }
@@ -279,6 +274,11 @@ public sealed class VideosController : ControllerBase
 
         await _webVideoTextTracksService.Write(memoryStream, cues, cancellationToken);
         memoryStream.Position = 0;
+
+        if (segments is [])
+        {
+            return File(memoryStream, WebVttContentType);
+        }
 
         var modifiedAt = segments.Select(segment => segment.ModifiedAt).Max();
         var etag = $"\"sponsorblock_{id}_{InstantPattern.ExtendedIso.Format(modifiedAt)}\"";

@@ -30,14 +30,12 @@ namespace Tubeshade.Server.Pages.Libraries.Videos;
 
 public sealed partial class Video : LibraryPageBase
 {
-    /// <summary>Name of the cookie set by device-preferences.js with the maximum preferred video resolution.</summary>
     public const string MaximumResolutionCookie = "Preferences.MaximumVideoResolution";
 
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
     private readonly LibraryRepository _libraryRepository;
     private readonly PreferencesRepository _preferencesRepository;
-    private readonly SponsorBlockSegmentRepository _sponsorBlockSegmentRepository;
     private readonly NpgsqlConnection _connection;
     private readonly VideoFileRepository _fileRepository;
     private readonly IClock _clock;
@@ -51,7 +49,6 @@ public sealed partial class Video : LibraryPageBase
         ChannelRepository channelRepository,
         LibraryRepository libraryRepository,
         PreferencesRepository preferencesRepository,
-        SponsorBlockSegmentRepository sponsorBlockSegmentRepository,
         NpgsqlConnection connection,
         VideoFileRepository fileRepository,
         IClock clock,
@@ -64,7 +61,6 @@ public sealed partial class Video : LibraryPageBase
         _channelRepository = channelRepository;
         _libraryRepository = libraryRepository;
         _preferencesRepository = preferencesRepository;
-        _sponsorBlockSegmentRepository = sponsorBlockSegmentRepository;
         _connection = connection;
         _fileRepository = fileRepository;
         _clock = clock;
@@ -107,8 +103,6 @@ public sealed partial class Video : LibraryPageBase
 
     public List<TrackFileEntity> Subtitles { get; private set; } = [];
 
-    public bool HasSponsorBlockSegments { get; private set; }
-
     public async Task OnGet(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
@@ -134,9 +128,6 @@ public sealed partial class Video : LibraryPageBase
         var trackFiles = await _trackFileRepository.GetForVideo(VideoId, userId, Access.Read, transaction, cancellationToken);
         Chapters = trackFiles.SingleOrDefault(file => file.Type == TrackType.Chapters);
         Subtitles = trackFiles.Where(file => file.Type == TrackType.Subtitles).ToList();
-
-        var segments = await _sponsorBlockSegmentRepository.GetForVideo(VideoId, userId, transaction);
-        HasSponsorBlockSegments = segments is not [];
 
         DescriptionContent = await FormatDescription(userId, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);

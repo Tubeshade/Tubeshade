@@ -40,7 +40,7 @@ public sealed class SponsorBlockClientTests
                 Category = SegmentCategory.SelfPromotion,
                 VideoDuration = 914.241m,
                 Action = SegmentAction.Skip,
-                Locked = true,
+                Locked = false,
                 Votes = 1,
                 Description = ""
             },
@@ -52,7 +52,7 @@ public sealed class SponsorBlockClientTests
                 Category = SegmentCategory.SelfPromotion,
                 VideoDuration = 914.241m,
                 Action = SegmentAction.Skip,
-                Locked = true,
+                Locked = false,
                 Votes = 3,
                 Description = ""
             },
@@ -64,7 +64,7 @@ public sealed class SponsorBlockClientTests
                 Category = SegmentCategory.Interaction,
                 VideoDuration = 914.241m,
                 Action = SegmentAction.Skip,
-                Locked = true,
+                Locked = false,
                 Votes = 2,
                 Description = ""
             },
@@ -76,7 +76,7 @@ public sealed class SponsorBlockClientTests
                 Category = SegmentCategory.Filler,
                 VideoDuration = 914.285m,
                 Action = SegmentAction.Skip,
-                Locked = true,
+                Locked = false,
                 Votes = 1,
                 Description = ""
             },
@@ -88,7 +88,7 @@ public sealed class SponsorBlockClientTests
                 Category = SegmentCategory.Interaction,
                 VideoDuration = 914.233m,
                 Action = SegmentAction.Skip,
-                Locked = true,
+                Locked = false,
                 Votes = 1,
                 Description = ""
             },

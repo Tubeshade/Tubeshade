@@ -41,7 +41,7 @@
                     kind="chapters" srclang="en" default/>
             }
 
-            @if (Model.HasSponsorBlockSegments)
+            @if (Model.PlayableFiles is not [])
             {
                 <track
                     src="@Url.Action("GetSponsorBlockSegments", "Videos", new { version = "1.0", id = Model.VideoId })"

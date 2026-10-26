@@ -45,6 +45,11 @@ public sealed class SponsorBlockClient : ISponsorBlockClient
 
         using var response = await _httpClient.GetAsync($"/api/skipSegments?{queryParameters}", cancellationToken);
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (response.StatusCode is HttpStatusCode.NotFound)
+        {
+            return [];
+        }
+
         if (response.StatusCode is not HttpStatusCode.OK)
         {
             throw new HttpRequestException(content);
@@ -60,7 +65,7 @@ public sealed class SponsorBlockClient : ISponsorBlockClient
                 Category = model.Category,
                 VideoDuration = model.VideoDuration,
                 Action = model.Action,
-                Locked = model.Locked is 0,
+                Locked = model.Locked is not 0,
                 Votes = model.Votes,
                 Description = model.Description,
             })
@@ -87,6 +92,11 @@ public sealed class SponsorBlockClient : ISponsorBlockClient
 
         using var response = await _httpClient.GetAsync($"/api/skipSegments/{path}?{queryParameters}", cancellationToken);
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (response.StatusCode is HttpStatusCode.NotFound)
+        {
+            return [];
+        }
+
         if (response.StatusCode is not HttpStatusCode.OK)
         {
             throw new HttpRequestException(content);
@@ -104,7 +114,7 @@ public sealed class SponsorBlockClient : ISponsorBlockClient
                 Category = model.Category,
                 VideoDuration = model.VideoDuration,
                 Action = model.Action,
-                Locked = model.Locked is 0,
+                Locked = model.Locked is not 0,
                 Votes = model.Votes,
                 Description = model.Description,
             })
