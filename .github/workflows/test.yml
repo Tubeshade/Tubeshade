@@ -87,7 +87,7 @@ jobs:
         working-directory: './extensions/browser'
         run: |
           npm ci
-          npx playwright install --with-deps
+          npx playwright install --with-deps firefox
           npm test
 
   build-debian-package:
