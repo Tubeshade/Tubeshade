@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using AwesomeAssertions;
 using AwesomeAssertions.Execution;
 using NUnit.Framework;
+using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Pages.Libraries.Videos;
 
 namespace Tubeshade.Server.Tests.Pages.Libraries.Videos;
@@ -30,6 +32,55 @@ public sealed class VideoTests
     {
         _regex.IsMatch(url).Should().BeFalse();
     }
+
+    [Test]
+    public void GetPreferredFile_ShouldReturnRequestedFile()
+    {
+        var files = Files();
+
+        Video.GetPreferredFile(files, files[3].Id, "1080").Should().BeSameAs(files[3]);
+    }
+
+    [TestCase("1080", 0)]
+    [TestCase("1000", 2)]
+    [TestCase("720", 2)]
+    [TestCase("480", 4)]
+    public void GetPreferredFile_ShouldReturnHighestResolutionWithinMaximum(string maximumResolution, int expectedIndex)
+    {
+        var files = Files();
+
+        Video.GetPreferredFile(files, Guid.NewGuid(), maximumResolution).Should().BeSameAs(files[expectedIndex]);
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("foo")]
+    [TestCase("240")]
+    public void GetPreferredFile_ShouldReturnNull_WhenNoFileIsPreferred(string? maximumResolution)
+    {
+        Video.GetPreferredFile(Files(), null, maximumResolution).Should().BeNull();
+    }
+
+    private static List<VideoFileEntity> Files() =>
+    [
+        File(1920, 1080, 60),
+        File(1920, 1080, 30),
+        File(1280, 720, 60),
+        File(1280, 720, 30),
+        File(640, 360, 30),
+    ];
+
+    private static VideoFileEntity File(int width, int height, decimal framerate) => new()
+    {
+        Id = Guid.NewGuid(),
+        OwnerId = Guid.Empty,
+        VideoId = Guid.Empty,
+        StoragePath = string.Empty,
+        Type = VideoContainerType.Mp4,
+        Width = width,
+        Height = height,
+        Framerate = framerate,
+    };
 
     private static IEnumerable<TestCaseData<string, string>> VideoUrlNewLineTestCases()
     {

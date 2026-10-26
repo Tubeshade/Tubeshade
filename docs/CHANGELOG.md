@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Changed
+
+- Start loading the preferred video resolution right away instead of switching to it after the page loads
+  ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
+
 ## [0.1.9] - 2026-10-26
 
 ### Added

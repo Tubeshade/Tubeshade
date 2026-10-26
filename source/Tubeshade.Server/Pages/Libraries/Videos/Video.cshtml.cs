@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -29,6 +30,9 @@ namespace Tubeshade.Server.Pages.Libraries.Videos;
 
 public sealed partial class Video : LibraryPageBase
 {
+    /// <summary>Name of the cookie set by device-preferences.js with the maximum preferred video resolution.</summary>
+    public const string MaximumResolutionCookie = "Preferences.MaximumVideoResolution";
+
     private readonly VideoRepository _videoRepository;
     private readonly ChannelRepository _channelRepository;
     private readonly LibraryRepository _libraryRepository;
@@ -87,6 +91,8 @@ public sealed partial class Video : LibraryPageBase
 
     public List<VideoFileEntity> PlayableFiles { get; private set; } = [];
 
+    public VideoFileEntity? PreferredFile { get; private set; }
+
     public List<VideoFileEntity> DownloadableFiles { get; private set; } = [];
 
     public ImageFileEntity? Poster { get; private set; }
@@ -111,6 +117,7 @@ public sealed partial class Video : LibraryPageBase
         Entity = await _videoRepository.GetAsync(VideoId, userId, transaction);
         Files = await _videoRepository.GetFilesAsync(VideoId, userId, transaction, cancellationToken);
         PlayableFiles = Files.Where(file => file.DownloadedAt is not null || file.TempPath is not null).ToList();
+        PreferredFile = GetPreferredFile(PlayableFiles, FileId, Request.Cookies[MaximumResolutionCookie]);
         DownloadableFiles = Files.Where(file => file.DownloadedAt is null && file.TempPath is null).ToList();
 
         var images = await _imageFileRepository.GetForVideo(VideoId, userId, Access.Read, transaction, cancellationToken);
@@ -324,6 +331,21 @@ public sealed partial class Video : LibraryPageBase
         }
 
         return builder;
+    }
+
+    public static VideoFileEntity? GetPreferredFile(
+        IReadOnlyList<VideoFileEntity> files,
+        Guid? fileId,
+        string? maximumResolution)
+    {
+        if (fileId is { } id && files.FirstOrDefault(file => file.Id == id) is { } requestedFile)
+        {
+            return requestedFile;
+        }
+
+        return int.TryParse(maximumResolution, NumberStyles.Integer, CultureInfo.InvariantCulture, out var resolution)
+            ? files.Where(file => file.Height <= resolution).MaxBy(file => file.Height)
+            : null;
     }
 
     [GeneratedRegex(

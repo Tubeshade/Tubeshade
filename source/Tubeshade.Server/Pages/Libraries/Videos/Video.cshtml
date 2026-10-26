@@ -19,7 +19,7 @@
                poster="@Model.PosterUrl"
                disabled="@(Model.PlayableFiles is [])">
 
-            @foreach (var file in Model.PlayableFiles)
+            @foreach (var file in Model.PlayableFiles.OrderBy(file => file.Id != Model.PreferredFile?.Id))
             {
                 <source
                     src="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })"
