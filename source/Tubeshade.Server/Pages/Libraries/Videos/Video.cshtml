@@ -381,7 +381,7 @@
                         for (let index = 0; index < cues.length; index++) {
                             const cue = cues[index];
 
-                            if (cue.startTime < currentTime && cue.endTime < currentTime) {
+                            if (cue.endTime <= currentTime) {
                                 continue;
                             } else if (cue.startTime <= currentTime && currentTime < cue.endTime) {
                                 currentCue = cue;
@@ -410,7 +410,7 @@
                         for (let index = 0; index < cues.length; index++) {
                             const cue = cues[index];
 
-                            if (cue.startTime < currentTime && cue.endTime < currentTime) {
+                            if (cue.endTime <= currentTime) {
                                 previousCue = cue;
                             } else if (cue.startTime <= currentTime && currentTime < cue.endTime) {
                                 currentCue = cue;
