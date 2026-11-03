@@ -19,6 +19,8 @@ _Latest build from master branch._
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
 - Index channel URLs as channels instead of playlists
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
+- Stream yt-dlp output instead of keeping it in memory, which for long livestreams could take several gigabytes
+  ([#349](https://github.com/Tubeshade/Tubeshade/pull/349))
 
 ## [0.1.9] - 2026-10-26
 
