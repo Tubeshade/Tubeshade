@@ -614,8 +614,8 @@ public sealed class YoutubeDownloadService
         var audioOptions = _ytdlpWrapper.GetDownloadFormatArgs(dataFile.Path, audioFormat.FormatId, "-", cookieFilepath, audioLimitRate);
         var videoOptions = _ytdlpWrapper.GetDownloadFormatArgs(dataFile.Path, videoFormat.FormatId, "-", cookieFilepath, videoLimitRate);
 
-        using var audioProcess = new CancelableProcess(_options.YtdlpPath, audioOptions.ToArguments(string.Empty), false);
-        using var videoProcess = new CancelableProcess(_options.YtdlpPath, videoOptions.ToArguments(string.Empty), false);
+        await using var audioProcess = new CancelableProcess(_options.YtdlpPath, audioOptions.ToArguments(string.Empty), false);
+        await using var videoProcess = new CancelableProcess(_options.YtdlpPath, videoOptions.ToArguments(string.Empty), false);
 
         var audioTask = audioProcess.Run(cancellationToken);
         var videoTask = videoProcess.Run(cancellationToken);

@@ -9,21 +9,19 @@ using System.Threading.Tasks;
 
 namespace Ytdlp.Processes;
 
-public sealed class CancelableProcess : IDisposable
+public sealed class CancelableProcess : IAsyncDisposable
 {
-    private const int GracefulShutdownTimeout = 500;
-
     private readonly bool _standardOutputEvents;
     private readonly bool _standardErrorEvents;
     private readonly Process _process;
+    private readonly CancellationTokenSource _disposed = new();
 
-    private readonly TaskCompletionSource _exited = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly TaskCompletionSource _standardOutputCompleted = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly TaskCompletionSource _standardErrorCompleted = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly ConcurrentQueue<string> _standardOutputLines = new();
     private readonly ConcurrentQueue<string> _standardErrorLines = new();
 
-    private bool _processStarted;
+    private Task<int>? _runTask;
 
     public CancelableProcess(
         string fileName,
@@ -71,8 +69,6 @@ public sealed class CancelableProcess : IDisposable
         {
             _process.ErrorDataReceived += ProcessOnErrorDataReceived;
         }
-
-        _process.Exited += ProcessOnExited;
     }
 
     public event ReceivedLineEventHandler? OutputReceived;
@@ -91,19 +87,20 @@ public sealed class CancelableProcess : IDisposable
 
     public Stream Error => _process.StandardError.BaseStream;
 
-    public async Task<int> Run(CancellationToken cancellationToken = default)
+    public Task<int> Run(CancellationToken cancellationToken = default)
     {
-        await using var registration = cancellationToken.Register(
-            static state => ((CancelableProcess)state!).KillProcess(),
-            this);
+        return _runTask ??= RunProcess(cancellationToken);
+    }
+
+    private async Task<int> RunProcess(CancellationToken cancellationToken)
+    {
+        using var stopping = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _disposed.Token);
 
         if (!_process.Start())
         {
             // According to documentation, should only return false if process is already running
             throw new UnreachableException("Failed to start process");
         }
-
-        _processStarted = true;
 
         if (_standardOutputEvents)
         {
@@ -115,9 +112,13 @@ public sealed class CancelableProcess : IDisposable
             _process.BeginErrorReadLine();
         }
 
-        if (!_process.HasExited)
+        try
         {
-            await _exited.Task;
+            await _process.WaitForExitAsync(stopping.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            await Stop();
         }
 
         if (_standardOutputEvents)
@@ -133,17 +134,20 @@ public sealed class CancelableProcess : IDisposable
         return _process.ExitCode;
     }
 
-    private void KillProcess()
+    private async Task Stop()
     {
-        if (_processStarted && !_process.HasExited)
-        {
-            _ = _process.TryTerminate();
-            Thread.Sleep(GracefulShutdownTimeout);
-        }
+        _ = _process.TryTerminate();
 
-        if (_processStarted)
+        using var timeout = new CancellationTokenSource(500);
+
+        try
         {
-            _process.Kill();
+            await _process.WaitForExitAsync(timeout.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            _process.Kill(entireProcessTree: true);
+            await _process.WaitForExitAsync(CancellationToken.None);
         }
     }
 
@@ -171,27 +175,21 @@ public sealed class CancelableProcess : IDisposable
         ErrorReceived?.Invoke(this, new(args.Data));
     }
 
-    private void ProcessOnExited(object? sender, EventArgs args) => _exited.TrySetResult();
-
     /// <inheritdoc />
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
+        await _disposed.CancelAsync();
 
-    /// <inheritdoc />
-    ~CancelableProcess()
-    {
-        Dispose(false);
-    }
-
-    private void Dispose(bool disposing)
-    {
-        KillProcess();
-        if (!disposing)
+        if (_runTask is not null)
         {
-            return;
+            try
+            {
+                await _runTask;
+            }
+            catch (Exception)
+            {
+                // Exceptions are observed by whoever awaits the task returned by Run
+            }
         }
 
         if (_standardOutputEvents)
@@ -204,8 +202,7 @@ public sealed class CancelableProcess : IDisposable
             _process.ErrorDataReceived -= ProcessOnErrorDataReceived;
         }
 
-        _process.Exited -= ProcessOnExited;
-
         _process.Dispose();
+        _disposed.Dispose();
     }
 }

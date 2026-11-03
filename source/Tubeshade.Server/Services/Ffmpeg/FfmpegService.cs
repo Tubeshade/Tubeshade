@@ -39,7 +39,7 @@ public sealed class FfmpegService
             "-show_streams",
         };
 
-        using var process = new CancelableProcess(_options.CurrentValue.FfprobePath, args, false);
+        await using var process = new CancelableProcess(_options.CurrentValue.FfprobePath, args, false);
         process.ErrorReceived += OnErrorReceived;
 
         var processTask = process.Run(cancellationToken);
@@ -101,7 +101,7 @@ public sealed class FfmpegService
 
         args.Add(outputFilePath);
 
-        using var process = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
+        await using var process = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
         process.OutputReceived += OnOutputReceived;
         process.ErrorReceived += OnErrorReceived;
 
@@ -165,7 +165,7 @@ public sealed class FfmpegService
 
         args.Add(outputFilePath);
 
-        using var process = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
+        await using var process = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
         process.OutputReceived += OnOutputReceived;
         process.ErrorReceived += OnErrorReceived;
 
@@ -196,7 +196,7 @@ public sealed class FfmpegService
 
         args.Add(outputFilePath);
 
-        using var ffmpegProcess = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
+        await using var ffmpegProcess = new CancelableProcess(_options.CurrentValue.FfmpegPath, args);
         ffmpegProcess.OutputReceived += OnOutputReceived;
         ffmpegProcess.ErrorReceived += OnErrorReceived;
 

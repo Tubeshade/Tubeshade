@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
@@ -20,7 +19,7 @@ public sealed class CancelableProcessTests
     public async Task Run_ShouldRespectCancellation()
     {
         using var source = new CancellationTokenSource();
-        using var process = new CancelableProcess("yt-dlp", _args);
+        await using var process = new CancelableProcess("yt-dlp", _args);
 
         var processStarted = new TaskCompletionSource();
         process.ErrorReceived += (_, _) => processStarted.TrySetResult();
@@ -47,7 +46,7 @@ public sealed class CancelableProcessTests
     [Test]
     public async Task RunToCompletion()
     {
-        using var process = new CancelableProcess("yt-dlp", _args);
+        await using var process = new CancelableProcess("yt-dlp", _args);
 
         var result = await process.Run();
         await TestContext.Out.WriteLineAsync(string.Join(Environment.NewLine, process.ErrorLines));
@@ -76,7 +75,7 @@ public sealed class CancelableProcessTests
         await FluentActions
             .Awaiting(async () =>
             {
-                using var process = new CancelableProcess(Guid.NewGuid().ToString(), _args);
+                await using var process = new CancelableProcess(Guid.NewGuid().ToString(), _args);
                 return await process.Run();
             })
             .Should()
@@ -84,19 +83,56 @@ public sealed class CancelableProcessTests
     }
 
     [Test]
-    public async Task Finalizer_ShouldNotThrow()
+    public async Task DisposeAsync_ShouldStopProcess()
     {
-        using var process = new CancelableProcess("yt-dlp", _args);
+        var process = new CancelableProcess("yt-dlp", _args);
 
         var processStarted = new TaskCompletionSource();
         process.ErrorReceived += (_, _) => processStarted.TrySetResult();
 
-        _ = process.Run();
+        var processTask = process.Run();
         await processStarted.Task;
 
-        var finalizer = typeof(CancelableProcess).GetMethod("Finalize", BindingFlags.Instance | BindingFlags.NonPublic);
-        finalizer.Should().NotBeNull();
+        await FluentActions
+            .Awaiting(() => process.DisposeAsync().AsTask())
+            .Should()
+            .CompleteWithinAsync(TimeSpan.FromSeconds(1));
 
-        finalizer.Invoke(process, null);
+        processTask.IsCompletedSuccessfully.Should().BeTrue();
+        processTask.Result.Should().BeGreaterThan(0);
+    }
+
+    [Test]
+    public async Task DisposeAsync_NotStarted_ShouldNotThrow()
+    {
+        var process = new CancelableProcess("yt-dlp", _args);
+
+        await FluentActions
+            .Awaiting(() => process.DisposeAsync().AsTask())
+            .Should()
+            .NotThrowAsync();
+    }
+
+    [Test]
+    [Platform("Linux")]
+    public async Task Run_ShouldStopChildProcesses()
+    {
+        using var source = new CancellationTokenSource();
+
+        // Ignoring SIGTERM is inherited by the child process, which also keeps standard output and error open
+        await using var process = new CancelableProcess("sh", ["-c", "\"trap '' TERM; echo started >&2; sleep 60 & wait\""]);
+
+        var processStarted = new TaskCompletionSource();
+        process.ErrorReceived += (_, _) => processStarted.TrySetResult();
+
+        var processTask = process.Run(source.Token);
+
+        await processStarted.Task;
+        await source.CancelAsync();
+
+        (await FluentActions.Awaiting(() => processTask).Should().CompleteWithinAsync(TimeSpan.FromSeconds(2)))
+            .Subject
+            .Should()
+            .BeGreaterThan(0);
     }
 }

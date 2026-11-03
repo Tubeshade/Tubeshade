@@ -33,7 +33,7 @@ public sealed class Ytdlp
 
     public async Task<RunResult<string>> RunAsync(string url, OptionSet options, CancellationToken cancellationToken)
     {
-        using var process = new CancelableProcess(Path, options.ToArguments(url));
+        await using var process = new CancelableProcess(Path, options.ToArguments(url));
 
         try
         {
@@ -62,7 +62,7 @@ public sealed class Ytdlp
         string? infoJsonFilePath,
         CancellationToken cancellationToken)
     {
-        using var process = new CancelableProcess(Path, options.ToArguments(url), standardOutputEvents: false);
+        await using var process = new CancelableProcess(Path, options.ToArguments(url), standardOutputEvents: false);
 
         var stdoutPath = infoJsonFilePath is null
             ? null
