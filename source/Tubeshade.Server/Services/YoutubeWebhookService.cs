@@ -16,7 +16,6 @@ using Tubeshade.Data.Media.Videos;
 using Tubeshade.Data.Preferences;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration;
-using YoutubeDLSharp.Metadata;
 
 namespace Tubeshade.Server.Services;
 
@@ -163,12 +162,7 @@ public sealed class YoutubeWebhookService
 
         // need to invoke yt-dlp because livestreams cannot be identified directly from url
         var cookieFilepath = await cookiesService.RefreshCookieFile();
-        var videoData = await _ytdlpWrapper.FetchUnknownUrlData(videoUrl, cookieFilepath, preferences.PlayerClient, null, cancellationToken);
-        if (videoData.ResultType is not MetadataType.Video)
-        {
-            throw new InvalidOperationException($"Unexpected yt-dlp result type {videoData.ResultType}");
-        }
-
+        var videoData = await _ytdlpWrapper.FetchVideoType(videoUrl, cookieFilepath, preferences.PlayerClient, cancellationToken);
         type ??= videoData.GetVideoType();
 
         if ((type.Name is VideoType.Names.Video && preferences.VideosCount is not > 0) ||

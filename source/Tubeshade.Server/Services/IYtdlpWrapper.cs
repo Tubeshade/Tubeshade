@@ -18,6 +18,12 @@ public interface IYtdlpWrapper
         string? infoJsonFilePath,
         CancellationToken cancellationToken);
 
+    ValueTask<VideoData> FetchVideoType(
+        string url,
+        string? cookieFilepath,
+        PlayerClient? client,
+        CancellationToken cancellationToken);
+
     ValueTask<VideoData> FetchPlaylistEntryUrls(
         string playlistUrl,
         int? count,

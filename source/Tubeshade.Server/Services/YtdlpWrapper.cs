@@ -37,23 +37,22 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         string? infoJsonFilePath,
         CancellationToken cancellationToken)
     {
-        _logger.UnknownUrlMetadata(url);
-
         var optionSet = GetVideoDataOptions(cookieFilepath, client);
+        return await FetchUrlData(url, optionSet, infoJsonFilePath, cancellationToken);
+    }
 
-        var result = await _ytdlp.FetchAsync(url, optionSet, infoJsonFilePath, cancellationToken);
-        if (result.ErrorOutput is { Length: > 0 } errorOutput)
-        {
-            _logger.StandardError(_ytdlp.Path,
-                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
-        }
+    /// <inheritdoc />
+    public async ValueTask<VideoData> FetchVideoType(
+        string url,
+        string? cookieFilepath,
+        PlayerClient? client,
+        CancellationToken cancellationToken)
+    {
+        var optionSet = GetVideoDataOptions(cookieFilepath, client);
+        optionSet.DumpSingleJson = false;
+        optionSet.Print = "%(.{id,title,live_status})j";
 
-        if (!result.Success)
-        {
-            throw new Exception(string.Join(Environment.NewLine, result.ErrorOutput));
-        }
-
-        return result.Data;
+        return await FetchUrlData(url, optionSet, null, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -322,6 +321,26 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         optionSet.RecodeVideo = VideoRecodeFormat.None;
 
         return optionSet;
+    }
+
+    private async ValueTask<VideoData> FetchUrlData(
+        string url,
+        OptionSet optionSet,
+        string? infoJsonFilePath,
+        CancellationToken cancellationToken)
+    {
+        _logger.UnknownUrlMetadata(url);
+
+        var result = await _ytdlp.FetchAsync(url, optionSet, infoJsonFilePath, cancellationToken);
+        if (result.ErrorOutput is { Length: > 0 } errorOutput)
+        {
+            _logger.StandardError(_ytdlp.Path,
+                string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
+        }
+
+        return result.Success
+            ? result.Data
+            : throw new Exception(string.Join(Environment.NewLine, result.ErrorOutput));
     }
 
     private OptionSet GetVideoDataOptions(string? cookieFilepath, PlayerClient? client)
