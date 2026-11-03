@@ -24,6 +24,9 @@ public static partial class libc
 
     internal enum Signals
     {
+        /// <summary>Kill signal.</summary>
+        SIGKILL = 9,
+
         /// <summary>Termination signal.</summary>
         SIGTERM = 15,
     }

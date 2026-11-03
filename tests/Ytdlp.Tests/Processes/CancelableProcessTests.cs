@@ -70,6 +70,7 @@ public sealed class CancelableProcessTests
     }
 
     [Test]
+    [Platform(Exclude = "Linux")]
     public async Task FailedToStart_ShouldThrow()
     {
         await FluentActions
@@ -80,6 +81,17 @@ public sealed class CancelableProcessTests
             })
             .Should()
             .ThrowExactlyAsync<Win32Exception>();
+    }
+
+    [Test]
+    [Platform("Linux")]
+    public async Task FailedToStart_ShouldReturnExitCode()
+    {
+        await using var process = new CancelableProcess(Guid.NewGuid().ToString(), _args);
+
+        var result = await process.Run();
+
+        result.Should().Be(127);
     }
 
     [Test]
@@ -121,6 +133,31 @@ public sealed class CancelableProcessTests
 
         // Ignoring SIGTERM is inherited by the child process, which also keeps standard output and error open
         await using var process = new CancelableProcess("sh", ["-c", "\"trap '' TERM; echo started >&2; sleep 60 & wait\""]);
+
+        var processStarted = new TaskCompletionSource();
+        process.ErrorReceived += (_, _) => processStarted.TrySetResult();
+
+        var processTask = process.Run(source.Token);
+
+        await processStarted.Task;
+        await source.CancelAsync();
+
+        (await FluentActions.Awaiting(() => processTask).Should().CompleteWithinAsync(TimeSpan.FromSeconds(2)))
+            .Subject
+            .Should()
+            .BeGreaterThan(0);
+    }
+
+    [Test]
+    [Platform("Linux")]
+    public async Task Run_ShouldStopChildProcesses_WhenProcessExits()
+    {
+        using var source = new CancellationTokenSource();
+
+        // The process exits on SIGTERM, but the child process ignores it and keeps standard output and error open
+        await using var process = new CancelableProcess(
+            "sh",
+            ["-c", "\"trap 'exit 1' TERM; (trap '' TERM; sleep 60) & echo started >&2; wait\""]);
 
         var processStarted = new TaskCompletionSource();
         process.ErrorReceived += (_, _) => processStarted.TrySetResult();

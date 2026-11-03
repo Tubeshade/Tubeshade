@@ -11,6 +11,7 @@ namespace Ytdlp.Processes;
 
 public sealed class CancelableProcess : IAsyncDisposable
 {
+    private readonly string _fileName;
     private readonly bool _standardOutputEvents;
     private readonly bool _standardErrorEvents;
     private readonly Process _process;
@@ -38,13 +39,12 @@ public sealed class CancelableProcess : IAsyncDisposable
         bool standardOutputEvents = true,
         bool standardErrorEvents = true)
     {
+        _fileName = fileName;
         _standardOutputEvents = standardOutputEvents;
         _standardErrorEvents = standardErrorEvents;
 
         var processStartInfo = new ProcessStartInfo
         {
-            FileName = fileName,
-            Arguments = arguments,
             CreateNoWindow = true,
             UseShellExecute = false,
             RedirectStandardOutput = true,
@@ -53,6 +53,17 @@ public sealed class CancelableProcess : IAsyncDisposable
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8,
         };
+
+        if (OperatingSystem.IsLinux())
+        {
+            processStartInfo.FileName = "setsid";
+            processStartInfo.Arguments = $"\"{fileName}\" {arguments}";
+        }
+        else
+        {
+            processStartInfo.FileName = fileName;
+            processStartInfo.Arguments = arguments;
+        }
 
         _process = new Process
         {
@@ -75,7 +86,7 @@ public sealed class CancelableProcess : IAsyncDisposable
 
     public event ReceivedLineEventHandler? ErrorReceived;
 
-    public string FileName => _process.StartInfo.FileName;
+    public string FileName => _fileName;
 
     public IReadOnlyCollection<string> OutputLines => _standardOutputLines;
 
@@ -146,9 +157,20 @@ public sealed class CancelableProcess : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
-            _process.Kill(entireProcessTree: true);
-            await _process.WaitForExitAsync(CancellationToken.None);
         }
+
+        // Processes started by the process can keep running after it exits, and keep standard output and error open
+        if (OperatingSystem.IsLinux())
+        {
+            _process.KillProcessGroup();
+        }
+
+        if (!_process.HasExited)
+        {
+            _process.Kill(entireProcessTree: true);
+        }
+
+        await _process.WaitForExitAsync(CancellationToken.None);
     }
 
     private void ProcessOnOutputDataReceived(object? sender, DataReceivedEventArgs args)
