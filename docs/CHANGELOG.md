@@ -6,6 +6,8 @@ _Latest build from master branch._
 
 ### Changed
 
+- Update yt-dlp from 2026.10.21 to 2026.10.26
+  ([#350](https://github.com/Tubeshade/Tubeshade/pull/350))
 - Start loading the preferred video resolution right away instead of switching to it after the page loads
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
 - Fetch only the video type when checking whether new videos from webhooks are livestreams
