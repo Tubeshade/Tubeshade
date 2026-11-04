@@ -10,28 +10,21 @@ public static class SegmentEntityExtensions
 {
     public static Period GetTotalDuration(this IEnumerable<SponsorBlockSegmentEntity> segments)
     {
-        var mergedSegments = new Stack<SponsorBlockSegmentEntity>();
+        var segmentDurationSeconds = 0m;
+        var end = decimal.MinValue;
 
-        foreach (var (index, segment) in segments.OrderBy(segment => segment.StartTime).Index())
+        foreach (var segment in segments.OrderBy(segment => segment.StartTime))
         {
-            if (index is 0)
+            var start = Math.Max(segment.StartTime, end);
+            if (segment.EndTime <= start)
             {
-                mergedSegments.Push(segment);
                 continue;
             }
 
-            var current = mergedSegments.Peek();
-            if (segment.StartTime > current.EndTime)
-            {
-                mergedSegments.Push(segment);
-            }
-            else
-            {
-                current.EndTime = Math.Max(current.EndTime, segment.EndTime);
-            }
+            segmentDurationSeconds += segment.EndTime - start;
+            end = segment.EndTime;
         }
 
-        var segmentDurationSeconds = mergedSegments.Sum(segment => segment.EndTime - segment.StartTime);
         return Period.FromMilliseconds((long)Math.Truncate(segmentDurationSeconds * 1000));
     }
 }
