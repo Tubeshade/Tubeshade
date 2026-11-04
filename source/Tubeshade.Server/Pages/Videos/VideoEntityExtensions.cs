@@ -50,7 +50,10 @@ public static class VideoEntityExtensions
         Dictionary<Guid, ChannelEntity> channels)
     {
         var skippedDuration = segments
-            .Where(segment => segment.VideoId == video.Id && segment.Category != SegmentCategory.Filler)
+            .Where(segment =>
+                segment.VideoId == video.Id &&
+                segment.Category != SegmentCategory.Filler &&
+                segment.Action != SegmentAction.Mute)
             .GetTotalDuration();
 
         var actualDuration = video.Duration is { } duration

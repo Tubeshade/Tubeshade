@@ -23,6 +23,8 @@ _Latest build from master branch._
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
 - Mute SponsorBlock segments that should be muted, instead of skipping them
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
+- Don't subtract muted SponsorBlock segments from the shown video duration
+  ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
 - Index channel URLs as channels instead of playlists
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
 - Stream yt-dlp output instead of keeping it in memory, which for long livestreams could take several gigabytes
