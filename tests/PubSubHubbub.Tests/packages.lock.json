@@ -271,7 +271,7 @@
           "Ardalis.SmartEnum": "[8.2.0, )",
           "Microsoft.Extensions.Http": "[10.0.14, )",
           "Microsoft.Extensions.Http.Polly": "[10.0.14, )",
-          "NodaTime": "[3.3.6, )",
+          "NodaTime": "[3.3.7, )",
           "Polly.Contrib.WaitAndRetry": "[1.1.1, )"
         }
       },
@@ -380,9 +380,9 @@
       },
       "NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.3.6, )",
-        "resolved": "3.3.6",
-        "contentHash": "vAjAdOvqu5hqgDVgzJxFPhSVy4EM5/tmSHJn/k0lLDIn4637OReqJgvR49fzFzj+5uZfebdJEFbI6LOLazWXog=="
+        "requested": "[3.3.7, )",
+        "resolved": "3.3.7",
+        "contentHash": "4Rc3zup1sZqtlcgkWZOsjoVbhm+RkDvxrFDJfIxi7nr32ZgzVW+zCTBr827+KG/4r5owpchUjqx8tO4K2ZtpOw=="
       },
       "Polly.Contrib.WaitAndRetry": {
         "type": "CentralTransitive",
