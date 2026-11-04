@@ -4,6 +4,11 @@
 
 _Latest build from master branch._
 
+### Added
+
+- Play history, with the number of plays and total watch time shown on the video page
+  ([#353](https://github.com/Tubeshade/Tubeshade/pull/353))
+
 ### Changed
 
 - Update yt-dlp from 2026.10.21 to 2026.10.26
@@ -24,7 +29,7 @@ _Latest build from master branch._
 - Mute SponsorBlock segments that should be muted, instead of skipping them
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
 - Don't subtract muted SponsorBlock segments from the shown video duration
-  ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
+  ([#353](https://github.com/Tubeshade/Tubeshade/pull/353))
 - Index channel URLs as channels instead of playlists
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
 - Stream yt-dlp output instead of keeping it in memory, which for long livestreams could take several gigabytes
@@ -39,6 +44,10 @@ _Latest build from master branch._
   ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
 - Stop streaming downloads when a yt-dlp process fails and allow canceling them, instead of hanging until the server is restarted
   ([#230](https://github.com/Tubeshade/Tubeshade/issues/230))
+- Check access to the video when updating its playback position or viewed status
+  ([#353](https://github.com/Tubeshade/Tubeshade/pull/353))
+- Revert the viewed switch if updating the viewed status fails
+  ([#353](https://github.com/Tubeshade/Tubeshade/pull/353))
 
 ## [0.1.9] - 2026-10-26
 

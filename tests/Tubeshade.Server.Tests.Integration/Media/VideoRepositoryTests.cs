@@ -152,7 +152,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
                 },
                 transaction);
 
-            await repository.MarkAsWatched(viewedId, _userId, transaction);
+            await repository.SetWatched(viewedId, _userId, true, transaction);
 
             await transaction.CommitAsync();
         }
@@ -197,6 +197,76 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
         allVideos.Select(video => video.Id).Should().Contain([notViewedId, viewedId]);
         viewedVideos.Should().Contain(video => video.Id == viewedId).And.NotContain(video => video.Id == notViewedId);
         notViewedVideos.Should().Contain(video => video.Id == notViewedId).And.NotContain(video => video.Id == viewedId);
+    }
+
+    [Test]
+    public async Task PlaybackStatistics()
+    {
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<VideoRepository>();
+
+        await using var transaction = await connection.OpenAndBeginTransaction();
+        var videoId = await AddVideo(repository, transaction);
+
+        var initialStatistics = await repository.GetPlaybackStatistics(videoId, _userId, transaction);
+
+        await repository.SavePlaybackActivity(videoId, _userId, 30, 15, 30, transaction);
+        await repository.SavePlaybackActivity(videoId, _userId, 60, 15.5, 31, transaction);
+        await repository.AddPlay(videoId, _userId, transaction);
+        await repository.AddPlay(videoId, _userId, transaction);
+
+        var statistics = await repository.GetPlaybackStatistics(videoId, _userId, transaction);
+        var video = await repository.GetAsync(videoId, _userId, transaction);
+
+        using (new AssertionScope())
+        {
+            initialStatistics.PlayCount.Should().Be(0);
+            initialStatistics.WatchTime.Should().Be(0);
+            initialStatistics.PlaybackTime.Should().Be(0);
+
+            statistics.PlayCount.Should().Be(2);
+            statistics.WatchTime.Should().Be(30.5);
+            statistics.PlaybackTime.Should().Be(61);
+
+            video.Position.Should().Be(60);
+            video.Viewed.Should().BeFalse();
+        }
+    }
+
+    [Test]
+    public async Task PlaybackWithoutAccess()
+    {
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<VideoRepository>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<UserRepository>();
+
+        await using var transaction = await connection.OpenAndBeginTransaction();
+        var videoId = await AddVideo(repository, transaction);
+
+        var userName = Guid.NewGuid().ToString("N");
+        var otherUserId = (await userRepository.AddAsync(
+            new UserEntity { Id = Guid.NewGuid(), Name = userName, NormalizedName = userName },
+            transaction))!.Value;
+
+        using (new AssertionScope())
+        {
+            (await repository.SavePlaybackActivity(videoId, otherUserId, 30, 15, 30, transaction)).Should().Be(0);
+            (await repository.AddPlay(videoId, otherUserId, transaction)).Should().Be(0);
+            (await repository.SetWatched(videoId, otherUserId, true, transaction)).Should().Be(0);
+            (await repository.SetWatched(videoId, otherUserId, false, transaction)).Should().Be(0);
+            (await repository.SavePlaybackActivity(Guid.NewGuid(), _userId, 30, 15, 30, transaction)).Should().Be(0);
+            (await repository.AddPlay(Guid.NewGuid(), _userId, transaction)).Should().Be(0);
+            (await repository.SetWatched(Guid.NewGuid(), _userId, true, transaction)).Should().Be(0);
+            (await repository.SetWatched(Guid.NewGuid(), _userId, false, transaction)).Should().Be(0);
+
+            // marking a video that was never watched as not watched still succeeds
+            (await repository.SetWatched(videoId, _userId, false, transaction)).Should().Be(1);
+            (await repository.SetWatched(videoId, _userId, true, transaction)).Should().Be(1);
+            (await repository.SavePlaybackActivity(videoId, _userId, 30, 15, 30, transaction)).Should().Be(1);
+            (await repository.AddPlay(videoId, _userId, transaction)).Should().Be(1);
+        }
     }
 
     [Test]
@@ -465,7 +535,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
                 },
                 transaction);
 
-            await repository.MarkAsWatched(descriptionId, _userId, transaction);
+            await repository.SetWatched(descriptionId, _userId, true, transaction);
 
             await transaction.CommitAsync();
         }
@@ -497,5 +567,30 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
         using var assertionScope = new AssertionScope();
         descending.Select(video => video.Id).Should().Equal(nameId, descriptionId);
         ascending.Select(video => video.Id).Should().Equal(descriptionId, nameId);
+    }
+
+    private async Task<Guid> AddVideo(VideoRepository repository, NpgsqlTransaction transaction)
+    {
+        return (await repository.AddAsync(
+            new()
+            {
+                CreatedByUserId = _userId,
+                ModifiedByUserId = _userId,
+                OwnerId = _userId,
+                Name = Guid.NewGuid().ToString("N"),
+                Description = string.Empty,
+                Categories = [],
+                Tags = [],
+                Type = VideoType.Video,
+                ChannelId = _channelId,
+                StoragePath = string.Empty,
+                ExternalId = string.Empty,
+                ExternalUrl = "https://example.org",
+                PublishedAt = SystemClock.Instance.GetCurrentInstant(),
+                RefreshedAt = SystemClock.Instance.GetCurrentInstant(),
+                Availability = ExternalAvailability.Public,
+                Duration = Period.FromMinutes(10),
+            },
+            transaction))!.Value;
     }
 }

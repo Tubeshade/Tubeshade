@@ -1707,6 +1707,15 @@ namespace Tubeshade.Server.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Played {0} times.
+        /// </summary>
+        public static string Video_Plays {
+            get {
+                return ResourceManager.GetString("Video_Plays", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Resolution.
         /// </summary>
         public static string Video_Resolution {
@@ -1730,6 +1739,15 @@ namespace Tubeshade.Server.Resources {
         public static string Video_Views {
             get {
                 return ResourceManager.GetString("Video_Views", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Watched for {0}.
+        /// </summary>
+        public static string Video_WatchTime {
+            get {
+                return ResourceManager.GetString("Video_WatchTime", resourceCulture);
             }
         }
         

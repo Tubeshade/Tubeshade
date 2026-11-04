@@ -6,4 +6,5 @@ namespace Tubeshade.Server.V1.Models;
 [JsonSourceGenerationOptions(JsonSerializerDefaults.Web)]
 [JsonSerializable(typeof(CookieUpdateRequest))]
 [JsonSerializable(typeof(Library))]
+[JsonSerializable(typeof(PlaybackActivityRequest))]
 public sealed partial class SerializerContext : JsonSerializerContext;

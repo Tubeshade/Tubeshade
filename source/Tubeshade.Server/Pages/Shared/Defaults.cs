@@ -13,6 +13,8 @@ internal static class Defaults
 
     internal const double PlaybackEpsilon = 10;
     internal const double ReportPeriodInSeconds = 60;
+    internal const double MinimumPlayFraction = 0.5;
+    internal const double RestartPlayFraction = 0.1;
 
     internal static readonly SortVideoBy VideoOrder = SortVideoBy.PublishedAt;
     internal static readonly SortDirection VideoDirection = SortDirection.Descending;

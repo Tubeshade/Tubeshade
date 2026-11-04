@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
+using NodaTime;
 using SponsorBlock;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
@@ -15,6 +16,23 @@ public static class VideoEntityExtensions
 {
     extension(VideoEntity video)
     {
+        public Period? GetActualDuration(IEnumerable<SponsorBlockSegmentEntity> segments)
+        {
+            if (video.Duration is not { } duration)
+            {
+                return null;
+            }
+
+            var skippedDuration = segments
+                .Where(segment =>
+                    segment.VideoId == video.Id &&
+                    segment.Category != SegmentCategory.Filler &&
+                    segment.Action != SegmentAction.Mute)
+                .GetTotalDuration();
+
+            return (duration - skippedDuration).Normalize();
+        }
+
         public string GetChaptersFilePath()
         {
             return video.GetFilePath("chapters.vtt");
@@ -49,21 +67,10 @@ public static class VideoEntityExtensions
         IReadOnlyList<SponsorBlockSegmentEntity> segments,
         Dictionary<Guid, ChannelEntity> channels)
     {
-        var skippedDuration = segments
-            .Where(segment =>
-                segment.VideoId == video.Id &&
-                segment.Category != SegmentCategory.Filler &&
-                segment.Action != SegmentAction.Mute)
-            .GetTotalDuration();
-
-        var actualDuration = video.Duration is { } duration
-            ? (duration - skippedDuration).Normalize()
-            : null;
-
         return new VideoModel
         {
             Video = video,
-            ActualDuration = actualDuration,
+            ActualDuration = video.GetActualDuration(segments),
             Channel = channels[video.ChannelId], // todo: this probably should be done in SQL instead of in-memory
         };
     }

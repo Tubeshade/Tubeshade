@@ -24,6 +24,7 @@ using Tubeshade.Data.Media.Videos;
 using Tubeshade.Server.Configuration;
 using Tubeshade.Server.Configuration.Auth;
 using Tubeshade.Server.Services;
+using Tubeshade.Server.V1.Models;
 
 namespace Tubeshade.Server.V1.Controllers;
 
@@ -67,16 +68,52 @@ public sealed class VideosController : ControllerBase
     }
 
     [HttpPost("PlaybackPosition")]
-    public async Task<NoContentResult> UpdatePlaybackPosition(Guid id, [Required, FromBody] double? position)
+    [Obsolete("Use SavePlaybackActivity instead")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdatePlaybackPosition(Guid id, [Required, FromBody] double? position)
     {
-        await _connection.ExecuteWithinTransaction(
+        var count = await _connection.ExecuteWithinTransaction(
             _logger,
-             async transaction =>
-             {
-                 await _repository.UpdatePlaybackPosition(id, User.GetUserId(), position!.Value, transaction);
-             });
+            async transaction => await _repository.SavePlaybackActivity(id, User.GetUserId(), position!.Value, 0, 0, transaction));
 
-        return NoContent();
+        return count is 0
+            ? NotFound()
+            : NoContent();
+    }
+
+    [HttpPost("PlaybackActivity")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SavePlaybackActivity(Guid id, [Required, FromBody] PlaybackActivityRequest request)
+    {
+        var count = await _connection.ExecuteWithinTransaction(
+            _logger,
+            async transaction => await _repository.SavePlaybackActivity(
+                id,
+                User.GetUserId(),
+                request.Position!.Value,
+                request.WatchTimeDelta!.Value,
+                request.PlaybackTimeDelta!.Value,
+                transaction));
+
+        return count is 0
+            ? NotFound()
+            : NoContent();
+    }
+
+    [HttpPost("Plays")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AddPlay(Guid id)
+    {
+        var count = await _connection.ExecuteWithinTransaction(
+            _logger,
+            async transaction => await _repository.AddPlay(id, User.GetUserId(), transaction));
+
+        return count is 0
+            ? NotFound()
+            : NoContent();
     }
 
     [HttpGet("Files")]

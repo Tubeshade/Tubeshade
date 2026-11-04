@@ -158,6 +158,12 @@
     <data name="Video_Likes" xml:space="preserve">
         <value>{0} patīk</value>
     </data>
+    <data name="Video_Plays" xml:space="preserve">
+        <value>Skatīts {0} reizes</value>
+    </data>
+    <data name="Video_WatchTime" xml:space="preserve">
+        <value>Kopā skatīts {0}</value>
+    </data>
     <data name="Filters_VideoType_video" xml:space="preserve">
         <value>Video</value>
     </data>

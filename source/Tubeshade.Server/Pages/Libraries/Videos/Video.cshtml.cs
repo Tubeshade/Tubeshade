@@ -81,6 +81,8 @@ public sealed partial class Video : LibraryPageBase
 
     public VideoEntity Entity { get; private set; } = null!;
 
+    public VideoPlaybackStatistics PlaybackStatistics { get; private set; } = null!;
+
     public IHtmlContent DescriptionContent { get; private set; } = null!;
 
     public List<VideoFileEntity> Files { get; private set; } = [];
@@ -109,6 +111,7 @@ public sealed partial class Video : LibraryPageBase
         await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.RepeatableRead, cancellationToken);
 
         Entity = await _videoRepository.GetAsync(VideoId, userId, transaction);
+        PlaybackStatistics = await _videoRepository.GetPlaybackStatistics(VideoId, userId, transaction);
         Files = await _videoRepository.GetFilesAsync(VideoId, userId, transaction, cancellationToken);
         PlayableFiles = Files.Where(file => file.DownloadedAt is not null || file.TempPath is not null).ToList();
         PreferredFile = GetPreferredFile(PlayableFiles, FileId, Request.Cookies[MaximumResolutionCookie]);
@@ -148,21 +151,13 @@ public sealed partial class Video : LibraryPageBase
     {
         var userId = User.GetUserId();
 
-        await _connection.ExecuteWithinTransaction(
+        var count = await _connection.ExecuteWithinTransaction(
             _logger,
-            async transaction =>
-            {
-                if (viewed is not null)
-                {
-                    await _videoRepository.MarkAsWatched(videoId, userId, transaction);
-                }
-                else
-                {
-                    await _videoRepository.MarkAsNotWatched(videoId, userId, transaction);
-                }
-            });
+            async transaction => await _videoRepository.SetWatched(videoId, userId, viewed is not null, transaction));
 
-        return StatusCode(StatusCodes.Status200OK);
+        return count is 0
+            ? NotFound()
+            : StatusCode(StatusCodes.Status200OK);
     }
 
     public async Task<IActionResult> OnPostScan()

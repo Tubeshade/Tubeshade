@@ -135,16 +135,12 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
     {
         var userId = User.GetUserId();
         await using var transaction = await _connection.OpenAndBeginTransaction();
-        if (viewed is not null)
-        {
-            await _videoRepository.MarkAsWatched(videoId, userId, transaction);
-        }
-        else
-        {
-            await _videoRepository.MarkAsNotWatched(videoId, userId, transaction);
-        }
+        var count = await _videoRepository.SetWatched(videoId, userId, viewed is not null, transaction);
 
         await transaction.CommitAsync();
-        return StatusCode(StatusCodes.Status200OK);
+
+        return count is 0
+            ? NotFound()
+            : StatusCode(StatusCodes.Status200OK);
     }
 }

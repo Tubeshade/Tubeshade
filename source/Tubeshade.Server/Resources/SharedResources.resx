@@ -171,6 +171,12 @@
     <data name="Video_Likes" xml:space="preserve">
         <value>{0} likes</value>
     </data>
+    <data name="Video_Plays" xml:space="preserve">
+        <value>Played {0} times</value>
+    </data>
+    <data name="Video_WatchTime" xml:space="preserve">
+        <value>Watched for {0}</value>
+    </data>
     <data name="Filters_Search" xml:space="preserve">
         <value>Search</value>
     </data>

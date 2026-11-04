@@ -369,50 +369,76 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return enumerable as List<EntityId> ?? enumerable.ToList();
     }
 
-    public async ValueTask<int> MarkAsWatched(Guid videoId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<int> SetWatched(Guid videoId, Guid userId, bool viewed, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
             $"""
+             {AccessCte}
+
              INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed)
-             VALUES (@{nameof(videoId)}, @{nameof(userId)}, true)
+             SELECT videos.id, @{nameof(GetVideoParameters.UserId)}, @{nameof(viewed)}
+             FROM media.videos
+             WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
              ON CONFLICT (video_id, user_id) DO UPDATE
              SET modified_at = CURRENT_TIMESTAMP,
-                 viewed = true;
+                 viewed = excluded.viewed;
              """,
-            new { videoId, userId },
+            new { VideoId = videoId, UserId = userId, Access = Access.Read, viewed },
             transaction);
     }
 
-    public async ValueTask<int> MarkAsNotWatched(Guid videoId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<int> SavePlaybackActivity(Guid videoId, Guid userId, double position, double watchTime, double playbackTime, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
             $"""
-             UPDATE media.video_viewed_by_users
+             {AccessCte}
+
+             INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed, position, watch_time, playback_time)
+             SELECT videos.id, @{nameof(GetVideoParameters.UserId)}, false, @{nameof(position)}, @{nameof(watchTime)}, @{nameof(playbackTime)}
+             FROM media.videos
+             WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
+             ON CONFLICT (video_id, user_id) DO UPDATE
              SET modified_at = CURRENT_TIMESTAMP,
-                 viewed = false
-             WHERE video_viewed_by_users.video_id = @{nameof(videoId)}
-               AND video_viewed_by_users.user_id = @{nameof(userId)};
+                 position = excluded.position,
+                 watch_time = video_viewed_by_users.watch_time + excluded.watch_time,
+                 playback_time = video_viewed_by_users.playback_time + excluded.playback_time;
              """,
-            new { videoId, userId },
+            new { VideoId = videoId, UserId = userId, Access = Access.Read, position, watchTime, playbackTime },
             transaction);
     }
 
-    public async ValueTask<int> UpdatePlaybackPosition(Guid videoId, Guid userId, double position,
+    public async ValueTask<int> AddPlay(Guid videoId, Guid userId, NpgsqlTransaction transaction)
+    {
+        return await Connection.ExecuteAsync(
+            $"""
+             {AccessCte}
+
+             INSERT INTO media.video_plays (video_id, user_id)
+             SELECT videos.id, @{nameof(GetVideoParameters.UserId)}
+             FROM media.videos
+             WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)};
+             """,
+            new GetVideoParameters(videoId, userId, Access.Read),
+            transaction);
+    }
+
+    public async ValueTask<VideoPlaybackStatistics> GetPlaybackStatistics(Guid videoId, Guid userId,
         NpgsqlTransaction transaction)
     {
-        return await Connection.ExecuteAsync(
+        return await Connection.QuerySingleAsync<VideoPlaybackStatistics>(
             $"""
-             INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed)
-             VALUES (@{nameof(videoId)}, @{nameof(userId)}, false)
-             ON CONFLICT DO NOTHING;         
-
-             UPDATE media.video_viewed_by_users
-             SET modified_at = CURRENT_TIMESTAMP,
-                 position = @{nameof(position)}
-             WHERE video_viewed_by_users.video_id = @{nameof(videoId)}
-               AND video_viewed_by_users.user_id = @{nameof(userId)};
+             SELECT plays.play_count AS {nameof(VideoPlaybackStatistics.PlayCount)},
+                    coalesce(video_viewed_by_users.watch_time, 0)::double precision AS {nameof(VideoPlaybackStatistics.WatchTime)},
+                    coalesce(video_viewed_by_users.playback_time, 0)::double precision AS {nameof(VideoPlaybackStatistics.PlaybackTime)}
+             FROM (SELECT count(video_plays.id)::integer AS play_count
+                   FROM media.video_plays
+                   WHERE video_plays.video_id = @{nameof(videoId)}
+                     AND video_plays.user_id = @{nameof(userId)}) AS plays
+                  LEFT JOIN media.video_viewed_by_users
+                            ON video_viewed_by_users.video_id = @{nameof(videoId)}
+                                AND video_viewed_by_users.user_id = @{nameof(userId)};
              """,
-            new { videoId, userId, position },
+            new { videoId, userId },
             transaction);
     }
 

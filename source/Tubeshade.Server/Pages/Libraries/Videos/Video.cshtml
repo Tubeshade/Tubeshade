@@ -1,5 +1,6 @@
 ﻿@page "~/Libraries/{libraryId:guid}/Videos/{videoId:guid}/{handler?}"
 @using System.Globalization
+@using NodaTime
 @using NodaTime.Text
 @using Tubeshade.Server.Pages.Shared
 @using Tubeshade.Server.Services
@@ -107,7 +108,8 @@
         <div class="form-check form-check-inline form-switch">
             <input id="viewed" checked="@(Model.Entity.Viewed is true)" name="viewed"
                    type="checkbox" role="switch" switch title="Viewed" class="form-check-input"
-                   hx-post="" hx-page-handler="Viewed" hx-swap="none"/>
+                   hx-post="" hx-page-handler="Viewed" hx-swap="none"
+                   hx-on::after-request="if (!event.detail.successful) this.checked = !event.detail.requestConfig.formData.has('viewed')"/>
             <label for="viewed" class="form-check-label">
                 @SharedResources.Filters_ViewStatus_viewed
             </label>
@@ -135,6 +137,18 @@
     {
         <div class="col-auto">
             @(string.Format(SharedResources.Video_Likes, likeCount.FormatCount(CultureInfo.CurrentCulture)))
+        </div>
+    }
+    @if (Model.PlaybackStatistics is { PlayCount: > 0 } statistics)
+    {
+        <div class="col-auto">
+            @(string.Format(SharedResources.Video_Plays, statistics.PlayCount.ToString(CultureInfo.CurrentCulture)))
+        </div>
+    }
+    @if (Model.PlaybackStatistics.WatchTime >= 1)
+    {
+        <div class="col-auto">
+            @(string.Format(SharedResources.Video_WatchTime, RoundedHumanReadablePeriodPattern.TwoPlaces.Format(Period.FromSeconds((long)Math.Truncate(Model.PlaybackStatistics.WatchTime)))))
         </div>
     }
 </div>
@@ -208,41 +222,161 @@
             @: video.currentTime = @(position.ToString(CultureInfo.InvariantCulture));
         }
 
-        video.addEventListener("pause", reportPlaybackPosition, false);
-        video.addEventListener("play", reportPlaybackPosition, false);
-        video.addEventListener("seeked", reportPlaybackPosition, false);
+        const reportingPeriod = @Defaults.ReportPeriodInSeconds.ToString(CultureInfo.InvariantCulture);
+        const minimumPlayFraction = @Defaults.MinimumPlayFraction.ToString(CultureInfo.InvariantCulture);
+        const playbackEpsilon = @Defaults.PlaybackEpsilon.ToString(CultureInfo.InvariantCulture);
+        const restartPlayFraction = @Defaults.RestartPlayFraction.ToString(CultureInfo.InvariantCulture);
 
-        document.addEventListener("pagehide", reportPlaybackPosition, false);
+        // real time spent playing the video since the last report, regardless of playback rate
+        let unreportedWatchTime = 0;
+        let unreportedPlaybackTime = 0;
+        // video time played since the current play started, used to decide whether the video counts as played
+        let playedVideoTime = 0;
+
+        let playCounted = false;
+        let trackingInterval = null;
+        let lastTrackedAt = 0;
+        let lastTrackedTime = 0;
+        let lastPlaybackRate = 1;
+
+        video.addEventListener("playing", startTracking, false);
+        video.addEventListener("seeked", startTracking, false);
+        video.addEventListener("pause", stopTracking, false);
+        video.addEventListener("waiting", stopTracking, false);
+        video.addEventListener("seeking", stopTracking, false);
+        video.addEventListener("emptied", stopTracking, false);
+        video.addEventListener("ratechange", () => {
+            if (trackingInterval !== null) {
+                trackPlayback();
+            }
+        }, false);
+
+        // "pause" is fired before "ended", so the previous play is already tracked
+        video.addEventListener("ended", startNewPlay, false);
+        video.addEventListener("seeking", () => {
+            if (playCounted && video.currentTime < Math.min(playbackEpsilon, video.duration * restartPlayFraction)) {
+                startNewPlay();
+            }
+        }, false);
+
+        video.addEventListener("pause", reportPlaybackActivity, false);
+        video.addEventListener("play", reportPlaybackActivity, false);
+        video.addEventListener("seeked", reportPlaybackActivity, false);
+
+        document.addEventListener("pagehide", reportPlaybackActivity, false);
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "hidden") {
-                reportPlaybackPosition();
+                reportPlaybackActivity();
             }
         });
 
-        video.addEventListener("timeupdate", onVideoTimeUpdate, false);
+        function startTracking() {
+            // "seeked" is also fired while paused, and "playing" will follow if the video is still buffering
+            if (trackingInterval !== null || video.paused || video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+                return;
+            }
 
-        const reportingPeriod = @Defaults.ReportPeriodInSeconds.ToString(CultureInfo.InvariantCulture);
-        let lastReportedTime = -1;
-        function onVideoTimeUpdate(event) {
-            const currentTime = event.target.currentTime;
-            const currentReportedTime = Math.floor(currentTime / reportingPeriod);
+            lastTrackedAt = performance.now();
+            lastTrackedTime = video.currentTime;
+            lastPlaybackRate = video.playbackRate;
+            trackingInterval = setInterval(onTrackingInterval, 1000);
+        }
 
-            if (currentReportedTime !== 0 && currentReportedTime !== lastReportedTime) {
-                reportPlaybackPosition();
+        function startNewPlay() {
+            playedVideoTime = 0;
+            playCounted = false;
+        }
+
+        function stopTracking() {
+            if (trackingInterval === null) {
+                return;
+            }
+
+            clearInterval(trackingInterval);
+            trackingInterval = null;
+            trackPlayback();
+        }
+
+        function onTrackingInterval() {
+            trackPlayback();
+            if (unreportedWatchTime >= reportingPeriod) {
+                reportPlaybackActivity();
             }
         }
 
-        function reportPlaybackPosition() {
+        function trackPlayback() {
+            // background tabs throttle timers, so measure the elapsed time instead of counting intervals
+            const now = performance.now();
             const currentTime = video.currentTime;
-            lastReportedTime = Math.floor(currentTime / reportingPeriod);
+            const elapsed = (now - lastTrackedAt) / 1000;
+            const advanced = currentTime - lastTrackedTime;
+            const playbackRate = lastPlaybackRate;
 
+            lastTrackedAt = now;
+            lastTrackedTime = currentTime;
+            lastPlaybackRate = video.playbackRate;
+
+            // the wall clock keeps going if playback stalls without "waiting" or the device sleeps,
+            // and currentTime already points to the seek target when "seeking" stops tracking
+            const played = Math.max(0, Math.min(advanced, elapsed * playbackRate));
+            if (played === 0) {
+                return;
+            }
+
+            unreportedWatchTime += played / playbackRate;
+            unreportedPlaybackTime += played;
+            playedVideoTime += played;
+
+            if (!playCounted && playedVideoTime >= getPlayableDuration() * minimumPlayFraction) {
+                playCounted = navigator.sendBeacon("@(Url.Action("AddPlay", "Videos", new { version = "1.0", id = Model.VideoId }))");
+            }
+        }
+
+        function getPlayableDuration() {
+            const cues = sponsorBlockTrack?.track.cues ?? [];
+            let skippedDuration = 0;
+            let skippedUntil = 0;
+
+            for (let i = 0; i < cues.length; i++) {
+                const cue = cues[i];
+                const [category, action] = cue.text.split(" ");
+                if (category === "filler" || action === "mute") {
+                    continue;
+                }
+
+                const start = Math.max(cue.startTime, skippedUntil);
+                if (cue.endTime > start) {
+                    skippedDuration += cue.endTime - start;
+                    skippedUntil = cue.endTime;
+                }
+            }
+
+            // segments can cover the whole video
+            const playableDuration = video.duration - skippedDuration;
+            return playableDuration > 0 ? playableDuration : video.duration;
+        }
+
+        function reportPlaybackActivity() {
+            if (trackingInterval !== null) {
+                trackPlayback();
+            }
+
+            const currentTime = video.currentTime;
             const position = Math.abs(video.duration - currentTime) < 0.1
                 ? 0
                 : currentTime;
 
-            navigator.sendBeacon(
-                "@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))",
-                new Blob([JSON.stringify(position)], {type: "application/json"}));
+            const queued = navigator.sendBeacon(
+                "@(Url.Action("SavePlaybackActivity", "Videos", new { version = "1.0", id = Model.VideoId }))",
+                new Blob(
+                    [JSON.stringify({position: position, watchTimeDelta: unreportedWatchTime, playbackTimeDelta: unreportedPlaybackTime})],
+                    {type: "application/json"}));
+
+            // if the browser refuses the beacon, the time is sent with the next report
+            if (queued) {
+                unreportedWatchTime = 0;
+                unreportedPlaybackTime = 0;
+            }
         }
 
         if ("mediaSession" in navigator) {
@@ -343,13 +477,10 @@
 
         function onVideoEnded() {
             const viewedInput = document.querySelector("#viewed");
+            // the playback position is reset by the "pause" event, which is fired before "ended"
             if (viewedInput.checked === true) {
                 return;
             }
-
-            navigator.sendBeacon(
-                "@(Url.Action("UpdatePlaybackPosition", "Videos", new { version = "1.0", id = Model.VideoId }))",
-                new Blob([JSON.stringify(0)], {type: "application/json"}));
 
             viewedInput.checked = true;
             viewedInput.dispatchEvent(new Event("change"));
@@ -471,7 +602,7 @@
 
                 const cue = activeCues[activeCues.length - 1];
                 chapters.value = cue.startTime;
-                reportPlaybackPosition();
+                reportPlaybackActivity();
             }
 
             function onChaptersChange(event) {
