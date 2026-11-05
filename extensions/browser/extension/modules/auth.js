@@ -27,6 +27,11 @@ async function getAccessToken() {
             } else {
                 console.debug("Refreshing access token");
                 access_token = await refreshAccessToken(refresh_token);
+
+                if (access_token === null) {
+                    console.debug("Refresh token was rejected, starting authentication flow");
+                    access_token = await oidcAuthenticate();
+                }
             }
         }
 
@@ -106,6 +111,10 @@ async function completeCodeFlow(redirectUrl) {
     console.log(tokenResponse);
     let responseBody = await tokenResponse.json();
 
+    if (!tokenResponse.ok || responseBody.access_token === undefined) {
+        throw new Error(`Failed to get access token: ${responseBody.error} ${responseBody.error_description ?? ""}`);
+    }
+
     await browser.storage.local.set({
         "refresh_token": responseBody.refresh_token,
         "refresh_expires_in": responseBody.refresh_expires_in,
@@ -141,6 +150,24 @@ async function refreshAccessToken(refresh_token) {
     let tokenResponse = await fetch(tokenRequest);
     console.log(tokenResponse);
     let responseBody = await tokenResponse.json();
+
+    if (!tokenResponse.ok || responseBody.access_token === undefined) {
+        // e.g. invalid_grant when the offline session has expired or was revoked;
+        // the stored refresh token will never work again, so drop it to allow a new login
+        console.warn("Failed to refresh access token", responseBody.error, responseBody.error_description);
+        await browser.storage.local.remove(["refresh_token", "refresh_expires_in", "refresh_scope"]);
+        await browser.storage.session.remove(["access_token", "access_token_expires_in", "access_token_expires_at"]);
+        return null;
+    }
+
+    // The server may rotate the refresh token, in which case only the new one is valid
+    if (responseBody.refresh_token !== undefined) {
+        await browser.storage.local.set({
+            "refresh_token": responseBody.refresh_token,
+            "refresh_expires_in": responseBody.refresh_expires_in,
+            "refresh_scope": responseBody.scope,
+        });
+    }
 
     await browser.storage.session.set({
         "access_token": responseBody.access_token,
