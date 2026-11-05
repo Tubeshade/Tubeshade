@@ -27,6 +27,8 @@ _Latest build from master branch._
   ([#349](https://github.com/Tubeshade/Tubeshade/pull/349))
 - Start a new login in the browser extension when refreshing the token fails, instead of using an undefined access token
   ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
+- Fail with a descriptive error when YouTube requires signing in, instead of marking the video as unavailable
+  ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
 
 ## [0.1.9] - 2026-10-26
 

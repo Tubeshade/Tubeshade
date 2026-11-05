@@ -107,6 +107,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
         }
 
+        YtdlpErrorOutput.ThrowIfSignInRequired(result.ErrorOutput, result.Data);
         return result;
     }
 
@@ -338,6 +339,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
                 string.Join(Environment.NewLine, errorOutput.Select(line => line ?? string.Empty)));
         }
 
+        YtdlpErrorOutput.ThrowIfSignInRequired(result.ErrorOutput, result.Data);
         return result.Success
             ? result.Data
             : throw new Exception(string.Join(Environment.NewLine, result.ErrorOutput));
