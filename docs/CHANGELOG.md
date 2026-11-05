@@ -12,6 +12,8 @@ _Latest build from master branch._
   ([#348](https://github.com/Tubeshade/Tubeshade/pull/348))
 - Fetch only the video type when checking whether new videos from webhooks are livestreams
   ([#349](https://github.com/Tubeshade/Tubeshade/pull/349))
+- Explain why members-only videos cannot be downloaded, instead of showing the verbose yt-dlp output
+  ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
 
 ### Fixed
 

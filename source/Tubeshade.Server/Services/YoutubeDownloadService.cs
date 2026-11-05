@@ -769,7 +769,7 @@ public sealed class YoutubeDownloadService
             return data;
         }
 
-        throw new Exception(string.Join(Environment.NewLine, result.ErrorOutput));
+        throw new Exception(YtdlpErrorOutput.GetErrorMessage(result.ErrorOutput));
     }
 
     private long? GetLimitRate(decimal? size, VideoEntity video)

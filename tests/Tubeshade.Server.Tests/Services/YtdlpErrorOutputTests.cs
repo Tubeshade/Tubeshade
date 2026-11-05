@@ -52,5 +52,59 @@ public sealed class YtdlpErrorOutputTests
         action.Should().NotThrow();
     }
 
+    [Test]
+    public void GetErrorMessage_MembersOnly()
+    {
+        string?[] output =
+        [
+            "[debug] [youtube] K8IFr6RlN-I: web_embedded player response playability status: UNPLAYABLE",
+            "WARNING: [youtube] This video is available to this channel's members on level: Super Special Fiend (or any higher level). Join this channel to get access to members-only content and other exclusive perks.",
+            NoFormats,
+            "WARNING: Requested format is not available"
+        ];
+
+        YtdlpErrorOutput.GetErrorMessage(output).Should().Be(
+            "This video is only available to members of the channel. The YouTube account in the cookies for this library needs to be a member on at least the \"Super Special Fiend\" level to download it.");
+    }
+
+    [Test]
+    public void GetErrorMessage_MembersOnlyWithoutLevel()
+    {
+        string?[] output =
+            ["WARNING: [youtube] This video is available to this channel’s members. Join this channel to get access."];
+
+        YtdlpErrorOutput.GetErrorMessage(output).Should().Be(
+            "This video is only available to members of the channel. The YouTube account in the cookies for this library needs to be a member to download it.");
+    }
+
+    [Test]
+    public void GetErrorMessage_SignInRequired()
+    {
+        YtdlpErrorOutput.GetErrorMessage([InvalidCookies, SignInRequired, NoFormats])
+            .Should().Contain("cookies for this library are no longer valid");
+    }
+
+    [Test]
+    public void GetErrorMessage_ShouldOnlyIncludeWarningsAndErrors()
+    {
+        string?[] output =
+        [
+            "[debug] Command-line config: ['-J', '-v']",
+            null,
+            "WARNING: No video formats found!\nERROR: [youtube] abc: Video unavailable",
+            "[debug] Default format spec: bestvideo*+bestaudio/best",
+            "WARNING: No video formats found!"
+        ];
+
+        YtdlpErrorOutput.GetErrorMessage(output).Should().Be(
+            $"WARNING: No video formats found!{Environment.NewLine}ERROR: [youtube] abc: Video unavailable");
+    }
+
+    [Test]
+    public void GetErrorMessage_ShouldFallBackToFullOutput()
+    {
+        YtdlpErrorOutput.GetErrorMessage(["something went wrong", " "]).Should().Be("something went wrong");
+    }
+
     private static VideoData Data() => new() { Id = "rymDzMIGn5Y", Title = "Test video" };
 }
