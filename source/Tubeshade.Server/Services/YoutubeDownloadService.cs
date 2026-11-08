@@ -144,9 +144,7 @@ public sealed class YoutubeDownloadService
         var dataFile = await FetchDataFile(video, preferences, tempDirectory, cookieFilepath, cancellationToken);
         var selectedFormats = await _ytdlpWrapper.SelectFormats(dataFile.Path, formatSelectors, cancellationToken);
 
-        var totalSize = selectedFormats
-            .SelectMany(formats => formats)
-            .Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
+        var totalSize = selectedFormats.SelectMany(formats => formats).GetTotalSize();
 
         if (totalSize.HasValue)
         {
@@ -297,9 +295,7 @@ public sealed class YoutubeDownloadService
         var dataFile = await FetchDataFile(video, preferences, tempDirectory, cookieFilepath, cancellationToken);
         var selectedFormats = await _ytdlpWrapper.SelectFormats(dataFile.Path, formatSelectors, cancellationToken);
 
-        var totalSize = selectedFormats
-            .SelectMany(formats => formats)
-            .Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
+        var totalSize = selectedFormats.SelectMany(formats => formats).GetTotalSize();
 
         if (totalSize.HasValue)
         {

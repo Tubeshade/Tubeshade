@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using YoutubeDLSharp.Metadata;
 
 namespace Tubeshade.Server.Services;
@@ -15,6 +16,26 @@ public static class FormatDataExtensions
             }
 
             return (decimal)Math.Round(frameRate);
+        }
+    }
+
+    extension(IEnumerable<FormatData> formats)
+    {
+        public decimal? GetTotalSize()
+        {
+            var total = 0m;
+
+            foreach (var format in formats)
+            {
+                if ((format.FileSize ?? format.ApproximateFileSize) is not { } size)
+                {
+                    return null;
+                }
+
+                total += size;
+            }
+
+            return total;
         }
     }
 }

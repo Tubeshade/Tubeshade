@@ -37,6 +37,22 @@ public sealed class VideoDataExtensionsTests
         Data.GetExpiry(formatIds).Should().BeNull();
     }
 
+    [Test]
+    public void GetTotalSize_ShouldSumFileAndApproximateSizes()
+    {
+        FormatData[] formats = [Sized("video", 100, null), Sized("audio", null, 20)];
+
+        formats.GetTotalSize().Should().Be(120);
+    }
+
+    [Test]
+    public void GetTotalSize_ShouldBeNull_WhenAnyFormatHasNoSize()
+    {
+        FormatData[] formats = [Sized("video", null, null), Sized("audio", 20, null)];
+
+        formats.GetTotalSize().Should().BeNull();
+    }
+
     [TestCase("@FortNine", "https://www.youtube.com/@FortNine", TestName = "Channel handle")]
     [TestCase("UCNSMdQtn1SuFzCZjfK2C7dQ", "https://www.youtube.com/@FortNine/videos", TestName = "Channel handle videos tab")]
     [TestCase("UCNSMdQtn1SuFzCZjfK2C7dQ", "https://www.youtube.com/@FortNine/playlists", TestName = "Channel handle playlists tab")]
@@ -94,5 +110,15 @@ public sealed class VideoDataExtensionsTests
         Format = formatId,
         Extension = "mp4",
         Url = url,
+    };
+
+    private static FormatData Sized(string formatId, long? fileSize, long? approximateFileSize) => new()
+    {
+        FormatId = formatId,
+        Format = formatId,
+        Extension = "mp4",
+        Url = "https://example.com",
+        FileSize = fileSize,
+        ApproximateFileSize = approximateFileSize,
     };
 }
