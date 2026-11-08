@@ -615,6 +615,27 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         return await Connection.ExecuteAsync(command);
     }
 
+    public async ValueTask<int> DeleteOldReindexRuns(NpgsqlTransaction transaction, CancellationToken cancellationToken)
+    {
+        var command = new CommandDefinition(
+            // lang=sql
+            $"""
+             DELETE
+             FROM tasks.task_runs
+                 USING tasks.tasks, tasks.task_run_results
+             WHERE task_runs.task_id = tasks.id
+               AND task_run_results.run_id = task_runs.id
+               AND tasks.type = '{TaskType.Names.ReindexVideos}'
+               AND (task_run_results.created_at <= CURRENT_TIMESTAMP - '1 month'::interval OR
+                    (task_run_results.result = '{TaskResult.Names.Successful}' AND task_run_results.created_at <= CURRENT_TIMESTAMP - '1 day'::interval));
+             """,
+            null,
+            transaction,
+            cancellationToken: cancellationToken);
+
+        return await Connection.ExecuteAsync(command);
+    }
+
     private async ValueTask FinishTaskRun(Guid taskRunId, NpgsqlTransaction transaction)
     {
         await Connection.ExecuteAsync(new CommandDefinition(

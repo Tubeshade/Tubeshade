@@ -265,9 +265,11 @@ public sealed class TaskService
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var count = await _taskRepository.DeleteOldTasks(transaction, cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-
         _logger.DeletedOldTasks(count);
+
+        var runCount = await _taskRepository.DeleteOldReindexRuns(transaction, cancellationToken);
+        _logger.DeletedOldReindexRuns(runCount);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     private static IEnumerable<TaskModel> GroupTasks(IEnumerable<RunningTaskEntity> runningTasks)

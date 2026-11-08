@@ -424,4 +424,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(142, Warning, "Failed to update SponsorBlock segments for video {VideoId}, using stored segments instead")]
     internal static partial void SponsorBlockSegmentUpdateFailed(this ILogger logger, Exception exception, Guid videoId);
+
+    [LoggerMessage(143, Information, "Deleted {Count} old reindex task runs")]
+    internal static partial void DeletedOldReindexRuns(this ILogger logger, int count);
 }
