@@ -58,14 +58,7 @@ public sealed class TrackFileRepository(NpgsqlConnection connection)
     protected override string AccessCte =>
         // lang=sql
         $"""
-         WITH accessible_libraries AS
-         (SELECT libraries.id
-          FROM media.libraries
-              INNER JOIN identity.owners ON owners.id = libraries.owner_id
-              INNER JOIN identity.ownerships ON
-                  ownerships.owner_id = owners.id AND
-                  ownerships.user_id = @{nameof(GetVideoParameters.UserId)} AND
-                  (ownerships.access = @{nameof(GetVideoParameters.Access)} OR ownerships.access = 'owner')),
+         WITH {AccessibleLibrariesCte},
          accessible AS
             (SELECT track_files.id
              FROM media.videos
@@ -109,12 +102,16 @@ public sealed class TrackFileRepository(NpgsqlConnection connection)
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             {AccessCte}
+             WITH {AccessibleLibrariesCte},
+             accessible AS
+                 (SELECT videos.id
+                  FROM media.videos
+                      INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
+                      INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
+                  WHERE videos.id = @{nameof(parameters.VideoId)})
 
              {SelectSql}
-                 INNER JOIN accessible ON track_files.id = accessible.id
-             WHERE {AccessFilter} AND
-                   track_files.video_id = @{nameof(parameters.VideoId)};
+             WHERE track_files.video_id IN (SELECT id FROM accessible);
              """,
             parameters,
             transaction,

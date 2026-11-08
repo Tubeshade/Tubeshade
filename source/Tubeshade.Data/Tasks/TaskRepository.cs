@@ -9,6 +9,7 @@ using Dapper;
 using NodaTime;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
+using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Tasks;
 
@@ -17,14 +18,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     // lang=sql
     private const string RunningTasksQuery =
         $"""
-         WITH accessible AS
-                  (SELECT libraries.id
-                   FROM media.libraries
-                            INNER JOIN identity.owners ON owners.id = libraries.owner_id
-                            INNER JOIN identity.ownerships ON
-                       ownerships.owner_id = owners.id AND
-                       ownerships.user_id = @{nameof(TaskParameters.UserId)} AND
-                       (ownerships.access = @{nameof(TaskParameters.Access)} OR ownerships.access = 'owner'))
+         WITH {AccessibleLibrariesCte}
 
          SELECT filtered_tasks.id,
                 filtered_tasks.type,
@@ -88,7 +82,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
                         INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
                         LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
                         LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-               WHERE (libraries.id IN (SELECT id FROM accessible))
+               WHERE (libraries.id IN (SELECT id FROM accessible_libraries))
                  AND (@{nameof(TaskParameters.LibraryId)} IS NULL OR libraries.id = @{nameof(TaskParameters.LibraryId)})
                  -- finished feed updates are hidden unless filtered by source, but unfinished ones are shown since they take up workers
                  AND ((@{nameof(TaskParameters.Source)}::tasks.task_source IS NULL AND (tasks.type != '{TaskType.Names.YouTubeFeedUpdate}' OR task_run_results.id IS NULL OR @{nameof(TaskParameters.TaskRunId)} IS NOT NULL)) OR task_runs.source = @{nameof(TaskParameters.Source)})
@@ -304,23 +298,16 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         var requestIds = await Connection.QueryAsync<Guid>(
             // lang=sql
             $"""
-             WITH accessible AS
-                 (SELECT libraries.id
-                  FROM media.libraries
-                  INNER JOIN identity.owners ON owners.id = libraries.owner_id
-                  INNER JOIN identity.ownerships ON
-                     ownerships.owner_id = owners.id AND
-                     ownerships.user_id = @{nameof(userId)} AND
-                     (ownerships.access = 'modify' OR ownerships.access = 'owner'))
+             WITH {AccessibleLibrariesCte}
 
              INSERT INTO tasks.task_requests (task_id, source)
              SELECT tasks.id, @{nameof(source)}::tasks.task_source
              FROM tasks.tasks
                   INNER JOIN media.libraries ON tasks.library_id = libraries.id
-             WHERE (libraries.id IN (SELECT id FROM accessible)) AND tasks.id = @{nameof(taskId)}
+             WHERE (libraries.id IN (SELECT id FROM accessible_libraries)) AND tasks.id = @{nameof(taskId)}
              RETURNING id;
              """,
-            new { taskId, source, userId },
+            new { taskId, source, UserId = userId, Access = Access.Modify },
             transaction);
 
         if (!requestIds.Any())
@@ -334,22 +321,15 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         await Connection.ExecuteAsync(
             // lang=sql
             $"""
-             WITH accessible AS
-                 (SELECT libraries.id
-                  FROM media.libraries
-                  INNER JOIN identity.owners ON owners.id = libraries.owner_id
-                  INNER JOIN identity.ownerships ON
-                     ownerships.owner_id = owners.id AND
-                     ownerships.user_id = @{nameof(userId)} AND
-                     (ownerships.access = 'modify' OR ownerships.access = 'owner'))
+             WITH {AccessibleLibrariesCte}
 
              SELECT pg_notify('{TaskChannels.Cancel}', @{nameof(taskRunId)}::text)
              FROM tasks.task_runs
                   INNER JOIN tasks.tasks ON task_runs.task_id = tasks.id
                   INNER JOIN media.libraries ON tasks.library_id = libraries.id
-             WHERE (libraries.id IN (SELECT id FROM accessible)) AND task_runs.id = @{nameof(taskRunId)};
+             WHERE (libraries.id IN (SELECT id FROM accessible_libraries)) AND task_runs.id = @{nameof(taskRunId)};
              """,
-            new { taskRunId, userId },
+            new { taskRunId, UserId = userId, Access = Access.Modify },
             transaction);
     }
 

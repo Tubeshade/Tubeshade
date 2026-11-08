@@ -65,14 +65,7 @@ public sealed class ScheduleRepository(NpgsqlConnection connection)
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             WITH accessible AS 
-                 (SELECT libraries.id
-                  FROM media.libraries
-                      INNER JOIN identity.owners ON owners.id = media.libraries.owner_id
-                      INNER JOIN identity.ownerships ON
-                          ownerships.owner_id = owners.id AND
-                          ownerships.user_id = @{nameof(userId)} AND
-                          (ownerships.access = @{nameof(access)} OR ownerships.access = 'owner'))
+             WITH {AccessibleLibrariesCte}
 
              SELECT schedules.id,
                     schedules.created_at,
@@ -85,11 +78,11 @@ public sealed class ScheduleRepository(NpgsqlConnection connection)
                     schedules.time_zone_id
              FROM tasks.schedules
                  INNER JOIN tasks.tasks ON schedules.task_id = tasks.id
-                 INNER JOIN accessible ON tasks.library_id = accessible.id
+                 INNER JOIN accessible_libraries ON tasks.library_id = accessible_libraries.id
              WHERE tasks.type = @{nameof(type)} AND
                    tasks.library_id = @{nameof(libraryId)}
              """,
-            new { userId, libraryId, type, access },
+            new { UserId = userId, libraryId, type, Access = access },
             cancellationToken: cancellationToken);
 
         return await Connection.QuerySingleAsync<ScheduleEntity>(command);

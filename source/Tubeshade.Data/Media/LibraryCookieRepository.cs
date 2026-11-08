@@ -3,12 +3,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Npgsql;
+using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Media;
 
 public sealed class LibraryCookieRepository
 {
+    private const string AccessibleLibrariesCte = RepositoryBase<LibraryCookieEntity>.AccessibleLibrariesCte;
+
     private readonly NpgsqlConnection _connection;
 
     public LibraryCookieRepository(NpgsqlConnection connection)
@@ -48,14 +51,7 @@ public sealed class LibraryCookieRepository
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             WITH accessible AS
-                 (SELECT libraries.id
-                  FROM media.libraries
-                      INNER JOIN identity.owners ON owners.id = libraries.owner_id
-                      INNER JOIN identity.ownerships ON
-                          ownerships.owner_id = owners.id AND
-                          ownerships.user_id = @{nameof(userId)} AND
-                          (ownerships.access = @{nameof(access)} OR ownerships.access = 'owner'))
+             WITH {AccessibleLibrariesCte}
 
              SELECT cookies.id,
                     cookies.created_at,
@@ -67,10 +63,10 @@ public sealed class LibraryCookieRepository
              FROM media.library_external_cookies cookies
                  INNER JOIN media.libraries ON cookies.id = libraries.id
              WHERE libraries.id = @{nameof(libraryId)}
-               AND libraries.id IN (SELECT id FROM accessible)
+               AND libraries.id IN (SELECT id FROM accessible_libraries)
                AND domain = @{nameof(domain)};
              """,
-            new { userId, libraryId, access, domain },
+            new { UserId = userId, libraryId, Access = access, domain },
             transaction,
             cancellationToken: cancellationToken);
 
@@ -85,27 +81,29 @@ public sealed class LibraryCookieRepository
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             WITH accessible AS
-                 (SELECT libraries.id
-                  FROM media.libraries
-                      INNER JOIN identity.owners ON owners.id = libraries.owner_id
-                      INNER JOIN identity.ownerships ON
-                          ownerships.owner_id = owners.id AND
-                          ownerships.user_id = @{nameof(entity.ModifiedByUserId)} AND
-                          (ownerships.access = 'append' OR ownerships.access = 'owner')),
+             WITH {AccessibleLibrariesCte},
                  new_cookie AS
                  (SELECT @{nameof(entity.Id)} AS id,
                          @{nameof(entity.CreatedByUserId)} AS created_by_user_id,
                          @{nameof(entity.ModifiedByUserId)} AS modified_by_user_id,
                          @{nameof(entity.Domain)} AS domain,
                          @{nameof(entity.Cookie)} AS cookie
-                  WHERE EXISTS (SELECT 1 FROM accessible WHERE accessible.id = @{nameof(entity.Id)}))
+                  WHERE EXISTS (SELECT 1 FROM accessible_libraries WHERE accessible_libraries.id = @{nameof(entity.Id)}))
 
              INSERT INTO media.library_external_cookies (id, created_by_user_id, modified_by_user_id, domain, cookie)
              SELECT id, created_by_user_id, modified_by_user_id, domain, cookie FROM new_cookie
              RETURNING id;
              """,
-            entity,
+            new
+            {
+                entity.Id,
+                entity.CreatedByUserId,
+                entity.ModifiedByUserId,
+                entity.Domain,
+                entity.Cookie,
+                UserId = entity.ModifiedByUserId,
+                Access = Access.Append,
+            },
             transaction,
             cancellationToken: cancellationToken);
 
@@ -120,14 +118,7 @@ public sealed class LibraryCookieRepository
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             WITH accessible AS
-                 (SELECT libraries.id
-                  FROM media.libraries
-                      INNER JOIN identity.owners ON owners.id = libraries.owner_id
-                      INNER JOIN identity.ownerships ON
-                          ownerships.owner_id = owners.id AND
-                          ownerships.user_id = @{nameof(entity.ModifiedByUserId)} AND
-                          (ownerships.access = 'modify' OR ownerships.access = 'owner'))
+             WITH {AccessibleLibrariesCte}
 
              UPDATE media.library_external_cookies
              SET modified_at = CURRENT_TIMESTAMP,
@@ -135,9 +126,17 @@ public sealed class LibraryCookieRepository
                  domain = @{nameof(entity.Domain)},
                  cookie = @{nameof(entity.Cookie)}
              WHERE id = @Id
-               AND EXISTS(SELECT 1 FROM accessible WHERE accessible.id = @Id);
+               AND EXISTS(SELECT 1 FROM accessible_libraries WHERE accessible_libraries.id = @Id);
              """,
-            entity,
+            new
+            {
+                entity.Id,
+                entity.ModifiedByUserId,
+                entity.Domain,
+                entity.Cookie,
+                UserId = entity.ModifiedByUserId,
+                Access = Access.Modify,
+            },
             transaction,
             cancellationToken: cancellationToken);
 

@@ -58,14 +58,7 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
     protected override string AccessCte =>
         // lang=sql
         $"""
-         WITH accessible_libraries AS
-         (SELECT libraries.id
-          FROM media.libraries
-              INNER JOIN identity.owners ON owners.id = libraries.owner_id
-              INNER JOIN identity.ownerships ON
-                  ownerships.owner_id = owners.id AND
-                  ownerships.user_id = @{nameof(GetVideoParameters.UserId)} AND
-                  (ownerships.access = @{nameof(GetVideoParameters.Access)} OR ownerships.access = 'owner')),
+         WITH {AccessibleLibrariesCte},
          accessible AS
              (SELECT video_images.image_id
               FROM media.videos
@@ -153,13 +146,17 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             {AccessCte}
+             WITH {AccessibleLibrariesCte},
+             accessible AS
+                 (SELECT videos.id
+                  FROM media.videos
+                      INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
+                      INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
+                  WHERE videos.id = @{nameof(parameters.VideoId)})
 
              {SelectSql}
                  INNER JOIN media.video_images ON image_files.id = video_images.image_id
-                 INNER JOIN accessible ON image_files.id = accessible.image_id
-             WHERE {AccessFilter} AND
-                   video_images.video_id = @{nameof(parameters.VideoId)}
+             WHERE video_images.video_id IN (SELECT id FROM accessible)
              ORDER BY image_files.width, image_files.height;
              """,
             parameters,
@@ -196,13 +193,16 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             {AccessCte}
+             WITH {AccessibleLibrariesCte},
+             accessible AS
+                 (SELECT library_channels.channel_id AS id
+                  FROM media.library_channels
+                      INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
+                  WHERE library_channels.channel_id = @{nameof(parameters.VideoId)} AND library_channels."primary")
 
              {SelectSql}
                  INNER JOIN media.channel_images ON image_files.id = channel_images.image_id
-                 INNER JOIN accessible ON image_files.id = accessible.image_id
-             WHERE {AccessFilter} AND
-                   channel_images.channel_id = @{nameof(parameters.VideoId)}
+             WHERE channel_images.channel_id IN (SELECT id FROM accessible)
              ORDER BY image_files.width, image_files.height;
              """,
             parameters,
@@ -239,13 +239,16 @@ public sealed class ImageFileRepository(NpgsqlConnection connection)
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             {AccessCte}
+             WITH {AccessibleLibrariesCte},
+             accessible AS
+                 (SELECT playlists.id
+                  FROM media.playlists
+                      INNER JOIN accessible_libraries ON playlists.library_id = accessible_libraries.id
+                  WHERE playlists.id = @{nameof(parameters.VideoId)})
 
              {SelectSql}
                  INNER JOIN media.playlist_images ON image_files.id = playlist_images.image_id
-                 INNER JOIN accessible ON image_files.id = accessible.image_id
-             WHERE {AccessFilter} AND
-                   playlist_images.playlist_id = @{nameof(parameters.VideoId)}
+             WHERE playlist_images.playlist_id IN (SELECT id FROM accessible)
              ORDER BY image_files.width, image_files.height;
              """,
             parameters,

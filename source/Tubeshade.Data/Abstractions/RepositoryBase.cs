@@ -12,6 +12,19 @@ namespace Tubeshade.Data.Abstractions;
 public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     where TEntity : IEntity
 {
+    // lang=sql
+    public const string AccessibleLibrariesCte =
+        $"""
+         accessible_libraries AS
+         (SELECT libraries.id
+          FROM media.libraries
+              INNER JOIN identity.owners ON owners.id = libraries.owner_id
+              INNER JOIN identity.ownerships ON
+                  ownerships.owner_id = owners.id AND
+                  ownerships.user_id = @{nameof(GetParameters.UserId)} AND
+                  (ownerships.access = @{nameof(GetParameters.Access)} OR ownerships.access = 'owner'))
+         """;
+
     protected RepositoryBase(NpgsqlConnection connection)
     {
         Connection = connection;
