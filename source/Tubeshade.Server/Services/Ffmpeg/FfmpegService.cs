@@ -122,7 +122,7 @@ public sealed class FfmpegService
 
     public async Task CombineStreams(
         string videoFilePath,
-        string audioFilePath,
+        IReadOnlyList<string> audioFilePaths,
         string outputFilePath,
         CancellationToken cancellationToken)
     {
@@ -138,19 +138,28 @@ public sealed class FfmpegService
             "1",
             "-i", // input file url
             $"file:{videoFilePath}",
-            "-rw_timeout", // Maximum time to wait for (network) read/write operations to complete, in microseconds.
-            "5M",
-            "-follow", // If set to 1, the protocol will retry reading at the end of the file, allowing reading files that still are being written
-            "1",
-            "-i", // input file url
-            $"file:{audioFilePath}",
-            "-map",
-            "0:v:0",
-            "-map",
-            "1:a:0",
-            "-c",
-            "copy",
         };
+
+        foreach (var audioFilePath in audioFilePaths)
+        {
+            args.AddRange(
+            [
+                "-rw_timeout", // Maximum time to wait for (network) read/write operations to complete, in microseconds.
+                "5M",
+                "-follow", // If set to 1, the protocol will retry reading at the end of the file, allowing reading files that still are being written
+                "1",
+                "-i", // input file url
+                $"file:{audioFilePath}",
+            ]);
+        }
+
+        args.AddRange(["-map", "0:v:0"]);
+        for (var inputIndex = 1; inputIndex <= audioFilePaths.Count; inputIndex++)
+        {
+            args.AddRange(["-map", $"{inputIndex}:a:0"]);
+        }
+
+        args.AddRange(["-c", "copy"]);
 
         if (outputFilePath.EndsWith("mp4"))
         {

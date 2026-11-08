@@ -62,7 +62,7 @@ public sealed class FfmpegExceptionTestCaseSource : IEnumerable<TestCaseData<Fun
         yield return new(
             service => service.CombineStreams(
                 "foo.video.mp4",
-                "foo.audio.webm",
+                ["foo.audio.webm"],
                 "foo.mp4",
                 CancellationToken.None),
             OperatingSystem.IsWindows()

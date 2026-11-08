@@ -221,9 +221,6 @@ internal static partial class LoggerExtensions
     [LoggerMessage(70, Debug, "Finished copying split download data to FIFO streams")]
     internal static partial void CompletedCopyTasks(this ILogger logger);
 
-    [LoggerMessage(71, Debug, "Flushed FIFO streams")]
-    internal static partial void FlushedFifoStreams(this ILogger logger);
-
     [LoggerMessage(72, Debug, "Closed all FIFO streams used for split video streams")]
     internal static partial void ClosedFifoStreams(this ILogger logger);
 

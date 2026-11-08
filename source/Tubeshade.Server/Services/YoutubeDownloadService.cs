@@ -386,26 +386,25 @@ public sealed class YoutubeDownloadService
                 cancellationToken);
         }
 
-        if (formats is [var first, var second] && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        if (formats.Length > 1 && RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            var (videoFormat, audioFormat) = (first, second) switch
+            var audioFormats = formats.Where(format => format.Resolution is "audio only").ToArray();
+            if (formats.Except(audioFormats).ToArray() is not [var videoFormat] || audioFormats is [])
             {
-                { first.Resolution: "audio only" } => (second, first),
-                { second.Resolution: "audio only" } => (first, second),
-                _ => throw new ArgumentOutOfRangeException(nameof(formats), formats, @"Could not identify video and audio formats")
-            };
+                throw new ArgumentOutOfRangeException(nameof(formats), formats, @"Could not identify video and audio formats");
+            }
 
             var containerType = VideoContainerType.FromName(videoFormat.Extension);
             var videoFile = GetFileForFormat(files, videoFormat, containerType);
 
-            _logger.DownloadingSplitVideoFile(videoFile.Id, videoFormat.FormatId, audioFormat.FormatId, containerType.Name);
+            _logger.DownloadingSplitVideoFile(videoFile.Id, videoFormat.FormatId, string.Join('+', audioFormats.Select(format => format.FormatId)), containerType.Name);
             return await DownloadSplitVideoFormat(
                 userId,
                 taskRepository,
                 taskRunId,
                 tempDirectory,
                 videoFormat,
-                audioFormat,
+                audioFormats,
                 videoFile,
                 video,
                 targetDirectory,
@@ -545,7 +544,7 @@ public sealed class YoutubeDownloadService
         Guid taskRunId,
         DirectoryInfo tempDirectory,
         FormatData videoFormat,
-        FormatData audioFormat,
+        FormatData[] audioFormats,
         VideoFileEntity videoFile,
         VideoEntity video,
         DirectoryInfo targetDirectory,
@@ -557,7 +556,8 @@ public sealed class YoutubeDownloadService
         IServiceProvider provider,
         CancellationToken cancellationToken)
     {
-        var size = new[] { audioFormat, videoFormat }
+        var size = audioFormats
+            .Append(videoFormat)
             .Sum(format => (decimal)(format.FileSize ?? format.ApproximateFileSize ?? 0));
 
         if (videoFile.DownloadedAt is not null)
@@ -566,8 +566,9 @@ public sealed class YoutubeDownloadService
             return size;
         }
 
-        var audioFileName = $"{videoFile.Id}_{audioFormat.FormatId}";
-        var audioFilePath = Path.Combine(tempDirectory.FullName, audioFileName);
+        var audioFilePaths = audioFormats
+            .Select(format => Path.Combine(tempDirectory.FullName, $"{videoFile.Id}_{format.FormatId}"))
+            .ToArray();
 
         var videoFileName = $"{videoFile.Id}_{videoFormat.FormatId}";
         var videoFilePath = Path.Combine(tempDirectory.FullName, videoFileName);
@@ -575,125 +576,211 @@ public sealed class YoutubeDownloadService
         var fileName = videoFile.StoragePath;
         var outputFilePath = Path.Combine(tempDirectory.FullName, fileName);
 
+        var filePaths = audioFilePaths.Prepend(videoFilePath).ToArray();
+
         const libc.Mode mask = libc.Mode.S_IWUSR | libc.Mode.S_IRUSR | libc.Mode.S_IRGRP | libc.Mode.S_IROTH;
-        if (libc.mkfifo(videoFilePath, mask) is not 0)
+
+        foreach (var path in filePaths)
         {
-            throw new Exception($"Failed to create FIFO named pipe {videoFilePath}");
-        }
-
-        if (libc.mkfifo(audioFilePath, mask) is not 0)
-        {
-            throw new Exception($"Failed to create FIFO named pipe {audioFilePath}");
-        }
-
-        var audioSize = audioFormat.FileSize ?? audioFormat.ApproximateFileSize;
-        var videoSize = videoFormat.FileSize ?? videoFormat.ApproximateFileSize;
-        var audioLimitRate = GetLimitRate(audioSize, video);
-        var videoLimitRate = GetLimitRate(videoSize, video);
-
-        _logger.SplitFormatLimitRates(videoFile.Id, audioLimitRate, videoLimitRate);
-
-        // audio and video are downloaded at the same time, so the download finishes when the longer one does
-        var downloadDuration = (EstimateDownloadDuration(audioSize, audioLimitRate), EstimateDownloadDuration(videoSize, videoLimitRate)) switch
-        {
-            ({ } audioDuration, { } videoDuration) => Duration.Max(audioDuration, videoDuration),
-            _ => (Duration?)null,
-        };
-
-        await RefreshExpiringDataFile(dataFile, [videoFormat, audioFormat], downloadDuration, video, preferences, cookieFilepath, cancellationToken);
-
-        var audioOptions = _ytdlpWrapper.GetDownloadFormatArgs(dataFile.Path, audioFormat.FormatId, "-", cookieFilepath, audioLimitRate);
-        var videoOptions = _ytdlpWrapper.GetDownloadFormatArgs(dataFile.Path, videoFormat.FormatId, "-", cookieFilepath, videoLimitRate);
-
-        await using var audioProcess = new CancelableProcess(_options.YtdlpPath, audioOptions.ToArguments(string.Empty), false);
-        await using var videoProcess = new CancelableProcess(_options.YtdlpPath, videoOptions.ToArguments(string.Empty), false);
-
-        var audioTask = audioProcess.Run(cancellationToken);
-        var videoTask = videoProcess.Run(cancellationToken);
-        var downloadTask = Task.WhenAll(audioTask, videoTask);
-
-        var combineTask = _ffmpegService.CombineStreams(videoFilePath, audioFilePath, outputFilePath, cancellationToken);
-
-        await using (var videoFileStream = File.Open(videoFilePath, FileMode.Open, FileAccess.Write, FileShare.Read))
-        {
-            var videoFileTask = videoProcess.Output.CopyToAsync(videoFileStream, cancellationToken);
-
-            await using (var audioFileStream = File.Open(audioFilePath, FileMode.Open, FileAccess.Write, FileShare.Read))
+            if (libc.mkfifo(path, mask) is not 0)
             {
-                var audioFileTask = audioProcess.Output.CopyToAsync(audioFileStream, cancellationToken);
-                var copyTask = Task.WhenAll(videoFileTask, audioFileTask);
-
-                await using (var scope = provider.CreateAsyncScope())
-                {
-                    var fileRepository = scope.ServiceProvider.GetRequiredService<VideoFileRepository>();
-                    await fileRepository.CreateTemporaryFile(videoFile.Id, taskRunId, outputFilePath, cancellationToken);
-                }
-
-                var timestamp = Stopwatch.GetTimestamp();
-                var fileSize = 0L;
-                var pollingDelay = TimeSpan.FromSeconds(1);
-
-                while (!downloadTask.IsCompleted)
-                {
-                    var startTimestamp = Stopwatch.GetTimestamp();
-                    if (!File.Exists(outputFilePath))
-                    {
-                        await Task.Delay(pollingDelay, cancellationToken);
-                        continue;
-                    }
-
-                    var newTimestamp = Stopwatch.GetTimestamp();
-                    var newFileSize = new FileInfo(outputFilePath).Length;
-
-                    var elapsedSeconds = Stopwatch.GetElapsedTime(timestamp, newTimestamp).TotalSeconds;
-                    var sizeDelta = newFileSize - fileSize;
-
-                    timestamp = newTimestamp;
-                    fileSize = newFileSize;
-
-                    if (totalSize is { } total && size is not 0)
-                    {
-                        var rate = sizeDelta / (decimal)elapsedSeconds;
-                        var remainingSize = total - (newFileSize + sizeOffset);
-                        var remainingDuration = rate > 0
-                            ? Period.FromNanoseconds((long)(remainingSize / rate * 1_000_000_000)).Normalize()
-                            : null;
-
-                        await taskRepository.UpdateProgress(taskRunId, fileSize + sizeOffset, rate, remainingDuration);
-                    }
-
-                    var remaining = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
-                    if (remaining < TimeSpan.Zero)
-                    {
-                        continue;
-                    }
-
-                    await Task.Delay(remaining, cancellationToken);
-                }
-
-                await downloadTask;
-                _logger.CompletedDownloadTasks();
-
-                await copyTask;
-                _logger.CompletedCopyTasks();
-
-                await videoFileStream.FlushAsync(cancellationToken);
-                await audioFileStream.FlushAsync(cancellationToken);
-                _logger.FlushedFifoStreams();
+                throw new Exception($"Failed to create FIFO named pipe {path}");
             }
         }
 
-        _logger.ClosedFifoStreams();
+        var audioSizes = audioFormats.Select(format => format.FileSize ?? format.ApproximateFileSize).ToArray();
+        var videoSize = videoFormat.FileSize ?? videoFormat.ApproximateFileSize;
+        var audioLimitRates = audioSizes.Select(audioSize => GetLimitRate(audioSize, video)).ToArray();
+        var videoLimitRate = GetLimitRate(videoSize, video);
 
-        await combineTask;
-        _logger.FinishedCombiningSplitFile();
+        foreach (var audioLimitRate in audioLimitRates)
+        {
+            _logger.SplitFormatLimitRates(videoFile.Id, audioLimitRate, videoLimitRate);
+        }
 
+        var downloadDurations = audioSizes
+            .Zip(audioLimitRates, (audioSize, audioLimitRate) => EstimateDownloadDuration(audioSize, audioLimitRate))
+            .Append(EstimateDownloadDuration(videoSize, videoLimitRate))
+            .ToArray();
+
+        var downloadDuration = downloadDurations.Contains(null) ? null : downloadDurations.Max();
+
+        await RefreshExpiringDataFile(dataFile, [videoFormat, .. audioFormats], downloadDuration, video, preferences, cookieFilepath, cancellationToken);
+
+        await using var processes = new AsyncDisposableList<CancelableProcess>();
+        processes.Add(CreateProcess(videoFormat, videoLimitRate));
+        foreach (var (audioFormat, audioLimitRate) in audioFormats.Zip(audioLimitRates))
+        {
+            processes.Add(CreateProcess(audioFormat, audioLimitRate));
+        }
+
+        using var stopping = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var stoppingToken = stopping.Token;
+        var failure = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var downloadTasks = new List<Task>(processes.Count);
+        downloadTasks.AddRange(processes.Select(process => StopOnFailure(RunYtdlp(process, stoppingToken), stopping)));
+
+        var downloadTask = Task.WhenAll(downloadTasks);
+        var combineTask = StopOnFailure(_ffmpegService.CombineStreams(videoFilePath, audioFilePaths, outputFilePath, stoppingToken), stopping);
+
+        // opening a FIFO blocks until ffmpeg opens it, which it does only after reading from the previous input
+        var openTasks = filePaths
+            .Select(path => Task.Run(() => File.Open(path, FileMode.Open, FileAccess.Write, FileShare.Read), CancellationToken.None))
+            .ToArray();
+
+        var copyTasks = new List<Task>();
+        copyTasks.AddRange(processes.Zip(openTasks).Select(tuple => StopOnFailure(WaitForCombineOnBrokenPipe(CopyToFifo(tuple.First, tuple.Second, stoppingToken)), stopping)));
+        var copyTask = Task.WhenAll(copyTasks);
+
+        try
+        {
+            await using (var scope = provider.CreateAsyncScope())
+            {
+                var fileRepository = scope.ServiceProvider.GetRequiredService<VideoFileRepository>();
+                await fileRepository.CreateTemporaryFile(videoFile.Id, taskRunId, outputFilePath, cancellationToken);
+            }
+
+            var timestamp = Stopwatch.GetTimestamp();
+            var fileSize = 0L;
+            var pollingDelay = TimeSpan.FromSeconds(1);
+
+            while (!downloadTask.IsCompleted)
+            {
+                var startTimestamp = Stopwatch.GetTimestamp();
+                if (!File.Exists(outputFilePath))
+                {
+                    await Task.Delay(pollingDelay, cancellationToken);
+                    continue;
+                }
+
+                var newTimestamp = Stopwatch.GetTimestamp();
+                var newFileSize = new FileInfo(outputFilePath).Length;
+
+                var elapsedSeconds = Stopwatch.GetElapsedTime(timestamp, newTimestamp).TotalSeconds;
+                var sizeDelta = newFileSize - fileSize;
+
+                timestamp = newTimestamp;
+                fileSize = newFileSize;
+
+                if (totalSize is { } total && size is not 0)
+                {
+                    var rate = sizeDelta / (decimal)elapsedSeconds;
+                    var remainingSize = total - (newFileSize + sizeOffset);
+                    var remainingDuration = rate > 0
+                        ? Period.FromNanoseconds((long)(remainingSize / rate * 1_000_000_000)).Normalize()
+                        : null;
+
+                    await taskRepository.UpdateProgress(taskRunId, fileSize + sizeOffset, rate, remainingDuration);
+                }
+
+                var remaining = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
+                if (remaining < TimeSpan.Zero)
+                {
+                    continue;
+                }
+
+                await Task.Delay(remaining, cancellationToken);
+            }
+
+            await downloadTask;
+            _logger.CompletedDownloadTasks();
+
+            await copyTask;
+            _logger.CompletedCopyTasks();
+            _logger.ClosedFifoStreams();
+
+            await combineTask;
+            _logger.FinishedCombiningSplitFile();
+        }
+        finally
+        {
+            await stopping.CancelAsync();
+            await combineTask;
+
+            // ffmpeg has exited without opening these FIFOs, so the threads opening them need a reader to be released
+            foreach (var (path, openTask) in filePaths.Zip(openTasks).Where(pair => !pair.Second.IsCompleted))
+            {
+                await using (File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                }
+
+                await StopOnFailure(openTask, stopping);
+            }
+
+            foreach (var openTask in openTasks.Where(task => task.IsCompletedSuccessfully))
+            {
+                await openTask.Result.DisposeAsync();
+            }
+        }
+
+        if (failure.Task.IsCompleted)
+        {
+            await failure.Task;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
         await MoveFileToOutput(userId, tempDirectory, videoFile, video, targetDirectory, fileName, true, cancellationToken);
 
-        File.Delete(audioFilePath);
+        foreach (var audioFilePath in audioFilePaths)
+        {
+            File.Delete(audioFilePath);
+        }
+
         File.Delete(videoFilePath);
 
         return size;
+
+        CancelableProcess CreateProcess(FormatData format, long? limitRate)
+        {
+            var options = _ytdlpWrapper.GetDownloadFormatArgs(dataFile.Path, format.FormatId, "-", cookieFilepath, limitRate);
+            return new CancelableProcess(_options.YtdlpPath, options.ToArguments(string.Empty), false);
+        }
+
+        async Task StopOnFailure(Task task, CancellationTokenSource taskCancellationSource)
+        {
+            try
+            {
+                await task;
+            }
+            catch (Exception exception) when (!taskCancellationSource.IsCancellationRequested)
+            {
+                failure.TrySetException(exception);
+                await taskCancellationSource.CancelAsync();
+            }
+            catch (Exception)
+            {
+                // Stopped because of another failure or because the download was canceled
+            }
+        }
+
+        async Task WaitForCombineOnBrokenPipe(Task task)
+        {
+            try
+            {
+                await task;
+            }
+            catch (IOException) when (!stopping.IsCancellationRequested)
+            {
+                await Task.WhenAny(combineTask, Task.Delay(TimeSpan.FromSeconds(5), CancellationToken.None));
+                throw;
+            }
+        }
+    }
+
+    private static async Task RunYtdlp(CancelableProcess process, CancellationToken cancellationToken)
+    {
+        if (await process.Run(cancellationToken) is not 0)
+        {
+            throw new Exception(YtdlpErrorOutput.GetErrorMessage(process.ErrorLines.ToArray()));
+        }
+    }
+
+    private static async Task CopyToFifo(CancelableProcess process, Task<FileStream> openTask, CancellationToken cancellationToken)
+    {
+        await using var fifo = await openTask.WaitAsync(cancellationToken);
+        await process.Output.CopyToAsync(fifo, cancellationToken);
+        await fifo.FlushAsync(cancellationToken);
     }
 
     private async ValueTask<DataFile> FetchDataFile(

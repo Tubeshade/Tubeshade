@@ -53,7 +53,7 @@ public sealed class Mp4LayoutTests
     public async Task Fragmented_ShouldNotBeStreamable()
     {
         var path = Path.Combine(_directory.FullName, "fragmented.mp4");
-        await _service.CombineStreams(_videoPath, _audioPath, path, CancellationToken.None);
+        await _service.CombineStreams(_videoPath, [_audioPath], path, CancellationToken.None);
 
         var streamable = await Mp4Layout.IsStreamable(path, CancellationToken.None);
 
@@ -76,7 +76,7 @@ public sealed class Mp4LayoutTests
     {
         var fragmentedPath = Path.Combine(_directory.FullName, "fragmented-copy.mp4");
         var path = Path.Combine(_directory.FullName, "copy.mp4");
-        await _service.CombineStreams(_videoPath, _audioPath, fragmentedPath, CancellationToken.None);
+        await _service.CombineStreams(_videoPath, [_audioPath], fragmentedPath, CancellationToken.None);
         await _service.Copy(fragmentedPath, path, CancellationToken.None);
 
         var streamable = await Mp4Layout.IsStreamable(path, CancellationToken.None);

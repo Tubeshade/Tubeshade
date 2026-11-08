@@ -35,6 +35,8 @@ _Latest build from master branch._
   ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
 - Do not delete an existing video file when moving a downloaded file to the same path fails
   ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
+- Stop streaming downloads when a yt-dlp process fails and allow canceling them, instead of hanging until the server is restarted
+  ([#230](https://github.com/Tubeshade/Tubeshade/issues/230))
 
 ## [0.1.9] - 2026-10-26
 
