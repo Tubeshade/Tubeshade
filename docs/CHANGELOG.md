@@ -48,6 +48,8 @@ _Latest build from master branch._
   ([#353](https://github.com/Tubeshade/Tubeshade/pull/353))
 - Revert the viewed switch if updating the viewed status fails
   ([#353](https://github.com/Tubeshade/Tubeshade/pull/353))
+- Run the video page scripts for videos without a thumbnail, instead of failing with a syntax error
+  ([#353](https://github.com/Tubeshade/Tubeshade/pull/353))
 
 ## [0.1.9] - 2026-10-26
 

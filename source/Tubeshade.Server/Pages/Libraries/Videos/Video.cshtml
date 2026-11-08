@@ -380,7 +380,7 @@
         }
 
         if ("mediaSession" in navigator) {
-            const posterUrl = @Html.Raw(Model.PosterUrl?.ToJson());
+            const posterUrl = @Html.Raw(Model.PosterUrl?.ToJson() ?? "null");
             if (posterUrl !== null) {
                 // since thumbnail endpoint requires authentication, the artwork source cannot be simply set to the url of the thumbnail
                 // we need to fetch it within the page context, and encode it into a data url
