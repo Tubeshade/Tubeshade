@@ -44,6 +44,10 @@ public sealed class ExecutableDetector : IPostConfigureOptions<YtdlpOptions>, IV
     /// <inheritdoc />
     public void PostConfigure(string? name, YtdlpOptions options)
     {
+        options.FfmpegPath = options.FfmpegPath.GetFullPath();
+        options.FfprobePath = options.FfprobePath.GetFullPath();
+        options.YtdlpPath = options.YtdlpPath.GetFullPath();
+
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             _logger.LogDebug("Executable auto-detection is only supported for linux");

@@ -28,8 +28,9 @@ public sealed class CancelableProcess : IAsyncDisposable
         string fileName,
         IEnumerable<string> arguments,
         bool standardOutputEvents = true,
-        bool standardErrorEvents = true)
-        : this(fileName, string.Join(' ', arguments), standardOutputEvents, standardErrorEvents)
+        bool standardErrorEvents = true,
+        string? workingDirectory = null)
+        : this(fileName, string.Join(' ', arguments), standardOutputEvents, standardErrorEvents, workingDirectory)
     {
     }
 
@@ -37,7 +38,8 @@ public sealed class CancelableProcess : IAsyncDisposable
         string fileName,
         string arguments,
         bool standardOutputEvents = true,
-        bool standardErrorEvents = true)
+        bool standardErrorEvents = true,
+        string? workingDirectory = null)
     {
         _fileName = fileName;
         _standardOutputEvents = standardOutputEvents;
@@ -52,6 +54,7 @@ public sealed class CancelableProcess : IAsyncDisposable
             RedirectStandardInput = true,
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8,
+            WorkingDirectory = workingDirectory ?? string.Empty,
         };
 
         if (OperatingSystem.IsLinux())

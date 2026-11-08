@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,30 @@ namespace Ytdlp.Tests.Processes;
 public sealed class CancelableProcessTests
 {
     private readonly string[] _args = ["--dump-json", "--verbose", "https://www.youtube.com/watch?v=njX2bu-_Vw4"];
+
+    [Test]
+    public async Task Run_ShouldUseWorkingDirectory()
+    {
+        var directory = Directory.CreateTempSubdirectory("cancelable-process");
+
+        try
+        {
+            await using var process = OperatingSystem.IsWindows()
+                ? new CancelableProcess("cmd.exe", "/c cd", workingDirectory: directory.FullName)
+                : new CancelableProcess("pwd", string.Empty, workingDirectory: directory.FullName);
+
+            var exitCode = await process.Run();
+
+            using var scope = new AssertionScope();
+
+            exitCode.Should().Be(0);
+            process.OutputLines.Should().ContainSingle().Which.Should().EndWith(directory.Name);
+        }
+        finally
+        {
+            directory.Delete();
+        }
+    }
 
     [Test]
     public async Task Run_ShouldRespectCancellation()

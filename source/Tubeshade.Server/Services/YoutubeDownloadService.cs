@@ -608,10 +608,10 @@ public sealed class YoutubeDownloadService
         await RefreshExpiringDataFile(dataFile, [videoFormat, .. audioFormats], downloadDuration, video, preferences, cookieFilepath, cancellationToken);
 
         await using var processes = new AsyncDisposableList<CancelableProcess>();
-        processes.Add(CreateProcess(videoFormat, videoLimitRate));
-        foreach (var (audioFormat, audioLimitRate) in audioFormats.Zip(audioLimitRates))
+        processes.Add(CreateProcess(videoFormat, videoFilePath, videoLimitRate));
+        foreach (var (audioFormat, audioFilePath, audioLimitRate) in audioFormats.Zip(audioFilePaths, audioLimitRates))
         {
-            processes.Add(CreateProcess(audioFormat, audioLimitRate));
+            processes.Add(CreateProcess(audioFormat, audioFilePath, audioLimitRate));
         }
 
         using var stopping = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -731,10 +731,12 @@ public sealed class YoutubeDownloadService
 
         return size;
 
-        CancelableProcess CreateProcess(FormatData format, long? limitRate)
+        CancelableProcess CreateProcess(FormatData format, string filePath, long? limitRate)
         {
+            // when writing to standard output yt-dlp stores HLS fragments in the working directory, and each stream needs its own
+            var workingDirectory = Directory.CreateDirectory($"{filePath}_fragments");
             var options = _ytdlpWrapper.GetDownloadFormatArgs(dataFile.Path, format.FormatId, "-", cookieFilepath, limitRate);
-            return new CancelableProcess(_options.YtdlpPath, options.ToArguments(string.Empty), false);
+            return new CancelableProcess(_options.YtdlpPath, options.ToArguments(string.Empty), false, workingDirectory: workingDirectory.FullName);
         }
 
         async Task StopOnFailure(Task task, CancellationTokenSource taskCancellationSource)
