@@ -50,6 +50,39 @@ public static partial class VideoDataExtensions
 
             return expiry;
         }
+
+        public FormatData[] GetSelectedFormats()
+        {
+            var formats = data.FormatId!
+                .Split('+')
+                .Distinct()
+                .Select(formatId => data.Formats!.Single(format => format.FormatId == formatId))
+                .ToArray();
+
+            // with multiple audio streams allowed yt-dlp also selects separate audio for a format that already has its own
+            if (formats.FirstOrDefault(FormatDataExtensions.HasVideoAndAudio) is { } combinedFormat)
+            {
+                return [combinedFormat];
+            }
+
+            if (formats.All(format => format.IsAudioOnly() || format.Extension is not VideoContainerType.Names.WebM))
+            {
+                return formats;
+            }
+
+            // WebM can only contain Opus or Vorbis, so other audio cannot be merged in
+            var compatibleFormats = formats.Where(format => !format.IsAudioOnly() || format.IsWebMAudio()).ToArray();
+            if (compatibleFormats.Length == formats.Length || compatibleFormats.Any(FormatDataExtensions.IsAudioOnly))
+            {
+                return compatibleFormats;
+            }
+
+            // formats are sorted from worst to best
+            var language = formats.First(FormatDataExtensions.IsAudioOnly).Language;
+            return data.Formats!.LastOrDefault(format => format.IsWebMAudio() && format.Language == language) is { } replacement
+                ? [.. compatibleFormats, replacement]
+                : throw new InvalidOperationException($"Could not find audio in language '{language}' that can be merged into a WebM video");
+        }
     }
 
     // YouTube format urls contain the expiry as a query parameter, and HLS manifest urls as a path segment

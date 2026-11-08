@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using AwesomeAssertions;
 using NodaTime;
 using NUnit.Framework;
@@ -35,6 +37,54 @@ public sealed class VideoDataExtensionsTests
     public void GetExpiry_ShouldBeNull(params string[] formatIds)
     {
         Data.GetExpiry(formatIds).Should().BeNull();
+    }
+
+    [TestCase("mp4+opus+eac3", "mp4+opus+eac3", TestName = "MP4 keeps all audio tracks")]
+    [TestCase("mp4+opus+opus", "mp4+opus", TestName = "Duplicate audio track")]
+    [TestCase("webm+opus+eac3", "webm+opus", TestName = "WebM drops audio it cannot contain")]
+    [TestCase("webm+opus+vorbis", "webm+opus+vorbis", TestName = "WebM keeps audio it can contain")]
+    [TestCase("webm+eac3", "webm+vorbis", TestName = "WebM replaces audio it cannot contain")]
+    [TestCase("webm+eac3+opus", "webm+opus", TestName = "WebM uses selected audio it can contain")]
+    [TestCase("muxed+opus+eac3", "muxed", TestName = "Format with its own audio ignores other audio")]
+    public void GetSelectedFormats(string formatId, string expectedFormatId)
+    {
+        var data = new VideoData
+        {
+            Id = "test",
+            Title = "Test video",
+            FormatId = formatId,
+            Formats =
+            [
+                Video("mp4", "mp4"),
+                Video("webm", "webm"),
+                Muxed("muxed"),
+                Audio("opus", "opus"),
+                Audio("vorbis", "vorbis"),
+                Audio("eac3", "ec-3"),
+            ],
+        };
+
+        string.Join('+', data.GetSelectedFormats().Select(format => format.FormatId)).Should().Be(expectedFormatId);
+    }
+
+    [Test]
+    public void GetSelectedFormats_ShouldReplaceAudio_WithSameLanguage()
+    {
+        var data = WebMWithAudioInLanguage("en");
+
+        string.Join('+', data.GetSelectedFormats().Select(format => format.FormatId)).Should().Be("webm+opus-en");
+    }
+
+    [Test]
+    public void GetSelectedFormats_ShouldThrow_WhenNoCompatibleAudioInSameLanguage()
+    {
+        var data = WebMWithAudioInLanguage("lv");
+
+        FluentActions
+            .Invoking(data.GetSelectedFormats)
+            .Should()
+            .Throw<InvalidOperationException>()
+            .WithMessage("*'lv'*");
     }
 
     [Test]
@@ -120,5 +170,50 @@ public sealed class VideoDataExtensionsTests
         Url = "https://example.com",
         FileSize = fileSize,
         ApproximateFileSize = approximateFileSize,
+    };
+
+    private static FormatData Video(string formatId, string extension) => new()
+    {
+        FormatId = formatId,
+        Format = formatId,
+        Extension = extension,
+        Url = "https://example.com",
+        Resolution = "1920x1080",
+        AudioCodec = "none",
+    };
+
+    private static VideoData WebMWithAudioInLanguage(string language) => new()
+    {
+        Id = "test",
+        Title = "Test video",
+        FormatId = $"webm+aac-{language}",
+        Formats =
+        [
+            Video("webm", "webm"),
+            Audio("opus-en", "opus", "en"),
+            Audio("aac-en", "mp4a.40.2", "en"),
+            Audio("aac-lv", "mp4a.40.2", "lv"),
+        ],
+    };
+
+    private static FormatData Muxed(string formatId) => new()
+    {
+        FormatId = formatId,
+        Format = formatId,
+        Extension = "mp4",
+        Url = "https://example.com",
+        Resolution = "1920x1080",
+        AudioCodec = "mp4a.40.2",
+    };
+
+    private static FormatData Audio(string formatId, string codec, string? language = null) => new()
+    {
+        Language = language,
+        FormatId = formatId,
+        Format = formatId,
+        Extension = "m4a",
+        Url = "https://example.com",
+        Resolution = "audio only",
+        AudioCodec = codec,
     };
 }

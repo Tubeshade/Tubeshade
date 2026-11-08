@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AwesomeAssertions;
@@ -23,6 +24,7 @@ public sealed class Mp4LayoutTests
     private DirectoryInfo _directory = null!;
     private string _videoPath = null!;
     private string _audioPath = null!;
+    private string _surroundAudioPath = null!;
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -30,9 +32,11 @@ public sealed class Mp4LayoutTests
         _directory = Directory.CreateTempSubdirectory("tubeshade-mp4-layout");
         _videoPath = Path.Combine(_directory.FullName, "video.mp4");
         _audioPath = Path.Combine(_directory.FullName, "audio.m4a");
+        _surroundAudioPath = Path.Combine(_directory.FullName, "surround.mp4");
 
         await RunFfmpeg("-f", "lavfi", "-i", "testsrc=duration=5:size=320x240:rate=25", "-c:v", "mpeg4", _videoPath);
         await RunFfmpeg("-f", "lavfi", "-i", "sine=duration=5", "-c:a", "aac", _audioPath);
+        await RunFfmpeg("-f", "lavfi", "-i", "sine=duration=5", "-c:a", "eac3", _surroundAudioPath);
     }
 
     [OneTimeTearDown]
@@ -82,6 +86,62 @@ public sealed class Mp4LayoutTests
         var streamable = await Mp4Layout.IsStreamable(path, CancellationToken.None);
 
         streamable.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task CombineStreams_ShouldKeepAudioTracksInOrder()
+    {
+        var path = Path.Combine(_directory.FullName, "multiple-audio.mp4");
+        await _service.CombineStreams(_videoPath, [_audioPath, _surroundAudioPath], path, CancellationToken.None);
+
+        var response = await _service.AnalyzeFile(path, CancellationToken.None);
+
+        response.Streams!.Select(stream => stream.CodecName).Should().Equal("mpeg4", "aac", "eac3");
+    }
+
+    [Test]
+    public async Task Copy_ShouldKeepAudioTracksInOrder()
+    {
+        var fragmentedPath = Path.Combine(_directory.FullName, "multiple-audio-fragmented.mp4");
+        var path = Path.Combine(_directory.FullName, "multiple-audio-copy.mp4");
+        await _service.CombineStreams(_videoPath, [_audioPath, _surroundAudioPath], fragmentedPath, CancellationToken.None);
+        await _service.Copy(fragmentedPath, path, CancellationToken.None);
+
+        var response = await _service.AnalyzeFile(path, CancellationToken.None);
+
+        response.Streams!.Select(stream => stream.CodecName).Should().Equal("mpeg4", "aac", "eac3");
+    }
+
+    [Test]
+    public async Task Copy_ShouldKeepSubtitlesAndCoverArt()
+    {
+        var subtitlePath = Path.Combine(_directory.FullName, "subtitles.srt");
+        var coverPath = Path.Combine(_directory.FullName, "cover.jpg");
+        var inputPath = Path.Combine(_directory.FullName, "subtitles-input.mp4");
+        var path = Path.Combine(_directory.FullName, "subtitles-copy.mp4");
+
+        await File.WriteAllTextAsync(subtitlePath, "1\n00:00:00,500 --> 00:00:02,000\nHello\n\n");
+        await RunFfmpeg("-f", "lavfi", "-i", "color=red:size=64x64", "-frames:v", "1", coverPath);
+        await RunFfmpeg(
+            "-i", _videoPath,
+            "-i", _audioPath,
+            "-i", subtitlePath,
+            "-i", coverPath,
+            "-map", "0:v",
+            "-map", "1:a",
+            "-map", "2:s",
+            "-map", "3:v",
+            "-c:v", "copy",
+            "-c:a", "copy",
+            "-c:s", "mov_text",
+            "-disposition:v:1", "attached_pic",
+            inputPath);
+
+        await _service.Copy(inputPath, path, CancellationToken.None);
+
+        var response = await _service.AnalyzeFile(path, CancellationToken.None);
+
+        response.Streams!.Select(stream => stream.CodecName).Should().BeEquivalentTo("mpeg4", "aac", "mov_text", "mjpeg");
     }
 
     [Test]

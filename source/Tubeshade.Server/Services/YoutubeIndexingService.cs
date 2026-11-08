@@ -29,11 +29,16 @@ public sealed class YoutubeIndexingService
 {
     private const string UpscalingFilter = "[url!*='xtags=sr%3D1']";
 
+    // yt-dlp ranks channel count above codec, so "ba" alone picks surround AC-3/E-AC-3 tracks that browsers cannot decode
+    private const string PlayableAudioFilter = "[acodec~='^(opus|mp4a)']";
+    private const string PlayableAudioFormat = $"(ba[format_note*=original]{PlayableAudioFilter}/ba[format_note*=original]/ba{PlayableAudioFilter}/ba)";
+    private const string BestAudioFormat = "(ba[format_note*=original]/ba)";
+
     internal const int DefaultVideoCount = 5;
-    internal static readonly string[] DefaultVideoFormats =
+    public static readonly string[] DefaultVideoFormats =
     [
-        $"bv{UpscalingFilter}+(ba[format_note*=original]/ba)/best{UpscalingFilter}",
-        $"bv*[height<=720]{UpscalingFilter}+(ba[format_note*=original]/ba)"
+        $"bv{UpscalingFilter}+{PlayableAudioFormat}+{BestAudioFormat}/best{UpscalingFilter}",
+        $"bv*[height<=720]{UpscalingFilter}+{PlayableAudioFormat}+{BestAudioFormat}"
     ];
 
     private readonly ILogger<YoutubeIndexingService> _logger;

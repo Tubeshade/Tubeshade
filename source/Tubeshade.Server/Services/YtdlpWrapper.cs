@@ -152,6 +152,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             var optionSet = GetDefaultOptions(null);
             optionSet.LoadInfoJson = infoJsonFilePath;
             optionSet.Format = format;
+            optionSet.AudioMultistreams = true;
             optionSet.DumpSingleJson = true;
             optionSet.Verbose = false;
 
@@ -178,17 +179,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
             throw new InvalidOperationException("Unexpected metadata type when downloading video");
         }
 
-        return results
-            .Select(result =>
-            {
-                var formatIds = result.Data!.FormatId!.Split('+');
-                var videoFormats = formatIds
-                    .Select(formatId => result.Data.Formats!.Single(format => format.FormatId == formatId))
-                    .ToArray();
-
-                return videoFormats;
-            })
-            .ToArray();
+        return results.Select(result => result.Data!.GetSelectedFormats()).ToArray();
     }
 
     /// <inheritdoc />
@@ -286,6 +277,7 @@ public sealed class YtdlpWrapper : IYtdlpWrapper
         optionSet.SubLangs = "all,-live_chat";
         optionSet.EmbedChapters = true;
         optionSet.MergeOutputFormat = mergeFormat;
+        optionSet.AudioMultistreams = true;
         optionSet.RecodeVideo = VideoRecodeFormat.None;
 
         var result = await _ytdlp.RunAsync(string.Empty, optionSet, cancellationToken);

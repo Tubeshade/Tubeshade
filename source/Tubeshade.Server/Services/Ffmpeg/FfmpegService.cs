@@ -196,7 +196,21 @@ public sealed class FfmpegService
         string outputFilePath,
         CancellationToken cancellationToken)
     {
-        var args = new List<string> { "-nostdin", "-y", "-i", $"file:{inputFilePath}", "-c", "copy" };
+        var args = new List<string>
+        {
+            "-nostdin",
+            "-y",
+            "-i",
+            $"file:{inputFilePath}",
+            "-map",
+            "0:v",
+            "-map",
+            "0:a?",
+            "-map",
+            "0:s?",
+            "-c",
+            "copy",
+        };
 
         if (outputFilePath.EndsWith("mp4"))
         {

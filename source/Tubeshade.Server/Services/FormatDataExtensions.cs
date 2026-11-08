@@ -17,6 +17,12 @@ public static class FormatDataExtensions
 
             return (decimal)Math.Round(frameRate);
         }
+
+        public bool IsAudioOnly() => data.Resolution is "audio only";
+
+        public bool IsWebMAudio() => data.IsAudioOnly() && data.AudioCodec is "opus" or "vorbis";
+
+        public bool HasVideoAndAudio() => !data.IsAudioOnly() && data.AudioCodec is not (null or "none");
     }
 
     extension(IEnumerable<FormatData> formats)
