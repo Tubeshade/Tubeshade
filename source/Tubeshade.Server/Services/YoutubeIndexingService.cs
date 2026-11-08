@@ -425,47 +425,52 @@ public sealed class YoutubeIndexingService
             using var scope = _logger.BeginScope("{FormatId}", videoFormat.FormatId);
             _logger.SelectedFormat(format);
 
+            var formatFrameRate = videoFormat.GetFrameRate();
             var containerType = VideoContainerType.FromName(videoFormat.Extension);
 
             var matchingFiles = files
                 .Where(file =>
                     file.Width == videoFormat.Width &&
-                    Math.Round(file.Framerate) >= (decimal)Math.Round(videoFormat.FrameRate ?? throw new InvalidOperationException("Video format is missing frame rate")))
+                    Math.Round(file.Framerate) >= formatFrameRate - 1)
                 .ToArray();
 
-            if (matchingFiles is [])
+            if (matchingFiles is not [])
             {
-                _logger.CreatingFileForFormat(format);
-                if (videoFormat is not { Width: { } width, Height: { } height, FrameRate: { } frameRate })
+                if (matchingFiles is [var file])
                 {
-                    throw new InvalidOperationException("Video format data is missing required data");
+                    _logger.ExistingFileForFormat(file.Id, format);
+                }
+                else
+                {
+                    _logger.ExistingFilesForFormat(format);
                 }
 
-                var fileId = await _videoFileRepository.AddAsync(
-                    new VideoFileEntity
-                    {
-                        CreatedByUserId = userId,
-                        ModifiedByUserId = userId,
-                        OwnerId = library.OwnerId,
-                        VideoId = video.Id,
-                        StoragePath = $"video_{height}.{containerType.Name}",
-                        Type = containerType,
-                        Width = width,
-                        Height = height,
-                        Framerate = (decimal)frameRate,
-                    },
-                    transaction);
+                continue;
+            }
 
-                _ = fileId ?? throw new InvalidOperationException("Failed to create file");
-            }
-            else if (matchingFiles is [var file])
+            _logger.CreatingFileForFormat(format);
+            if (videoFormat is not { Width: { } width, Height: { } height, FrameRate: { } frameRate })
             {
-                _logger.ExistingFileForFormat(file.Id, format);
+                throw new InvalidOperationException("Video format data is missing required data");
             }
-            else
-            {
-                _logger.ExistingFilesForFormat(format);
-            }
+
+            var storagePath = $"video_{height}_{(int)formatFrameRate}.{containerType.Name}";
+            var fileId = await _videoFileRepository.AddAsync(
+                new VideoFileEntity
+                {
+                    CreatedByUserId = userId,
+                    ModifiedByUserId = userId,
+                    OwnerId = library.OwnerId,
+                    VideoId = video.Id,
+                    StoragePath = storagePath,
+                    Type = containerType,
+                    Width = width,
+                    Height = height,
+                    Framerate = (decimal)frameRate,
+                },
+                transaction);
+
+            _ = fileId ?? throw new InvalidOperationException("Failed to create file");
         }
 
         var tracks = await _trackFileRepository.GetForVideo(video.Id, userId, Access.Read, transaction, cancellationToken);

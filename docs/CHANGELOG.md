@@ -31,6 +31,10 @@ _Latest build from master branch._
   ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
 - Fail with a descriptive error when YouTube requires signing in, instead of marking the video as unavailable
   ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
+- Treat formats with a one frame difference in frame rate as the same file
+  ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
+- Do not delete an existing video file when moving a downloaded file to the same path fails
+  ([#351](https://github.com/Tubeshade/Tubeshade/pull/351))
 
 ## [0.1.9] - 2026-10-26
 
