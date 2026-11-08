@@ -52,6 +52,8 @@ _Latest build from master branch._
   ([#353](https://github.com/Tubeshade/Tubeshade/pull/353))
 - Run the video page scripts for videos without a thumbnail, instead of failing with a syntax error
   ([#353](https://github.com/Tubeshade/Tubeshade/pull/353))
+- Return an error when adding a cookie without permission, instead of reporting success
+  ([#355](https://github.com/Tubeshade/Tubeshade/pull/355))
 
 ## [0.1.9] - 2026-10-26
 

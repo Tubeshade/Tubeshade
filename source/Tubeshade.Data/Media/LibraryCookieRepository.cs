@@ -107,7 +107,7 @@ public sealed class LibraryCookieRepository
             transaction,
             cancellationToken: cancellationToken);
 
-        return await _connection.QuerySingleOrDefaultAsync<Guid>(command);
+        return await _connection.QuerySingleOrDefaultAsync<Guid?>(command);
     }
 
     public async ValueTask<int> UpdateAsync(
