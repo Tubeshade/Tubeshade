@@ -948,6 +948,9 @@ public sealed class YoutubeDownloadService
             {
                 throw new InvalidOperationException($"User {userId} failed to remove ignored status from video {video.Id}");
             }
+
+            // the stored time differs from the one set above, and the next file of this video is checked against it
+            video.ModifiedAt = (await _videoRepository.GetAsync(video.Id, userId, transaction)).ModifiedAt;
         }
 
         var targetFilePath = Path.Combine(targetDirectory.FullName, fileName);
