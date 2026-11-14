@@ -11,6 +11,8 @@ _Latest build from master branch._
 
 ### Changed
 
+- Update .NET SDK from 10.0.403 to 10.0.404, and runtime from 10.0.14 to 10.0.15
+  ([#356](https://github.com/Tubeshade/Tubeshade/pull/356))
 - Update yt-dlp from 2026.10.21 to 2026.10.26
   ([#350](https://github.com/Tubeshade/Tubeshade/pull/350))
 - Start loading the preferred video resolution right away instead of switching to it after the page loads
