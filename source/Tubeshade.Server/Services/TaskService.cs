@@ -221,7 +221,7 @@ public sealed class TaskService
         CancellationToken cancellationToken)
     {
         var parameters = BlockingTaskParameters.FromTask(task, taskRunId);
-        var blockingRunIds = await _taskRepository.GetBlockingTaskRunIds(parameters, cancellationToken);
+        var blockingRunIds = await _taskRepository.GetBlockingTaskRunIdsForSystemAsync(SystemPrincipals.TaskRuns, parameters, cancellationToken);
 
         if (blockingRunIds.Count is not 0)
         {
@@ -237,7 +237,7 @@ public sealed class TaskService
                             // If the database was restarted, the connection is broken but only fails on first use, after which it is closed.
                             // It is reopened, instead of letting Dapper open it only for this query, so that it is kept open for status updates.
                             await _connection.OpenConnection(cancellationToken);
-                            return await _taskRepository.GetBlockingTaskRunIds(parameters, cancellationToken);
+                            return await _taskRepository.GetBlockingTaskRunIdsForSystemAsync(SystemPrincipals.TaskRuns, parameters, cancellationToken);
                         },
                         // The database might still be considered offline after the broken connection failed,
                         // so opening the connection again can also fail for a while.
@@ -264,10 +264,10 @@ public sealed class TaskService
     public async ValueTask DeleteOldTasks(CancellationToken cancellationToken)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var count = await _taskRepository.DeleteOldTasks(transaction, cancellationToken);
+        var count = await _taskRepository.DeleteOldTasksForSystemAsync(SystemPrincipals.Cleanup, transaction, cancellationToken);
         _logger.DeletedOldTasks(count);
 
-        var runCount = await _taskRepository.DeleteOldReindexRuns(transaction, cancellationToken);
+        var runCount = await _taskRepository.DeleteOldReindexRunsForSystemAsync(SystemPrincipals.Cleanup, transaction, cancellationToken);
         _logger.DeletedOldReindexRuns(runCount);
         await transaction.CommitAsync(cancellationToken);
     }

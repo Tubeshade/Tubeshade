@@ -76,7 +76,7 @@ public sealed class ChannelService
 
         channel.StoragePath = Path.Combine(library.StoragePath, $"channel_{channel.Id}");
         await _channelRepository.UpdateAsync(channel, transaction);
-        await _channelRepository.AddToLibrary(libraryId, channel.Id, transaction);
+        await _channelRepository.AddToLibrary(libraryId, channel.Id, userId, transaction);
 
         Directory.CreateDirectory(channel.StoragePath);
 

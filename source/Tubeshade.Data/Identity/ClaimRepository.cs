@@ -38,25 +38,25 @@ public sealed class ClaimRepository : IRepository<ClaimEntity>
     }
 
     /// <inheritdoc />
-    public ValueTask<ClaimEntity?> FindAsync(Guid id, Guid userId, Access access, CancellationToken cancellationToken = default)
+    public ValueTask<ClaimEntity?> FindAsync(Guid id, Guid userId, Permissions permissions, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public ValueTask<ClaimEntity?> FindAsync(Guid id, Guid userId, Access access, NpgsqlTransaction transaction)
+    public ValueTask<ClaimEntity?> FindAsync(Guid id, Guid userId, Permissions permissions, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public ValueTask<ClaimEntity?> FindAsync(Guid id, CancellationToken cancellationToken = default)
+    public ValueTask<ClaimEntity?> FindForSystemAsync(SystemPrincipal system, Guid id, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public ValueTask<ClaimEntity?> FindAsync(Guid id, NpgsqlTransaction transaction)
+    public ValueTask<List<ClaimEntity>> GetForSystemAsync(SystemPrincipal system, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }

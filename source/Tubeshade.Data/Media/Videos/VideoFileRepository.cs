@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
+using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Media.Videos;
 
@@ -15,11 +16,12 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        """
-        INSERT INTO media.video_files (created_by_user_id, modified_by_user_id, owner_id, video_id, storage_path, type, width, height, framerate, downloaded_at, downloaded_by_user_id, hash_algorithm, hash, storage_size) 
-        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @VideoId, @StoragePath, @Type, @Width, @Height, @Framerate,@DownloadedAt, @DownloadedByUserId, @HashAlgorithm, @Hash, @StorageSize)
-        RETURNING id;
-        """;
+        $"""
+         INSERT INTO media.video_files (created_by_user_id, modified_by_user_id, owner_id, video_id, storage_path, type, width, height, framerate, downloaded_at, downloaded_by_user_id, hash_algorithm, hash, storage_size)
+         SELECT @CreatedByUserId, @ModifiedByUserId, @OwnerId, @VideoId, @StoragePath, @Type, @Width, @Height, @Framerate,@DownloadedAt, @DownloadedByUserId, @HashAlgorithm, @Hash, @StorageSize
+         WHERE {CanCreateIn(nameof(VideoFileEntity.OwnerId))}
+         RETURNING id;
+         """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
@@ -60,8 +62,10 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
              storage_size = @{nameof(VideoFileEntity.StorageSize)}
          """;
 
-    public async ValueTask CreateTemporaryFile(
+    /// <summary>Records where the file is being downloaded to, if the user holds Update on the file.</summary>
+    public async ValueTask<bool> CreateTemporaryFile(
         Guid id,
+        Guid userId,
         Guid taskRunId,
         string path,
         CancellationToken cancellationToken)
@@ -70,14 +74,17 @@ public sealed class VideoFileRepository(NpgsqlConnection connection)
             // lang=sql
             $"""
              INSERT INTO media.video_files_downloading (file_id, task_run_id, path)
-             VALUES (@{nameof(id)}, @{nameof(taskRunId)}, @{nameof(path)})
+             SELECT video_files.id, @{nameof(taskRunId)}, @{nameof(path)}
+             FROM media.video_files
+             WHERE video_files.id = @{nameof(id)}
+               AND video_files.owner_id IN ({Access.AccessibleOwners})
              ON CONFLICT (file_id) DO
                  UPDATE SET task_run_id = @{nameof(taskRunId)},
                             path = @{nameof(path)};
              """,
-            new { id, taskRunId, path },
+            Access.Parameters(new UserPrincipal(userId), Resources.File, Permissions.Update, new { id, taskRunId, path }),
             cancellationToken: cancellationToken);
 
-        await Connection.ExecuteAsync(command);
+        return await Connection.ExecuteAsync(command) is 1;
     }
 }

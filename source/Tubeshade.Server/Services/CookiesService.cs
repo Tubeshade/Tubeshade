@@ -39,7 +39,7 @@ public sealed class CookiesService
     {
         const string domain = "youtube.com";
 
-        var cookie = await _repository.FindByDomain(domain, _userId, _libraryId, Access.Read, _cancellationToken);
+        var cookie = await _repository.FindByDomain(domain, _userId, _libraryId, Permissions.Read, _cancellationToken);
         if (cookie?.Cookie is null)
         {
             _logger.NoCookies(domain);

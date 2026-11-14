@@ -30,7 +30,6 @@ public static class ServiceCollectionExtensions
         {
             DefaultTypeMap.MatchNamesWithUnderscores = true;
 
-            SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<Access>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskType>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<RunState>());
             SqlMapper.AddTypeHandler(new SmartEnumTypeHandler<TaskSource>());
@@ -70,7 +69,6 @@ public static class ServiceCollectionExtensions
             return services
                 .AddTransient<DatabaseMigrationService>()
                 .AddScoped<OwnerRepository>()
-                .AddScoped<OwnershipRepository>()
                 .AddScoped<UserRepository>()
                 .AddScoped<UserLoginRepository>()
                 .AddScoped<IRepository<UserEntity>, UserRepository>()

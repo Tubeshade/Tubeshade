@@ -15,17 +15,18 @@ public interface IRepository<TEntity>
 
     ValueTask<TEntity> GetAsync(Guid id, Guid userId, NpgsqlTransaction transaction);
 
-    ValueTask<TEntity?> FindAsync(Guid id, Guid userId, Access access, CancellationToken cancellationToken = default);
+    /// <summary>Finds the entity if the user holds Read and <paramref name="permissions"/> on its owner.</summary>
+    ValueTask<TEntity?> FindAsync(Guid id, Guid userId, Permissions permissions, CancellationToken cancellationToken = default);
 
-    ValueTask<TEntity?> FindAsync(Guid id, Guid userId, Access access, NpgsqlTransaction transaction);
+    ValueTask<TEntity?> FindAsync(Guid id, Guid userId, Permissions permissions, NpgsqlTransaction transaction);
 
-    ValueTask<TEntity?> FindAsync(Guid id, CancellationToken cancellationToken = default);
-
-    ValueTask<TEntity?> FindAsync(Guid id, NpgsqlTransaction transaction);
+    ValueTask<TEntity?> FindForSystemAsync(SystemPrincipal system, Guid id, NpgsqlTransaction transaction);
 
     ValueTask<List<TEntity>> GetAsync(Guid userId, CancellationToken cancellationToken = default);
 
     ValueTask<List<TEntity>> GetAsync(Guid userId, NpgsqlTransaction transaction);
+
+    ValueTask<List<TEntity>> GetForSystemAsync(SystemPrincipal system, NpgsqlTransaction transaction);
 
     IAsyncEnumerable<TEntity> GetUnbufferedAsync(Guid userId);
 

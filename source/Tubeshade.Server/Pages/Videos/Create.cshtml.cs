@@ -71,7 +71,7 @@ public sealed class Create : PageModel, INonLibraryPage, IFormLayout
         await using var transaction = await _connection.OpenAndBeginTransaction();
 
         var channel = await _channelRepository.GetAsync(CreateVideo.ChannelId!.Value, userId, transaction);
-        var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, transaction);
+        var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, userId, transaction);
         var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
 
         var timeZone = _timeZoneProvider.GetZoneOrNull(CreateVideo.PublishedAtTimeZone) ??

@@ -34,7 +34,7 @@ public sealed class Video : PageModel
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         var video = await _videoRepository.GetAsync(VideoId, User.GetUserId(), transaction);
-        var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, transaction, cancellationToken);
+        var libraryId = await _channelRepository.GetPrimaryLibraryId(video.ChannelId, User.GetUserId(), transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
         return RedirectToPage("/Libraries/Videos/Video", new { libraryId, VideoId, Time });

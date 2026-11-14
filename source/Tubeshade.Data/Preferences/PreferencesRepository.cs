@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
+using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Preferences;
 
@@ -54,13 +55,32 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
          """;
 
     /// <inheritdoc />
-    protected override string AccessCte => string.Empty;
+    /// <remarks>Preferences have no owner of their own - access is inherited from the libraries and channels that use them.</remarks>
+    protected override string AccessFilter =>
+        $"""
+         (preferences.id IN (SELECT library_preferences.preference_id
+                             FROM media.library_preferences
+                             WHERE library_preferences.library_id IN ({AccessibleLibraries})
+                             UNION ALL
+                             SELECT channel_preferences.preference_id
+                             FROM media.channel_preferences
+                                 INNER JOIN media.channels ON channels.id = channel_preferences.channel_id
+                             WHERE channels.owner_id IN ({Access.AccessibleOwners})))
+         """;
 
     /// <inheritdoc />
-    protected override string UpdateAccessCte => string.Empty;
-
-    /// <inheritdoc />
-    protected override string AccessFilter => "(1 = 1)";
+    protected override string UpdateAccessFilter =>
+        $"""
+         (preferences.id IN (SELECT library_preferences.preference_id
+                             FROM media.library_preferences
+                                 INNER JOIN media.libraries ON libraries.id = library_preferences.library_id
+                             WHERE libraries.owner_id IN ({UpdatableOwners})
+                             UNION ALL
+                             SELECT channel_preferences.preference_id
+                             FROM media.channel_preferences
+                                 INNER JOIN media.channels ON channels.id = channel_preferences.channel_id
+                             WHERE channels.owner_id IN ({UpdatableOwners})))
+         """;
 
     public async ValueTask<PreferencesEntity?> FindForLibrary(
         Guid libraryId,
@@ -86,9 +106,10 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
              FROM media.libraries
                 INNER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                 INNER JOIN media.preferences ON library_preferences.preference_id = preferences.id
-             WHERE libraries.id = @{nameof(libraryId)};
+             WHERE libraries.id = @{nameof(libraryId)}
+               AND libraries.owner_id IN ({Access.AccessibleOwners});
              """,
-            new { libraryId, userId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Preferences, Permissions.Read, new { libraryId }),
             transaction));
     }
 
@@ -116,9 +137,10 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
              FROM media.libraries
                 INNER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                 INNER JOIN media.preferences ON library_preferences.preference_id = preferences.id
-             WHERE libraries.id = @{nameof(libraryId)};
+             WHERE libraries.id = @{nameof(libraryId)}
+               AND libraries.owner_id IN ({Access.AccessibleOwners});
              """,
-            new { libraryId, userId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Preferences, Permissions.Read, new { libraryId }),
             cancellationToken: cancellationToken));
     }
 
@@ -133,9 +155,12 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
             new CommandDefinition(
                 $"""
                  INSERT INTO media.library_preferences (library_id, preference_id)
-                 VALUES (@{nameof(libraryId)}, @{nameof(preferenceId)});
+                 SELECT libraries.id, @{nameof(preferenceId)}
+                 FROM media.libraries
+                 WHERE libraries.id = @{nameof(libraryId)}
+                   AND libraries.owner_id IN ({Access.AccessibleOwners});
                  """,
-                new { preferenceId, libraryId, userId },
+                Access.Parameters(new UserPrincipal(userId), Resources.Preferences, Permissions.Update, new { preferenceId, libraryId }),
                 transaction));
     }
 
@@ -162,9 +187,10 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
              FROM media.libraries
                       LEFT OUTER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                       LEFT OUTER JOIN media.preferences library_p ON library_preferences.preference_id = library_p.id
-             WHERE libraries.id = @{nameof(libraryId)};
+             WHERE libraries.id = @{nameof(libraryId)}
+               AND libraries.owner_id IN ({Access.AccessibleOwners});
              """,
-            new { libraryId, userId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Preferences, Permissions.Read, new { libraryId }),
             cancellationToken: cancellationToken));
     }
 
@@ -192,9 +218,10 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
              FROM media.channels
                 INNER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
                 INNER JOIN media.preferences ON channel_preferences.preference_id = preferences.id
-             WHERE channels.id = @{nameof(channelId)};
+             WHERE channels.id = @{nameof(channelId)}
+               AND channels.owner_id IN ({Access.AccessibleOwners});
              """,
-            new { channelId, userId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Preferences, Permissions.Read, new { channelId }),
             transaction));
     }
 
@@ -222,9 +249,10 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
              FROM media.channels
                 INNER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
                 INNER JOIN media.preferences ON channel_preferences.preference_id = preferences.id
-             WHERE channels.id = @{nameof(channelId)};
+             WHERE channels.id = @{nameof(channelId)}
+               AND channels.owner_id IN ({Access.AccessibleOwners});
              """,
-            new { channelId, userId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Preferences, Permissions.Read, new { channelId }),
             cancellationToken: cancellationToken));
     }
 
@@ -239,9 +267,12 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
             new CommandDefinition(
                 $"""
                  INSERT INTO media.channel_preferences (channel_id, preference_id)
-                 VALUES (@{nameof(channelId)}, @{nameof(preferenceId)});
+                 SELECT channels.id, @{nameof(preferenceId)}
+                 FROM media.channels
+                 WHERE channels.id = @{nameof(channelId)}
+                   AND channels.owner_id IN ({Access.AccessibleOwners});
                  """,
-                new { preferenceId, channelId, userId },
+                Access.Parameters(new UserPrincipal(userId), Resources.Preferences, Permissions.Update, new { preferenceId, channelId }),
                 transaction));
     }
 
@@ -293,9 +324,11 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                       INNER JOIN media.libraries ON libraries.id = @{nameof(libraryId)}
                       LEFT OUTER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                       LEFT OUTER JOIN media.preferences library_p ON library_preferences.preference_id = library_p.id
-             WHERE channels.id = @{nameof(channelId)} AND COALESCE(channel_p.id, library_p.id) IS NOT NULL;
+             WHERE channels.id = @{nameof(channelId)} AND COALESCE(channel_p.id, library_p.id) IS NOT NULL
+               AND channels.owner_id IN ({Access.AccessibleOwners})
+               AND libraries.owner_id IN ({Access.AccessibleOwners});
              """,
-            new { libraryId, channelId, userId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Preferences, Permissions.Read, new { libraryId, channelId }),
             transaction,
             cancellationToken: cancellationToken));
     }
@@ -330,9 +363,11 @@ public sealed class PreferencesRepository(NpgsqlConnection connection)
                       INNER JOIN media.libraries ON libraries.id = @{nameof(libraryId)}
                       LEFT OUTER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
                       LEFT OUTER JOIN media.preferences library_p ON library_preferences.preference_id = library_p.id
-             WHERE videos.id = @{nameof(videoId)} AND COALESCE(channel_p.id, library_p.id) IS NOT NULL;
+             WHERE videos.id = @{nameof(videoId)} AND COALESCE(channel_p.id, library_p.id) IS NOT NULL
+               AND videos.owner_id IN ({Access.AccessibleOwners})
+               AND libraries.owner_id IN ({Access.AccessibleOwners});
              """,
-            new { libraryId, videoId, userId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Preferences, Permissions.Read, new { libraryId, videoId }),
             transaction,
             cancellationToken: cancellationToken));
     }

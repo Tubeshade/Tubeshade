@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Tubeshade.Data.Abstractions;
 
 namespace Tubeshade.Data.Tasks;
@@ -6,7 +6,11 @@ namespace Tubeshade.Data.Tasks;
 public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
 {
     /// <inheritdoc />
-    public required Guid OwnerId { get; set; }
+    /// <remarks>
+    /// A task for a library always belongs to the library's owner, which is set when the task is added;
+    /// this is only used for tasks without a library.
+    /// </remarks>
+    public Guid OwnerId { get; set; }
 
     public required TaskType Type { get; init; }
 
@@ -40,7 +44,6 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
-        OwnerId = userId,
         Type = TaskType.Index,
         UserId = userId,
         LibraryId = libraryId,
@@ -56,7 +59,6 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
-        OwnerId = userId,
         Type = TaskType.YouTubeFeedUpdate,
         UserId = userId,
         LibraryId = libraryId,
@@ -72,7 +74,6 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
-        OwnerId = userId,
         Type = TaskType.DownloadVideo,
         UserId = userId,
         LibraryId = libraryId,
@@ -88,7 +89,6 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
-        OwnerId = userId,
         Type = TaskType.ScanChannel,
         UserId = userId,
         LibraryId = libraryId,
@@ -104,7 +104,6 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
-        OwnerId = userId,
         Type = TaskType.ScanPlaylist,
         UserId = userId,
         LibraryId = libraryId,
@@ -138,7 +137,6 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
-        OwnerId = userId,
         Type = type,
         UserId = userId,
         LibraryId = libraryId,

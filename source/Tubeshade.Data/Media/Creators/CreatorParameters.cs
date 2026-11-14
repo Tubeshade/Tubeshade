@@ -7,7 +7,9 @@ namespace Tubeshade.Data.Media.Creators;
 public sealed class CreatorParameters : IAccessParameters, IPaginatedParameters, ISortingParameters<SortCreatorBy>
 {
     /// <inheritdoc />
-    public Access Access => Access.Read;
+    public Guid PrincipalId => UserId;
+
+    public Permissions Permissions => Permissions.Read;
 
     /// <inheritdoc />
     public required int Limit { get; init; }

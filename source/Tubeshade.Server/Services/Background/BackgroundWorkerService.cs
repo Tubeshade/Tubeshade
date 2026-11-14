@@ -193,21 +193,21 @@ public sealed class BackgroundWorkerService : BackgroundService
                     // Waiting for it to finish, instead of skipping the request, ensures that if it committed,
                     // its task run is visible to the following query, since each statement sees all committed changes at ReadCommitted.
                     var request = isRetry
-                        ? await repository.TryDeleteTaskRequestWaitingForLock(taskRequestId, transaction)
-                        : await repository.TryDeleteTaskRequest(taskRequestId, transaction);
+                        ? await repository.TryDeleteTaskRequestWaitingForLockForSystemAsync(SystemPrincipals.TaskRuns, taskRequestId, transaction)
+                        : await repository.TryDeleteTaskRequestForSystemAsync(SystemPrincipals.TaskRuns, taskRequestId, transaction);
 
                     if (request is null)
                     {
                         // Either another worker handled the same request, which happens if it was queued more than once,
                         // or a previous attempt of this worker committed without the confirmation being received.
-                        if (await repository.FindTaskRunRequest(taskRunId, transaction) is not { } existingRun)
+                        if (await repository.FindTaskRunRequestForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, transaction) is not { } existingRun)
                         {
                             logger.TaskRequestAlreadyHandled(taskRequestId);
                             return DequeueResult.Nothing;
                         }
 
                         logger.ResumingTaskRun(taskRunId);
-                        if (await repository.FindAsync(existingRun.TaskId, transaction) is { } existingTask)
+                        if (await repository.FindForSystemAsync(SystemPrincipals.TaskRuns, existingRun.TaskId, transaction) is { } existingTask)
                         {
                             return DequeueResult.Dequeued(existingTask, existingRun.Source);
                         }
@@ -217,14 +217,14 @@ public sealed class BackgroundWorkerService : BackgroundService
 
                     // Locked in a separate statement, so that TryDequeueTask sees task runs committed by the previous holder of the lock.
                     // The transaction is rolled back, so that the request is not deleted and can be retried.
-                    if (!await repository.TryLockTask(request.TaskId, transaction))
+                    if (!await repository.TryLockTaskForSystemAsync(SystemPrincipals.TaskRuns, request.TaskId, transaction))
                     {
                         await transaction.RollbackAsync(stoppingToken);
                         return DequeueResult.Locked;
                     }
 
                     // the request is deleted even if the task is not dequeued, same as triggering a task that is already running
-                    if (await repository.TryDequeueTask(request.TaskId, transaction) is not { } task)
+                    if (await repository.TryDequeueTaskForSystemAsync(SystemPrincipals.TaskRuns, request.TaskId, transaction) is not { } task)
                     {
                         logger.CouldNotDequeueTask(request.TaskId);
                         await transaction.CommitAsync(stoppingToken);
@@ -232,7 +232,7 @@ public sealed class BackgroundWorkerService : BackgroundService
                     }
 
                     logger.AddingTaskRun(task.Id);
-                    await repository.AddTaskRun(taskRunId, task.Id, request.Source, transaction);
+                    await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, task.Id, request.Source, transaction);
                     await transaction.CommitAsync(stoppingToken);
                     return DequeueResult.Dequeued(task, request.Source);
                 },
@@ -283,6 +283,7 @@ public sealed class BackgroundWorkerService : BackgroundService
             task.ChannelId = result.ChannelId;
             task.PlaylistId = result.PlaylistId;
             task.VideoId = result.VideoId;
+            task.ModifiedByUserId = userId;
             await taskRepository.UpdateAsync(task);
         }
         else if (task.Type == TaskType.YouTubeFeedUpdate)
@@ -444,7 +445,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         else if (task.Type == TaskType.DeleteTasks)
         {
-            await taskRepository.StartTaskRun(taskRunId, cancellationToken);
+            await taskRepository.StartTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, cancellationToken);
             var service = provider.GetRequiredService<TaskService>();
             await service.DeleteOldTasks(cancellationToken);
         }
@@ -457,7 +458,7 @@ public sealed class BackgroundWorkerService : BackgroundService
         CancellationToken cancellationToken)
     {
         var scope = await semaphore.LockAsync(cancellationToken);
-        await repository.StartTaskRun(taskRunId, cancellationToken);
+        await repository.StartTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, cancellationToken);
 
         return scope;
     }
@@ -480,7 +481,7 @@ public sealed class BackgroundWorkerService : BackgroundService
                     // the first attempt is made even if the service is stopping, so that the result is not lost
                     await using var scope = _serviceProvider.CreateAsyncScope();
                     var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
-                    return await repository.FinishTask(taskRunId, result, taskException, CancellationToken.None);
+                    return await repository.FinishTaskForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, result, taskException, CancellationToken.None);
                 },
                 exception => RetryDelay.IsTransient(exception) && !stoppingToken.IsCancellationRequested,
                 (exception, delay) => logger.SavingTaskResultFailed(exception, taskRunId, delay),

@@ -108,20 +108,20 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     }
 
     /// <inheritdoc />
-    public ValueTask<UserEntity?> FindAsync(Guid id, Guid userId, Access access,
+    public ValueTask<UserEntity?> FindAsync(Guid id, Guid userId, Permissions permissions,
         CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public ValueTask<UserEntity?> FindAsync(Guid id, Guid userId, Access access, NpgsqlTransaction transaction)
+    public ValueTask<UserEntity?> FindAsync(Guid id, Guid userId, Permissions permissions, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }
 
-    /// <inheritdoc />
-    public async ValueTask<UserEntity?> FindAsync(Guid id, CancellationToken cancellationToken = default)
+    /// <summary>Finds the user by id, for authentication; users are not owned data.</summary>
+    public async ValueTask<UserEntity?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
             $"""
@@ -135,7 +135,12 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     }
 
     /// <inheritdoc />
-    public ValueTask<UserEntity?> FindAsync(Guid id, NpgsqlTransaction transaction)
+    public ValueTask<UserEntity?> FindForSystemAsync(SystemPrincipal system, Guid id, NpgsqlTransaction transaction)
+    {
+        throw new NotImplementedException();
+    }
+
+    public ValueTask<List<UserEntity>> GetForSystemAsync(SystemPrincipal system, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }
@@ -221,14 +226,14 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     }
 
     /// <inheritdoc />
-    public ValueTask<UserEntity?> FindAsync(string name, Guid userId, Access access,
+    public ValueTask<UserEntity?> FindAsync(string name, Guid userId, Permissions permissions,
         CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public ValueTask<UserEntity?> FindAsync(string name, Guid userId, Access access, NpgsqlTransaction transaction)
+    public ValueTask<UserEntity?> FindAsync(string name, Guid userId, Permissions permissions, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }
@@ -246,13 +251,5 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     public ValueTask<UserEntity?> FindAsync(string name, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
-    }
-
-    public async ValueTask<Guid> GetSystemUserId(NpgsqlTransaction transaction)
-    {
-        return await _connection.QuerySingleAsync<Guid>(
-            "SELECT id FROM identity.users WHERE normalized_name = 'SYSTEM';",
-            null,
-            transaction);
     }
 }

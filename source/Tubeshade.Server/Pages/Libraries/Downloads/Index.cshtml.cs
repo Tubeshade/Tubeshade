@@ -124,7 +124,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
         var userId = User.GetUserId();
 
         await using var transaction = await _connection.OpenAndBeginTransaction(CancellationToken.None);
-        var video = await _videoRepository.FindAsync(videoId, userId, Access.Modify, transaction);
+        var video = await _videoRepository.FindAsync(videoId, userId, Permissions.Update, transaction);
         if (video is null)
         {
             return NotFound();

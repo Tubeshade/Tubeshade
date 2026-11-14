@@ -8,6 +8,7 @@ using NodaTime;
 using Npgsql;
 using PubSubHubbub;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
 using static System.StringComparison;
@@ -119,10 +120,11 @@ public sealed class SubscriptionsService
         var updatedChannelCount = await _channelRepository.UpdateAsync(channel, transaction);
         Trace.Assert(updatedChannelCount is not 0);
 
-        var subscription = await _channelSubscriptionRepository.FindAsync(channelId, transaction);
+        var subscription = await _channelSubscriptionRepository.FindAsync(channelId, userId, Permissions.Update, transaction);
         if (subscription is not null)
         {
             subscription.Status = SubscriptionStatus.UnsubscriptionPending;
+            subscription.ModifiedByUserId = userId;
             await _channelSubscriptionRepository.UpdateAsync(subscription, transaction);
         }
 
@@ -142,7 +144,7 @@ public sealed class SubscriptionsService
 
     public async ValueTask RefreshSubscriptions(CancellationToken cancellationToken)
     {
-        await foreach (var subscription in _channelSubscriptionRepository.GetExpiringUnbufferedAsync().WithCancellation(cancellationToken))
+        await foreach (var subscription in _channelSubscriptionRepository.GetExpiringForSystemAsync(SystemPrincipals.Subscriptions).WithCancellation(cancellationToken))
         {
             try
             {

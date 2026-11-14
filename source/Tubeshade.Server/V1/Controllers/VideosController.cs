@@ -206,7 +206,7 @@ public sealed class VideosController : ControllerBase
 
         await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
         {
-            var images = await _imageFileRepository.GetForVideo(id, User.GetUserId(), Access.Read, transaction, cancellationToken);
+            var images = await _imageFileRepository.GetForVideo(id, User.GetUserId(), Permissions.Read, transaction, cancellationToken);
             image = images.LastOrDefault(file => file.Type == ImageType.Thumbnail);
 
             await transaction.CommitAsync(cancellationToken);
@@ -226,7 +226,7 @@ public sealed class VideosController : ControllerBase
 
         await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.RepeatableRead, cancellationToken);
         var video = await _repository.GetAsync(id, userId, transaction);
-        var files = await _trackFileRepository.GetForVideo(id, userId, Access.Read, transaction, cancellationToken);
+        var files = await _trackFileRepository.GetForVideo(id, userId, Permissions.Read, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
         var comparer = StringComparer.OrdinalIgnoreCase;
@@ -259,7 +259,7 @@ public sealed class VideosController : ControllerBase
 
         await using var transaction = await _connection.OpenAndBeginTransaction(IsolationLevel.RepeatableRead, cancellationToken);
         var video = await _repository.GetAsync(id, userId, transaction);
-        var files = await _trackFileRepository.GetForVideo(id, userId, Access.Read, transaction, cancellationToken);
+        var files = await _trackFileRepository.GetForVideo(id, userId, Permissions.Read, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
         if (files.SingleOrDefault(file => file.Type == TrackType.Chapters) is not { } trackFile)

@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Npgsql;
 using Tubeshade.Data;
-using Tubeshade.Data.Identity;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Tasks;
 using static System.Data.IsolationLevel;
@@ -14,18 +13,18 @@ namespace Tubeshade.Server.Configuration.Startup.Migrations;
 public sealed class TrackFileMigration : IApplicationMigration
 {
     private readonly NpgsqlConnection _connection;
-    private readonly UserRepository _userRepository;
+    private readonly OwnerRepository _ownerRepository;
     private readonly LibraryRepository _libraryRepository;
     private readonly TaskRepository _taskRepository;
 
     public TrackFileMigration(
         NpgsqlConnection connection,
-        UserRepository userRepository,
+        OwnerRepository ownerRepository,
         LibraryRepository libraryRepository,
         TaskRepository taskRepository)
     {
         _connection = connection;
-        _userRepository = userRepository;
+        _ownerRepository = ownerRepository;
         _libraryRepository = libraryRepository;
         _taskRepository = taskRepository;
     }
@@ -33,13 +32,12 @@ public sealed class TrackFileMigration : IApplicationMigration
     /// <inheritdoc />
     public async ValueTask MigrateAsync(CancellationToken cancellationToken)
     {
-        Guid userId;
+        var system = SystemPrincipals.StartupMigrations;
         List<LibraryEntity> libraries;
 
         await using (var transaction = await _connection.OpenAndBeginTransaction(ReadCommitted, cancellationToken))
         {
-            userId = await _userRepository.GetSystemUserId(transaction);
-            libraries = await _libraryRepository.GetAsync(userId, transaction);
+            libraries = await _libraryRepository.GetForSystemAsync(system, transaction);
 
             await transaction.CommitAsync(cancellationToken);
         }
@@ -47,6 +45,12 @@ public sealed class TrackFileMigration : IApplicationMigration
         foreach (var library in libraries)
         {
             await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+
+            if (await _ownerRepository.GetPersonalUserIdForSystemAsync(system, library.OwnerId, transaction) is not { } userId)
+            {
+                continue;
+            }
+
             var tasks = await _taskRepository.GetRunningTasks(
                 new TaskParameters
                 {
@@ -62,9 +66,9 @@ public sealed class TrackFileMigration : IApplicationMigration
             if (tasks is [])
             {
                 var task = TaskEntity.RefreshTracks(library.Id, userId);
-                if (await _taskRepository.TryAddTask(task, transaction) is { } taskId)
+                if (await _taskRepository.TryAddTaskForSystemAsync(system, task, transaction) is { } taskId)
                 {
-                    await _taskRepository.TriggerTask(taskId, TaskSource.Schedule, transaction);
+                    await _taskRepository.TriggerTaskForSystemAsync(system, taskId, TaskSource.Schedule, transaction);
                 }
             }
 

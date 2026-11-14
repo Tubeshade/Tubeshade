@@ -10,7 +10,7 @@ namespace Tubeshade.Data.Media;
 
 public sealed class LibraryCookieRepository
 {
-    private const string AccessibleLibrariesCte = RepositoryBase<LibraryCookieEntity>.AccessibleLibrariesCte;
+    private const string AccessibleLibraries = RepositoryBase<LibraryCookieEntity>.AccessibleLibraries;
 
     private readonly NpgsqlConnection _connection;
 
@@ -23,36 +23,34 @@ public sealed class LibraryCookieRepository
         string domain,
         Guid userId,
         Guid libraryId,
-        Access access,
+        Permissions permissions,
         CancellationToken cancellationToken = default)
     {
-        return FindByDomainCore(domain, userId, libraryId, access, null, cancellationToken);
+        return FindByDomainCore(domain, userId, libraryId, permissions, null, cancellationToken);
     }
 
     public ValueTask<LibraryCookieEntity?> FindByDomain(
         string domain,
         Guid userId,
         Guid libraryId,
-        Access access,
+        Permissions permissions,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {
-        return FindByDomainCore(domain, userId, libraryId, access, transaction, cancellationToken);
+        return FindByDomainCore(domain, userId, libraryId, permissions, transaction, cancellationToken);
     }
 
     private async ValueTask<LibraryCookieEntity?> FindByDomainCore(
         string domain,
         Guid userId,
         Guid libraryId,
-        Access access,
+        Permissions permissions,
         NpgsqlTransaction? transaction,
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             WITH {AccessibleLibrariesCte}
-
              SELECT cookies.id,
                     cookies.created_at,
                     cookies.created_by_user_id,
@@ -63,10 +61,10 @@ public sealed class LibraryCookieRepository
              FROM media.library_external_cookies cookies
                  INNER JOIN media.libraries ON cookies.id = libraries.id
              WHERE libraries.id = @{nameof(libraryId)}
-               AND libraries.id IN (SELECT id FROM accessible_libraries)
+               AND libraries.id IN ({AccessibleLibraries})
                AND domain = @{nameof(domain)};
              """,
-            new { UserId = userId, libraryId, Access = access, domain },
+            Access.Parameters(new UserPrincipal(userId), Resources.LibraryCookie, permissions | Permissions.Read, new { libraryId, domain }),
             transaction,
             cancellationToken: cancellationToken);
 
@@ -81,29 +79,23 @@ public sealed class LibraryCookieRepository
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             WITH {AccessibleLibrariesCte},
-                 new_cookie AS
+             WITH new_cookie AS
                  (SELECT @{nameof(entity.Id)} AS id,
                          @{nameof(entity.CreatedByUserId)} AS created_by_user_id,
                          @{nameof(entity.ModifiedByUserId)} AS modified_by_user_id,
                          @{nameof(entity.Domain)} AS domain,
                          @{nameof(entity.Cookie)} AS cookie
-                  WHERE EXISTS (SELECT 1 FROM accessible_libraries WHERE accessible_libraries.id = @{nameof(entity.Id)}))
+                  WHERE @{nameof(entity.Id)} IN ({AccessibleLibraries}))
 
              INSERT INTO media.library_external_cookies (id, created_by_user_id, modified_by_user_id, domain, cookie)
              SELECT id, created_by_user_id, modified_by_user_id, domain, cookie FROM new_cookie
              RETURNING id;
              """,
-            new
-            {
-                entity.Id,
-                entity.CreatedByUserId,
-                entity.ModifiedByUserId,
-                entity.Domain,
-                entity.Cookie,
-                UserId = entity.ModifiedByUserId,
-                Access = Access.Append,
-            },
+            Access.Parameters(
+                new UserPrincipal(entity.ModifiedByUserId),
+                Resources.LibraryCookie,
+                Permissions.Create,
+                new { entity.Id, entity.CreatedByUserId, entity.ModifiedByUserId, entity.Domain, entity.Cookie }),
             transaction,
             cancellationToken: cancellationToken);
 
@@ -118,25 +110,19 @@ public sealed class LibraryCookieRepository
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             WITH {AccessibleLibrariesCte}
-
              UPDATE media.library_external_cookies
              SET modified_at = CURRENT_TIMESTAMP,
                  modified_by_user_id = @{nameof(entity.ModifiedByUserId)},
                  domain = @{nameof(entity.Domain)},
                  cookie = @{nameof(entity.Cookie)}
              WHERE id = @Id
-               AND EXISTS(SELECT 1 FROM accessible_libraries WHERE accessible_libraries.id = @Id);
+               AND id IN ({AccessibleLibraries});
              """,
-            new
-            {
-                entity.Id,
-                entity.ModifiedByUserId,
-                entity.Domain,
-                entity.Cookie,
-                UserId = entity.ModifiedByUserId,
-                Access = Access.Modify,
-            },
+            Access.Parameters(
+                new UserPrincipal(entity.ModifiedByUserId),
+                Resources.LibraryCookie,
+                Permissions.Update,
+                new { entity.Id, entity.ModifiedByUserId, entity.Domain, entity.Cookie }),
             transaction,
             cancellationToken: cancellationToken);
 

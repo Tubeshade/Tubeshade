@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
+using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Media.Creators;
 
@@ -22,11 +23,12 @@ public sealed class CreatorRepository : ModifiableRepositoryBase<CreatorEntity>
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        """
-        INSERT INTO media.creators (created_by_user_id, modified_by_user_id, owner_id, name)
-        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name)
-        RETURNING id;
-        """;
+        $"""
+         INSERT INTO media.creators (created_by_user_id, modified_by_user_id, owner_id, name)
+         SELECT @CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name
+         WHERE {CanCreateIn(nameof(CreatorEntity.OwnerId))}
+         RETURNING id;
+         """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
@@ -48,12 +50,14 @@ public sealed class CreatorRepository : ModifiableRepositoryBase<CreatorEntity>
     {
         var command = new CommandDefinition(
             $"""
-             SELECT channel_id,
-                    "primary"
+             SELECT creator_channels.channel_id,
+                    creator_channels."primary"
              FROM media.creator_channels
-             WHERE creator_id = @{nameof(creatorId)}
+                 INNER JOIN media.creators ON creators.id = creator_channels.creator_id
+             WHERE creator_channels.creator_id = @{nameof(creatorId)}
+               AND creators.owner_id IN ({Access.AccessibleOwners})
              """,
-            new { creatorId, userId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Creator, Permissions.Read, new { creatorId }),
             cancellationToken: cancellationToken);
 
         var enumerable = await Connection.QueryAsync<CreatorChannel>(command);
@@ -73,11 +77,7 @@ public sealed class CreatorRepository : ModifiableRepositoryBase<CreatorEntity>
             $"""
              WITH libs AS (SELECT libraries.id
                            FROM media.libraries
-                               INNER JOIN identity.owners ON owners.id = media.libraries.owner_id
-                               INNER JOIN identity.ownerships ON
-                                   ownerships.owner_id = owners.id AND
-                                   ownerships.user_id = @{nameof(userId)} AND
-                                   (ownerships.access = 'read' OR ownerships.access = 'owner')),
+                           WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IAccessParameters.PrincipalId)}, {(int)Permissions.Read}))),
                  accessible AS (SELECT channel_id
                                 FROM media.library_channels
                                 WHERE EXISTS(SELECT 1 FROM libs WHERE libs.id = library_id))
@@ -86,15 +86,12 @@ public sealed class CreatorRepository : ModifiableRepositoryBase<CreatorEntity>
              DELETE
              FROM media.creator_channels
              WHERE creator_id = @{nameof(creatorId)}
+               AND creator_id IN (SELECT creators.id FROM media.creators WHERE creators.owner_id IN ({Access.AccessibleOwners}))
                AND EXISTS(SELECT 1 FROM accessible WHERE accessible.channel_id = creator_channels.channel_id);
 
              WITH libs AS (SELECT libraries.id
                            FROM media.libraries
-                               INNER JOIN identity.owners ON owners.id = media.libraries.owner_id
-                               INNER JOIN identity.ownerships ON
-                                   ownerships.owner_id = owners.id AND
-                                   ownerships.user_id = @{nameof(userId)} AND
-                                   (ownerships.access = 'read' OR ownerships.access = 'owner')),
+                           WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IAccessParameters.PrincipalId)}, {(int)Permissions.Read}))),
                  accessible AS (SELECT channel_id
                                 FROM media.library_channels
                                 WHERE EXISTS(SELECT 1 FROM libs WHERE libs.id = library_id)),
@@ -102,7 +99,8 @@ public sealed class CreatorRepository : ModifiableRepositoryBase<CreatorEntity>
                                        channel_id,
                                        false AS "primary"
                                 FROM UNNEST(@{nameof(channelIds)}) AS t(channel_id)
-                                WHERE EXISTS(SELECT 1 from accessible WHERE accessible.channel_id = t.channel_id))
+                                WHERE EXISTS(SELECT 1 from accessible WHERE accessible.channel_id = t.channel_id)
+                                  AND @{nameof(creatorId)} IN (SELECT creators.id FROM media.creators WHERE creators.owner_id IN ({Access.AccessibleOwners})))
 
              INSERT
              INTO media.creator_channels (creator_id, channel_id, "primary")
@@ -111,11 +109,7 @@ public sealed class CreatorRepository : ModifiableRepositoryBase<CreatorEntity>
              
              WITH libs AS (SELECT libraries.id
                            FROM media.libraries
-                               INNER JOIN identity.owners ON owners.id = media.libraries.owner_id
-                               INNER JOIN identity.ownerships ON
-                                   ownerships.owner_id = owners.id AND
-                                   ownerships.user_id = @{nameof(userId)} AND
-                                   (ownerships.access = 'read' OR ownerships.access = 'owner')),
+                           WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IAccessParameters.PrincipalId)}, {(int)Permissions.Read}))),
                  accessible AS (SELECT channel_id
                                 FROM media.library_channels
                                 WHERE EXISTS(SELECT 1 FROM libs WHERE libs.id = library_id)),
@@ -127,9 +121,10 @@ public sealed class CreatorRepository : ModifiableRepositoryBase<CreatorEntity>
              INTO media.creator_channels (creator_id, channel_id, "primary")
              SELECT * 
              FROM insertable
-             WHERE EXISTS(SELECT 1 FROM accessible WHERE accessible.channel_id = insertable.channel_id);
+             WHERE EXISTS(SELECT 1 FROM accessible WHERE accessible.channel_id = insertable.channel_id)
+               AND @{nameof(creatorId)} IN (SELECT creators.id FROM media.creators WHERE creators.owner_id IN ({Access.AccessibleOwners}));
              """,
-            new { creatorId, primaryChannelId, channelIds, userId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Creator, Permissions.Update, new { creatorId, primaryChannelId, channelIds }),
             transaction,
             cancellationToken: cancellationToken);
 
@@ -149,16 +144,7 @@ public sealed class CreatorRepository : ModifiableRepositoryBase<CreatorEntity>
     private string GetFilteredQuery(CreatorParameters parameters) =>
         // lang=sql
         $"""
-         WITH accessible AS
-             (SELECT creators.id
-              FROM media.creators
-                  INNER JOIN identity.owners ON owners.id = creators.owner_id
-                  INNER JOIN identity.ownerships ON
-                      ownerships.owner_id = owners.id AND
-                      ownerships.user_id = @{nameof(parameters.UserId)} AND
-                      (ownerships.access = @{nameof(parameters.Access)} OR ownerships.access = 'owner')),
-
-             parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query),
+         WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query),
 
              filtered AS (
                  SELECT id,
@@ -174,7 +160,7 @@ public sealed class CreatorRepository : ModifiableRepositoryBase<CreatorEntity>
                         count(*) OVER()                                   AS total_count
                  FROM media.creators
                      CROSS JOIN parameters
-                 WHERE (creators.id IN (SELECT id FROM accessible))
+                 WHERE (creators.owner_id IN ({Access.AccessibleOwners}))
                    AND (@{nameof(parameters.LibraryId)} IS NULL OR EXISTS(SELECT 1
                                                                          FROM media.library_channels
                                                                              INNER JOIN media.creator_channels ON library_channels.channel_id = creator_channels.channel_id

@@ -1,29 +1,27 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Ardalis.SmartEnum;
+﻿using Dapper;
 
 namespace Tubeshade.Data.AccessControl;
 
-[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
-public sealed class Access : SmartEnum<Access, int>
+public static class Access
 {
-    public static readonly Access Read = new(Names.Read, 1);
-    public static readonly Access Append = new(Names.Append, 2);
-    public static readonly Access Modify = new(Names.Modify, 3);
-    public static readonly Access Delete = new(Names.Delete, 4);
-    public static readonly Access Owner = new(Names.Owner, 5);
+    // lang=sql
+    public const string AccessibleOwners =
+        $"SELECT owner_id FROM access.accessible_owners(@{nameof(IAccessParameters.PrincipalId)}, @{nameof(IAccessParameters.Permissions)})";
 
-    private Access(string name, int value)
-        : base(name, value)
+    public static DynamicParameters? Parameters(
+        Principal principal,
+        Resource resource,
+        Permissions permissions,
+        object? values = null)
     {
-    }
+        if (!principal.Allows(resource, permissions))
+        {
+            return null;
+        }
 
-    [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
-    public static class Names
-    {
-        public const string Read = "read";
-        public const string Append = "append";
-        public const string Modify = "modify";
-        public const string Delete = "delete";
-        public const string Owner = "owner";
+        var parameters = new DynamicParameters(values);
+        parameters.Add(nameof(IAccessParameters.PrincipalId), principal.GrantHolderId);
+        parameters.Add(nameof(IAccessParameters.Permissions), (int)permissions);
+        return parameters;
     }
 }

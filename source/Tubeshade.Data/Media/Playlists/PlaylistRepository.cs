@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -22,11 +22,14 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        """
-        INSERT INTO media.playlists (created_by_user_id, modified_by_user_id, library_id, storage_path, external_id, external_url, name, refreshed_at, subscribed_at)
-        VALUES (@CreatedByUserId, @ModifiedByUserId, @LibraryId, @StoragePath, @ExternalId, @ExternalUrl, @Name, @RefreshedAt, @SubscribedAt)
-        RETURNING id;
-        """;
+        $"""
+         INSERT INTO media.playlists (created_by_user_id, modified_by_user_id, library_id, storage_path, external_id, external_url, name, refreshed_at, subscribed_at)
+         SELECT @CreatedByUserId, @ModifiedByUserId, @LibraryId, @StoragePath, @ExternalId, @ExternalUrl, @Name, @RefreshedAt, @SubscribedAt
+         WHERE @{nameof(PlaylistEntity.LibraryId)} IN (SELECT libraries.id
+                                                      FROM media.libraries
+                                                      WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IEntity.CreatedByUserId)}, {(int)Permissions.Create})))
+         RETURNING id;
+         """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
@@ -60,19 +63,19 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
 
     /// <inheritdoc />
     /// <remarks>Playlists have no owner of their own - access is inherited from the library that contains them.</remarks>
-    protected override string AccessCte => GetAccessCte(nameof(GetParameters.UserId), nameof(GetParameters.Access));
+    protected override string AccessFilter => $"(playlists.library_id IN ({AccessibleLibraries}))";
 
     /// <inheritdoc />
     /// <remarks>Playlists have no owner of their own - access is inherited from the library that contains them.</remarks>
-    protected override string UpdateAccessCte =>
-        GetAccessCte(nameof(IModifiableEntity.ModifiedByUserId), nameof(IModifiableEntity.AccessFoo));
+    protected override string UpdateAccessFilter =>
+        $"(playlists.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN ({UpdatableOwners})))";
 
     /// <remarks>Playlist identity is only unique within a library, so the library must be specified.</remarks>
     public async ValueTask<PlaylistEntity?> FindByExternalId(
         string externalId,
         Guid libraryId,
         Guid userId,
-        Access access,
+        Permissions permissions,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -81,7 +84,7 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
                AND {TableName}.external_id = @{nameof(GetSingleLibraryExternalParameters.ExternalId)}
                AND {TableName}.library_id = @{nameof(GetSingleLibraryExternalParameters.LibraryId)};
              """,
-            new GetSingleLibraryExternalParameters(externalId, libraryId, userId, access),
+            new GetSingleLibraryExternalParameters(externalId, libraryId, userId, permissions | Permissions.Read),
             transaction);
 
         return await Connection.QuerySingleOrDefaultAsync<PlaylistEntity>(command);
@@ -99,7 +102,7 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
                 AND playlists.library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
                 AND playlists.subscribed_at IS NOT NULL;
              """,
-            new GetFromLibraryParameters(userId, libraryId, Access.Read),
+            new GetFromLibraryParameters(userId, libraryId, Permissions.Read),
             transaction);
 
         var enumerable = await Connection.QueryAsync<PlaylistEntity>(command);
@@ -108,31 +111,46 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
 
     /// <summary>Replaces all entries of the playlist with <paramref name="videoIds"/>, in the given order.</summary>
     /// <remarks>The same video may occur multiple times in the list, mirroring playlists on external services.</remarks>
-    public async ValueTask ReplaceVideos(
+    public async ValueTask<bool> ReplaceVideos(
         Guid playlistId,
         Guid[] videoIds,
+        Guid userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             DELETE FROM media.playlist_videos
-             WHERE playlist_id = @{nameof(playlistId)};
+             WITH playlist AS
+                 (SELECT playlists.id
+                  FROM media.playlists
+                  WHERE playlists.id = @{nameof(playlistId)}
+                    AND playlists.library_id IN ({AccessibleLibraries})),
 
-             INSERT INTO media.playlist_videos (playlist_id, video_id, "order")
-             SELECT @{nameof(playlistId)}, video_id, ordinality - 1
-             FROM UNNEST(@{nameof(videoIds)}) WITH ORDINALITY AS entries(video_id, ordinality);
+                  deleted AS
+                 (DELETE FROM media.playlist_videos
+                  WHERE playlist_id IN (SELECT id FROM playlist)),
+
+                  inserted AS
+                 (INSERT INTO media.playlist_videos (playlist_id, video_id, "order")
+                  SELECT playlist.id, entries.video_id, entries.ordinality - 1
+                  FROM UNNEST(@{nameof(videoIds)}) WITH ORDINALITY AS entries(video_id, ordinality)
+                      CROSS JOIN playlist
+                      INNER JOIN media.videos ON videos.id = entries.video_id
+                  WHERE videos.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IAccessParameters.PrincipalId)}, {(int)Permissions.Read})))
+
+             SELECT count(*) FROM playlist;
              """,
-            new { playlistId, videoIds },
+            Access.Parameters(new UserPrincipal(userId), Resources.Playlist, Permissions.Update, new { playlistId, videoIds }),
             transaction,
             cancellationToken: cancellationToken);
 
-        await Connection.ExecuteAsync(command);
+        return await Connection.QuerySingleAsync<long>(command) is 1;
     }
 
     public async ValueTask<List<string>> GetVideoUrls(
         Guid playlistId,
+        Guid userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {
@@ -143,9 +161,10 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
              INNER JOIN media.playlist_videos ON playlists.id = playlist_videos.playlist_id
              INNER JOIN media.videos ON playlist_videos.video_id = videos.id
              WHERE playlists.id = @{nameof(playlistId)}
+               AND playlists.library_id IN ({AccessibleLibraries})
              ORDER BY playlist_videos."order";
              """,
-            new { playlistId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Playlist, Permissions.Read, new { playlistId }),
             transaction,
             cancellationToken: cancellationToken);
 
@@ -179,34 +198,10 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
             .ToList();
     }
 
-    private static string GetAccessCte(string userIdParameter, string accessParameter) =>
-        // lang=sql
-        $"""
-         WITH accessible AS
-         (SELECT playlists.id
-          FROM media.playlists
-                   INNER JOIN media.libraries ON libraries.id = playlists.library_id
-                   INNER JOIN identity.owners ON owners.id = libraries.owner_id
-                   INNER JOIN identity.ownerships ON
-              ownerships.owner_id = owners.id AND
-              ownerships.user_id = @{userIdParameter} AND
-              (ownerships.access = @{accessParameter} OR ownerships.access = 'owner'))
-         """;
-
     private static string GetFilteredQuery(PlaylistParameters parameters) =>
         // lang=sql
         $"""
-         WITH accessible AS
-             (SELECT playlists.id
-              FROM media.playlists
-                  INNER JOIN media.libraries ON libraries.id = playlists.library_id
-                  INNER JOIN identity.owners ON owners.id = libraries.owner_id
-                  INNER JOIN identity.ownerships ON
-                      ownerships.owner_id = owners.id AND
-                      ownerships.user_id = @{nameof(parameters.UserId)} AND
-                      (ownerships.access = @{nameof(parameters.Access)} OR ownerships.access = 'owner')),
-
-             parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query),
+         WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query),
 
              filtered AS (
                  SELECT id,
@@ -227,7 +222,7 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
                         count(*) OVER()                                    AS total_count
                  FROM media.playlists
                      CROSS JOIN parameters
-                 WHERE (playlists.id IN (SELECT id FROM accessible))
+                 WHERE (playlists.library_id IN ({AccessibleLibraries}))
                    AND (@{nameof(parameters.LibraryId)} IS NULL OR playlists.library_id = @{nameof(parameters.LibraryId)})
                    AND (@{nameof(parameters.Query)} IS NULL OR playlists.name @@ query)
                  ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, playlists.id

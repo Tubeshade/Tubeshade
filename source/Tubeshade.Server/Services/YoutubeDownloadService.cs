@@ -109,7 +109,7 @@ public sealed class YoutubeDownloadService
 
         await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
         {
-            var tracks = await _trackFileRepository.GetForVideo(video.Id, userId, Access.Read, transaction, cancellationToken);
+            var tracks = await _trackFileRepository.GetForVideo(video.Id, userId, Permissions.Read, transaction, cancellationToken);
 
             var videoDirectory = new DirectoryInfo(video.GetDirectoryPath());
             await _trackFileService.CreateOrUpdateSubtitles(
@@ -148,7 +148,7 @@ public sealed class YoutubeDownloadService
 
         if (totalSize.HasValue)
         {
-            await taskRepository.InitializeTaskProgress(taskRunId, totalSize.Value);
+            await taskRepository.InitializeTaskProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, totalSize.Value);
         }
 
         var targetDirectoryPath = video.GetDirectoryPath();
@@ -237,7 +237,7 @@ public sealed class YoutubeDownloadService
                         ? Period.FromNanoseconds((long)(remainingSize / rate * 1_000_000_000)).Normalize()
                         : null;
 
-                    await taskRepository.UpdateProgress(taskRunId, fileSize + sizeOffset, rate, remainingDuration);
+                    await taskRepository.UpdateProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, fileSize + sizeOffset, rate, remainingDuration);
                 }
 
                 var remaining2 = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
@@ -299,7 +299,7 @@ public sealed class YoutubeDownloadService
 
         if (totalSize.HasValue)
         {
-            await taskRepository.InitializeTaskProgress(taskRunId, totalSize.Value);
+            await taskRepository.InitializeTaskProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, totalSize.Value);
         }
 
         var targetDirectory = Directory.CreateDirectory(video.GetDirectoryPath());
@@ -449,7 +449,7 @@ public sealed class YoutubeDownloadService
             var fileRepository = scope.ServiceProvider.GetRequiredService<VideoFileRepository>();
 
             var path = Path.Combine(tempDirectory.FullName, fileName);
-            await fileRepository.CreateTemporaryFile(videoFile.Id, taskRunId, path, cancellationToken);
+            await fileRepository.CreateTemporaryFile(videoFile.Id, userId, taskRunId, path, cancellationToken);
         }
 
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
@@ -509,7 +509,7 @@ public sealed class YoutubeDownloadService
                     ? Period.FromNanoseconds((long)(remainingSize / rate * 1_000_000_000)).Normalize()
                     : null;
 
-                await taskRepository.UpdateProgress(taskRunId, fileSize + sizeOffset, rate, remainingDuration);
+                await taskRepository.UpdateProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, fileSize + sizeOffset, rate, remainingDuration);
             }
 
             var remaining2 = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);
@@ -634,7 +634,7 @@ public sealed class YoutubeDownloadService
             await using (var scope = provider.CreateAsyncScope())
             {
                 var fileRepository = scope.ServiceProvider.GetRequiredService<VideoFileRepository>();
-                await fileRepository.CreateTemporaryFile(videoFile.Id, taskRunId, outputFilePath, cancellationToken);
+                await fileRepository.CreateTemporaryFile(videoFile.Id, userId, taskRunId, outputFilePath, cancellationToken);
             }
 
             var timestamp = Stopwatch.GetTimestamp();
@@ -667,7 +667,7 @@ public sealed class YoutubeDownloadService
                         ? Period.FromNanoseconds((long)(remainingSize / rate * 1_000_000_000)).Normalize()
                         : null;
 
-                    await taskRepository.UpdateProgress(taskRunId, fileSize + sizeOffset, rate, remainingDuration);
+                    await taskRepository.UpdateProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, fileSize + sizeOffset, rate, remainingDuration);
                 }
 
                 var remaining = pollingDelay - Stopwatch.GetElapsedTime(startTimestamp);

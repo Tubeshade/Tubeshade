@@ -19,7 +19,6 @@ namespace Tubeshade.Server.Tests.Integration.Media;
 
 public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fixture)
 {
-    private Guid _userId;
     private Guid _libraryId;
     private Guid _channelId;
 
@@ -29,24 +28,18 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
         await using var scope = Fixture.Services.CreateAsyncScope();
         var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
 
-        await using (var transaction = await connection.OpenAndBeginTransaction())
-        {
-            var userRepository = scope.ServiceProvider.GetRequiredService<UserRepository>();
-            _userId = await userRepository.GetSystemUserId(transaction);
-            await transaction.CommitAsync();
-        }
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            _libraryId = await CreateLibrary(_userId, scope.ServiceProvider, transaction);
+            _libraryId = await CreateLibrary(User.Id, scope.ServiceProvider, transaction);
 
             var channelRepository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
             _channelId = (await channelRepository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = Guid.NewGuid().ToString("N"),
                     StoragePath = string.Empty,
                     ExternalId = string.Empty,
@@ -55,7 +48,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
                 },
                 transaction))!.Value;
 
-            await channelRepository.AddToLibrary(_libraryId, _channelId, transaction);
+            await channelRepository.AddToLibrary(_libraryId, _channelId, User.Id, transaction);
 
             await transaction.CommitAsync();
         }
@@ -77,9 +70,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             notViewedId = (await repository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = Guid.NewGuid().ToString("N"),
                     Description = string.Empty,
                     Categories = [],
@@ -99,16 +92,16 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             await fileRepository.AddAsync(
                 new VideoFileEntity
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     VideoId = notViewedId,
                     StoragePath = string.Empty,
                     Type = VideoContainerType.Mp4,
                     Width = 0,
                     Height = 0,
                     Framerate = 0,
-                    DownloadedByUserId = _userId,
+                    DownloadedByUserId = User.Id,
                     DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
                 },
                 transaction);
@@ -116,9 +109,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             viewedId = (await repository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = Guid.NewGuid().ToString("N"),
                     Description = string.Empty,
                     Categories = [],
@@ -138,21 +131,21 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             await fileRepository.AddAsync(
                 new VideoFileEntity
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     VideoId = viewedId,
                     StoragePath = string.Empty,
                     Type = VideoContainerType.Mp4,
                     Width = 0,
                     Height = 0,
                     Framerate = 0,
-                    DownloadedByUserId = _userId,
+                    DownloadedByUserId = User.Id,
                     DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
                 },
                 transaction);
 
-            await repository.SetWatched(viewedId, _userId, true, transaction);
+            await repository.SetWatched(viewedId, User.Id, true, transaction);
 
             await transaction.CommitAsync();
         }
@@ -162,7 +155,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             {
                 SortBy = SortVideoBy.PublishedAt,
                 SortDirection = SortDirection.Descending,
-                UserId = _userId,
+                UserId = User.Id,
                 LibraryId = _libraryId,
                 Limit = 24,
                 Offset = 0,
@@ -174,7 +167,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             {
                 SortBy = SortVideoBy.PublishedAt,
                 SortDirection = SortDirection.Descending,
-                UserId = _userId,
+                UserId = User.Id,
                 LibraryId = _libraryId,
                 Limit = 24,
                 Offset = 0,
@@ -186,7 +179,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             {
                 SortBy = SortVideoBy.PublishedAt,
                 SortDirection = SortDirection.Descending,
-                UserId = _userId,
+                UserId = User.Id,
                 LibraryId = _libraryId,
                 Limit = 24,
                 Offset = 0,
@@ -209,15 +202,15 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
         await using var transaction = await connection.OpenAndBeginTransaction();
         var videoId = await AddVideo(repository, transaction);
 
-        var initialStatistics = await repository.GetPlaybackStatistics(videoId, _userId, transaction);
+        var initialStatistics = await repository.GetPlaybackStatistics(videoId, User.Id, transaction);
 
-        await repository.SavePlaybackActivity(videoId, _userId, 30, 15, 30, transaction);
-        await repository.SavePlaybackActivity(videoId, _userId, 60, 15.5, 31, transaction);
-        await repository.AddPlay(videoId, _userId, transaction);
-        await repository.AddPlay(videoId, _userId, transaction);
+        await repository.SavePlaybackActivity(videoId, User.Id, 30, 15, 30, transaction);
+        await repository.SavePlaybackActivity(videoId, User.Id, 60, 15.5, 31, transaction);
+        await repository.AddPlay(videoId, User.Id, transaction);
+        await repository.AddPlay(videoId, User.Id, transaction);
 
-        var statistics = await repository.GetPlaybackStatistics(videoId, _userId, transaction);
-        var video = await repository.GetAsync(videoId, _userId, transaction);
+        var statistics = await repository.GetPlaybackStatistics(videoId, User.Id, transaction);
+        var video = await repository.GetAsync(videoId, User.Id, transaction);
 
         using (new AssertionScope())
         {
@@ -256,16 +249,16 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             (await repository.AddPlay(videoId, otherUserId, transaction)).Should().Be(0);
             (await repository.SetWatched(videoId, otherUserId, true, transaction)).Should().Be(0);
             (await repository.SetWatched(videoId, otherUserId, false, transaction)).Should().Be(0);
-            (await repository.SavePlaybackActivity(Guid.NewGuid(), _userId, 30, 15, 30, transaction)).Should().Be(0);
-            (await repository.AddPlay(Guid.NewGuid(), _userId, transaction)).Should().Be(0);
-            (await repository.SetWatched(Guid.NewGuid(), _userId, true, transaction)).Should().Be(0);
-            (await repository.SetWatched(Guid.NewGuid(), _userId, false, transaction)).Should().Be(0);
+            (await repository.SavePlaybackActivity(Guid.NewGuid(), User.Id, 30, 15, 30, transaction)).Should().Be(0);
+            (await repository.AddPlay(Guid.NewGuid(), User.Id, transaction)).Should().Be(0);
+            (await repository.SetWatched(Guid.NewGuid(), User.Id, true, transaction)).Should().Be(0);
+            (await repository.SetWatched(Guid.NewGuid(), User.Id, false, transaction)).Should().Be(0);
 
             // marking a video that was never watched as not watched still succeeds
-            (await repository.SetWatched(videoId, _userId, false, transaction)).Should().Be(1);
-            (await repository.SetWatched(videoId, _userId, true, transaction)).Should().Be(1);
-            (await repository.SavePlaybackActivity(videoId, _userId, 30, 15, 30, transaction)).Should().Be(1);
-            (await repository.AddPlay(videoId, _userId, transaction)).Should().Be(1);
+            (await repository.SetWatched(videoId, User.Id, false, transaction)).Should().Be(1);
+            (await repository.SetWatched(videoId, User.Id, true, transaction)).Should().Be(1);
+            (await repository.SavePlaybackActivity(videoId, User.Id, 30, 15, 30, transaction)).Should().Be(1);
+            (await repository.AddPlay(videoId, User.Id, transaction)).Should().Be(1);
         }
     }
 
@@ -286,9 +279,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             withoutSegments = (await repository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = Guid.NewGuid().ToString("N"),
                     Description = string.Empty,
                     Categories = [],
@@ -308,9 +301,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             withUnlockedSegments = (await repository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = Guid.NewGuid().ToString("N"),
                     Description = string.Empty,
                     Categories = [],
@@ -330,8 +323,8 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             await segmentRepository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
                     VideoId = withUnlockedSegments,
                     ExternalId = Guid.NewGuid().ToString(),
                     StartTime = 0,
@@ -345,9 +338,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             withMixedSegments = (await repository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = Guid.NewGuid().ToString("N"),
                     Description = string.Empty,
                     Categories = [],
@@ -367,8 +360,8 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             await segmentRepository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
                     VideoId = withMixedSegments,
                     ExternalId = Guid.NewGuid().ToString(),
                     StartTime = 0,
@@ -382,8 +375,8 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             await segmentRepository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
                     VideoId = withMixedSegments,
                     ExternalId = Guid.NewGuid().ToString(),
                     StartTime = 0,
@@ -397,9 +390,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             var withLockedSegments = (await repository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = Guid.NewGuid().ToString("N"),
                     Description = string.Empty,
                     Categories = [],
@@ -419,8 +412,8 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             await segmentRepository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
                     VideoId = withLockedSegments,
                     ExternalId = Guid.NewGuid().ToString(),
                     StartTime = 0,
@@ -436,8 +429,8 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var without = await repository.GetWithoutSegments(_userId, _libraryId, transaction);
-            var unlocked = await repository.GetWithUnlockedSegments(_userId, _libraryId, transaction);
+            var without = await repository.GetWithoutSegments(User.Id, _libraryId, transaction);
+            var unlocked = await repository.GetWithUnlockedSegments(User.Id, _libraryId, transaction);
 
             without.Select(id => id.Id).Should().BeEquivalentTo([withoutSegments]);
             unlocked.Select(id => id.Id).Should().BeEquivalentTo([withUnlockedSegments, withMixedSegments]);
@@ -460,9 +453,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             nameId = (await repository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
                     Description = string.Empty,
                     Categories = [],
@@ -482,16 +475,16 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             await fileRepository.AddAsync(
                 new VideoFileEntity
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     VideoId = nameId,
                     StoragePath = string.Empty,
                     Type = VideoContainerType.Mp4,
                     Width = 0,
                     Height = 0,
                     Framerate = 0,
-                    DownloadedByUserId = _userId,
+                    DownloadedByUserId = User.Id,
                     DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
                 },
                 transaction);
@@ -499,9 +492,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             descriptionId = (await repository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = Guid.NewGuid().ToString("N"),
                     Description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
                     Categories = [],
@@ -521,21 +514,21 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             await fileRepository.AddAsync(
                 new VideoFileEntity
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     VideoId = descriptionId,
                     StoragePath = string.Empty,
                     Type = VideoContainerType.Mp4,
                     Width = 0,
                     Height = 0,
                     Framerate = 0,
-                    DownloadedByUserId = _userId,
+                    DownloadedByUserId = User.Id,
                     DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
                 },
                 transaction);
 
-            await repository.SetWatched(descriptionId, _userId, true, transaction);
+            await repository.SetWatched(descriptionId, User.Id, true, transaction);
 
             await transaction.CommitAsync();
         }
@@ -545,7 +538,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             {
                 SortBy = SortVideoBy.Query,
                 SortDirection = SortDirection.Descending,
-                UserId = _userId,
+                UserId = User.Id,
                 LibraryId = _libraryId,
                 Limit = 24,
                 Offset = 0,
@@ -557,7 +550,7 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             {
                 SortBy = SortVideoBy.Query,
                 SortDirection = SortDirection.Ascending,
-                UserId = _userId,
+                UserId = User.Id,
                 LibraryId = _libraryId,
                 Limit = 24,
                 Offset = 0,
@@ -574,9 +567,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
         return (await repository.AddAsync(
             new()
             {
-                CreatedByUserId = _userId,
-                ModifiedByUserId = _userId,
-                OwnerId = _userId,
+                CreatedByUserId = User.Id,
+                ModifiedByUserId = User.Id,
+                OwnerId = User.OwnerId,
                 Name = Guid.NewGuid().ToString("N"),
                 Description = string.Empty,
                 Categories = [],

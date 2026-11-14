@@ -11,7 +11,7 @@ using NodaTime;
 using Npgsql;
 using PubSubHubbub;
 using Tubeshade.Data;
-using Tubeshade.Data.Identity;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
 using Tubeshade.Server.Services;
@@ -30,7 +30,7 @@ public sealed class NotificationsController : ControllerBase
     private readonly NpgsqlConnection _connection;
     private readonly ChannelRepository _channelRepository;
     private readonly ChannelSubscriptionRepository _channelSubscriptionRepository;
-    private readonly UserRepository _userRepository;
+    private readonly OwnerRepository _ownerRepository;
     private readonly TaskService _taskService;
 
     public NotificationsController(
@@ -39,7 +39,7 @@ public sealed class NotificationsController : ControllerBase
         NpgsqlConnection connection,
         ChannelRepository channelRepository,
         ChannelSubscriptionRepository channelSubscriptionRepository,
-        UserRepository userRepository,
+        OwnerRepository ownerRepository,
         TaskService taskService)
     {
         _logger = logger;
@@ -47,7 +47,7 @@ public sealed class NotificationsController : ControllerBase
         _connection = connection;
         _channelRepository = channelRepository;
         _channelSubscriptionRepository = channelSubscriptionRepository;
-        _userRepository = userRepository;
+        _ownerRepository = ownerRepository;
         _taskService = taskService;
     }
 
@@ -68,7 +68,7 @@ public sealed class NotificationsController : ControllerBase
         var currentTime = _clock.GetCurrentInstant();
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
-        var channel = await _channelRepository.FindAsync(channelId, transaction);
+        var channel = await _channelRepository.FindForSystemAsync(SystemPrincipals.Webhook, channelId, transaction);
         if (channel is null)
         {
             return Problem("Channel does not exist", statusCode: StatusCodes.Status404NotFound);
@@ -76,7 +76,7 @@ public sealed class NotificationsController : ControllerBase
 
         _logger.ReceivedIntentVerificationRequest(channel.Name);
 
-        var subscription = await _channelSubscriptionRepository.FindAsync(channel.Id, transaction);
+        var subscription = await _channelSubscriptionRepository.FindForSystemAsync(SystemPrincipals.Webhook, channel.Id, transaction);
         if (subscription is null)
         {
             return Problem("Subscription request not found", statusCode: StatusCodes.Status404NotFound);
@@ -102,7 +102,7 @@ public sealed class NotificationsController : ControllerBase
                 ? currentTime.InUtc().PlusSeconds(lease).ToInstant()
                 : null;
 
-            await _channelSubscriptionRepository.UpdateAsync(subscription, transaction);
+            await _channelSubscriptionRepository.UpdateForSystemAsync(SystemPrincipals.Webhook, subscription, transaction);
         }
         else if (mode == SubscriptionMode.Unsubscribe)
         {
@@ -112,7 +112,7 @@ public sealed class NotificationsController : ControllerBase
                 return BadRequest(ModelState);
             }
 
-            await _channelSubscriptionRepository.DeleteAsync(subscription, transaction);
+            await _channelSubscriptionRepository.DeleteForSystemAsync(SystemPrincipals.Webhook, subscription.Id, transaction);
         }
         else
         {
@@ -129,7 +129,7 @@ public sealed class NotificationsController : ControllerBase
         _logger.ReceivedFeedUpdate(channelId);
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var channel = await _channelRepository.FindAsync(channelId, transaction);
+        var channel = await _channelRepository.FindForSystemAsync(SystemPrincipals.Webhook, channelId, transaction);
         if (channel is null)
         {
             return Problem("Channel does not exist", statusCode: StatusCodes.Status404NotFound);
@@ -137,8 +137,12 @@ public sealed class NotificationsController : ControllerBase
 
         _logger.ReceivedFeedUpdate(channelId, channel.Name);
 
-        var userId = await _userRepository.GetSystemUserId(transaction);
-        var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, transaction, cancellationToken);
+        if (await _ownerRepository.GetPersonalUserIdForSystemAsync(SystemPrincipals.Webhook, channel.OwnerId, transaction) is not { } userId)
+        {
+            return Problem("Channel does not exist", statusCode: StatusCodes.Status404NotFound);
+        }
+
+        var libraryId = await _channelRepository.GetPrimaryLibraryIdForSystemAsync(SystemPrincipals.Webhook, channel.Id, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
         using var reader = new StreamReader(Request.Body, Encoding.UTF8);

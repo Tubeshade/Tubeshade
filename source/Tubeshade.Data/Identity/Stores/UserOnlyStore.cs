@@ -26,7 +26,6 @@ public sealed class UserOnlyStore :
     private readonly NpgsqlConnection _connection;
     private readonly UserRepository _userRepository;
     private readonly OwnerRepository _ownerRepository;
-    private readonly OwnershipRepository _ownershipRepository;
     private readonly IRepository<ClaimEntity> _claimRepository;
     private readonly UserLoginRepository _userLoginRepository;
 
@@ -34,7 +33,6 @@ public sealed class UserOnlyStore :
         NpgsqlConnection connection,
         UserRepository userRepository,
         OwnerRepository ownerRepository,
-        OwnershipRepository ownershipRepository,
         IRepository<ClaimEntity> claimRepository,
         UserLoginRepository userLoginRepository)
     {
@@ -42,7 +40,6 @@ public sealed class UserOnlyStore :
         _claimRepository = claimRepository;
         _userLoginRepository = userLoginRepository;
         _ownerRepository = ownerRepository;
-        _ownershipRepository = ownershipRepository;
         _connection = connection;
     }
 
@@ -90,8 +87,7 @@ public sealed class UserOnlyStore :
             return IdentityResult.Failed();
         }
 
-        _ = await _ownerRepository.AddDefaultForUserAsync(userId.Value, transaction);
-        _ = await _ownershipRepository.AddDefaultForUserAsync(userId.Value, transaction);
+        _ = await _ownerRepository.AddPersonalAsync(userId.Value, transaction);
 
         await transaction.CommitAsync(cancellationToken);
         return IdentityResult.Success;
@@ -120,7 +116,7 @@ public sealed class UserOnlyStore :
     /// <inheritdoc />
     public async Task<UserEntity?> FindByIdAsync(string userId, CancellationToken cancellationToken)
     {
-        return await _userRepository.FindAsync(Guid.Parse(userId), cancellationToken);
+        return await _userRepository.FindByIdAsync(Guid.Parse(userId), cancellationToken);
     }
 
     /// <inheritdoc />

@@ -7,7 +7,9 @@ namespace Tubeshade.Data.Media.Channels;
 public sealed class ChannelParameters : IAccessParameters, IPaginatedParameters, ISortingParameters<SortChannelBy>
 {
     /// <inheritdoc />
-    public Access Access => Access.Read;
+    public Guid PrincipalId => UserId;
+
+    public Permissions Permissions => Permissions.Read;
 
     /// <inheritdoc />
     public required int Limit { get; init; }

@@ -9,7 +9,9 @@ public sealed class VideoParameters : IAccessParameters, IPaginatedParameters, I
     public required Guid UserId { get; init; }
 
     /// <inheritdoc />
-    public Access Access => Access.Read;
+    public Guid PrincipalId => UserId;
+
+    public Permissions Permissions => Permissions.Read;
 
     public Guid? LibraryId { get; init; }
 

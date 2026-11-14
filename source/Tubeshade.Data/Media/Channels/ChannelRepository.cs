@@ -17,11 +17,12 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        """
-        INSERT INTO media.channels (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, external_id, subscribed_at, subscriber_count, external_url, availability) 
-        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @ExternalId, @SubscribedAt, @SubscriberCount, @ExternalUrl, @Availability)
-        RETURNING id;
-        """;
+        $"""
+         INSERT INTO media.channels (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, external_id, subscribed_at, subscriber_count, external_url, availability)
+         SELECT @CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @ExternalId, @SubscribedAt, @SubscriberCount, @ExternalUrl, @Availability
+         WHERE {CanCreateIn(nameof(ChannelEntity.OwnerId))}
+         RETURNING id;
+         """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
@@ -68,7 +69,7 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
                              AND library_channels.channel_id = channels.id)
                 AND channels.subscribed_at IS NOT NULL;
              """,
-            new GetFromLibraryParameters(userId, libraryId, Access.Read),
+            new GetFromLibraryParameters(userId, libraryId, Permissions.Read),
             transaction);
 
         var enumerable = await Connection.QueryAsync<ChannelEntity>(command);
@@ -90,7 +91,7 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
                            WHERE libraries.id = @{nameof(GetFromLibraryParameters.LibraryId)}
                              AND library_channels.channel_id = channels.id);
              """,
-            new GetFromLibraryParameters(userId, libraryId, Access.Read),
+            new GetFromLibraryParameters(userId, libraryId, Permissions.Read),
             cancellationToken: cancellationToken);
 
         var enumerable = await Connection.QueryAsync<ChannelEntity>(command);
@@ -100,7 +101,7 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
     public async ValueTask<ChannelEntity?> FindByExternalId(
         string externalId,
         Guid userId,
-        Access access,
+        Permissions permissions,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -108,20 +109,28 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
              {SelectAccessibleSql}
                AND {TableName}.external_id = @{nameof(GetSingleExternalParameters.ExternalId)};
              """,
-            new GetSingleExternalParameters(externalId, userId, access),
+            new GetSingleExternalParameters(externalId, userId, permissions | Permissions.Read),
             transaction);
 
         return await Connection.QuerySingleOrDefaultAsync<ChannelEntity>(command);
     }
 
-    public async ValueTask<int> AddToLibrary(Guid libraryId, Guid channelId, NpgsqlTransaction transaction)
+    /// <summary>Adds the channel to the library, if the user holds Update on the library and Read on the channel.</summary>
+    public async ValueTask<int> AddToLibrary(Guid libraryId, Guid channelId, Guid userId, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
+            // lang=sql
             $"""
              INSERT INTO media.library_channels (library_id, channel_id, "primary")
-             VALUES (@{nameof(libraryId)}, @{nameof(channelId)}, true);
+             SELECT libraries.id, channels.id, true
+             FROM media.libraries,
+                  media.channels
+             WHERE libraries.id = @{nameof(libraryId)}
+               AND libraries.owner_id IN ({Access.AccessibleOwners})
+               AND channels.id = @{nameof(channelId)}
+               AND channels.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IAccessParameters.PrincipalId)}, {(int)Permissions.Read}));
              """,
-            new { libraryId, channelId },
+            Access.Parameters(new UserPrincipal(userId), Resources.Library, Permissions.Update, new { libraryId, channelId }),
             transaction);
     }
 
@@ -131,7 +140,6 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
         Guid userId,
         NpgsqlTransaction transaction)
     {
-        var access = Access.Modify;
         return await Connection.ExecuteAsync(
             new CommandDefinition(
                 // lang=sql
@@ -139,12 +147,8 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
                  WITH accessible AS
                      (SELECT libraries.id
                       FROM media.libraries
-                          INNER JOIN identity.owners ON owners.id = media.libraries.owner_id
-                          INNER JOIN identity.ownerships ON
-                              ownerships.owner_id = owners.id AND
-                              ownerships.user_id = @{nameof(userId)} AND
-                              (ownerships.access = @{nameof(access)} OR ownerships.access = 'owner')
-                      WHERE storage_path IN (SELECT storage_path FROM media.libraries WHERE id = @{nameof(newLibraryId)}))
+                      WHERE libraries.owner_id IN ({Access.AccessibleOwners})
+                        AND storage_path IN (SELECT storage_path FROM media.libraries WHERE id = @{nameof(newLibraryId)}))
 
                  UPDATE media.library_channels
                  SET library_id = @{nameof(newLibraryId)}
@@ -153,26 +157,49 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
                        EXISTS(SELECT 1 FROM accessible WHERE accessible.id = library_id) AND
                        EXISTS(SELECT 1 FROM accessible WHERE accessible.id = @{nameof(newLibraryId)});
                  """,
-                new { newLibraryId, channelId, userId, access },
+                Access.Parameters(new UserPrincipal(userId), Resources.Library, Permissions.Update, new { newLibraryId, channelId }),
                 transaction));
     }
 
-    public async ValueTask<Guid> GetPrimaryLibraryId(Guid id, CancellationToken cancellationToken = default)
+    public async ValueTask<Guid> GetPrimaryLibraryId(Guid id, Guid userId, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
             $"""
              SELECT id
              FROM media.libraries
              INNER JOIN media.library_channels ON libraries.id = library_channels.library_id
-             WHERE library_channels.channel_id = @{nameof(id)} AND library_channels."primary" = true;
+             WHERE library_channels.channel_id = @{nameof(GetSingleParameters.Id)} AND library_channels."primary" = true
+               AND libraries.owner_id IN ({Access.AccessibleOwners});
              """,
-            new { id },
+            new GetSingleParameters(id, userId, Permissions.Read),
             cancellationToken: cancellationToken);
 
         return await Connection.QuerySingleAsync<Guid>(command);
     }
 
     public async ValueTask<Guid> GetPrimaryLibraryId(
+        Guid id,
+        Guid userId,
+        NpgsqlTransaction transaction,
+        CancellationToken cancellationToken = default)
+    {
+        var command = new CommandDefinition(
+            $"""
+             SELECT id
+             FROM media.libraries
+             INNER JOIN media.library_channels ON libraries.id = library_channels.library_id
+             WHERE library_channels.channel_id = @{nameof(GetSingleParameters.Id)} AND library_channels."primary" = true
+               AND libraries.owner_id IN ({Access.AccessibleOwners});
+             """,
+            new GetSingleParameters(id, userId, Permissions.Read),
+            transaction,
+            cancellationToken: cancellationToken);
+
+        return await Connection.QuerySingleAsync<Guid>(command);
+    }
+
+    public async ValueTask<Guid> GetPrimaryLibraryIdForSystemAsync(
+        SystemPrincipal system,
         Guid id,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
@@ -225,8 +252,7 @@ public sealed class ChannelRepository(NpgsqlConnection connection) : ModifiableR
     private string GetFilteredChannelsQuery(ChannelParameters parameters) =>
         // lang=sql
         $"""
-         {AccessCte},
-          filtered AS (
+         WITH filtered AS (
              SELECT channels.id,
                 channels.created_at,
                 channels.created_by_user_id,

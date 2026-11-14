@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Media.Creators;
@@ -20,17 +21,20 @@ public sealed class Create : PageModel, IFormLayout, INonLibraryPage
     private readonly CreatorRepository _repository;
     private readonly LibraryRepository _libraryRepository;
     private readonly ChannelRepository _channelRepository;
+    private readonly OwnerRepository _ownerRepository;
 
     public Create(
         NpgsqlConnection connection,
         CreatorRepository repository,
         LibraryRepository libraryRepository,
-        ChannelRepository channelRepository)
+        ChannelRepository channelRepository,
+        OwnerRepository ownerRepository)
     {
         _connection = connection;
         _repository = repository;
         _libraryRepository = libraryRepository;
         _channelRepository = channelRepository;
+        _ownerRepository = ownerRepository;
     }
 
     [BindProperty]
@@ -71,7 +75,7 @@ public sealed class Create : PageModel, IFormLayout, INonLibraryPage
         {
             CreatedByUserId = userId,
             ModifiedByUserId = userId,
-            OwnerId = userId,
+            OwnerId = await _ownerRepository.GetPersonalOwnerIdAsync(userId, transaction),
             Name = name,
         };
 

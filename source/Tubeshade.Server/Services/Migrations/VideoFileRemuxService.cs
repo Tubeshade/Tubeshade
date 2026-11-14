@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -62,7 +62,7 @@ public sealed class VideoFileRemuxService
             cancellationToken);
 
         var totalCount = videos.Count;
-        await taskRepository.InitializeTaskProgress(taskRunId, totalCount);
+        await taskRepository.InitializeTaskProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, totalCount);
         var startTime = _clock.GetCurrentInstant();
 
         foreach (var (index, video) in videos.Index())
@@ -145,7 +145,7 @@ public sealed class VideoFileRemuxService
 
             var currentIndex = index + 1;
             var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
-            await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
+            await taskRepository.UpdateProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, currentIndex, rate, remaining);
         }
     }
 }

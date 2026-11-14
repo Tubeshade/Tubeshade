@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Dapper;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
+using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Media.Channels;
 
+/// <remarks>A subscription shares the id of its channel, and access is checked on the channel's owner.</remarks>
 public sealed class ChannelSubscriptionRepository(NpgsqlConnection connection)
     : ModifiableRepositoryBase<ChannelSubscriptionEntity>(connection)
 {
@@ -14,23 +17,24 @@ public sealed class ChannelSubscriptionRepository(NpgsqlConnection connection)
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        """
-        INSERT INTO media.channel_subscriptions (id, created_by_user_id, modified_by_user_id, status, callback, topic, expires_at, verify_token, secret) 
-        VALUES (@Id, @CreatedByUserId, @ModifiedByUserId, @Status, @Callback, @Topic, @ExpiresAt, @VerifyToken, @Secret)
-        RETURNING id;
-        """;
+        $"""
+         INSERT INTO media.channel_subscriptions (id, created_by_user_id, modified_by_user_id, status, callback, topic, expires_at, verify_token, secret)
+         SELECT @Id, @CreatedByUserId, @ModifiedByUserId, @Status, @Callback, @Topic, @ExpiresAt, @VerifyToken, @Secret
+         WHERE @Id IN (SELECT channels.id
+                       FROM media.channels
+                       WHERE channels.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IEntity.CreatedByUserId)}, {(int)Permissions.Update})))
+         RETURNING id;
+         """;
+
+    protected override string AccessFilter =>
+        $"""
+         (channel_subscriptions.id IN (SELECT channels.id FROM media.channels WHERE channels.owner_id IN ({Access.AccessibleOwners})))
+         """;
 
     /// <inheritdoc />
-    protected override string AccessCte =>
+    protected override string UpdateAccessFilter =>
         $"""
-         WITH accessible AS
-         (SELECT channels.id
-          FROM media.channels
-                   INNER JOIN identity.owners ON owners.id = channels.owner_id
-                   INNER JOIN identity.ownerships ON
-              ownerships.owner_id = owners.id AND
-              ownerships.user_id = @{nameof(GetParameters.UserId)} AND
-              (ownerships.access = @{nameof(GetParameters.Access)} OR ownerships.access = 'owner'))
+         (channel_subscriptions.id IN (SELECT channels.id FROM media.channels WHERE channels.owner_id IN ({UpdatableOwners})))
          """;
 
     /// <inheritdoc />
@@ -51,24 +55,48 @@ public sealed class ChannelSubscriptionRepository(NpgsqlConnection connection)
         """;
 
     /// <inheritdoc />
-    protected override string UpdateSet => throw new NotSupportedException();
-
-    /// <inheritdoc />
-    protected override string UpdateSql =>
+    protected override string UpdateSet =>
         $"""
-         UPDATE media.channel_subscriptions
-         SET modified_at = CURRENT_TIMESTAMP,
-             modified_by_user_id = @{nameof(ChannelSubscriptionEntity.ModifiedByUserId)},
-             status = @{nameof(ChannelSubscriptionEntity.Status)},
-             callback = @{nameof(ChannelSubscriptionEntity.Callback)},
-             topic = @{nameof(ChannelSubscriptionEntity.Topic)},
-             expires_at = @{nameof(ChannelSubscriptionEntity.ExpiresAt)},
-             verify_token = @{nameof(ChannelSubscriptionEntity.VerifyToken)},
-             secret = @{nameof(ChannelSubscriptionEntity.Secret)}
-         WHERE (media.channel_subscriptions.id = @{nameof(ChannelSubscriptionEntity.Id)});
+         status = @{nameof(ChannelSubscriptionEntity.Status)},
+         callback = @{nameof(ChannelSubscriptionEntity.Callback)},
+         topic = @{nameof(ChannelSubscriptionEntity.Topic)},
+         expires_at = @{nameof(ChannelSubscriptionEntity.ExpiresAt)},
+         verify_token = @{nameof(ChannelSubscriptionEntity.VerifyToken)},
+         secret = @{nameof(ChannelSubscriptionEntity.Secret)}
          """;
 
-    public IAsyncEnumerable<ChannelSubscriptionEntity> GetExpiringUnbufferedAsync()
+    public async ValueTask<int> UpdateForSystemAsync(
+        SystemPrincipal system,
+        ChannelSubscriptionEntity entity,
+        NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            $"""
+             UPDATE media.channel_subscriptions
+             SET modified_at = CURRENT_TIMESTAMP,
+             {UpdateSet}
+             WHERE channel_subscriptions.id = @{nameof(IEntity.Id)};
+             """,
+            entity,
+            transaction);
+
+        return await Connection.ExecuteAsync(command);
+    }
+
+    public async ValueTask<int> DeleteForSystemAsync(
+        SystemPrincipal system,
+        Guid id,
+        NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(
+            "DELETE FROM media.channel_subscriptions WHERE id = @id;",
+            new { id },
+            transaction);
+
+        return await Connection.ExecuteAsync(command);
+    }
+
+    public IAsyncEnumerable<ChannelSubscriptionEntity> GetExpiringForSystemAsync(SystemPrincipal system)
     {
         return Connection.QueryUnbufferedAsync<ChannelSubscriptionEntity>(
             $"""

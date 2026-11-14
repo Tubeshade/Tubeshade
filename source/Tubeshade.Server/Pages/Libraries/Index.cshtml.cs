@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using NodaTime;
 using Npgsql;
 using Tubeshade.Data;
+using Tubeshade.Data.AccessControl;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Tasks;
 using Tubeshade.Server.Configuration.Auth;
@@ -19,6 +20,7 @@ public sealed class Index : PageModel, INonLibraryPage, IFormLayout
     private readonly LibraryRepository _repository;
     private readonly TaskRepository _taskRepository;
     private readonly ScheduleRepository _scheduleRepository;
+    private readonly OwnerRepository _ownerRepository;
     private readonly IDateTimeZoneProvider _timeZoneProvider;
 
     public Index(
@@ -26,12 +28,14 @@ public sealed class Index : PageModel, INonLibraryPage, IFormLayout
         LibraryRepository repository,
         TaskRepository taskRepository,
         ScheduleRepository scheduleRepository,
+        OwnerRepository ownerRepository,
         IDateTimeZoneProvider timeZoneProvider)
     {
         _repository = repository;
         _connection = connection;
         _taskRepository = taskRepository;
         _scheduleRepository = scheduleRepository;
+        _ownerRepository = ownerRepository;
         _timeZoneProvider = timeZoneProvider;
     }
 
@@ -66,13 +70,14 @@ public sealed class Index : PageModel, INonLibraryPage, IFormLayout
         cancellationToken = CancellationToken.None;
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
+        var ownerId = await _ownerRepository.GetPersonalOwnerIdAsync(userId, transaction);
 
         var taskId = await _taskRepository.AddAsync(
             new TaskEntity
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
-                OwnerId = userId,
+                OwnerId = ownerId,
                 Type = TaskType.ScanSubscriptions,
                 UserId = userId,
             },
@@ -82,7 +87,7 @@ public sealed class Index : PageModel, INonLibraryPage, IFormLayout
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
-                OwnerId = userId,
+                OwnerId = ownerId,
                 TaskId = task.Id,
                 CronExpression = model.CronExpression,
                 TimeZoneId = model.TimeZoneId,
@@ -93,7 +98,7 @@ public sealed class Index : PageModel, INonLibraryPage, IFormLayout
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
-                OwnerId = userId,
+                OwnerId = ownerId,
                 Name = model.Name,
                 StoragePath = model.StoragePath,
                 SubscriptionsScheduleId = scheduleId!.Value,
@@ -108,7 +113,7 @@ public sealed class Index : PageModel, INonLibraryPage, IFormLayout
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
-                OwnerId = userId,
+                OwnerId = ownerId,
                 Type = TaskType.ReindexVideos,
                 UserId = userId,
                 LibraryId = libraryId.Value,
@@ -120,7 +125,7 @@ public sealed class Index : PageModel, INonLibraryPage, IFormLayout
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
-                OwnerId = userId,
+                OwnerId = ownerId,
                 TaskId = rescanTaskId!.Value,
                 CronExpression = "*/15 * * * *",
                 TimeZoneId = model.TimeZoneId

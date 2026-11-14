@@ -61,7 +61,7 @@ public sealed class FileMetadataService
             cancellationToken);
 
         var totalCount = videos.Count;
-        await taskRepository.InitializeTaskProgress(taskRunId, totalCount);
+        await taskRepository.InitializeTaskProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, totalCount);
         var startTime = _clock.GetCurrentInstant();
 
         foreach (var (index, video) in videos.Index())
@@ -106,7 +106,7 @@ public sealed class FileMetadataService
                 }
             }
 
-            var images = await _imageFileRepository.GetForVideo(video.Id, userId, Access.Modify, transaction, cancellationToken);
+            var images = await _imageFileRepository.GetForVideo(video.Id, userId, Permissions.Update, transaction, cancellationToken);
             foreach (var imageFile in images)
             {
                 if (imageFile is { HashAlgorithm.Name: not HashAlgorithm.Names.Placeholder })
@@ -140,7 +140,7 @@ public sealed class FileMetadataService
 
             var currentIndex = index + 1;
             var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
-            await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
+            await taskRepository.UpdateProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, currentIndex, rate, remaining);
         }
     }
 }

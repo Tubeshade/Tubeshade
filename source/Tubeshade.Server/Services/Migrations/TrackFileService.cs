@@ -60,7 +60,7 @@ public sealed class TrackFileService
             cancellationToken);
 
         var totalCount = videos.Count;
-        await taskRepository.InitializeTaskProgress(taskRunId, totalCount);
+        await taskRepository.InitializeTaskProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, totalCount);
         var startTime = _clock.GetCurrentInstant();
 
         foreach (var (index, video) in videos.Index())
@@ -70,12 +70,12 @@ public sealed class TrackFileService
             if (!videoDirectory.Exists)
             {
                 var (skippedRate, skippedRemaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
-                await taskRepository.UpdateProgress(taskRunId, currentIndex, skippedRate, skippedRemaining);
+                await taskRepository.UpdateProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, currentIndex, skippedRate, skippedRemaining);
                 continue;
             }
 
             await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-            var tracks = await _trackFileRepository.GetForVideo(video.Id, userId, Access.Read, transaction, cancellationToken);
+            var tracks = await _trackFileRepository.GetForVideo(video.Id, userId, Permissions.Read, transaction, cancellationToken);
 
             var chaptersFile = new FileInfo(video.GetChaptersFilePath());
             if (chaptersFile.Exists)
@@ -92,7 +92,7 @@ public sealed class TrackFileService
             await transaction.CommitAsync(cancellationToken);
 
             var (rate, remaining) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
-            await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, remaining);
+            await taskRepository.UpdateProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, currentIndex, rate, remaining);
         }
     }
 

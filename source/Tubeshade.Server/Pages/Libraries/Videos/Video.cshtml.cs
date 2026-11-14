@@ -117,7 +117,7 @@ public sealed partial class Video : LibraryPageBase
         PreferredFile = GetPreferredFile(PlayableFiles, FileId, Request.Cookies[MaximumResolutionCookie]);
         DownloadableFiles = Files.Where(file => file.DownloadedAt is null && file.TempPath is null).ToList();
 
-        var images = await _imageFileRepository.GetForVideo(VideoId, userId, Access.Read, transaction, cancellationToken);
+        var images = await _imageFileRepository.GetForVideo(VideoId, userId, Permissions.Read, transaction, cancellationToken);
 
         Channel = await _channelRepository.GetAsync(Entity.ChannelId, userId, transaction);
         Library = await _libraryRepository.GetAsync(LibraryId, userId, transaction);
@@ -128,7 +128,7 @@ public sealed partial class Video : LibraryPageBase
             PlaybackSpeed = playbackSpeed;
         }
 
-        var trackFiles = await _trackFileRepository.GetForVideo(VideoId, userId, Access.Read, transaction, cancellationToken);
+        var trackFiles = await _trackFileRepository.GetForVideo(VideoId, userId, Permissions.Read, transaction, cancellationToken);
         Chapters = trackFiles.SingleOrDefault(file => file.Type == TrackType.Chapters);
         Subtitles = trackFiles.Where(file => file.Type == TrackType.Subtitles).ToList();
 
@@ -165,7 +165,7 @@ public sealed partial class Video : LibraryPageBase
         var userId = User.GetUserId();
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
-        var video = await _videoRepository.FindAsync(VideoId, userId, Access.Modify, transaction);
+        var video = await _videoRepository.FindAsync(VideoId, userId, Permissions.Update, transaction);
         if (video is null)
         {
             return NotFound();
@@ -182,7 +182,7 @@ public sealed partial class Video : LibraryPageBase
         var userId = User.GetUserId();
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
-        var video = await _videoRepository.FindAsync(VideoId, userId, Access.Modify, transaction);
+        var video = await _videoRepository.FindAsync(VideoId, userId, Permissions.Update, transaction);
         if (video is null)
         {
             return NotFound();
@@ -198,7 +198,7 @@ public sealed partial class Video : LibraryPageBase
     {
         var userId = User.GetUserId();
         await using var transaction = await _connection.OpenAndBeginTransaction();
-        var video = await _videoRepository.FindAsync(VideoId, userId, Access.Delete, transaction);
+        var video = await _videoRepository.FindAsync(VideoId, userId, Permissions.Delete, transaction);
         if (video is null)
         {
             return NotFound();

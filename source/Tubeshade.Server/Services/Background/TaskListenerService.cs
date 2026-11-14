@@ -126,7 +126,7 @@ public sealed class TaskListenerService : BackgroundService
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
         var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
-        return await repository.GetTaskRequestIds(cancellationToken);
+        return await repository.GetTaskRequestIdsForSystemAsync(SystemPrincipals.TaskRuns, cancellationToken);
     }
 
     private void ConnectionOnNotification(object? sender, NpgsqlNotificationEventArgs args)

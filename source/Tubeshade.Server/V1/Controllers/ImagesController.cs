@@ -39,8 +39,8 @@ public sealed class ImagesController : ControllerBase
         var userId = User.GetUserId();
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
-        var image = await _repository.FindAsync(id, userId, Access.Read, transaction);
-        var folderPath = await _repository.GetPath(id, transaction, cancellationToken);
+        var image = await _repository.FindAsync(id, userId, Permissions.Read, transaction);
+        var folderPath = await _repository.GetPath(id, userId, transaction, cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
 

@@ -118,7 +118,7 @@ public sealed class FileUploadService
         {
             CreatedByUserId = userId,
             ModifiedByUserId = userId,
-            OwnerId = userId,
+            OwnerId = videoEntity.OwnerId,
             VideoId = videoId,
             StoragePath = videoFilePath,
             Type = type,

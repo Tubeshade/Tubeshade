@@ -18,11 +18,12 @@ public sealed class ScheduleRepository(NpgsqlConnection connection)
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        """
-        INSERT INTO tasks.schedules (created_by_user_id, modified_by_user_id, owner_id, task_id, cron_expression, time_zone_id)
-        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @TaskId, @CronExpression, @TimeZoneId)
-        RETURNING id;
-        """;
+        $"""
+         INSERT INTO tasks.schedules (created_by_user_id, modified_by_user_id, owner_id, task_id, cron_expression, time_zone_id)
+         SELECT @CreatedByUserId, @ModifiedByUserId, @OwnerId, @TaskId, @CronExpression, @TimeZoneId
+         WHERE {CanCreateIn(nameof(ScheduleEntity.OwnerId))}
+         RETURNING id;
+         """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
@@ -47,7 +48,7 @@ public sealed class ScheduleRepository(NpgsqlConnection connection)
         time_zone_id = @TimeZoneId
         """;
 
-    public async ValueTask<List<ScheduleEntity>> GetWithoutAccessControl(CancellationToken cancellationToken)
+    public async ValueTask<List<ScheduleEntity>> GetForSystemAsync(SystemPrincipal system, CancellationToken cancellationToken)
     {
         var command = new CommandDefinition(SelectSql, cancellationToken: cancellationToken);
 
@@ -59,14 +60,12 @@ public sealed class ScheduleRepository(NpgsqlConnection connection)
         Guid userId,
         Guid libraryId,
         TaskType type,
-        Access access,
+        Permissions permissions,
         CancellationToken cancellationToken)
     {
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             WITH {AccessibleLibrariesCte}
-
              SELECT schedules.id,
                     schedules.created_at,
                     schedules.created_by_user_id,
@@ -78,11 +77,11 @@ public sealed class ScheduleRepository(NpgsqlConnection connection)
                     schedules.time_zone_id
              FROM tasks.schedules
                  INNER JOIN tasks.tasks ON schedules.task_id = tasks.id
-                 INNER JOIN accessible_libraries ON tasks.library_id = accessible_libraries.id
-             WHERE tasks.type = @{nameof(type)} AND
+             WHERE schedules.owner_id IN ({Access.AccessibleOwners}) AND
+                   tasks.type = @{nameof(type)} AND
                    tasks.library_id = @{nameof(libraryId)}
              """,
-            new { UserId = userId, libraryId, type, Access = access },
+            Access.Parameters(new UserPrincipal(userId), Resources.Task, permissions | Permissions.Read, new { libraryId, type }),
             cancellationToken: cancellationToken);
 
         return await Connection.QuerySingleAsync<ScheduleEntity>(command);

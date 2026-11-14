@@ -95,7 +95,7 @@ public sealed class SchedulerService : BackgroundService
         await using var tickScope = _serviceProvider.CreateAsyncScope();
 
         var scheduleRepository = tickScope.ServiceProvider.GetRequiredService<ScheduleRepository>();
-        var schedules = await scheduleRepository.GetWithoutAccessControl(stoppingToken);
+        var schedules = await scheduleRepository.GetForSystemAsync(SystemPrincipals.Scheduler, stoppingToken);
 
         var taskRepository = tickScope.ServiceProvider.GetRequiredService<TaskRepository>();
         var connection = tickScope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
@@ -113,7 +113,7 @@ public sealed class SchedulerService : BackgroundService
             _logger.StartingScheduledTask(schedule.TaskId);
 
             await using var transaction = await connection.OpenAndBeginTransaction(ReadCommitted, stoppingToken);
-            await taskRepository.TriggerTask(schedule.TaskId, TaskSource.Schedule, transaction);
+            await taskRepository.TriggerTaskForSystemAsync(SystemPrincipals.Scheduler, schedule.TaskId, TaskSource.Schedule, transaction);
             await transaction.CommitAsync(stoppingToken);
             triggeredScheduleIds.Add(schedule.Id);
         }

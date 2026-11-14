@@ -32,7 +32,7 @@ public sealed class CookiesController : ControllerBase
         var userId = User.GetUserId();
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
-        var cookie = await _repository.FindByDomain(request.Domain, userId, request.LibraryId!.Value, Access.Read, transaction);
+        var cookie = await _repository.FindByDomain(request.Domain, userId, request.LibraryId!.Value, Permissions.Read, transaction);
 
         if (cookie is null)
         {

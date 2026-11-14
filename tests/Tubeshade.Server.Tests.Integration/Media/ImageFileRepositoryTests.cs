@@ -8,7 +8,6 @@ using Npgsql;
 using NUnit.Framework;
 using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
-using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Media.Videos;
@@ -18,7 +17,6 @@ namespace Tubeshade.Server.Tests.Integration.Media;
 
 public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTests(fixture)
 {
-    private Guid _userId;
     private Guid _libraryId;
     private Guid _channelId;
     private Guid _videoId;
@@ -29,24 +27,18 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
         await using var scope = Fixture.Services.CreateAsyncScope();
         var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
 
-        await using (var transaction = await connection.OpenAndBeginTransaction())
-        {
-            var userRepository = scope.ServiceProvider.GetRequiredService<UserRepository>();
-            _userId = await userRepository.GetSystemUserId(transaction);
-            await transaction.CommitAsync();
-        }
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            _libraryId = await CreateLibrary(_userId, scope.ServiceProvider, transaction);
+            _libraryId = await CreateLibrary(User.Id, scope.ServiceProvider, transaction);
 
             var channelRepository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
             _channelId = (await channelRepository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = Guid.NewGuid().ToString("N"),
                     StoragePath = string.Empty,
                     ExternalId = string.Empty,
@@ -55,15 +47,15 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
                 },
                 transaction))!.Value;
 
-            await channelRepository.AddToLibrary(_libraryId, _channelId, transaction);
+            await channelRepository.AddToLibrary(_libraryId, _channelId, User.Id, transaction);
 
             var videoRepository = scope.ServiceProvider.GetRequiredService<VideoRepository>();
             _videoId = (await videoRepository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
-                    OwnerId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
+                    OwnerId = User.OwnerId,
                     Name = string.Empty,
                     Description = string.Empty,
                     Categories = [],
@@ -104,8 +96,8 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
             fileId = (await repository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
                     StoragePath = string.Empty,
                     Type = ImageType.Thumbnail,
                     Width = 0,
@@ -119,8 +111,8 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
             await repository.AddAsync(
                 new()
                 {
-                    CreatedByUserId = _userId,
-                    ModifiedByUserId = _userId,
+                    CreatedByUserId = User.Id,
+                    ModifiedByUserId = User.Id,
                     StoragePath = string.Empty,
                     Type = ImageType.Banner,
                     Width = 0,
@@ -131,14 +123,14 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
                 },
                 transaction);
 
-            await repository.LinkToVideoAsync(fileId, _videoId, _userId, transaction);
+            await repository.LinkToVideoAsync(fileId, _videoId, User.Id, transaction);
 
             await transaction.CommitAsync();
         }
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var image = (await repository.GetForVideo(_videoId, _userId, Access.Read, transaction))
+            var image = (await repository.GetForVideo(_videoId, User.Id, Permissions.Read, transaction))
                 .Should()
                 .ContainSingle()
                 .Subject;
@@ -147,14 +139,14 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
 
             image.Width += 1;
             await repository.UpdateAsync(image, transaction);
-            (await repository.GetForVideo(_videoId, _userId, Access.Read, transaction))
+            (await repository.GetForVideo(_videoId, User.Id, Permissions.Read, transaction))
                 .Should()
                 .ContainSingle()
                 .Which.Width.Should()
                 .Be(image.Width);
 
             await repository.DeleteAsync(image, transaction);
-            (await repository.GetForVideo(_videoId, _userId, Access.Read, transaction)).Should().BeEmpty();
+            (await repository.GetForVideo(_videoId, User.Id, Permissions.Read, transaction)).Should().BeEmpty();
         }
     }
 
@@ -173,8 +165,8 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
         var fileId = (await repository.AddAsync(
             new()
             {
-                CreatedByUserId = _userId,
-                ModifiedByUserId = _userId,
+                CreatedByUserId = User.Id,
+                ModifiedByUserId = User.Id,
                 StoragePath = string.Empty,
                 Type = ImageType.Thumbnail,
                 Width = 1,
@@ -185,10 +177,10 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
             },
             transaction))!.Value;
 
-        await repository.LinkToChannelAsync(fileId, _channelId, transaction);
-        (await repository.GetForChannel(_channelId, _userId, Access.Read, transaction)).Should().ContainSingle();
+        await repository.LinkToChannelAsync(fileId, _channelId, User.Id, transaction);
+        (await repository.GetForChannel(_channelId, User.Id, Permissions.Read, transaction)).Should().ContainSingle();
 
-        (await repository.DeleteAsync(fileId, _userId, transaction)).Should().Be(1);
-        (await repository.GetForChannel(_channelId, _userId, Access.Read, transaction)).Should().BeEmpty();
+        (await repository.DeleteAsync(fileId, User.Id, transaction)).Should().Be(1);
+        (await repository.GetForChannel(_channelId, User.Id, Permissions.Read, transaction)).Should().BeEmpty();
     }
 }

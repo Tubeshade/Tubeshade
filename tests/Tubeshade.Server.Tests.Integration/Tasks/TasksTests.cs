@@ -11,7 +11,6 @@ using NodaTime;
 using Npgsql;
 using NUnit.Framework;
 using Tubeshade.Data;
-using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Media.Videos;
@@ -22,7 +21,6 @@ namespace Tubeshade.Server.Tests.Integration.Tasks;
 
 public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 {
-    private Guid _userId;
     private Guid _libraryId;
 
     [OneTimeSetUp]
@@ -31,16 +29,10 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         await using var scope = Fixture.Services.CreateAsyncScope();
         var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
 
-        await using (var transaction = await connection.OpenAndBeginTransaction())
-        {
-            var userRepository = scope.ServiceProvider.GetRequiredService<UserRepository>();
-            _userId = await userRepository.GetSystemUserId(transaction);
-            await transaction.CommitAsync();
-        }
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            _libraryId = await CreateLibrary(_userId, scope.ServiceProvider, transaction);
+            _libraryId = await CreateLibrary(User.Id, scope.ServiceProvider, transaction);
             await transaction.CommitAsync();
         }
     }
@@ -70,7 +62,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            indexTaskId = await repository.AddTask(TaskEntity.Index(_libraryId, _userId, url), transaction);
+            indexTaskId = await repository.AddTask(TaskEntity.Index(_libraryId, User.Id, url), transaction);
             await transaction.CommitAsync();
         }
 
@@ -78,17 +70,17 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var taskId = await repository.AddTask(TaskEntity.Download(_libraryId, _userId, videoId), transaction);
+            var taskId = await repository.AddTask(TaskEntity.Download(_libraryId, User.Id, videoId), transaction);
 
-            var task1 = (await repository.TryDequeueTask(taskId, transaction))!;
+            var task1 = (await repository.TryDequeueTaskForSystemAsync(SystemPrincipals.TaskRuns, taskId, transaction))!;
             task1.Should().NotBeNull();
             task1RunId = Guid.NewGuid();
-            await repository.AddTaskRun(task1RunId, taskId, TaskSource.User, transaction);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, task1RunId, taskId, TaskSource.User, transaction);
 
             var parameters = BlockingTaskParameters.FromTask(task1, task1RunId);
-            (await repository.GetBlockingTaskRunIds(parameters, CancellationToken.None)).Should().BeEmpty();
+            (await repository.GetBlockingTaskRunIdsForSystemAsync(SystemPrincipals.TaskRuns, parameters, CancellationToken.None)).Should().BeEmpty();
 
-            await repository.StartTaskRun(task1RunId, CancellationToken.None);
+            await repository.StartTaskRunForSystemAsync(SystemPrincipals.TaskRuns, task1RunId, CancellationToken.None);
             await transaction.CommitAsync();
         }
 
@@ -98,28 +90,28 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
             await using (var transaction = await connection.OpenAndBeginTransaction())
             {
-                indexTask = (await repository.TryDequeueTask(indexTaskId, transaction))!;
+                indexTask = (await repository.TryDequeueTaskForSystemAsync(SystemPrincipals.TaskRuns, indexTaskId, transaction))!;
                 indexTask.Should().NotBeNull();
                 indexTaskRunId = Guid.NewGuid();
-                await repository.AddTaskRun(indexTaskRunId, indexTaskId, TaskSource.User, transaction);
+                await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, indexTaskRunId, indexTaskId, TaskSource.User, transaction);
                 await transaction.CommitAsync();
             }
 
             var parameters = BlockingTaskParameters.FromTask(indexTask, indexTaskRunId);
 
-            var blockingIds = await repository.GetBlockingTaskRunIds(parameters, CancellationToken.None);
+            var blockingIds = await repository.GetBlockingTaskRunIdsForSystemAsync(SystemPrincipals.TaskRuns, parameters, CancellationToken.None);
             blockingIds.Should().ContainSingle().Which.Should().Be(task1RunId);
 
             await using (var parallelScope = Fixture.Services.CreateAsyncScope())
             {
                 var parallelRepository = parallelScope.ServiceProvider.GetRequiredService<TaskRepository>();
-                await parallelRepository.FinishTask(task1RunId, TaskResult.Successful, null, CancellationToken.None);
+                await parallelRepository.FinishTaskForSystemAsync(SystemPrincipals.TaskRuns, task1RunId, TaskResult.Successful, null, CancellationToken.None);
             }
 
-            blockingIds = await repository.GetBlockingTaskRunIds(parameters, CancellationToken.None);
+            blockingIds = await repository.GetBlockingTaskRunIdsForSystemAsync(SystemPrincipals.TaskRuns, parameters, CancellationToken.None);
             blockingIds.Should().BeEmpty();
 
-            await repository.StartTaskRun(indexTaskRunId, CancellationToken.None);
+            await repository.StartTaskRunForSystemAsync(SystemPrincipals.TaskRuns, indexTaskRunId, CancellationToken.None);
         }
     }
 
@@ -136,15 +128,15 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            taskId = await repository.AddTask(TaskEntity.Index(_libraryId, _userId, url), transaction);
+            taskId = await repository.AddTask(TaskEntity.Index(_libraryId, User.Id, url), transaction);
             taskRunId = Guid.NewGuid();
-            await repository.AddTaskRun(taskRunId, taskId, TaskSource.User, transaction);
-            await repository.StartTaskRun(taskRunId, CancellationToken.None);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, taskId, TaskSource.User, transaction);
+            await repository.StartTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, CancellationToken.None);
 
             await transaction.CommitAsync();
         }
 
-        var parameters = new TaskParameters { UserId = _userId, LibraryId = _libraryId, Limit = 100, Offset = 0, };
+        var parameters = new TaskParameters { UserId = User.Id, LibraryId = _libraryId, Limit = 100, Offset = 0, };
 
         var tasks = await repository.GetRunningTasks(parameters, CancellationToken.None);
 
@@ -155,7 +147,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
             runningTask.RunState.Should().Be(RunState.Running);
         }
 
-        await repository.CompleteStuckTasks(CancellationToken.None);
+        await repository.CompleteStuckTasksForSystemAsync(SystemPrincipals.Cleanup, CancellationToken.None);
 
         tasks = await repository.GetRunningTasks(parameters, CancellationToken.None);
 
@@ -182,35 +174,35 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var taskId = await repository.AddTask(TaskEntity.Index(_libraryId, _userId, url1), transaction);
+            var taskId = await repository.AddTask(TaskEntity.Index(_libraryId, User.Id, url1), transaction);
             taskRunId = Guid.NewGuid();
-            await repository.AddTaskRun(taskRunId, taskId, TaskSource.User, transaction);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, taskId, TaskSource.User, transaction);
 
-            var otherTaskId = await repository.AddTask(TaskEntity.Index(_libraryId, _userId, url2), transaction);
+            var otherTaskId = await repository.AddTask(TaskEntity.Index(_libraryId, User.Id, url2), transaction);
             var otherTaskRunId = Guid.NewGuid();
-            await repository.AddTaskRun(otherTaskRunId, otherTaskId, TaskSource.User, transaction);
-            await repository.StartTaskRun(otherTaskRunId, CancellationToken.None);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, otherTaskRunId, otherTaskId, TaskSource.User, transaction);
+            await repository.StartTaskRunForSystemAsync(SystemPrincipals.TaskRuns, otherTaskRunId, CancellationToken.None);
 
             await transaction.CommitAsync();
         }
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var secondTaskId = await repository.TryAddTask(TaskEntity.Index(_libraryId, _userId, url1), transaction);
+            var secondTaskId = await repository.TryAddTask(TaskEntity.Index(_libraryId, User.Id, url1), transaction);
             secondTaskId.Should().BeNull();
             await transaction.CommitAsync();
         }
 
-        await repository.StartTaskRun(taskRunId, CancellationToken.None);
+        await repository.StartTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, CancellationToken.None);
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var secondTaskId = await repository.TryAddTask(TaskEntity.Index(_libraryId, _userId, url1), transaction);
+            var secondTaskId = await repository.TryAddTask(TaskEntity.Index(_libraryId, User.Id, url1), transaction);
             secondTaskId.Should().BeNull();
             await transaction.CommitAsync();
         }
 
-        await repository.FinishTask(taskRunId, TaskResult.Successful, null, CancellationToken.None);
+        await repository.FinishTaskForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, TaskResult.Successful, null, CancellationToken.None);
 
         var ids = await Task.WhenAll(AddTask(url1), AddTask(url1), AddTask(url1));
         ids.Should().ContainSingle(id => id.HasValue);
@@ -228,15 +220,15 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
             var url = $"https://example.org/{Guid.NewGuid():N}";
-            var taskId = await repository.AddTask(TaskEntity.Index(_libraryId, _userId, url), transaction);
+            var taskId = await repository.AddTask(TaskEntity.Index(_libraryId, User.Id, url), transaction);
             taskRunId = Guid.NewGuid();
-            await repository.AddTaskRun(taskRunId, taskId, TaskSource.User, transaction);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, taskId, TaskSource.User, transaction);
             await transaction.CommitAsync();
         }
 
-        var resultId = await repository.FinishTask(taskRunId, TaskResult.Successful, null, CancellationToken.None);
+        var resultId = await repository.FinishTaskForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, TaskResult.Successful, null, CancellationToken.None);
         var secondResultId =
-            await repository.FinishTask(taskRunId, TaskResult.Failed, new Exception("Retry"), CancellationToken.None);
+            await repository.FinishTaskForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, TaskResult.Failed, new Exception("Retry"), CancellationToken.None);
 
         using (new AssertionScope())
         {
@@ -258,38 +250,38 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
             var channelId = await CreateChannel(channelRepository, transaction);
-            taskId = await repository.AddTask(TaskEntity.ScanChannel(_libraryId, _userId, channelId, true), transaction);
+            taskId = await repository.AddTask(TaskEntity.ScanChannel(_libraryId, User.Id, channelId, true), transaction);
             await transaction.CommitAsync();
         }
 
         var firstRunId = await AddTaskRun(taskId);
-        (await repository.GetPreviousProgress(firstRunId)).Should().BeNull();
+        (await repository.GetPreviousProgressForSystemAsync(SystemPrincipals.TaskRuns, firstRunId)).Should().BeNull();
 
-        await repository.InitializeTaskProgress(firstRunId, 10);
-        await repository.UpdateProgress(firstRunId, 4);
-        await repository.FinishTask(firstRunId, TaskResult.Failed, null, CancellationToken.None);
+        await repository.InitializeTaskProgressForSystemAsync(SystemPrincipals.TaskRuns, firstRunId, 10);
+        await repository.UpdateProgressForSystemAsync(SystemPrincipals.TaskRuns, firstRunId, 4);
+        await repository.FinishTaskForSystemAsync(SystemPrincipals.TaskRuns, firstRunId, TaskResult.Failed, null, CancellationToken.None);
 
         var secondRunId = await AddTaskRun(taskId);
-        (await repository.GetPreviousProgress(secondRunId)).Should().Be(4);
-        await repository.FinishTask(secondRunId, TaskResult.Cancelled, null, CancellationToken.None);
+        (await repository.GetPreviousProgressForSystemAsync(SystemPrincipals.TaskRuns, secondRunId)).Should().Be(4);
+        await repository.FinishTaskForSystemAsync(SystemPrincipals.TaskRuns, secondRunId, TaskResult.Cancelled, null, CancellationToken.None);
 
         // the second run did not report progress, so the progress of the first run is used
         var thirdRunId = await AddTaskRun(taskId);
-        (await repository.GetPreviousProgress(thirdRunId)).Should().Be(4);
+        (await repository.GetPreviousProgressForSystemAsync(SystemPrincipals.TaskRuns, thirdRunId)).Should().Be(4);
 
-        await repository.InitializeTaskProgress(thirdRunId, 10, 4);
-        await repository.UpdateProgress(thirdRunId, 10);
-        await repository.FinishTask(thirdRunId, TaskResult.Successful, null, CancellationToken.None);
+        await repository.InitializeTaskProgressForSystemAsync(SystemPrincipals.TaskRuns, thirdRunId, 10, 4);
+        await repository.UpdateProgressForSystemAsync(SystemPrincipals.TaskRuns, thirdRunId, 10);
+        await repository.FinishTaskForSystemAsync(SystemPrincipals.TaskRuns, thirdRunId, TaskResult.Successful, null, CancellationToken.None);
 
         var fourthRunId = await AddTaskRun(taskId);
-        (await repository.GetPreviousProgress(fourthRunId)).Should().BeNull();
+        (await repository.GetPreviousProgressForSystemAsync(SystemPrincipals.TaskRuns, fourthRunId)).Should().BeNull();
 
         async Task<Guid> AddTaskRun(Guid id)
         {
             // separate transactions, so that the runs are ordered by their creation time
             await using var transaction = await connection.OpenAndBeginTransaction();
             var taskRunId = Guid.NewGuid();
-            await repository.AddTaskRun(taskRunId, id, TaskSource.User, transaction);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, id, TaskSource.User, transaction);
             await transaction.CommitAsync();
             return taskRunId;
         }
@@ -307,21 +299,21 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            taskId = await repository.AddTask(TaskEntity.Index(_libraryId, _userId, url), transaction);
+            taskId = await repository.AddTask(TaskEntity.Index(_libraryId, User.Id, url), transaction);
             await transaction.CommitAsync();
         }
 
         // the notification is only sent on commit, so the background worker does not handle the request
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            await repository.TriggerTask(taskId, TaskSource.User, _userId, transaction);
+            await repository.TriggerTaskForSystemAsync(SystemPrincipals.Scheduler, taskId, TaskSource.User, transaction);
             var requestId = await connection.QuerySingleAsync<Guid>(
                 "SELECT id FROM tasks.task_requests WHERE task_id = @taskId;",
                 new { taskId },
                 transaction);
 
-            var request = await repository.TryDeleteTaskRequest(requestId, transaction);
-            var secondRequest = await repository.TryDeleteTaskRequest(requestId, transaction);
+            var request = await repository.TryDeleteTaskRequestForSystemAsync(SystemPrincipals.TaskRuns, requestId, transaction);
+            var secondRequest = await repository.TryDeleteTaskRequestForSystemAsync(SystemPrincipals.TaskRuns, requestId, transaction);
 
             using (new AssertionScope())
             {
@@ -330,9 +322,9 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
             }
 
             var taskRunId = Guid.NewGuid();
-            await repository.AddTaskRun(taskRunId, taskId, TaskSource.User, transaction);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, taskId, TaskSource.User, transaction);
 
-            var runRequest = await repository.FindTaskRunRequest(taskRunId, transaction);
+            var runRequest = await repository.FindTaskRunRequestForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, transaction);
             runRequest.Should().BeEquivalentTo(new TaskRequest { TaskId = taskId, Source = TaskSource.User });
 
             await transaction.RollbackAsync();
@@ -355,16 +347,16 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            taskId = await repository.AddTask(TaskEntity.Index(_libraryId, _userId, url), transaction);
+            taskId = await repository.AddTask(TaskEntity.Index(_libraryId, User.Id, url), transaction);
             await transaction.CommitAsync();
         }
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var locked = await repository.TryLockTask(taskId, transaction);
+            var locked = await repository.TryLockTaskForSystemAsync(SystemPrincipals.TaskRuns, taskId, transaction);
 
             await using var otherTransaction = await otherConnection.OpenAndBeginTransaction();
-            var otherLocked = await otherRepository.TryLockTask(taskId, otherTransaction);
+            var otherLocked = await otherRepository.TryLockTaskForSystemAsync(SystemPrincipals.TaskRuns, taskId, otherTransaction);
 
             using (new AssertionScope())
             {
@@ -378,7 +370,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await otherConnection.OpenAndBeginTransaction())
         {
-            var locked = await otherRepository.TryLockTask(taskId, transaction);
+            var locked = await otherRepository.TryLockTaskForSystemAsync(SystemPrincipals.TaskRuns, taskId, transaction);
             locked.Should().BeTrue("the lock is released when the other transaction ends");
             await transaction.RollbackAsync();
         }
@@ -400,18 +392,18 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            taskId = await repository.AddTask(TaskEntity.Index(_libraryId, _userId, url), transaction);
+            taskId = await repository.AddTask(TaskEntity.Index(_libraryId, User.Id, url), transaction);
             await transaction.CommitAsync();
         }
 
         // the foreign key check of the new request takes a FOR KEY SHARE lock on the task
         await using var triggerTransaction = await otherConnection.OpenAndBeginTransaction();
-        await otherRepository.TriggerTask(taskId, TaskSource.User, triggerTransaction);
+        await otherRepository.TriggerTaskForSystemAsync(SystemPrincipals.Scheduler, taskId, TaskSource.User, triggerTransaction);
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var locked = await repository.TryLockTask(taskId, transaction);
-            var dequeued = await repository.TryDequeueTask(taskId, transaction);
+            var locked = await repository.TryLockTaskForSystemAsync(SystemPrincipals.TaskRuns, taskId, transaction);
+            var dequeued = await repository.TryDequeueTaskForSystemAsync(SystemPrincipals.TaskRuns, taskId, transaction);
 
             using (new AssertionScope())
             {
@@ -442,8 +434,8 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            taskId = await repository.AddTask(TaskEntity.Index(_libraryId, _userId, url), transaction);
-            await repository.TriggerTask(taskId, TaskSource.User, transaction);
+            taskId = await repository.AddTask(TaskEntity.Index(_libraryId, User.Id, url), transaction);
+            await repository.TriggerTaskForSystemAsync(SystemPrincipals.Scheduler, taskId, TaskSource.User, transaction);
             requestId = await connection.QuerySingleAsync<Guid>(
                 "SELECT id FROM tasks.task_requests WHERE task_id = @taskId;",
                 new { taskId },
@@ -456,14 +448,14 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         // the first attempt deletes the request and adds the task run, but has not committed yet
         await using var firstAttempt = await connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted);
-        (await repository.TryDeleteTaskRequest(requestId, firstAttempt)).Should().NotBeNull();
-        await repository.AddTaskRun(taskRunId, taskId, TaskSource.User, firstAttempt);
+        (await repository.TryDeleteTaskRequestForSystemAsync(SystemPrincipals.TaskRuns, requestId, firstAttempt)).Should().NotBeNull();
+        await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, taskId, TaskSource.User, firstAttempt);
 
         await using var retry = await retryConnection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted);
-        (await retryRepository.TryDeleteTaskRequest(requestId, retry))
+        (await retryRepository.TryDeleteTaskRequestForSystemAsync(SystemPrincipals.TaskRuns, requestId, retry))
             .Should().BeNull("the request is skipped while it is locked");
 
-        var waitingDelete = retryRepository.TryDeleteTaskRequestWaitingForLock(requestId, retry).AsTask();
+        var waitingDelete = retryRepository.TryDeleteTaskRequestWaitingForLockForSystemAsync(SystemPrincipals.TaskRuns, requestId, retry).AsTask();
         await Task.Delay(TimeSpan.FromMilliseconds(500));
         waitingDelete.IsCompleted.Should().BeFalse("the retry waits for the first attempt to finish");
 
@@ -472,7 +464,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         using (new AssertionScope())
         {
             (await waitingDelete).Should().BeNull("the first attempt already deleted the request");
-            var runRequest = await retryRepository.FindTaskRunRequest(taskRunId, retry);
+            var runRequest = await retryRepository.FindTaskRunRequestForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, retry);
             runRequest.Should().BeEquivalentTo(new TaskRequest { TaskId = taskId, Source = TaskSource.User });
         }
 
@@ -489,7 +481,7 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         var taskId = Guid.NewGuid();
 
         await using var transaction = await connection.OpenAndBeginTransaction();
-        await repository.TriggerTask(taskId, TaskSource.Schedule, transaction);
+        await repository.TriggerTaskForSystemAsync(SystemPrincipals.Scheduler, taskId, TaskSource.Schedule, transaction);
 
         var count = await connection.QuerySingleAsync<int>(
             "SELECT count(*) FROM tasks.task_requests WHERE task_id = @taskId;",
@@ -528,11 +520,11 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction(cancellationToken: token))
         {
-            var task = TaskEntity.YouTubeFeedUpdate(_libraryId, _userId, channelId1, string.Empty);
+            var task = TaskEntity.YouTubeFeedUpdate(_libraryId, User.Id, channelId1, string.Empty);
             var taskId = await repository.AddTask(task, transaction);
             updateRunId = Guid.NewGuid();
-            await repository.AddTaskRun(updateRunId, taskId, TaskSource.Webhook, transaction);
-            await repository.StartTaskRun(updateRunId, token);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, updateRunId, taskId, TaskSource.Webhook, transaction);
+            await repository.StartTaskRunForSystemAsync(SystemPrincipals.TaskRuns, updateRunId, token);
             await transaction.CommitAsync(token);
         }
 
@@ -547,37 +539,37 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
 
         await using (var transaction = await connection.OpenAndBeginTransaction(token))
         {
-            blockedTask = TaskEntity.YouTubeFeedUpdate(_libraryId, _userId, channelId1, string.Empty);
+            blockedTask = TaskEntity.YouTubeFeedUpdate(_libraryId, User.Id, channelId1, string.Empty);
             var blockedTaskId = await repository.AddTask(blockedTask, transaction);
             blockedRunId = Guid.NewGuid();
-            await repository.AddTaskRun(blockedRunId, blockedTaskId, TaskSource.Webhook, transaction);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, blockedRunId, blockedTaskId, TaskSource.Webhook, transaction);
 
-            unblockedTask = TaskEntity.YouTubeFeedUpdate(_libraryId, _userId, channelId2, string.Empty);
+            unblockedTask = TaskEntity.YouTubeFeedUpdate(_libraryId, User.Id, channelId2, string.Empty);
             var unblockedTaskId = await repository.AddTask(unblockedTask, transaction);
             unblockedRunId = Guid.NewGuid();
-            await repository.AddTaskRun(unblockedRunId, unblockedTaskId, TaskSource.Webhook, transaction);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, unblockedRunId, unblockedTaskId, TaskSource.Webhook, transaction);
 
-            indexTask = TaskEntity.Index(_libraryId, _userId, channelId1, videoId, Guid.NewGuid().ToString("N"));
+            indexTask = TaskEntity.Index(_libraryId, User.Id, channelId1, videoId, Guid.NewGuid().ToString("N"));
             var indexTaskId = await repository.AddTask(indexTask, transaction);
             indexTaskRunId = Guid.NewGuid();
-            await repository.AddTaskRun(indexTaskRunId, indexTaskId, TaskSource.Webhook, transaction);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, indexTaskRunId, indexTaskId, TaskSource.Webhook, transaction);
 
             await transaction.CommitAsync(token);
         }
 
         using var assertionScope = new AssertionScope();
 
-        (await repository.GetBlockingTaskRunIds(BlockingTaskParameters.FromTask(blockedTask, blockedRunId), token))
+        (await repository.GetBlockingTaskRunIdsForSystemAsync(SystemPrincipals.TaskRuns, BlockingTaskParameters.FromTask(blockedTask, blockedRunId), token))
             .Should()
             .ContainSingle()
             .Which.Should()
             .Be(updateRunId);
 
-        (await repository.GetBlockingTaskRunIds(BlockingTaskParameters.FromTask(indexTask, indexTaskRunId), token))
+        (await repository.GetBlockingTaskRunIdsForSystemAsync(SystemPrincipals.TaskRuns, BlockingTaskParameters.FromTask(indexTask, indexTaskRunId), token))
             .Should()
             .BeEmpty();
 
-        (await repository.GetBlockingTaskRunIds(BlockingTaskParameters.FromTask(unblockedTask, unblockedRunId), token))
+        (await repository.GetBlockingTaskRunIdsForSystemAsync(SystemPrincipals.TaskRuns, BlockingTaskParameters.FromTask(unblockedTask, unblockedRunId), token))
             .Should()
             .BeEmpty();
     }
@@ -601,31 +593,31 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
             var channelRepository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
             var channelId = await CreateChannel(channelRepository, transaction);
 
-            var task = TaskEntity.YouTubeFeedUpdate(_libraryId, _userId, channelId, string.Empty);
+            var task = TaskEntity.YouTubeFeedUpdate(_libraryId, User.Id, channelId, string.Empty);
 
             queuedTaskId = await repository.AddTask(task, transaction);
-            await repository.AddTaskRun(Guid.NewGuid(), queuedTaskId, TaskSource.Webhook, transaction);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, Guid.NewGuid(), queuedTaskId, TaskSource.Webhook, transaction);
 
             runningTaskId = await repository.AddTask(task, transaction);
             var runningRunId = Guid.NewGuid();
-            await repository.AddTaskRun(runningRunId, runningTaskId, TaskSource.Webhook, transaction);
-            await repository.StartTaskRun(runningRunId, token);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, runningRunId, runningTaskId, TaskSource.Webhook, transaction);
+            await repository.StartTaskRunForSystemAsync(SystemPrincipals.TaskRuns, runningRunId, token);
 
             finishedTaskId = await repository.AddTask(task, transaction);
             finishedRunId = Guid.NewGuid();
-            await repository.AddTaskRun(finishedRunId, finishedTaskId, TaskSource.Webhook, transaction);
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, finishedRunId, finishedTaskId, TaskSource.Webhook, transaction);
 
             await transaction.CommitAsync(token);
         }
 
-        await repository.FinishTask(finishedRunId, TaskResult.Successful, null, token);
+        await repository.FinishTaskForSystemAsync(SystemPrincipals.TaskRuns, finishedRunId, TaskResult.Successful, null, token);
 
-        var parameters = new TaskParameters { UserId = _userId, LibraryId = _libraryId, Limit = 100, Offset = 0 };
+        var parameters = new TaskParameters { UserId = User.Id, LibraryId = _libraryId, Limit = 100, Offset = 0 };
         var tasks = await repository.GetRunningTasks(parameters, token);
 
         var webhookParameters = new TaskParameters
         {
-            UserId = _userId,
+            UserId = User.Id,
             LibraryId = _libraryId,
             Source = TaskSource.Webhook,
             Limit = 100,
@@ -652,10 +644,10 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
             NullLogger.Instance,
             async transaction =>
             {
-                var taskId = await repository.TryAddTask(TaskEntity.Index(_libraryId, _userId, url), transaction);
+                var taskId = await repository.TryAddTask(TaskEntity.Index(_libraryId, User.Id, url), transaction);
                 if (taskId.HasValue)
                 {
-                    await repository.AddTaskRun(Guid.NewGuid(), taskId.Value, TaskSource.User, transaction);
+                    await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, Guid.NewGuid(), taskId.Value, TaskSource.User, transaction);
                 }
 
                 return taskId;
@@ -667,9 +659,9 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         var id = await repository.AddAsync(
             new()
             {
-                CreatedByUserId = _userId,
-                ModifiedByUserId = _userId,
-                OwnerId = _userId,
+                CreatedByUserId = User.Id,
+                ModifiedByUserId = User.Id,
+                OwnerId = User.OwnerId,
                 Name = Guid.NewGuid().ToString("N"),
                 StoragePath = string.Empty,
                 ExternalId = string.Empty,
@@ -690,9 +682,9 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         var id = await repository.AddAsync(
             new()
             {
-                CreatedByUserId = _userId,
-                ModifiedByUserId = _userId,
-                OwnerId = _userId,
+                CreatedByUserId = User.Id,
+                ModifiedByUserId = User.Id,
+                OwnerId = User.OwnerId,
                 Name = Guid.NewGuid().ToString("N"),
                 Description = string.Empty,
                 Categories = [],

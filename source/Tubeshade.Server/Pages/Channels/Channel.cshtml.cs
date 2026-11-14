@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Tubeshade.Data.Media.Channels;
+using Tubeshade.Server.Configuration.Auth;
 
 namespace Tubeshade.Server.Pages.Channels;
 
@@ -21,7 +22,7 @@ public sealed class Channel : PageModel
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
-        var libraryId = await _channelRepository.GetPrimaryLibraryId(ChannelId, cancellationToken);
+        var libraryId = await _channelRepository.GetPrimaryLibraryId(ChannelId, User.GetUserId(), cancellationToken);
         return RedirectToPage("/Libraries/Channels/Channel", new { libraryId, ChannelId });
     }
 }

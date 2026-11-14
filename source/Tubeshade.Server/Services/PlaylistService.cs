@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -59,7 +59,7 @@ public sealed class PlaylistService
         Instant? subscribedAt,
         NpgsqlTransaction transaction)
     {
-        var playlist = await _playlistRepository.FindAsync(playlistId, userId, Access.Modify, transaction);
+        var playlist = await _playlistRepository.FindAsync(playlistId, userId, Permissions.Update, transaction);
         if (playlist is null)
         {
             throw new InvalidOperationException("Missing access to modify playlist");

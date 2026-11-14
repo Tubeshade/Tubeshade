@@ -59,8 +59,8 @@ public sealed class LibrarySettings : LibraryPageBase, ISettingsPage
 
         UpdatePreferencesModel ??= new UpdatePreferencesModel(preferences) { Effective = effective };
 
-        var subscriptionSchedule = await _scheduleRepository.GetForTask(userId, LibraryId, TaskType.ScanSubscriptions, Access.Modify, cancellationToken);
-        var reindexSchedule = await _scheduleRepository.GetForTask(userId, LibraryId, TaskType.ReindexVideos, Access.Modify, cancellationToken);
+        var subscriptionSchedule = await _scheduleRepository.GetForTask(userId, LibraryId, TaskType.ScanSubscriptions, Permissions.Update, cancellationToken);
+        var reindexSchedule = await _scheduleRepository.GetForTask(userId, LibraryId, TaskType.ReindexVideos, Permissions.Update, cancellationToken);
 
         Schedules.Subscription ??= new UpdateScheduleModel(subscriptionSchedule);
         Schedules.Reindex ??= new UpdateScheduleModel(reindexSchedule);

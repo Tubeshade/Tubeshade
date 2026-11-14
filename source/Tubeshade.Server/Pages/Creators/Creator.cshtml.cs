@@ -136,7 +136,7 @@ public sealed class Creator : PageModel, IChannelPage, INonLibraryPage
 
         await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
         {
-            var libraryId = await _channelRepository.GetPrimaryLibraryId(channelId, transaction, cancellationToken);
+            var libraryId = await _channelRepository.GetPrimaryLibraryId(channelId, userId, transaction, cancellationToken);
             var task = TaskEntity.ScanChannel(libraryId, userId, channelId, all ?? false);
             var taskId = await _taskRepository.AddTask(task, transaction);
             await _taskRepository.TriggerTask(taskId, TaskSource.User, userId, transaction);

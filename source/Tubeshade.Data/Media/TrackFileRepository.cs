@@ -18,11 +18,14 @@ public sealed class TrackFileRepository(NpgsqlConnection connection)
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        """
-        INSERT INTO media.track_files (created_by_user_id, modified_by_user_id, video_id, storage_path, type, language, hash, hash_algorithm, storage_size)
-        VALUES (@CreatedByUserId, @ModifiedByUserId, @VideoId, @StoragePath, @Type, @Language, @Hash, @HashAlgorithm, @StorageSize)
-        RETURNING id;
-        """;
+        $"""
+         INSERT INTO media.track_files (created_by_user_id, modified_by_user_id, video_id, storage_path, type, language, hash, hash_algorithm, storage_size)
+         SELECT @CreatedByUserId, @ModifiedByUserId, @VideoId, @StoragePath, @Type, @Language, @Hash, @HashAlgorithm, @StorageSize
+         WHERE @{nameof(TrackFileEntity.VideoId)} IN (SELECT videos.id
+                                                     FROM media.videos
+                                                     WHERE videos.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IEntity.CreatedByUserId)}, {(int)Permissions.Update})))
+         RETURNING id;
+         """;
 
     /// <inheritdoc />
     protected override string SelectSql =>
@@ -55,63 +58,31 @@ public sealed class TrackFileRepository(NpgsqlConnection connection)
          """;
 
     /// <inheritdoc />
-    protected override string AccessCte =>
-        // lang=sql
-        $"""
-         WITH {AccessibleLibrariesCte},
-         accessible AS
-            (SELECT track_files.id
-             FROM media.videos
-                 INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
-                 INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
-                 INNER JOIN media.track_files ON videos.id = track_files.video_id)
-         """;
+    /// <remarks>Track files have no owner of their own - access is inherited from the video's primary library.</remarks>
+    protected override string AccessFilter => $"(track_files.video_id IN ({VideosInLibraries(AccessibleLibraries)}))";
 
     /// <inheritdoc />
-    protected override string UpdateAccessCte =>
-        // lang=sql
-        $"""
-         WITH accessible_libraries AS
-         (SELECT libraries.id
-          FROM media.libraries
-              INNER JOIN identity.owners ON owners.id = libraries.owner_id
-              INNER JOIN identity.ownerships ON
-                  ownerships.owner_id = owners.id AND
-                  ownerships.user_id = @{nameof(IModifiableEntity.ModifiedByUserId)} AND
-                  (ownerships.access = @{nameof(IModifiableEntity.AccessFoo)} OR ownerships.access = 'owner')),
-         accessible AS
-             (SELECT track_files.id
-              FROM media.videos
-                  INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
-                  INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
-                  INNER JOIN media.track_files ON videos.id = track_files.video_id)
-         """;
-
-    /// <inheritdoc />
-    protected override string AccessFilter => "(track_files.id IN (SELECT id FROM accessible))";
+    protected override string UpdateAccessFilter =>
+        $"(track_files.video_id IN ({VideosInLibraries($"SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN ({UpdatableOwners})")}))";
 
     public async ValueTask<List<TrackFileEntity>> GetForVideo(
         Guid videoId,
         Guid userId,
-        Access access,
+        Permissions permissions,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {
-        var parameters = new GetVideoParameters(videoId, userId, access);
+        var parameters = new GetVideoParameters(videoId, userId, permissions | Permissions.Read);
 
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             WITH {AccessibleLibrariesCte},
-             accessible AS
-                 (SELECT videos.id
-                  FROM media.videos
-                      INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
-                      INNER JOIN accessible_libraries ON library_channels.library_id = accessible_libraries.id
-                  WHERE videos.id = @{nameof(parameters.VideoId)})
-
              {SelectSql}
-             WHERE track_files.video_id IN (SELECT id FROM accessible);
+             WHERE track_files.video_id IN (SELECT videos.id
+                                            FROM media.videos
+                                                INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
+                                            WHERE videos.id = @{nameof(parameters.VideoId)}
+                                              AND library_channels.library_id IN ({AccessibleLibraries}));
              """,
             parameters,
             transaction,
@@ -120,4 +91,13 @@ public sealed class TrackFileRepository(NpgsqlConnection connection)
         var enumerable = await Connection.QueryAsync<TrackFileEntity>(command);
         return enumerable as List<TrackFileEntity> ?? enumerable.ToList();
     }
+
+    private static string VideosInLibraries(string libraryIds) =>
+        // lang=sql
+        $"""
+         SELECT videos.id
+         FROM media.videos
+             INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
+         WHERE library_channels.library_id IN ({libraryIds})
+         """;
 }

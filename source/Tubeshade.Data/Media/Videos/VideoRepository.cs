@@ -19,8 +19,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     /// <inheritdoc />
     protected override string InsertSql =>
         $"""
-         INSERT INTO media.videos (created_by_user_id, modified_by_user_id, owner_id, name, description, categories, tags, type, view_count, like_count, channel_id, storage_path, external_id, external_url, published_at, refreshed_at, availability, duration, ignored_at, ignored_by_user_id) 
-         VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @Description, @Categories, @Tags, @Type, @ViewCount, @LikeCount, @ChannelId, @StoragePath, @ExternalId, @ExternalUrl, @PublishedAt, @RefreshedAt, @Availability, @Duration, @IgnoredAt, @IgnoredByUserId)
+         INSERT INTO media.videos (created_by_user_id, modified_by_user_id, owner_id, name, description, categories, tags, type, view_count, like_count, channel_id, storage_path, external_id, external_url, published_at, refreshed_at, availability, duration, ignored_at, ignored_by_user_id)
+         SELECT @CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @Description, @Categories, @Tags, @Type, @ViewCount, @LikeCount, @ChannelId, @StoragePath, @ExternalId, @ExternalUrl, @PublishedAt, @RefreshedAt, @Availability, @Duration, @IgnoredAt, @IgnoredByUserId
+         WHERE {CanCreateIn(nameof(VideoEntity.OwnerId))}
          RETURNING id;
          """;
 
@@ -53,7 +54,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 video_viewed_by_users.viewed,
                 video_viewed_by_users.position
          FROM media.videos
-           LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(GetParameters.UserId)}
+           LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(GetParameters.PrincipalId)}
          """;
 
     /// <inheritdoc />
@@ -79,8 +80,6 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     private string SelectFilesSql =>
         // lang=sql
         $"""
-         {AccessCte}
-
          SELECT video_files.id,
                 video_files.created_at,
                 video_files.created_by_user_id,
@@ -162,6 +161,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
 
     public async ValueTask<List<(Guid VideoId, Guid ChannelId, string VideoUrl)>> GetForReindex(
         Guid libraryId,
+        Guid userId,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -176,7 +176,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                                    FROM media.videos
                                        INNER JOIN media.library_channels ON videos.channel_id = library_channels.channel_id
                                    WHERE library_channels."primary" 
-                                     AND library_channels.library_id = @{nameof(libraryId)}
+                                     AND library_channels.library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
+                                     AND videos.owner_id IN ({Access.AccessibleOwners})
                                      AND videos.ignored_at IS NULL
                                      AND videos.published_at < CURRENT_TIMESTAMP)
 
@@ -191,7 +192,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              ORDER BY stale_videos.published_at DESC, stale_videos.id
              LIMIT 5;
              """,
-            new { libraryId },
+            new GetFromLibraryParameters(userId, libraryId, Permissions.Read),
             transaction);
 
         var enumerable = await Connection.QueryAsync<(Guid, Guid, string)>(command);
@@ -205,7 +206,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     {
         var command = new CommandDefinition(
             SelectFilesSql,
-            new GetVideoParameters(videoId, userId, Access.Read),
+            new GetVideoParameters(videoId, userId, Permissions.Read),
             cancellationToken: cancellationToken);
 
         var enumerable = await Connection.QueryAsync<VideoFileEntity>(command);
@@ -220,7 +221,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     {
         var command = new CommandDefinition(
             SelectFilesSql,
-            new GetVideoParameters(videoId, userId, Access.Read),
+            new GetVideoParameters(videoId, userId, Permissions.Read),
             transaction,
             cancellationToken: cancellationToken);
 
@@ -236,8 +237,6 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             {AccessCte}
-
              SELECT video_files.id,
                     video_files.created_at,
                     video_files.created_by_user_id,
@@ -262,7 +261,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                 LEFT OUTER JOIN media.video_files_downloading downloading ON video_files.id = downloading.file_id
              WHERE {AccessFilter} AND video_files.id = @{nameof(GetSingleParameters.Id)};
              """,
-            new GetSingleParameters(id, userId, Access.Read),
+            new GetSingleParameters(id, userId, Permissions.Read),
             cancellationToken: cancellationToken);
 
         return await Connection.QuerySingleOrDefaultAsync<VideoFileEntity>(command);
@@ -271,7 +270,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     public async ValueTask<VideoEntity?> FindByExternalId(
         string externalId,
         Guid userId,
-        Access access,
+        Permissions permissions,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -279,7 +278,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              {SelectAccessibleSql}
                AND {TableName}.external_id = @{nameof(GetSingleExternalParameters.ExternalId)};
              """,
-            new GetSingleExternalParameters(externalId, userId, access),
+            new GetSingleExternalParameters(externalId, userId, permissions | Permissions.Read),
             transaction);
 
         return await Connection.QuerySingleOrDefaultAsync<VideoEntity>(command);
@@ -294,15 +293,13 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         var command = new CommandDefinition(
             // lang=sql
             $"""
-             {AccessCte}
-
              SELECT videos.id,
                     videos.external_id
              FROM media.videos
              WHERE {AccessFilter}
                AND (videos.external_id = ANY(@{nameof(externalIds)}));
              """,
-            new { UserId = userId, externalIds, Access = Access.Read },
+            Access.Parameters(new UserPrincipal(userId), Resources.Video, Permissions.Read, new { externalIds }),
             transaction,
             cancellationToken: cancellationToken);
 
@@ -310,7 +307,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return enumerable as List<EntityId> ?? enumerable.ToList();
     }
 
-    public async ValueTask<VideoEntity?> FindByExternalUrl(string externalUrl, Guid userId, Access access,
+    public async ValueTask<VideoEntity?> FindByExternalUrl(string externalUrl, Guid userId, Permissions permissions,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -318,7 +315,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              {SelectAccessibleSql}
                AND {TableName}.external_url = @{nameof(GetSingleExternalUrlParameters.ExternalUrl)};
              """,
-            new GetSingleExternalUrlParameters(externalUrl, userId, access),
+            new GetSingleExternalUrlParameters(externalUrl, userId, permissions | Permissions.Read),
             transaction);
 
         return await Connection.QuerySingleOrDefaultAsync<VideoEntity>(command);
@@ -338,9 +335,10 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                       INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
                       LEFT OUTER JOIN media.sponsorblock_segments ON videos.id = sponsorblock_segments.video_id
              WHERE library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
+               AND videos.owner_id IN ({Access.AccessibleOwners})
                AND sponsorblock_segments.video_id IS NULL;
              """,
-            new GetFromLibraryParameters(userId, libraryId, Access.Read),
+            new GetFromLibraryParameters(userId, libraryId, Permissions.Read),
             transaction);
 
         return enumerable as List<EntityId> ?? enumerable.ToList();
@@ -360,10 +358,11 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                       INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
                       INNER JOIN media.sponsorblock_segments ON videos.id = sponsorblock_segments.video_id
              WHERE library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
+               AND videos.owner_id IN ({Access.AccessibleOwners})
              GROUP BY videos.id, videos.external_id
              HAVING bool_and(sponsorblock_segments.locked) IS NOT TRUE;
              """,
-            new GetFromLibraryParameters(userId, libraryId, Access.Read),
+            new GetFromLibraryParameters(userId, libraryId, Permissions.Read),
             transaction);
 
         return enumerable as List<EntityId> ?? enumerable.ToList();
@@ -373,17 +372,15 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     {
         return await Connection.ExecuteAsync(
             $"""
-             {AccessCte}
-
              INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed)
-             SELECT videos.id, @{nameof(GetVideoParameters.UserId)}, @{nameof(viewed)}
+             SELECT videos.id, @{nameof(GetVideoParameters.PrincipalId)}, @{nameof(viewed)}
              FROM media.videos
              WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
              ON CONFLICT (video_id, user_id) DO UPDATE
              SET modified_at = CURRENT_TIMESTAMP,
                  viewed = excluded.viewed;
              """,
-            new { VideoId = videoId, UserId = userId, Access = Access.Read, viewed },
+            Access.Parameters(new UserPrincipal(userId), Resources.Video, Permissions.Read, new { VideoId = videoId, viewed }),
             transaction);
     }
 
@@ -391,10 +388,8 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     {
         return await Connection.ExecuteAsync(
             $"""
-             {AccessCte}
-
              INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed, position, watch_time, playback_time)
-             SELECT videos.id, @{nameof(GetVideoParameters.UserId)}, false, @{nameof(position)}, @{nameof(watchTime)}, @{nameof(playbackTime)}
+             SELECT videos.id, @{nameof(GetVideoParameters.PrincipalId)}, false, @{nameof(position)}, @{nameof(watchTime)}, @{nameof(playbackTime)}
              FROM media.videos
              WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
              ON CONFLICT (video_id, user_id) DO UPDATE
@@ -403,7 +398,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                  watch_time = video_viewed_by_users.watch_time + excluded.watch_time,
                  playback_time = video_viewed_by_users.playback_time + excluded.playback_time;
              """,
-            new { VideoId = videoId, UserId = userId, Access = Access.Read, position, watchTime, playbackTime },
+            Access.Parameters(new UserPrincipal(userId), Resources.Video, Permissions.Read, new { VideoId = videoId, position, watchTime, playbackTime }),
             transaction);
     }
 
@@ -411,14 +406,12 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     {
         return await Connection.ExecuteAsync(
             $"""
-             {AccessCte}
-
              INSERT INTO media.video_plays (video_id, user_id)
-             SELECT videos.id, @{nameof(GetVideoParameters.UserId)}
+             SELECT videos.id, @{nameof(GetVideoParameters.PrincipalId)}
              FROM media.videos
              WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)};
              """,
-            new GetVideoParameters(videoId, userId, Access.Read),
+            new GetVideoParameters(videoId, userId, Permissions.Read),
             transaction);
     }
 
@@ -445,16 +438,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     private static string GetFilteredVideosQuery(VideoParameters parameters) =>
         // lang=sql
         $"""
-         WITH accessible AS
-             (SELECT videos.id
-              FROM media.videos
-                  INNER JOIN identity.owners ON owners.id = videos.owner_id
-                  INNER JOIN identity.ownerships ON
-                      ownerships.owner_id = owners.id AND
-                      ownerships.user_id = @{nameof(parameters.UserId)} AND
-                      (ownerships.access = @{nameof(parameters.Access)} OR ownerships.access = 'owner')),
-
-             parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query)
+         WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query)
 
          SELECT videos.id,
                 videos.created_at,
@@ -489,7 +473,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
              CROSS JOIN parameters
              INNER JOIN media.channels ON videos.channel_id = channels.id
              INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
-         WHERE (videos.id IN (SELECT id FROM accessible))
+         WHERE (videos.owner_id IN ({Access.AccessibleOwners}))
            AND videos.ignored_at IS NULL
            AND ((@{nameof(parameters.WithFiles)} = TRUE AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NOT NULL)) OR
                 (@{nameof(parameters.WithFiles)} = FALSE AND NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)) OR
@@ -521,16 +505,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         return
             // lang=sql
             $"""
-         WITH accessible AS
-             (SELECT videos.id
-              FROM media.videos
-                  INNER JOIN identity.owners ON owners.id = videos.owner_id
-                  INNER JOIN identity.ownerships ON
-                      ownerships.owner_id = owners.id AND
-                      ownerships.user_id = @{nameof(parameters.UserId)} AND
-                      (ownerships.access = @{nameof(parameters.Access)} OR ownerships.access = 'owner')),
-
-             downloading AS MATERIALIZED
+         WITH downloading AS MATERIALIZED
                  (SELECT tasks.video_id
                   FROM tasks.tasks
                       INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
@@ -575,7 +550,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
                       CROSS JOIN parameters
                       INNER JOIN media.channels ON videos.channel_id = channels.id
                       INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
-                  WHERE (videos.id IN (SELECT id FROM accessible))
+                  WHERE (videos.owner_id IN ({Access.AccessibleOwners}))
                     AND videos.ignored_at IS NULL
                     AND (@{nameof(parameters.Downloadable)} = FALSE OR NOT EXISTS(SELECT 1 FROM downloading WHERE downloading.video_id = videos.id))
                     AND ((@{nameof(parameters.WithFiles)} = TRUE AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND (downloaded_at IS NULL = @{nameof(parameters.Downloadable)}))) OR

@@ -12,10 +12,10 @@ public interface INamedRepository<TEntity> : IRepository<TEntity>
     ValueTask<TEntity?> FindAsync(
         string name,
         Guid userId,
-        Access access,
+        Permissions permissions,
         CancellationToken cancellationToken = default);
 
-    ValueTask<TEntity?> FindAsync(string name, Guid userId, Access access, NpgsqlTransaction transaction);
+    ValueTask<TEntity?> FindAsync(string name, Guid userId, Permissions permissions, NpgsqlTransaction transaction);
 
     ValueTask<TEntity?> FindAsync(string name, CancellationToken cancellationToken = default);
 

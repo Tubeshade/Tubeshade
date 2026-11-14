@@ -57,7 +57,7 @@ public sealed class UserHandler : AuthorizationHandler<UserRequirement>
             return;
         }
 
-        var user = await _userRepository.FindAsync(id);
+        var user = await _userRepository.FindByIdAsync(id);
         if (user is not null)
         {
             context.User.AddUserId(user.Id);

@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Identity;
 using NodaTime;
 using Tubeshade.Data.Abstractions;
-using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Identity;
 
@@ -14,9 +13,6 @@ public sealed record UserEntity : Entity, IModifiableEntity, INamedEntity
 
     /// <inheritdoc />
     public Guid ModifiedByUserId { get; set; }
-
-    /// <inheritdoc />
-    public Access AccessFoo => Access.Modify;
 
     /// <inheritdoc />
     [ProtectedPersonalData]

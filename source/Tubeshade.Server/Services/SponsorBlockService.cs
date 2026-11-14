@@ -83,7 +83,7 @@ public sealed class SponsorBlockService
         var totalCount = videos.Count;
         var startTime = _clock.GetCurrentInstant();
 
-        await taskRepository.InitializeTaskProgress(taskRunId, totalCount);
+        await taskRepository.InitializeTaskProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, totalCount);
 
         foreach (var (index, videoId) in videos.Index())
         {
@@ -91,7 +91,7 @@ public sealed class SponsorBlockService
 
             var currentIndex = index + 1;
             var (rate, period) = _clock.GetRemainingEstimate(startTime, totalCount, currentIndex);
-            await taskRepository.UpdateProgress(taskRunId, currentIndex, rate, period);
+            await taskRepository.UpdateProgressForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, currentIndex, rate, period);
         }
 
         await transaction.CommitAsync(cancellationToken);

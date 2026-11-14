@@ -1,6 +1,5 @@
 ﻿using System;
 using NodaTime;
-using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Abstractions;
 
@@ -10,6 +9,4 @@ public interface IModifiableEntity : IEntity
     Instant ModifiedAt { get; set; }
 
     Guid ModifiedByUserId { get; set; }
-
-    Access AccessFoo { get; }
 }

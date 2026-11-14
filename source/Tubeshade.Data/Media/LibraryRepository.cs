@@ -10,11 +10,12 @@ public sealed class LibraryRepository(NpgsqlConnection connection) : ModifiableR
 
     /// <inheritdoc />
     protected override string InsertSql =>
-        """
-        INSERT INTO media.libraries (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, subscriptions_schedule_id) 
-        VALUES (@CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @SubscriptionsScheduleId)
-        RETURNING id;
-        """;
+        $"""
+         INSERT INTO media.libraries (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, subscriptions_schedule_id)
+         SELECT @CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @SubscriptionsScheduleId
+         WHERE {CanCreateIn(nameof(LibraryEntity.OwnerId))}
+         RETURNING id;
+         """;
 
     /// <inheritdoc />
     protected override string SelectSql =>

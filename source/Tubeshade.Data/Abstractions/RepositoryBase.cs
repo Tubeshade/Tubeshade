@@ -13,17 +13,8 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     where TEntity : IEntity
 {
     // lang=sql
-    public const string AccessibleLibrariesCte =
-        $"""
-         accessible_libraries AS
-         (SELECT libraries.id
-          FROM media.libraries
-              INNER JOIN identity.owners ON owners.id = libraries.owner_id
-              INNER JOIN identity.ownerships ON
-                  ownerships.owner_id = owners.id AND
-                  ownerships.user_id = @{nameof(GetParameters.UserId)} AND
-                  (ownerships.access = @{nameof(GetParameters.Access)} OR ownerships.access = 'owner'))
-         """;
+    public const string AccessibleLibraries =
+        $"SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN ({Access.AccessibleOwners})";
 
     protected RepositoryBase(NpgsqlConnection connection)
     {
@@ -34,34 +25,13 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
 
     protected abstract string TableName { get; }
 
-    protected virtual string InsertAccessFilter =>
-        $"""
-         EXISTS(SELECT owners.id
-                FROM identity.owners
-                         INNER JOIN identity.ownerships ON ownerships.owner_id = owners.id AND
-                                                  ownerships.user_id = @{nameof(IEntity.CreatedByUserId)} AND
-                                                  (ownerships.access = 'append' OR ownerships.access = 'owner'))
-         """;
-
     protected abstract string InsertSql { get; }
-
-    protected virtual string AccessCte =>
-        $"""
-         WITH accessible AS
-         (SELECT {TableName}.id
-          FROM {TableName}
-                   INNER JOIN identity.owners ON owners.id = {TableName}.owner_id
-                   INNER JOIN identity.ownerships ON
-              ownerships.owner_id = owners.id AND
-              ownerships.user_id = @{nameof(GetParameters.UserId)} AND
-              (ownerships.access = @{nameof(GetParameters.Access)} OR ownerships.access = 'owner'))
-         """;
 
     protected abstract string SelectSql { get; }
 
     protected virtual string AccessFilter =>
         $"""
-         ({TableName}.id IN (SELECT id FROM accessible))
+         ({TableName}.owner_id IN ({Access.AccessibleOwners}))
          """;
 
     protected virtual string SelectSingleSql =>
@@ -72,8 +42,6 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
 
     protected virtual string SelectAccessibleSql =>
         $"""
-         {AccessCte}
-
          {SelectSql}
          WHERE {AccessFilter}
          """;
@@ -86,11 +54,14 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
 
     protected virtual string DeleteSql =>
         $"""
-         {AccessCte}
-
          DELETE FROM {TableName}
          WHERE {AccessFilter}
            AND {TableName}.id = @{nameof(GetSingleParameters.Id)};
+         """;
+
+    protected static string CanCreateIn(string ownerIdParameter) =>
+        $"""
+         @{ownerIdParameter} IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IEntity.CreatedByUserId)}, {(int)Permissions.Create}))
          """;
 
     /// <inheritdoc />
@@ -105,7 +76,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     {
         var command = new CommandDefinition(
             SelectAccessibleSingleSql,
-            new GetSingleParameters(id, userId, Access.Read),
+            new GetSingleParameters(id, userId, Permissions.Read),
             cancellationToken: cancellationToken);
 
         return await Connection.QuerySingleAsync<TEntity>(command);
@@ -116,7 +87,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     {
         var command = new CommandDefinition(
             SelectAccessibleSingleSql,
-            new GetSingleParameters(id, userId, Access.Read),
+            new GetSingleParameters(id, userId, Permissions.Read),
             transaction);
 
         return await Connection.QuerySingleAsync<TEntity>(command);
@@ -126,47 +97,32 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     public async ValueTask<TEntity?> FindAsync(
         Guid id,
         Guid userId,
-        Access access,
+        Permissions permissions,
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
             SelectAccessibleSingleSql,
-            new GetSingleParameters(id, userId, access),
+            new GetSingleParameters(id, userId, permissions | Permissions.Read),
             cancellationToken: cancellationToken);
 
         return await Connection.QuerySingleOrDefaultAsync<TEntity>(command);
     }
 
     /// <inheritdoc />
-    public async ValueTask<TEntity?> FindAsync(Guid id, Guid userId, Access access, NpgsqlTransaction transaction)
+    public async ValueTask<TEntity?> FindAsync(Guid id, Guid userId, Permissions permissions, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             SelectAccessibleSingleSql,
-            new GetSingleParameters(id, userId, access),
+            new GetSingleParameters(id, userId, permissions | Permissions.Read),
             transaction);
 
         return await Connection.QuerySingleOrDefaultAsync<TEntity>(command);
     }
 
     /// <inheritdoc />
-    public async ValueTask<TEntity?> FindAsync(Guid id, CancellationToken cancellationToken = default)
+    public async ValueTask<TEntity?> FindForSystemAsync(SystemPrincipal system, Guid id, NpgsqlTransaction transaction)
     {
-        var command = new CommandDefinition(
-            SelectSingleSql,
-            new GetSingleParameters(id, default, Access.Read),
-            cancellationToken: cancellationToken);
-
-        return await Connection.QuerySingleOrDefaultAsync<TEntity>(command);
-    }
-
-    /// <inheritdoc />
-    public async ValueTask<TEntity?> FindAsync(Guid id, NpgsqlTransaction transaction)
-    {
-        var command = new CommandDefinition(
-            SelectSingleSql,
-            new GetSingleParameters(id, default, Access.Read),
-            transaction);
-
+        var command = new CommandDefinition(SelectSingleSql, new { Id = id }, transaction);
         return await Connection.QuerySingleOrDefaultAsync<TEntity>(command);
     }
 
@@ -175,7 +131,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     {
         var command = new CommandDefinition(
             SelectAccessibleSql,
-            new GetParameters(userId, Access.Read),
+            new GetParameters(userId, Permissions.Read),
             cancellationToken: cancellationToken);
 
         var enumerable = await Connection.QueryAsync<TEntity>(command);
@@ -187,9 +143,16 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     {
         var command = new CommandDefinition(
             SelectAccessibleSql,
-            new GetParameters(userId, Access.Read),
+            new GetParameters(userId, Permissions.Read),
             transaction);
 
+        var enumerable = await Connection.QueryAsync<TEntity>(command);
+        return enumerable as List<TEntity> ?? enumerable.ToList();
+    }
+
+    public async ValueTask<List<TEntity>> GetForSystemAsync(SystemPrincipal system, NpgsqlTransaction transaction)
+    {
+        var command = new CommandDefinition(SelectSql, null, transaction);
         var enumerable = await Connection.QueryAsync<TEntity>(command);
         return enumerable as List<TEntity> ?? enumerable.ToList();
     }
@@ -199,7 +162,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     {
         return Connection.QueryUnbufferedAsync<TEntity>(
             SelectAccessibleSql,
-            new GetParameters(userId, Access.Read));
+            new GetParameters(userId, Permissions.Read));
     }
 
     /// <inheritdoc />
@@ -207,7 +170,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     {
         return Connection.QueryUnbufferedAsync<TEntity>(
             SelectAccessibleSql,
-            new GetParameters(userId, Access.Read),
+            new GetParameters(userId, Permissions.Read),
             transaction);
     }
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -13,7 +13,6 @@ using NodaTime;
 using Npgsql;
 using NUnit.Framework;
 using Tubeshade.Data;
-using Tubeshade.Data.Identity;
 using Tubeshade.Data.Media;
 using Tubeshade.Data.Media.Channels;
 using Tubeshade.Data.Media.Videos;
@@ -32,7 +31,6 @@ public sealed class VideoFileRemuxServiceTests(ServerFixture fixture) : ServerTe
     private const string UnhashedFileName = "unhashed.mp4";
 
     private DirectoryInfo _directory = null!;
-    private Guid _userId;
     private Guid _libraryId;
     private Guid _videoId;
     private Guid _indexAtEndFileId;
@@ -57,16 +55,15 @@ public sealed class VideoFileRemuxServiceTests(ServerFixture fixture) : ServerTe
 
         await using var transaction = await connection.OpenAndBeginTransaction();
 
-        _userId = await scope.ServiceProvider.GetRequiredService<UserRepository>().GetSystemUserId(transaction);
-        _libraryId = await CreateLibrary(_userId, scope.ServiceProvider, transaction);
+        _libraryId = await CreateLibrary(User.Id, scope.ServiceProvider, transaction);
 
         var channelRepository = scope.ServiceProvider.GetRequiredService<ChannelRepository>();
         var channelId = (await channelRepository.AddAsync(
             new()
             {
-                CreatedByUserId = _userId,
-                ModifiedByUserId = _userId,
-                OwnerId = _userId,
+                CreatedByUserId = User.Id,
+                ModifiedByUserId = User.Id,
+                OwnerId = User.OwnerId,
                 Name = Guid.NewGuid().ToString("N"),
                 StoragePath = string.Empty,
                 ExternalId = string.Empty,
@@ -75,14 +72,14 @@ public sealed class VideoFileRemuxServiceTests(ServerFixture fixture) : ServerTe
             },
             transaction))!.Value;
 
-        await channelRepository.AddToLibrary(_libraryId, channelId, transaction);
+        await channelRepository.AddToLibrary(_libraryId, channelId, User.Id, transaction);
 
         _videoId = (await scope.ServiceProvider.GetRequiredService<VideoRepository>().AddAsync(
             new()
             {
-                CreatedByUserId = _userId,
-                ModifiedByUserId = _userId,
-                OwnerId = _userId,
+                CreatedByUserId = User.Id,
+                ModifiedByUserId = User.Id,
+                OwnerId = User.OwnerId,
                 Name = Guid.NewGuid().ToString("N"),
                 Description = string.Empty,
                 Categories = [],
@@ -164,16 +161,16 @@ public sealed class VideoFileRemuxServiceTests(ServerFixture fixture) : ServerTe
 
     private VideoFileEntity CreateFile(string fileName) => new()
     {
-        CreatedByUserId = _userId,
-        ModifiedByUserId = _userId,
-        OwnerId = _userId,
+        CreatedByUserId = User.Id,
+        ModifiedByUserId = User.Id,
+        OwnerId = User.OwnerId,
         VideoId = _videoId,
         StoragePath = fileName,
         Type = VideoContainerType.Mp4,
         Width = 320,
         Height = 240,
         Framerate = 25,
-        DownloadedByUserId = _userId,
+        DownloadedByUserId = User.Id,
         DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
     };
 
@@ -186,8 +183,8 @@ public sealed class VideoFileRemuxServiceTests(ServerFixture fixture) : ServerTe
         var taskRunId = Guid.NewGuid();
         await using (var transaction = await connection.OpenAndBeginTransaction())
         {
-            var taskId = await taskRepository.AddTask(TaskEntity.RemuxVideos(_libraryId, _userId), transaction);
-            await taskRepository.AddTaskRun(taskRunId, taskId, TaskSource.User, transaction);
+            var taskId = await taskRepository.AddTask(TaskEntity.RemuxVideos(_libraryId, User.Id), transaction);
+            await taskRepository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, taskId, TaskSource.User, transaction);
             await transaction.CommitAsync();
         }
 
@@ -209,7 +206,7 @@ public sealed class VideoFileRemuxServiceTests(ServerFixture fixture) : ServerTe
             new FfmpegService(NullLogger<FfmpegService>.Instance, options),
             SystemClock.Instance);
 
-        await service.RemuxVideoFiles(_libraryId, _userId, taskRepository, taskRunId);
+        await service.RemuxVideoFiles(_libraryId, User.Id, taskRepository, taskRunId);
     }
 
     private async Task<VideoFileEntity[]> GetFiles()
@@ -219,7 +216,7 @@ public sealed class VideoFileRemuxServiceTests(ServerFixture fixture) : ServerTe
         await using var transaction = await connection.OpenAndBeginTransaction();
         var files = await scope.ServiceProvider
             .GetRequiredService<VideoRepository>()
-            .GetFilesAsync(_videoId, _userId, transaction, CancellationToken.None);
+            .GetFilesAsync(_videoId, User.Id, transaction, CancellationToken.None);
 
         await transaction.CommitAsync();
         return files.ToArray();

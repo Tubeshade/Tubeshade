@@ -35,7 +35,7 @@ public sealed class DatabaseMigrationStartupFilter : IStartupFilter
         using (var scope = builder.ApplicationServices.CreateScope())
         {
             var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
-            repository.CompleteStuckTasks(CancellationToken.None).AsTask().GetAwaiter().GetResult();
+            repository.CompleteStuckTasksForSystemAsync(SystemPrincipals.Cleanup, CancellationToken.None).AsTask().GetAwaiter().GetResult();
         }
 
         _taskCompletionSource.SetResult();
