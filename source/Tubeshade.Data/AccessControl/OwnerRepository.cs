@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Dapper;
 using Npgsql;
 
@@ -18,29 +17,29 @@ public sealed partial class OwnerRepository
     /// Creates the user's personal owner, gives the user all permissions on it,
     /// and Read on the system owner, which holds work that belongs to no user.
     /// </summary>
-    public async ValueTask<Guid> AddPersonalAsync(Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<long> AddPersonalAsync(long userId, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             Queries.AddPersonal,
             new { userId, PersonalPermissions = Permissions.All, SystemPermissions = Permissions.Read },
             transaction);
 
-        return await _connection.QuerySingleAsync<Guid>(command);
+        return await _connection.QuerySingleAsync<long>(command);
     }
 
-    public async ValueTask<Guid> GetPersonalOwnerIdAsync(Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<long> GetPersonalOwnerIdAsync(long userId, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             Queries.GetPersonalOwnerId,
             new { userId },
             transaction);
 
-        return await _connection.QuerySingleAsync<Guid>(command);
+        return await _connection.QuerySingleAsync<long>(command);
     }
 
-    public async ValueTask<Guid?> GetPersonalUserIdForSystemAsync(
+    public async ValueTask<long?> GetPersonalUserIdForSystemAsync(
         SystemPrincipal system,
-        Guid ownerId,
+        long ownerId,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -48,6 +47,6 @@ public sealed partial class OwnerRepository
             new { ownerId },
             transaction);
 
-        return await _connection.QuerySingleOrDefaultAsync<Guid?>(command);
+        return await _connection.QuerySingleOrDefaultAsync<long?>(command);
     }
 }

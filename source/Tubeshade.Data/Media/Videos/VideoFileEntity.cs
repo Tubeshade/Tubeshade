@@ -6,7 +6,7 @@ namespace Tubeshade.Data.Media.Videos;
 
 public sealed record VideoFileEntity : ModifiableEntity
 {
-    public required Guid OwnerId { get; set; }
+    public long OwnerId { get; set; }
 
     public required Guid VideoId { get; set; }
 
@@ -29,7 +29,7 @@ public sealed record VideoFileEntity : ModifiableEntity
 
     public Instant? DownloadedAt { get; set; }
 
-    public Guid? DownloadedByUserId { get; set; }
+    public long? DownloadedByUserId { get; set; }
 
     public Guid? TaskRunId { get; set; }
 

@@ -1,5 +1,6 @@
 WITH filtered AS (
     SELECT channels.id,
+           channels.public_id,
            channels.created_at,
            channels.created_by_user_id,
            channels.modified_at,
@@ -12,8 +13,9 @@ WITH filtered AS (
            channels.subscriber_count,
            channels.external_url,
            channels.availability,
-           (SELECT library_id
+           (SELECT libraries.public_id
             FROM media.library_channels
+                INNER JOIN media.libraries ON libraries.id = library_channels.library_id
             WHERE channel_id = channels.id AND library_channels."primary") AS primary_library_id,
            (SELECT count(*)
             FROM media.videos
@@ -21,9 +23,9 @@ WITH filtered AS (
            count(*) OVER()                                                 AS total_count
     FROM media.channels
     WHERE channels.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))
-      AND (@Id IS NULL OR channels.id = @Id)
-      AND (@LibraryId IS NULL OR EXISTS(SELECT 1 FROM media.library_channels WHERE library_id = @LibraryId AND channel_id = channels.id))
-      AND (@CreatorId IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_id = @CreatorId AND channel_id = channels.id))
+      AND (@Id IS NULL OR channels.public_id = @Id)
+      AND (@LibraryId IS NULL OR EXISTS(SELECT 1 FROM media.library_channels WHERE library_id = (SELECT libraries.id FROM media.libraries WHERE libraries.public_id = @LibraryId) AND channel_id = channels.id))
+      AND (@CreatorId IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_id = (SELECT creators.id FROM media.creators WHERE creators.public_id = @CreatorId) AND channel_id = channels.id))
       AND (@Query IS NULL OR channels.name @@ websearch_to_tsquery('english', @Query))
       AND (@Availability::media.external_availability IS NULL OR channels.availability = @Availability)
     ORDER BY
@@ -45,6 +47,7 @@ WITH filtered AS (
     OFFSET @Offset)
 
 SELECT channels.id,
+       channels.public_id,
        channels.created_at,
        channels.created_by_user_id,
        channels.modified_at,
@@ -62,6 +65,7 @@ SELECT channels.id,
        channels.total_count,
 
        image_files.id,
+       image_files.public_id,
        image_files.created_at,
        image_files.created_by_user_id,
        image_files.modified_at,

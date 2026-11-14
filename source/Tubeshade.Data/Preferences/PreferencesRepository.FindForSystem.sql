@@ -1,4 +1,5 @@
 SELECT preferences.id,
+       preferences.public_id,
        preferences.created_at,
        preferences.created_by_user_id,
        preferences.modified_at,
@@ -12,4 +13,4 @@ SELECT preferences.id,
        preferences.download_method,
        preferences.formats
 FROM media.preferences
-WHERE preferences.id = @Id;
+WHERE preferences.public_id = @Id;

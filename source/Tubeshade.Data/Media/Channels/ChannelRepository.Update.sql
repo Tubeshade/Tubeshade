@@ -7,4 +7,4 @@ SET modified_at = CURRENT_TIMESTAMP,
     subscribed_at = @SubscribedAt,
     subscriber_count = @SubscriberCount
 WHERE channels.owner_id IN (SELECT owner_id FROM access.accessible_owners(@ModifiedByUserId, @Permissions))
-  AND channels.id = @Id;
+  AND channels.public_id = @PublicId;

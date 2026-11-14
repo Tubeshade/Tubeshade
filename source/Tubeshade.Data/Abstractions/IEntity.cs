@@ -5,9 +5,11 @@ namespace Tubeshade.Data.Abstractions;
 
 public interface IEntity
 {
-    Guid Id { get; set; }
+    long Id { get; set; }
+
+    Guid PublicId { get; set; }
 
     Instant CreatedAt { get; init; }
 
-    Guid CreatedByUserId { get; init; }
+    long CreatedByUserId { get; init; }
 }

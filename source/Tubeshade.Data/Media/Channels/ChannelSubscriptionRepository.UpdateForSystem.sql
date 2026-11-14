@@ -6,4 +6,4 @@ SET modified_at = CURRENT_TIMESTAMP,
     expires_at = @ExpiresAt,
     verify_token = @VerifyToken,
     secret = @Secret
-WHERE channel_subscriptions.id = @Id;
+WHERE channel_subscriptions.channel_id = @Id;

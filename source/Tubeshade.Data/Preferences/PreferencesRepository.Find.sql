@@ -1,4 +1,5 @@
 SELECT preferences.id,
+       preferences.public_id,
        preferences.created_at,
        preferences.created_by_user_id,
        preferences.modified_at,
@@ -20,4 +21,4 @@ WHERE preferences.id IN (SELECT library_preferences.preference_id
                          FROM media.channel_preferences
                              INNER JOIN media.channels ON channels.id = channel_preferences.channel_id
                          WHERE channels.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions)))
-  AND preferences.id = @Id;
+  AND preferences.public_id = @Id;

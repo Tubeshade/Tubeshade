@@ -1,4 +1,5 @@
 SELECT preferences.id,
+       preferences.public_id,
        preferences.created_at,
        preferences.created_by_user_id,
        preferences.modified_at,
@@ -14,5 +15,5 @@ SELECT preferences.id,
 FROM media.channels
    INNER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
    INNER JOIN media.preferences ON channel_preferences.preference_id = preferences.id
-WHERE channels.id = @channelId
+WHERE channels.public_id = @channelId
   AND channels.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions));

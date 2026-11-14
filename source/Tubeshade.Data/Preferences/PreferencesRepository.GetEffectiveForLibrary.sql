@@ -1,4 +1,5 @@
 SELECT library_p.id,
+       library_p.public_id,
        library_p.created_at,
        library_p.created_by_user_id,
        library_p.modified_at,
@@ -14,5 +15,5 @@ SELECT library_p.id,
 FROM media.libraries
          LEFT OUTER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
          LEFT OUTER JOIN media.preferences library_p ON library_preferences.preference_id = library_p.id
-WHERE libraries.id = @libraryId
+WHERE libraries.public_id = @libraryId
   AND libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions));

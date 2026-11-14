@@ -6,10 +6,10 @@ namespace Tubeshade.Data.Tasks;
 
 public sealed class TaskParameters : IAccessParameters, IPaginatedParameters
 {
-    public required Guid UserId { get; init; }
+    public required long UserId { get; init; }
 
     /// <inheritdoc />
-    public Guid PrincipalId => UserId;
+    public long PrincipalId => UserId;
 
     public Permissions Permissions => Permissions.Read;
 

@@ -1,5 +1,4 @@
-﻿using System;
-using NodaTime;
+﻿using NodaTime;
 
 namespace Tubeshade.Data.Abstractions;
 
@@ -9,5 +8,5 @@ public abstract record ModifiableEntity : Entity, IModifiableEntity
     public Instant ModifiedAt { get; set; }
 
     /// <inheritdoc />
-    public Guid ModifiedByUserId { get; set; }
+    public long ModifiedByUserId { get; set; }
 }

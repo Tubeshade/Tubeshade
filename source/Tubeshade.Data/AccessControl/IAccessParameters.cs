@@ -1,10 +1,8 @@
-﻿using System;
-
-namespace Tubeshade.Data.AccessControl;
+﻿namespace Tubeshade.Data.AccessControl;
 
 public interface IAccessParameters
 {
-    Guid PrincipalId { get; }
+    long PrincipalId { get; }
 
     Permissions Permissions { get; }
 }

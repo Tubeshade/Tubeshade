@@ -2,5 +2,5 @@
 -- taken by foreign key checks, for example when a task is triggered concurrently.
 SELECT id
 FROM tasks.tasks
-WHERE id = @taskId
+WHERE public_id = @taskId
     FOR NO KEY UPDATE SKIP LOCKED;

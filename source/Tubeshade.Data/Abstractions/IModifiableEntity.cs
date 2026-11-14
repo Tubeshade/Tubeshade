@@ -1,5 +1,4 @@
-﻿using System;
-using NodaTime;
+﻿using NodaTime;
 
 namespace Tubeshade.Data.Abstractions;
 
@@ -8,5 +7,5 @@ public interface IModifiableEntity : IEntity
 {
     Instant ModifiedAt { get; set; }
 
-    Guid ModifiedByUserId { get; set; }
+    long ModifiedByUserId { get; set; }
 }

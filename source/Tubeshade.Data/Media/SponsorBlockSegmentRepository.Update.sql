@@ -8,4 +8,4 @@ SET modified_at = CURRENT_TIMESTAMP,
     locked = @Locked,
     description = @Description
 WHERE sponsorblock_segments.video_id IN (SELECT videos.id FROM media.videos WHERE videos.owner_id IN (SELECT owner_id FROM access.accessible_owners(@ModifiedByUserId, @Permissions)))
-  AND sponsorblock_segments.id = @Id;
+  AND sponsorblock_segments.public_id = @PublicId;

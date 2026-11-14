@@ -3,11 +3,11 @@ using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Abstractions;
 
-internal class DeleteParameters(Guid id, Guid userId) : GetSingleParameters(id, userId, Permissions.Delete);
+internal class DeleteParameters(Guid id, long userId) : GetSingleParameters(id, userId, Permissions.Delete);
 
 internal class GetSingleVideoParameters : GetVideoParameters
 {
-    public GetSingleVideoParameters(Guid id, Guid videoId, Guid userId, Permissions permissions)
+    public GetSingleVideoParameters(Guid id, Guid videoId, long userId, Permissions permissions)
         : base(videoId, userId, permissions)
     {
         Id = id;
@@ -18,7 +18,7 @@ internal class GetSingleVideoParameters : GetVideoParameters
 
 internal class GetVideosParameters : GetParameters
 {
-    public GetVideosParameters(Guid[] videoIds, Guid userId, Permissions permissions)
+    public GetVideosParameters(Guid[] videoIds, long userId, Permissions permissions)
         : base(userId, permissions)
     {
         VideoIds = videoIds;
@@ -29,7 +29,7 @@ internal class GetVideosParameters : GetParameters
 
 internal class GetVideoParameters : GetParameters
 {
-    public GetVideoParameters(Guid videoId, Guid userId, Permissions permissions)
+    public GetVideoParameters(Guid videoId, long userId, Permissions permissions)
         : base(userId, permissions)
     {
         VideoId = videoId;
@@ -40,7 +40,7 @@ internal class GetVideoParameters : GetParameters
 
 public class GetFromLibraryParameters : GetParameters
 {
-    public GetFromLibraryParameters(Guid userId, Guid libraryId, Permissions permissions)
+    public GetFromLibraryParameters(long userId, Guid libraryId, Permissions permissions)
         : base(userId, permissions)
     {
         LibraryId = libraryId;
@@ -51,20 +51,20 @@ public class GetFromLibraryParameters : GetParameters
 
 public class GetParameters : IAccessParameters
 {
-    public GetParameters(Guid userId, Permissions permissions)
+    public GetParameters(long userId, Permissions permissions)
     {
         PrincipalId = userId;
         Permissions = permissions;
     }
 
-    public Guid PrincipalId { get; }
+    public long PrincipalId { get; }
 
     public Permissions Permissions { get; }
 }
 
 internal class GetSingleExternalUrlParameters : GetParameters
 {
-    public GetSingleExternalUrlParameters(string externalUrl, Guid userId, Permissions permissions)
+    public GetSingleExternalUrlParameters(string externalUrl, long userId, Permissions permissions)
         : base(userId, permissions)
     {
         ExternalUrl = externalUrl;
@@ -75,7 +75,7 @@ internal class GetSingleExternalUrlParameters : GetParameters
 
 internal class GetSingleExternalParameters : GetParameters
 {
-    public GetSingleExternalParameters(string externalId, Guid userId, Permissions permissions)
+    public GetSingleExternalParameters(string externalId, long userId, Permissions permissions)
         : base(userId, permissions)
     {
         ExternalId = externalId;
@@ -86,7 +86,7 @@ internal class GetSingleExternalParameters : GetParameters
 
 internal class GetSingleLibraryExternalParameters : GetParameters
 {
-    public GetSingleLibraryExternalParameters(string externalId, Guid libraryId, Guid userId, Permissions permissions)
+    public GetSingleLibraryExternalParameters(string externalId, Guid libraryId, long userId, Permissions permissions)
         : base(userId, permissions)
     {
         ExternalId = externalId;
@@ -99,7 +99,7 @@ internal class GetSingleLibraryExternalParameters : GetParameters
 
 internal class GetSingleParameters : GetParameters
 {
-    public GetSingleParameters(Guid id, Guid userId, Permissions permissions)
+    public GetSingleParameters(Guid id, long userId, Permissions permissions)
         : base(userId, permissions)
     {
         Id = id;

@@ -10,12 +10,13 @@ WITH downloading AS MATERIALIZED
 
     filtered AS
         (SELECT videos.id,
+                videos.public_id,
                 videos.created_at,
                 videos.created_by_user_id,
                 videos.modified_at,
                 videos.modified_by_user_id,
                 videos.owner_id,
-                videos.channel_id,
+                channels.public_id AS channel_id,
                 videos.storage_path,
                 videos.external_id,
                 videos.external_url,
@@ -39,7 +40,7 @@ WITH downloading AS MATERIALIZED
                 videos.searchable_index_value AS searchable_index_value
          FROM media.videos
              LEFT OUTER JOIN media.video_viewed_by_users viewed ON videos.id = viewed.video_id AND viewed.user_id = @UserId
-             LEFT OUTER JOIN media.playlist_videos ON playlist_videos.video_id = videos.id AND playlist_videos.playlist_id = @PlaylistId
+             LEFT OUTER JOIN media.playlist_videos ON playlist_videos.video_id = videos.id AND playlist_videos.playlist_id = (SELECT playlists.id FROM media.playlists WHERE playlists.public_id = @PlaylistId)
              CROSS JOIN parameters
              INNER JOIN media.channels ON videos.channel_id = channels.id
              INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
@@ -55,9 +56,9 @@ WITH downloading AS MATERIALIZED
                  )
                 )
                )
-           AND (@LibraryId IS NULL OR library_channels.library_id = @LibraryId)
-           AND (@CreatorId IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_channels.channel_id = videos.channel_id AND creator_id = @CreatorId))
-           AND (@ChannelId IS NULL OR library_channels.channel_id = @ChannelId)
+           AND (@LibraryId IS NULL OR library_channels.library_id = (SELECT libraries.id FROM media.libraries WHERE libraries.public_id = @LibraryId))
+           AND (@CreatorId IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_channels.channel_id = videos.channel_id AND creator_id = (SELECT creators.id FROM media.creators WHERE creators.public_id = @CreatorId)))
+           AND (@ChannelId IS NULL OR library_channels.channel_id = (SELECT channels.id FROM media.channels WHERE channels.public_id = @ChannelId))
            AND (@PlaylistId IS NULL OR playlist_videos."order" IS NOT NULL)
            AND (@Query IS NULL OR videos.searchable_index_value @@ query)
            AND (@Type::media.video_type IS NULL OR videos.type = @Type)
@@ -97,6 +98,7 @@ WITH downloading AS MATERIALIZED
          OFFSET @Offset)
 
 SELECT videos.id,
+       videos.public_id,
        videos.created_at,
        videos.created_by_user_id,
        videos.modified_at,
@@ -125,6 +127,7 @@ SELECT videos.id,
        videos.playlist_order,
 
        image_files.id,
+       image_files.public_id,
        image_files.created_at,
        image_files.created_by_user_id,
        image_files.modified_at,

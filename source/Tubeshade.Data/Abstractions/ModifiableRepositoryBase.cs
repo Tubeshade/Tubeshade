@@ -25,6 +25,6 @@ public abstract class ModifiableRepositoryBase<TEntity> : RepositoryBase<TEntity
     /// <inheritdoc />
     public ValueTask<int> DeleteAsync(TEntity entity, NpgsqlTransaction transaction)
     {
-        return DeleteAsync(entity.Id, entity.ModifiedByUserId, transaction);
+        return DeleteAsync(entity.PublicId, entity.ModifiedByUserId, transaction);
     }
 }

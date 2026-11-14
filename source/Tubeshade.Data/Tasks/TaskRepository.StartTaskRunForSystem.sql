@@ -1,3 +1,3 @@
 UPDATE tasks.task_runs
 SET state = 'running'
-WHERE id = @taskRunId;
+WHERE public_id = @taskRunId;

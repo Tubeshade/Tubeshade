@@ -26,25 +26,25 @@ public sealed partial class ClaimRepository : IRepository<ClaimEntity>
     }
 
     /// <inheritdoc />
-    public ValueTask<ClaimEntity> GetAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
+    public ValueTask<ClaimEntity> GetAsync(Guid id, long userId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public ValueTask<ClaimEntity> GetAsync(Guid id, Guid userId, NpgsqlTransaction transaction)
+    public ValueTask<ClaimEntity> GetAsync(Guid id, long userId, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public ValueTask<ClaimEntity?> FindAsync(Guid id, Guid userId, Permissions permissions, CancellationToken cancellationToken = default)
+    public ValueTask<ClaimEntity?> FindAsync(Guid id, long userId, Permissions permissions, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public ValueTask<ClaimEntity?> FindAsync(Guid id, Guid userId, Permissions permissions, NpgsqlTransaction transaction)
+    public ValueTask<ClaimEntity?> FindAsync(Guid id, long userId, Permissions permissions, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }
@@ -62,7 +62,7 @@ public sealed partial class ClaimRepository : IRepository<ClaimEntity>
     }
 
     /// <inheritdoc />
-    public async ValueTask<List<ClaimEntity>> GetAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async ValueTask<List<ClaimEntity>> GetAsync(long userId, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
             Queries.Get,
@@ -74,25 +74,25 @@ public sealed partial class ClaimRepository : IRepository<ClaimEntity>
     }
 
     /// <inheritdoc />
-    public ValueTask<List<ClaimEntity>> GetAsync(Guid userId, NpgsqlTransaction transaction)
+    public ValueTask<List<ClaimEntity>> GetAsync(long userId, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public IAsyncEnumerable<ClaimEntity> GetUnbufferedAsync(Guid userId)
+    public IAsyncEnumerable<ClaimEntity> GetUnbufferedAsync(long userId)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public IAsyncEnumerable<ClaimEntity> GetUnbufferedAsync(Guid userId, NpgsqlTransaction transaction)
+    public IAsyncEnumerable<ClaimEntity> GetUnbufferedAsync(long userId, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc />
-    public ValueTask<int> DeleteAsync(Guid id, Guid userId, NpgsqlTransaction transaction)
+    public ValueTask<int> DeleteAsync(Guid id, long userId, NpgsqlTransaction transaction)
     {
         throw new NotImplementedException();
     }

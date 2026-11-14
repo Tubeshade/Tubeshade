@@ -28,7 +28,7 @@ public sealed partial class ChannelRepository(NpgsqlConnection connection) : Mod
 
     public async ValueTask<List<ChannelEntity>> GetSubscribedForLibrary(
         Guid libraryId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -42,7 +42,7 @@ public sealed partial class ChannelRepository(NpgsqlConnection connection) : Mod
 
     public async ValueTask<List<ChannelEntity>> GetForLibrary(
         Guid libraryId,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
@@ -56,7 +56,7 @@ public sealed partial class ChannelRepository(NpgsqlConnection connection) : Mod
 
     public async ValueTask<ChannelEntity?> FindByExternalId(
         string externalId,
-        Guid userId,
+        long userId,
         Permissions permissions,
         NpgsqlTransaction transaction)
     {
@@ -69,7 +69,7 @@ public sealed partial class ChannelRepository(NpgsqlConnection connection) : Mod
     }
 
     /// <summary>Adds the channel to the library, if the user holds Update on the library and Read on the channel.</summary>
-    public async ValueTask<int> AddToLibrary(Guid libraryId, Guid channelId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<int> AddToLibrary(Guid libraryId, Guid channelId, long userId, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
             Queries.AddToLibrary,
@@ -80,17 +80,17 @@ public sealed partial class ChannelRepository(NpgsqlConnection connection) : Mod
     public async ValueTask<int> MoveToLibrary(
         Guid newLibraryId,
         Guid channelId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction)
     {
-        return await Connection.ExecuteAsync(
+        return await Connection.QuerySingleAsync<int>(
             new CommandDefinition(
                 Queries.MoveToLibrary,
-                Access.Parameters(new UserPrincipal(userId), Resources.Library, Permissions.Update, new { newLibraryId, channelId }),
+                Access.Parameters(new UserPrincipal(userId), Resources.Library, Permissions.Update, new { newLibraryId, channelId, MovePermissions = Permissions.Delete }),
                 transaction));
     }
 
-    public async ValueTask<Guid> GetPrimaryLibraryId(Guid id, Guid userId, CancellationToken cancellationToken = default)
+    public async ValueTask<Guid> GetPrimaryLibraryId(Guid id, long userId, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
             Queries.GetPrimaryLibraryId,
@@ -102,7 +102,7 @@ public sealed partial class ChannelRepository(NpgsqlConnection connection) : Mod
 
     public async ValueTask<Guid> GetPrimaryLibraryId(
         Guid id,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {
@@ -141,7 +141,7 @@ public sealed partial class ChannelRepository(NpgsqlConnection connection) : Mod
 
     public async ValueTask<DetailedChannel> GetDetailed(
         Guid id,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken = default)
     {
         var parameters = new ChannelParameters

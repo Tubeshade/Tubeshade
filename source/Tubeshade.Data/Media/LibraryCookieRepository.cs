@@ -18,7 +18,7 @@ public sealed partial class LibraryCookieRepository
 
     public ValueTask<LibraryCookieEntity?> FindByDomain(
         string domain,
-        Guid userId,
+        long userId,
         Guid libraryId,
         Permissions permissions,
         CancellationToken cancellationToken = default)
@@ -28,7 +28,7 @@ public sealed partial class LibraryCookieRepository
 
     public ValueTask<LibraryCookieEntity?> FindByDomain(
         string domain,
-        Guid userId,
+        long userId,
         Guid libraryId,
         Permissions permissions,
         NpgsqlTransaction transaction,
@@ -39,7 +39,7 @@ public sealed partial class LibraryCookieRepository
 
     private async ValueTask<LibraryCookieEntity?> FindByDomainCore(
         string domain,
-        Guid userId,
+        long userId,
         Guid libraryId,
         Permissions permissions,
         NpgsqlTransaction? transaction,
@@ -65,7 +65,7 @@ public sealed partial class LibraryCookieRepository
                 new UserPrincipal(entity.ModifiedByUserId),
                 Resources.LibraryCookie,
                 Permissions.Create,
-                new { entity.Id, entity.CreatedByUserId, entity.ModifiedByUserId, entity.Domain, entity.Cookie }),
+                new { entity.PublicId, entity.CreatedByUserId, entity.ModifiedByUserId, entity.Domain, entity.Cookie }),
             transaction,
             cancellationToken: cancellationToken);
 
@@ -83,7 +83,7 @@ public sealed partial class LibraryCookieRepository
                 new UserPrincipal(entity.ModifiedByUserId),
                 Resources.LibraryCookie,
                 Permissions.Update,
-                new { entity.Id, entity.ModifiedByUserId, entity.Domain, entity.Cookie }),
+                new { entity.PublicId, entity.ModifiedByUserId, entity.Domain, entity.Cookie }),
             transaction,
             cancellationToken: cancellationToken);
 

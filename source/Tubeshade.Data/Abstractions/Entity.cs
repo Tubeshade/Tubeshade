@@ -6,11 +6,14 @@ namespace Tubeshade.Data.Abstractions;
 public abstract record Entity : IEntity
 {
     /// <inheritdoc />
-    public Guid Id { get; set; }
+    public long Id { get; set; }
+
+    /// <inheritdoc />
+    public Guid PublicId { get; set; }
 
     /// <inheritdoc />
     public Instant CreatedAt { get; init; }
 
     /// <inheritdoc />
-    public Guid CreatedByUserId { get; init; }
+    public long CreatedByUserId { get; init; }
 }

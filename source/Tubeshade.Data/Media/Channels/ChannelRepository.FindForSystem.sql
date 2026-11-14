@@ -1,4 +1,5 @@
 SELECT id,
+       public_id,
        created_at,
        created_by_user_id,
        modified_at,
@@ -12,4 +13,4 @@ SELECT id,
        external_url,
        availability
 FROM media.channels
-WHERE channels.id = @Id;
+WHERE channels.public_id = @Id;

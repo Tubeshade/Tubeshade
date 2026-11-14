@@ -1,4 +1,5 @@
 SELECT id,
+       public_id,
        created_at,
        created_by_user_id,
        modified_at,
@@ -11,4 +12,4 @@ SELECT id,
        hash,
        storage_size
 FROM media.image_files
-WHERE image_files.id = @Id;
+WHERE image_files.public_id = @Id;

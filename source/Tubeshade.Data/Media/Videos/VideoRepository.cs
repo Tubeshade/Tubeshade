@@ -12,6 +12,7 @@ namespace Tubeshade.Data.Media.Videos;
 
 public sealed partial class VideoRepository(NpgsqlConnection connection) : ModifiableRepositoryBase<VideoEntity>(connection)
 {
+    /// <remarks>A video takes the owner of its channel, so <see cref="VideoEntity.OwnerId"/> is not used.</remarks>
     protected override string InsertSql => Queries.Insert;
 
     protected override string GetSql => Queries.Get;
@@ -55,7 +56,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
     }
 
     public async ValueTask<VideoEntity?> GetLatestDownloadedVideo(
-        Guid userId,
+        long userId,
         Guid libraryId,
         Guid channelId,
         NpgsqlTransaction transaction)
@@ -78,7 +79,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
 
     public async ValueTask<List<(Guid VideoId, Guid ChannelId, string VideoUrl)>> GetForReindex(
         Guid libraryId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -92,7 +93,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
 
     public async ValueTask<List<VideoFileEntity>> GetFilesAsync(
         Guid videoId,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
@@ -106,7 +107,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
 
     public async ValueTask<List<VideoFileEntity>> GetFilesAsync(
         Guid videoId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {
@@ -122,7 +123,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
 
     public async ValueTask<VideoFileEntity?> FindFileAsync(
         Guid id,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
@@ -135,7 +136,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
 
     public async ValueTask<VideoEntity?> FindByExternalId(
         string externalId,
-        Guid userId,
+        long userId,
         Permissions permissions,
         NpgsqlTransaction transaction)
     {
@@ -149,7 +150,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
 
     public async ValueTask<List<EntityId>> FindByExternalIds(
         List<string> externalIds,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {
@@ -163,7 +164,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
         return enumerable as List<EntityId> ?? enumerable.ToList();
     }
 
-    public async ValueTask<VideoEntity?> FindByExternalUrl(string externalUrl, Guid userId, Permissions permissions,
+    public async ValueTask<VideoEntity?> FindByExternalUrl(string externalUrl, long userId, Permissions permissions,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -175,7 +176,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
     }
 
     public async ValueTask<List<EntityId>> GetWithoutSegments(
-        Guid userId,
+        long userId,
         Guid libraryId,
         NpgsqlTransaction transaction)
     {
@@ -188,7 +189,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
     }
 
     public async ValueTask<List<EntityId>> GetWithUnlockedSegments(
-        Guid userId,
+        long userId,
         Guid libraryId,
         NpgsqlTransaction transaction)
     {
@@ -200,7 +201,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
         return enumerable as List<EntityId> ?? enumerable.ToList();
     }
 
-    public async ValueTask<int> SetWatched(Guid videoId, Guid userId, bool viewed, NpgsqlTransaction transaction)
+    public async ValueTask<int> SetWatched(Guid videoId, long userId, bool viewed, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
             Queries.SetWatched,
@@ -208,7 +209,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
             transaction);
     }
 
-    public async ValueTask<int> SavePlaybackActivity(Guid videoId, Guid userId, double position, double watchTime, double playbackTime, NpgsqlTransaction transaction)
+    public async ValueTask<int> SavePlaybackActivity(Guid videoId, long userId, double position, double watchTime, double playbackTime, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
             Queries.SavePlaybackActivity,
@@ -216,7 +217,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
             transaction);
     }
 
-    public async ValueTask<int> AddPlay(Guid videoId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<int> AddPlay(Guid videoId, long userId, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
             Queries.AddPlay,
@@ -224,7 +225,7 @@ public sealed partial class VideoRepository(NpgsqlConnection connection) : Modif
             transaction);
     }
 
-    public async ValueTask<VideoPlaybackStatistics> GetPlaybackStatistics(Guid videoId, Guid userId,
+    public async ValueTask<VideoPlaybackStatistics> GetPlaybackStatistics(Guid videoId, long userId,
         NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleAsync<VideoPlaybackStatistics>(

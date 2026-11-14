@@ -1,5 +1,4 @@
-﻿using System;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Tubeshade.Data.Abstractions;
 
 namespace Tubeshade.Data.Identity;
@@ -9,7 +8,7 @@ public sealed record ClaimEntity : Entity
     /// <summary>
     /// Gets or sets the primary key of the user associated with this claim.
     /// </summary>
-    public Guid UserId { get; set; }
+    public long UserId { get; set; }
 
     /// <summary>
     /// Gets or sets the claim type for this claim.

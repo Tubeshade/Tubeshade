@@ -33,7 +33,7 @@ public sealed partial class TrackFileRepository(NpgsqlConnection connection)
 
     public async ValueTask<List<TrackFileEntity>> GetForVideo(
         Guid videoId,
-        Guid userId,
+        long userId,
         Permissions permissions,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)

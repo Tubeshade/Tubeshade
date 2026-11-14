@@ -34,7 +34,7 @@ public sealed partial class CreatorRepository : ModifiableRepositoryBase<Creator
 
     public async ValueTask<List<CreatorChannel>> GetChannels(
         Guid creatorId,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
@@ -50,7 +50,7 @@ public sealed partial class CreatorRepository : ModifiableRepositoryBase<Creator
         Guid creatorId,
         Guid primaryChannelId,
         Guid[] channelIds,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {

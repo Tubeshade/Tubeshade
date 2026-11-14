@@ -1,4 +1,5 @@
 SELECT COALESCE(channel_p.id, library_p.id) AS Id,
+       COALESCE(channel_p.public_id, library_p.public_id) AS PublicId,
        COALESCE(channel_p.created_at, library_p.created_at) AS CreatedAt,
        COALESCE(channel_p.created_by_user_id, library_p.created_by_user_id) AS CreatedByUserId,
        COALESCE(channel_p.modified_at, library_p.modified_at) AS ModifiedAt,
@@ -16,9 +17,9 @@ FROM media.videos
          LEFT OUTER JOIN media.channel_preferences ON channels.id = channel_preferences.channel_id
          LEFT OUTER JOIN media.preferences channel_p ON channel_preferences.preference_id = channel_p.id
 
-         INNER JOIN media.libraries ON libraries.id = @libraryId
+         INNER JOIN media.libraries ON libraries.public_id = @libraryId
          LEFT OUTER JOIN media.library_preferences ON libraries.id = library_preferences.library_id
          LEFT OUTER JOIN media.preferences library_p ON library_preferences.preference_id = library_p.id
-WHERE videos.id = @videoId AND COALESCE(channel_p.id, library_p.id) IS NOT NULL
+WHERE videos.public_id = @videoId AND COALESCE(channel_p.id, library_p.id) IS NOT NULL
   AND videos.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))
   AND libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions));

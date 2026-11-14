@@ -12,7 +12,7 @@ public sealed record UserEntity : Entity, IModifiableEntity, INamedEntity
     public Instant ModifiedAt { get; set; }
 
     /// <inheritdoc />
-    public Guid ModifiedByUserId { get; set; }
+    public long ModifiedByUserId { get; set; }
 
     /// <inheritdoc />
     [ProtectedPersonalData]

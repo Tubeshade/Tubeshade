@@ -33,7 +33,7 @@ public sealed partial class ImageFileRepository(NpgsqlConnection connection)
     protected override string DeleteSql => Queries.Delete;
 
     /// <summary>Links the image to the video, if the user holds Update on the video.</summary>
-    public async ValueTask<int> LinkToVideoAsync(Guid id, Guid videoId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<int> LinkToVideoAsync(Guid id, Guid videoId, long userId, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             Queries.LinkToVideo,
@@ -45,7 +45,7 @@ public sealed partial class ImageFileRepository(NpgsqlConnection connection)
 
     public async ValueTask<List<ImageFileEntity>> GetForVideo(
         Guid videoId,
-        Guid userId,
+        long userId,
         Permissions permissions,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
@@ -63,7 +63,7 @@ public sealed partial class ImageFileRepository(NpgsqlConnection connection)
     }
 
     /// <summary>Links the image to the channel, if the user holds Update on the channel.</summary>
-    public async ValueTask<int> LinkToChannelAsync(Guid id, Guid channelId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<int> LinkToChannelAsync(Guid id, Guid channelId, long userId, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             Queries.LinkToChannel,
@@ -75,7 +75,7 @@ public sealed partial class ImageFileRepository(NpgsqlConnection connection)
 
     public async ValueTask<List<ImageFileEntity>> GetForChannel(
         Guid channelId,
-        Guid userId,
+        long userId,
         Permissions permissions,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
@@ -93,7 +93,7 @@ public sealed partial class ImageFileRepository(NpgsqlConnection connection)
     }
 
     /// <summary>Links the image to the playlist, if the user holds Update on the playlist's library.</summary>
-    public async ValueTask<int> LinkToPlaylistAsync(Guid id, Guid playlistId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<int> LinkToPlaylistAsync(Guid id, Guid playlistId, long userId, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             Queries.LinkToPlaylist,
@@ -105,7 +105,7 @@ public sealed partial class ImageFileRepository(NpgsqlConnection connection)
 
     public async ValueTask<List<ImageFileEntity>> GetForPlaylist(
         Guid playlistId,
-        Guid userId,
+        long userId,
         Permissions permissions,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
@@ -125,7 +125,7 @@ public sealed partial class ImageFileRepository(NpgsqlConnection connection)
     /// <summary>Gets the storage path of the video, channel or playlist that the image belongs to, if the user can read it.</summary>
     public async ValueTask<string?> GetPath(
         Guid id,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {

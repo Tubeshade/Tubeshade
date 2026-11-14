@@ -7,5 +7,7 @@ SET modified_at = CURRENT_TIMESTAMP,
     expires_at = @ExpiresAt,
     verify_token = @VerifyToken,
     secret = @Secret
-WHERE channel_subscriptions.id IN (SELECT channels.id FROM media.channels WHERE channels.owner_id IN (SELECT owner_id FROM access.accessible_owners(@ModifiedByUserId, @Permissions)))
-  AND channel_subscriptions.id = @Id;
+FROM media.channels
+WHERE channels.id = channel_subscriptions.channel_id
+  AND channels.owner_id IN (SELECT owner_id FROM access.accessible_owners(@ModifiedByUserId, @Permissions))
+  AND channels.public_id = @PublicId;

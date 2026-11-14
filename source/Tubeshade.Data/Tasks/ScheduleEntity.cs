@@ -6,7 +6,7 @@ namespace Tubeshade.Data.Tasks;
 public sealed record ScheduleEntity : ModifiableEntity, IOwnableEntity
 {
     /// <inheritdoc />
-    public required Guid OwnerId { get; set; }
+    public required long OwnerId { get; set; }
 
     public required Guid TaskId { get; set; }
 

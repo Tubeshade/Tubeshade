@@ -1,9 +1,10 @@
 SELECT track_files.id,
+       track_files.public_id,
        track_files.created_at,
        track_files.created_by_user_id,
        track_files.modified_at,
        track_files.modified_by_user_id,
-       track_files.video_id,
+       (SELECT videos.public_id FROM media.videos WHERE videos.id = track_files.video_id) AS video_id,
        track_files.storage_path,
        track_files.type,
        track_files.language,
@@ -15,4 +16,4 @@ WHERE track_files.video_id IN (SELECT videos.id
                                FROM media.videos
                                    INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
                                WHERE library_channels.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))))
-  AND track_files.id = @Id;
+  AND track_files.public_id = @Id;

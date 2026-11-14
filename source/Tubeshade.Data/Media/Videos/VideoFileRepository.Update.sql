@@ -1,7 +1,7 @@
 UPDATE media.video_files
 SET modified_at = CURRENT_TIMESTAMP,
     modified_by_user_id = @ModifiedByUserId,
-    video_id = @VideoId,
+    video_id = (SELECT videos.id FROM media.videos WHERE videos.public_id = @VideoId),
     storage_path = @StoragePath,
     type = @Type,
     width = @Width,
@@ -13,4 +13,4 @@ SET modified_at = CURRENT_TIMESTAMP,
     hash = @Hash,
     storage_size = @StorageSize
 WHERE video_files.owner_id IN (SELECT owner_id FROM access.accessible_owners(@ModifiedByUserId, @Permissions))
-  AND video_files.id = @Id;
+  AND video_files.public_id = @PublicId;

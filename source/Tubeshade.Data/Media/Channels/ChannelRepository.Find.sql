@@ -1,4 +1,5 @@
 SELECT id,
+       public_id,
        created_at,
        created_by_user_id,
        modified_at,
@@ -13,4 +14,4 @@ SELECT id,
        availability
 FROM media.channels
 WHERE channels.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))
-  AND channels.id = @Id;
+  AND channels.public_id = @Id;

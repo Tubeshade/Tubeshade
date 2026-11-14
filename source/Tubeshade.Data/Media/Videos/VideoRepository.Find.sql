@@ -1,4 +1,5 @@
 SELECT videos.id,
+       videos.public_id,
        videos.created_at,
        videos.created_by_user_id,
        videos.modified_at,
@@ -11,7 +12,7 @@ SELECT videos.id,
        videos.type,
        videos.view_count,
        videos.like_count,
-       videos.channel_id,
+       (SELECT channels.public_id FROM media.channels WHERE channels.id = videos.channel_id) AS channel_id,
        videos.storage_path,
        videos.external_id,
        videos.external_url,
@@ -26,4 +27,4 @@ SELECT videos.id,
 FROM media.videos
   LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @PrincipalId
 WHERE videos.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))
-  AND videos.id = @Id;
+  AND videos.public_id = @Id;

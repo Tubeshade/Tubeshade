@@ -19,4 +19,4 @@ WHERE image_files.id IN (SELECT video_images.image_id
                          FROM media.playlists
                              INNER JOIN media.playlist_images ON playlists.id = playlist_images.playlist_id
                          WHERE playlists.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))))
-  AND image_files.id = @Id;
+  AND image_files.public_id = @Id;

@@ -2,6 +2,7 @@ WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @Query) 
 
     filtered AS (
         SELECT id,
+               public_id,
                created_at,
                created_by_user_id,
                modified_at,
@@ -18,7 +19,7 @@ WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @Query) 
           AND (@LibraryId IS NULL OR EXISTS(SELECT 1
                                             FROM media.library_channels
                                                 INNER JOIN media.creator_channels ON library_channels.channel_id = creator_channels.channel_id
-                                            WHERE library_id = @LibraryId AND creator_id = creators.id))
+                                            WHERE library_id = (SELECT libraries.id FROM media.libraries WHERE libraries.public_id = @LibraryId) AND creator_id = creators.id))
           AND (@Query IS NULL OR creators.name @@ query)
         ORDER BY
                  CASE WHEN @SortKey = 'random' THEN random() END,
@@ -35,6 +36,7 @@ WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @Query) 
         OFFSET @Offset)
 
 SELECT creators.id,
+       creators.public_id,
        creators.created_at,
        creators.created_by_user_id,
        creators.modified_at,
@@ -45,6 +47,7 @@ SELECT creators.id,
        creators.total_count,
 
        image_files.id,
+       image_files.public_id,
        image_files.created_at,
        image_files.created_by_user_id,
        image_files.modified_at,

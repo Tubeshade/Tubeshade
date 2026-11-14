@@ -1,4 +1,5 @@
 SELECT preferences.id,
+       preferences.public_id,
        preferences.created_at,
        preferences.created_by_user_id,
        preferences.modified_at,

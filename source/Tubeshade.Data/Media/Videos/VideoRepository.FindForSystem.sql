@@ -1,4 +1,5 @@
 SELECT videos.id,
+       videos.public_id,
        videos.created_at,
        videos.created_by_user_id,
        videos.modified_at,
@@ -11,7 +12,7 @@ SELECT videos.id,
        videos.type,
        videos.view_count,
        videos.like_count,
-       videos.channel_id,
+       (SELECT channels.public_id FROM media.channels WHERE channels.id = videos.channel_id) AS channel_id,
        videos.storage_path,
        videos.external_id,
        videos.external_url,
@@ -22,4 +23,4 @@ SELECT videos.id,
        videos.ignored_at,
        videos.ignored_by_user_id
 FROM media.videos
-WHERE videos.id = @Id;
+WHERE videos.public_id = @Id;

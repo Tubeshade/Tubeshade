@@ -7,7 +7,7 @@ namespace Tubeshade.Data.Media.Channels;
 public sealed class ChannelParameters : IAccessParameters, IPaginatedParameters, ISortingParameters<SortChannelBy>
 {
     /// <inheritdoc />
-    public Guid PrincipalId => UserId;
+    public long PrincipalId => UserId;
 
     public Permissions Permissions => Permissions.Read;
 
@@ -17,7 +17,7 @@ public sealed class ChannelParameters : IAccessParameters, IPaginatedParameters,
     /// <inheritdoc />
     public required int Offset { get; init; }
 
-    public required Guid UserId { get; init; }
+    public required long UserId { get; init; }
 
     public Guid? Id { get; init; }
 

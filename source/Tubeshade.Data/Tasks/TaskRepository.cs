@@ -47,9 +47,9 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
             transaction));
     }
 
-    public async ValueTask AddTaskRunForSystemAsync(SystemPrincipal system, Guid taskRunId, Guid taskId, TaskSource source, NpgsqlTransaction transaction)
+    public async ValueTask<long> AddTaskRunForSystemAsync(SystemPrincipal system, Guid taskRunId, Guid taskId, TaskSource source, NpgsqlTransaction transaction)
     {
-        await Connection.ExecuteAsync(new CommandDefinition(
+        return await Connection.QuerySingleAsync<long>(new CommandDefinition(
             Queries.AddTaskRunForSystem,
             new { taskRunId, taskId, source },
             transaction));
@@ -59,7 +59,7 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
     /// <returns><see langword="true"/> if the task was locked, otherwise <see langword="false"/>.</returns>
     public async ValueTask<bool> TryLockTaskForSystemAsync(SystemPrincipal system, Guid taskId, NpgsqlTransaction transaction)
     {
-        var lockedId = await Connection.QuerySingleOrDefaultAsync<Guid?>(new CommandDefinition(
+        var lockedId = await Connection.QuerySingleOrDefaultAsync<long?>(new CommandDefinition(
             Queries.TryLockTaskForSystem,
             new { taskId },
             transaction));
@@ -69,7 +69,7 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
 
     /// <summary>Deletes the task request, unless it was already deleted or is locked by another transaction.</summary>
     /// <returns>The deleted task request, or <see langword="null"/> if it was not deleted.</returns>
-    public async ValueTask<TaskRequest?> TryDeleteTaskRequestForSystemAsync(SystemPrincipal system, Guid taskRequestId, NpgsqlTransaction transaction)
+    public async ValueTask<TaskRequest?> TryDeleteTaskRequestForSystemAsync(SystemPrincipal system, long taskRequestId, NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleOrDefaultAsync<TaskRequest>(new CommandDefinition(
             Queries.TryDeleteTaskRequestForSystem,
@@ -85,7 +85,7 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
     /// <returns>The deleted task request, or <see langword="null"/> if it was not deleted.</returns>
     public async ValueTask<TaskRequest?> TryDeleteTaskRequestWaitingForLockForSystemAsync(
         SystemPrincipal system,
-        Guid taskRequestId,
+        long taskRequestId,
         NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleOrDefaultAsync<TaskRequest>(new CommandDefinition(
@@ -95,17 +95,25 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
     }
 
     /// <summary>Finds the task and source of an existing task run.</summary>
-    public async ValueTask<TaskRequest?> FindTaskRunRequestForSystemAsync(SystemPrincipal system, Guid taskRunId, NpgsqlTransaction transaction)
+    public async ValueTask<TaskRunRequest?> FindTaskRunRequestForSystemAsync(SystemPrincipal system, Guid taskRunId, NpgsqlTransaction transaction)
     {
-        return await Connection.QuerySingleOrDefaultAsync<TaskRequest>(new CommandDefinition(
+        return await Connection.QuerySingleOrDefaultAsync<TaskRunRequest>(new CommandDefinition(
             Queries.FindTaskRunRequestForSystem,
             new { taskRunId },
             transaction));
     }
 
-    public async ValueTask<List<Guid>> GetTaskRequestIdsForSystemAsync(SystemPrincipal system, CancellationToken cancellationToken)
+    public async ValueTask<Guid?> FindTaskRunPublicIdForSystemAsync(SystemPrincipal system, long taskRunId, CancellationToken cancellationToken)
     {
-        var ids = await Connection.QueryAsync<Guid>(new CommandDefinition(
+        return await Connection.QuerySingleOrDefaultAsync<Guid?>(new CommandDefinition(
+            Queries.FindTaskRunPublicIdForSystem,
+            new { taskRunId },
+            cancellationToken: cancellationToken));
+    }
+
+    public async ValueTask<List<long>> GetTaskRequestIdsForSystemAsync(SystemPrincipal system, CancellationToken cancellationToken)
+    {
+        var ids = await Connection.QueryAsync<long>(new CommandDefinition(
             Queries.GetTaskRequestIdsForSystem,
             cancellationToken: cancellationToken));
 
@@ -132,9 +140,9 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
     }
 
     /// <summary>Requests the task to be run, if the user holds Create on the task's owner.</summary>
-    public async ValueTask TriggerTask(Guid taskId, TaskSource source, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask TriggerTask(Guid taskId, TaskSource source, long userId, NpgsqlTransaction transaction)
     {
-        var requestIds = await Connection.QueryAsync<Guid>(
+        var requestIds = await Connection.QueryAsync<long>(
             Queries.TriggerTask,
             Access.Parameters(new UserPrincipal(userId), Resources.Task, Permissions.Create, new { taskId, source }),
             transaction);
@@ -145,7 +153,7 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
         }
     }
 
-    public async ValueTask CancelTaskRun(Guid taskRunId, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask CancelTaskRun(Guid taskRunId, long userId, NpgsqlTransaction transaction)
     {
         await Connection.ExecuteAsync(
             Queries.CancelTaskRun,
@@ -188,7 +196,7 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
 
     /// <summary>Saves the result of a task run, unless the task run already has a result.</summary>
     /// <returns>The id of the saved result, or <see langword="null"/> if the task run already had a result.</returns>
-    public async ValueTask<Guid?> FinishTaskForSystemAsync(
+    public async ValueTask<long?> FinishTaskForSystemAsync(
         SystemPrincipal system,
         Guid taskRunId,
         TaskResult result,
@@ -199,7 +207,7 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
         await FinishTaskRun(taskRunId, transaction);
 
         var message = exception?.Message;
-        var id = await Connection.QuerySingleOrDefaultAsync<Guid?>(new CommandDefinition(
+        var id = await Connection.QuerySingleOrDefaultAsync<long?>(new CommandDefinition(
             Queries.FinishTaskForSystem,
             new { taskRunId, result, message },
             transaction));
@@ -228,7 +236,7 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
         return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
     }
 
-    public async ValueTask<List<Guid>> GetBlockingTaskRunIdsForSystemAsync(
+    public async ValueTask<List<long>> GetBlockingTaskRunIdsForSystemAsync(
         SystemPrincipal system,
         BlockingTaskParameters parameters,
         CancellationToken cancellationToken)
@@ -238,8 +246,8 @@ public sealed partial class TaskRepository(NpgsqlConnection connection) : Modifi
             parameters,
             cancellationToken: cancellationToken);
 
-        var enumerable = await Connection.QueryAsync<Guid>(command);
-        return enumerable as List<Guid> ?? enumerable.ToList();
+        var enumerable = await Connection.QueryAsync<long>(command);
+        return enumerable as List<long> ?? enumerable.ToList();
     }
 
     public async ValueTask<Guid> AddTask(TaskEntity task, NpgsqlTransaction transaction)

@@ -46,7 +46,7 @@ public sealed class UserOnlyStore :
     /// <inheritdoc />
     public Task<string> GetUserIdAsync(UserEntity user, CancellationToken cancellationToken)
     {
-        return Task.FromResult(user.Id.ToString());
+        return Task.FromResult(user.PublicId.ToString());
     }
 
     /// <inheritdoc />
@@ -81,13 +81,12 @@ public sealed class UserOnlyStore :
     public async Task<IdentityResult> CreateAsync(UserEntity user, CancellationToken cancellationToken)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        var userId = await _userRepository.AddAsync(user, transaction);
-        if (userId is null)
+        if (await _userRepository.AddAsync(user, transaction) is null)
         {
             return IdentityResult.Failed();
         }
 
-        _ = await _ownerRepository.AddPersonalAsync(userId.Value, transaction);
+        _ = await _ownerRepository.AddPersonalAsync(user.Id, transaction);
 
         await transaction.CommitAsync(cancellationToken);
         return IdentityResult.Success;

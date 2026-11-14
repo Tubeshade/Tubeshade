@@ -33,7 +33,7 @@ public sealed partial class SponsorBlockSegmentRepository(NpgsqlConnection conne
 
     public async ValueTask<List<SponsorBlockSegmentEntity>> GetForVideo(
         Guid videoId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -47,7 +47,7 @@ public sealed partial class SponsorBlockSegmentRepository(NpgsqlConnection conne
 
     public async ValueTask<List<SponsorBlockSegmentEntity>> GetForVideos(
         Guid[] videoIds,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(

@@ -1,5 +1,4 @@
-﻿using System;
-using Tubeshade.Data.Abstractions;
+﻿using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.Identity;
 
 namespace Tubeshade.Data.AccessControl;
@@ -11,5 +10,5 @@ public sealed record OwnerEntity : Entity, INamedEntity
     /// <inheritdoc />
     public required string Name { get; set; }
 
-    public Guid? PersonalFor { get; init; }
+    public long? PersonalFor { get; init; }
 }

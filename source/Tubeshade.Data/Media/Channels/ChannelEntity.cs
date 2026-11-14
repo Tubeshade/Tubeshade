@@ -1,5 +1,4 @@
-﻿using System;
-using NodaTime;
+﻿using NodaTime;
 using Tubeshade.Data.Abstractions;
 
 namespace Tubeshade.Data.Media.Channels;
@@ -7,7 +6,7 @@ namespace Tubeshade.Data.Media.Channels;
 public record ChannelEntity : ModifiableEntity, IOwnableEntity, INamedEntity
 {
     /// <inheritdoc />
-    public Guid OwnerId { get; set; }
+    public long OwnerId { get; set; }
 
     /// <inheritdoc />
     public required string Name { get; set; }

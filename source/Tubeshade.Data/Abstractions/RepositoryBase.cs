@@ -41,7 +41,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     }
 
     /// <inheritdoc />
-    public async ValueTask<TEntity> GetAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
+    public async ValueTask<TEntity> GetAsync(Guid id, long userId, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
             FindSql,
@@ -52,7 +52,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     }
 
     /// <inheritdoc />
-    public async ValueTask<TEntity> GetAsync(Guid id, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<TEntity> GetAsync(Guid id, long userId, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             FindSql,
@@ -65,7 +65,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     /// <inheritdoc />
     public async ValueTask<TEntity?> FindAsync(
         Guid id,
-        Guid userId,
+        long userId,
         Permissions permissions,
         CancellationToken cancellationToken = default)
     {
@@ -78,7 +78,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     }
 
     /// <inheritdoc />
-    public async ValueTask<TEntity?> FindAsync(Guid id, Guid userId, Permissions permissions, NpgsqlTransaction transaction)
+    public async ValueTask<TEntity?> FindAsync(Guid id, long userId, Permissions permissions, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             FindSql,
@@ -96,7 +96,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     }
 
     /// <inheritdoc />
-    public async ValueTask<List<TEntity>> GetAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async ValueTask<List<TEntity>> GetAsync(long userId, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
             GetSql,
@@ -108,7 +108,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     }
 
     /// <inheritdoc />
-    public async ValueTask<List<TEntity>> GetAsync(Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<List<TEntity>> GetAsync(long userId, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
             GetSql,
@@ -127,7 +127,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     }
 
     /// <inheritdoc />
-    public IAsyncEnumerable<TEntity> GetUnbufferedAsync(Guid userId)
+    public IAsyncEnumerable<TEntity> GetUnbufferedAsync(long userId)
     {
         return Connection.QueryUnbufferedAsync<TEntity>(
             GetSql,
@@ -135,7 +135,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     }
 
     /// <inheritdoc />
-    public IAsyncEnumerable<TEntity> GetUnbufferedAsync(Guid userId, NpgsqlTransaction transaction)
+    public IAsyncEnumerable<TEntity> GetUnbufferedAsync(long userId, NpgsqlTransaction transaction)
     {
         return Connection.QueryUnbufferedAsync<TEntity>(
             GetSql,
@@ -144,7 +144,7 @@ public abstract class RepositoryBase<TEntity> : IRepository<TEntity>
     }
 
     /// <inheritdoc />
-    public async ValueTask<int> DeleteAsync(Guid id, Guid userId, NpgsqlTransaction transaction)
+    public async ValueTask<int> DeleteAsync(Guid id, long userId, NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(DeleteSql, new DeleteParameters(id, userId), transaction);
         return await Connection.ExecuteAsync(command);

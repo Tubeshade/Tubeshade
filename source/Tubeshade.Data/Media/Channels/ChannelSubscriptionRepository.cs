@@ -8,7 +8,7 @@ using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Media.Channels;
 
-/// <remarks>A subscription shares the id of its channel, and access is checked on the channel's owner.</remarks>
+/// <remarks>A subscription shares the ids of its channel, and access is checked on the channel's owner.</remarks>
 public sealed partial class ChannelSubscriptionRepository(NpgsqlConnection connection)
     : ModifiableRepositoryBase<ChannelSubscriptionEntity>(connection)
 {
@@ -40,7 +40,7 @@ public sealed partial class ChannelSubscriptionRepository(NpgsqlConnection conne
 
     public async ValueTask<int> DeleteForSystemAsync(
         SystemPrincipal system,
-        Guid id,
+        long id,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(Queries.DeleteForSystem, new { id }, transaction);

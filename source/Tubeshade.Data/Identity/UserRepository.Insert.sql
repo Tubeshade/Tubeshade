@@ -1,4 +1,5 @@
-WITH system AS (SELECT id FROM identity.users WHERE normalized_name = 'SYSTEM')
+WITH system AS (SELECT id FROM identity.users WHERE normalized_name = 'SYSTEM'),
+     principal AS (INSERT INTO access.principals (public_id, kind) VALUES (@PublicId, 'user') RETURNING id)
 INSERT
 INTO identity.users (
             id,
@@ -13,7 +14,7 @@ INTO identity.users (
             lockout_end,
             lockout_enabled,
             access_failed_count)
-SELECT @Id,
+SELECT principal.id,
        system.id,
        system.id,
        @Name,
@@ -25,5 +26,5 @@ SELECT @Id,
        @LockoutEnd,
        @LockoutEnabled,
        @AccessFailedCount
-FROM system
+FROM principal, system
 RETURNING id;

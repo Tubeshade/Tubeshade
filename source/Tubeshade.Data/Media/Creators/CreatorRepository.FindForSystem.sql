@@ -1,4 +1,5 @@
 SELECT id,
+       public_id,
        created_at,
        created_by_user_id,
        modified_at,
@@ -6,4 +7,4 @@ SELECT id,
        owner_id,
        name
 FROM media.creators
-WHERE creators.id = @Id;
+WHERE creators.public_id = @Id;

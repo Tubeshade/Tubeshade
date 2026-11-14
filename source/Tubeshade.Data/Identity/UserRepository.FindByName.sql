@@ -1,4 +1,5 @@
 SELECT users.id,
+       principals.public_id,
        users.created_at,
        users.created_by_user_id,
        users.modified_at,
@@ -13,4 +14,5 @@ SELECT users.id,
        users.lockout_enabled,
        users.access_failed_count
 FROM identity.users
+    INNER JOIN access.principals ON principals.id = users.id
 WHERE users.normalized_name = @name;

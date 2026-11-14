@@ -36,7 +36,7 @@ public sealed partial class PlaylistRepository : ModifiableRepositoryBase<Playli
     public async ValueTask<PlaylistEntity?> FindByExternalId(
         string externalId,
         Guid libraryId,
-        Guid userId,
+        long userId,
         Permissions permissions,
         NpgsqlTransaction transaction)
     {
@@ -50,7 +50,7 @@ public sealed partial class PlaylistRepository : ModifiableRepositoryBase<Playli
 
     public async ValueTask<List<PlaylistEntity>> GetSubscribedForLibrary(
         Guid libraryId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
@@ -67,7 +67,7 @@ public sealed partial class PlaylistRepository : ModifiableRepositoryBase<Playli
     public async ValueTask<bool> ReplaceVideos(
         Guid playlistId,
         Guid[] videoIds,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {
@@ -82,7 +82,7 @@ public sealed partial class PlaylistRepository : ModifiableRepositoryBase<Playli
 
     public async ValueTask<List<string>> GetVideoUrls(
         Guid playlistId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {

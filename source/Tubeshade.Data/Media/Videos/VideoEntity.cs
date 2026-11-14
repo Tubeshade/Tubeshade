@@ -7,7 +7,7 @@ namespace Tubeshade.Data.Media.Videos;
 public record VideoEntity : ModifiableEntity, IOwnableEntity, INamedEntity
 {
     /// <inheritdoc />
-    public Guid OwnerId { get; set; }
+    public long OwnerId { get; set; }
 
     /// <inheritdoc />
     public required string Name { get; set; }
@@ -42,7 +42,7 @@ public record VideoEntity : ModifiableEntity, IOwnableEntity, INamedEntity
 
     public Instant? IgnoredAt { get; set; }
 
-    public Guid? IgnoredByUserId { get; set; }
+    public long? IgnoredByUserId { get; set; }
 
     public bool? Viewed { get; set; }
 

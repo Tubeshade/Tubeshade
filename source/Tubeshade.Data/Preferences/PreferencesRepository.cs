@@ -28,7 +28,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
 
     public async ValueTask<PreferencesEntity?> FindForLibrary(
         Guid libraryId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
@@ -39,7 +39,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
 
     public async ValueTask<PreferencesEntity?> FindForLibrary(
         Guid libraryId,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken)
     {
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
@@ -52,7 +52,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
     public async ValueTask<int> LinkToLibrary(
         Guid preferenceId,
         Guid libraryId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
@@ -64,7 +64,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
 
     public async ValueTask<PreferencesEntity?> GetEffectiveForLibrary(
         Guid libraryId,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken)
     {
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
@@ -75,7 +75,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
 
     public async ValueTask<PreferencesEntity?> FindForChannel(
         Guid channelId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
@@ -86,7 +86,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
 
     public async ValueTask<PreferencesEntity?> FindForChannel(
         Guid channelId,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken)
     {
         return await Connection.QuerySingleOrDefaultAsync<PreferencesEntity>(new CommandDefinition(
@@ -99,7 +99,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
     public async ValueTask<int> LinkToChannel(
         Guid preferenceId,
         Guid channelId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
@@ -112,7 +112,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
     public ValueTask<PreferencesEntity?> GetEffectiveForChannel(
         Guid libraryId,
         Guid channelId,
-        Guid userId,
+        long userId,
         CancellationToken cancellationToken)
     {
         return GetEffectiveForChannelCore(libraryId, channelId, userId, null, cancellationToken);
@@ -121,7 +121,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
     public ValueTask<PreferencesEntity?> GetEffectiveForChannel(
         Guid libraryId,
         Guid channelId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
@@ -131,7 +131,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
     private async ValueTask<PreferencesEntity?> GetEffectiveForChannelCore(
         Guid libraryId,
         Guid channelId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction? transaction,
         CancellationToken cancellationToken)
     {
@@ -145,7 +145,7 @@ public sealed partial class PreferencesRepository(NpgsqlConnection connection)
     public async ValueTask<PreferencesEntity?> GetEffectiveForVideo(
         Guid libraryId,
         Guid videoId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {

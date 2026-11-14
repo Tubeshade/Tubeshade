@@ -10,11 +10,11 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
     /// A task for a library always belongs to the library's owner, which is set when the task is added;
     /// this is only used for tasks without a library.
     /// </remarks>
-    public Guid OwnerId { get; set; }
+    public long OwnerId { get; set; }
 
     public required TaskType Type { get; init; }
 
-    public Guid? UserId { get; init; }
+    public long? UserId { get; init; }
 
     public Guid? LibraryId { get; set; }
 
@@ -30,17 +30,17 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
 
     public string? Payload { get; init; }
 
-    public (Guid LibraryId, Guid UserId) DestructureLibraryTask()
+    public (Guid LibraryId, long UserId) DestructureLibraryTask()
     {
         return this is { LibraryId: { } libraryId, UserId: { } userId }
             ? (libraryId, userId)
             : throw new InvalidOperationException("Task is not for a library");
     }
 
-    public static TaskEntity Index(Guid libraryId, Guid userId, string url) =>
+    public static TaskEntity Index(Guid libraryId, long userId, string url) =>
         Index(libraryId, userId, null, null, url);
 
-    public static TaskEntity Index(Guid libraryId, Guid userId, Guid? channelId, Guid? videoId, string url) => new()
+    public static TaskEntity Index(Guid libraryId, long userId, Guid? channelId, Guid? videoId, string url) => new()
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
@@ -55,7 +55,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         Payload = null,
     };
 
-    public static TaskEntity YouTubeFeedUpdate(Guid libraryId, Guid userId, Guid channelId, string payload) => new()
+    public static TaskEntity YouTubeFeedUpdate(Guid libraryId, long userId, Guid channelId, string payload) => new()
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
@@ -70,7 +70,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         Payload = payload,
     };
 
-    public static TaskEntity Download(Guid libraryId, Guid userId, Guid videoId) => new()
+    public static TaskEntity Download(Guid libraryId, long userId, Guid videoId) => new()
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
@@ -85,7 +85,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         Payload = null,
     };
 
-    public static TaskEntity ScanChannel(Guid libraryId, Guid userId, Guid channelId, bool allVideos) => new()
+    public static TaskEntity ScanChannel(Guid libraryId, long userId, Guid channelId, bool allVideos) => new()
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
@@ -100,7 +100,7 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         Payload = null,
     };
 
-    public static TaskEntity ScanPlaylist(Guid libraryId, Guid userId, Guid playlistId, bool allVideos) => new()
+    public static TaskEntity ScanPlaylist(Guid libraryId, long userId, Guid playlistId, bool allVideos) => new()
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,
@@ -115,25 +115,25 @@ public sealed record TaskEntity : ModifiableEntity, IOwnableEntity
         Payload = null,
     };
 
-    public static TaskEntity ScanSubscriptions(Guid libraryId, Guid userId) =>
+    public static TaskEntity ScanSubscriptions(Guid libraryId, long userId) =>
         LibraryTask(libraryId, userId, TaskType.ScanSubscriptions);
 
-    public static TaskEntity ScanSegments(Guid libraryId, Guid userId) =>
+    public static TaskEntity ScanSegments(Guid libraryId, long userId) =>
         LibraryTask(libraryId, userId, TaskType.ScanSponsorBlockSegments);
 
-    public static TaskEntity UpdateSegments(Guid libraryId, Guid userId) =>
+    public static TaskEntity UpdateSegments(Guid libraryId, long userId) =>
         LibraryTask(libraryId, userId, TaskType.UpdateSponsorBlockSegments);
 
-    public static TaskEntity RefreshMetadata(Guid libraryId, Guid userId) =>
+    public static TaskEntity RefreshMetadata(Guid libraryId, long userId) =>
         LibraryTask(libraryId, userId, TaskType.RefreshFileMetadata);
 
-    public static TaskEntity RefreshTracks(Guid libraryId, Guid userId) =>
+    public static TaskEntity RefreshTracks(Guid libraryId, long userId) =>
         LibraryTask(libraryId, userId, TaskType.RefreshTrackFiles);
 
-    public static TaskEntity RemuxVideos(Guid libraryId, Guid userId) =>
+    public static TaskEntity RemuxVideos(Guid libraryId, long userId) =>
         LibraryTask(libraryId, userId, TaskType.RemuxVideoFiles);
 
-    private static TaskEntity LibraryTask(Guid libraryId, Guid userId, TaskType type) => new()
+    private static TaskEntity LibraryTask(Guid libraryId, long userId, TaskType type) => new()
     {
         CreatedByUserId = userId,
         ModifiedByUserId = userId,

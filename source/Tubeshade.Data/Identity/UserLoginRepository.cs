@@ -23,7 +23,7 @@ public sealed partial class UserLoginRepository
         return await _connection.ExecuteAsync(command);
     }
 
-    public async ValueTask<List<UserLogin>> GetAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async ValueTask<List<UserLogin>> GetAsync(long userId, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(Queries.Get, new { userId }, cancellationToken: cancellationToken);
         var enumerable = await _connection.QueryAsync<UserLogin>(command);

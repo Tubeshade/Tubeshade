@@ -36,7 +36,7 @@ public sealed partial class ScheduleRepository(NpgsqlConnection connection)
     }
 
     public async ValueTask<ScheduleEntity> GetForTask(
-        Guid userId,
+        long userId,
         Guid libraryId,
         TaskType type,
         Permissions permissions,

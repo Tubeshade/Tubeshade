@@ -2,11 +2,12 @@ WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @Query) 
 
     filtered AS (
         SELECT id,
+               public_id,
                created_at,
                created_by_user_id,
                modified_at,
                modified_by_user_id,
-               library_id,
+               (SELECT libraries.public_id FROM media.libraries WHERE libraries.id = playlists.library_id) AS library_id,
                storage_path,
                external_id,
                external_url,
@@ -20,7 +21,7 @@ WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @Query) 
         FROM media.playlists
             CROSS JOIN parameters
         WHERE (playlists.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))))
-          AND (@LibraryId IS NULL OR playlists.library_id = @LibraryId)
+          AND (@LibraryId IS NULL OR playlists.library_id = (SELECT libraries.id FROM media.libraries WHERE libraries.public_id = @LibraryId))
           AND (@Query IS NULL OR playlists.name @@ query)
         ORDER BY
                  CASE WHEN @SortKey = 'random' THEN random() END,
@@ -41,6 +42,7 @@ WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @Query) 
         OFFSET @Offset)
 
 SELECT playlists.id,
+       playlists.public_id,
        playlists.created_at,
        playlists.created_by_user_id,
        playlists.modified_at,
@@ -56,6 +58,7 @@ SELECT playlists.id,
        playlists.total_count,
 
        image_files.id,
+       image_files.public_id,
        image_files.created_at,
        image_files.created_by_user_id,
        image_files.modified_at,
