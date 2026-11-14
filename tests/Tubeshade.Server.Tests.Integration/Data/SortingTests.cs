@@ -133,12 +133,12 @@ public sealed class SortingTests(ServerFixture fixture) : ServerTests(fixture)
             },
             transaction);
 
-        channels.Select(channel => channel.Id).Should().BeEquivalentTo(_channelIds);
+        channels.Select(channel => channel.PublicId).Should().BeEquivalentTo(_channelIds);
         if (sortBy == SortChannelBy.ChannelName ||
             sortBy == SortChannelBy.SubscriberCount ||
             sortBy == SortChannelBy.SubscribedAt)
         {
-            channels.Select(channel => channel.Id).Should().Equal(Ordered(_channelIds, direction));
+            channels.Select(channel => channel.PublicId).Should().Equal(Ordered(_channelIds, direction));
         }
     }
 
@@ -167,21 +167,21 @@ public sealed class SortingTests(ServerFixture fixture) : ServerTests(fixture)
         if (sortBy == SortVideoBy.PlaylistOrder)
         {
             // without a playlist, the playlist order is always null
-            videos.Select(video => video.Id).Should().BeEquivalentTo(_videoIds);
-            detailed.Select(video => video.Id).Should().BeEquivalentTo(_videoIds);
+            videos.Select(video => video.PublicId).Should().BeEquivalentTo(_videoIds);
+            detailed.Select(video => video.PublicId).Should().BeEquivalentTo(_videoIds);
             return;
         }
 
-        videos.Select(video => video.Id).Should().BeEquivalentTo(_videoIds);
-        detailed.Select(video => video.Id).Should().BeEquivalentTo(_videoIds);
+        videos.Select(video => video.PublicId).Should().BeEquivalentTo(_videoIds);
+        detailed.Select(video => video.PublicId).Should().BeEquivalentTo(_videoIds);
         if (sortBy == SortVideoBy.PublishedAt ||
             sortBy == SortVideoBy.RefreshedAt ||
             sortBy == SortVideoBy.ViewCount ||
             sortBy == SortVideoBy.LikeCount ||
             sortBy == SortVideoBy.Duration)
         {
-            videos.Select(video => video.Id).Should().Equal(Ordered(_videoIds, direction));
-            detailed.Select(video => video.Id).Should().Equal(Ordered(_videoIds, direction));
+            videos.Select(video => video.PublicId).Should().Equal(Ordered(_videoIds, direction));
+            detailed.Select(video => video.PublicId).Should().Equal(Ordered(_videoIds, direction));
         }
     }
 
@@ -206,12 +206,12 @@ public sealed class SortingTests(ServerFixture fixture) : ServerTests(fixture)
             },
             transaction);
 
-        playlists.Select(playlist => playlist.Id).Should().BeEquivalentTo(_playlistIds);
+        playlists.Select(playlist => playlist.PublicId).Should().BeEquivalentTo(_playlistIds);
         if (sortBy == SortPlaylistBy.PlaylistName ||
             sortBy == SortPlaylistBy.RefreshedAt ||
             sortBy == SortPlaylistBy.SubscribedAt)
         {
-            playlists.Select(playlist => playlist.Id).Should().Equal(Ordered(_playlistIds, direction));
+            playlists.Select(playlist => playlist.PublicId).Should().Equal(Ordered(_playlistIds, direction));
         }
     }
 

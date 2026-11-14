@@ -24,6 +24,23 @@ public sealed partial class QueryPreparationTests(ServerFixture fixture) : Serve
         ["Url"] = NpgsqlDbType.Text,
         ["Query"] = NpgsqlDbType.Text,
         ["AllVideos"] = NpgsqlDbType.Boolean,
+        ["PrincipalId"] = NpgsqlDbType.Bigint,
+        ["CreatedByUserId"] = NpgsqlDbType.Bigint,
+        ["ModifiedByUserId"] = NpgsqlDbType.Bigint,
+        ["IgnoredByUserId"] = NpgsqlDbType.Bigint,
+        ["DownloadedByUserId"] = NpgsqlDbType.Bigint,
+        ["UserId"] = NpgsqlDbType.Bigint,
+        ["OwnerId"] = NpgsqlDbType.Bigint,
+        ["taskRequestId"] = NpgsqlDbType.Bigint,
+    };
+
+    // Queries that take internal ids by a name that is otherwise a public id.
+    private static readonly Dictionary<(string Query, string Parameter), NpgsqlDbType> QueryParameterTypes = new()
+    {
+        [("Media.Channels.ChannelSubscriptionRepository.DeleteForSystem", "id")] = NpgsqlDbType.Bigint,
+        [("Media.Channels.ChannelSubscriptionRepository.UpdateForSystem", "Id")] = NpgsqlDbType.Bigint,
+        [("Identity.UserRepository.Update", "Id")] = NpgsqlDbType.Bigint,
+        [("Tasks.TaskRepository.FindTaskRunPublicIdForSystem", "taskRunId")] = NpgsqlDbType.Bigint,
     };
 
     public static IEnumerable<string> QueryNames => QueryRegistry.All.Keys;
@@ -46,7 +63,7 @@ public sealed partial class QueryPreparationTests(ServerFixture fixture) : Serve
         await using var command = new NpgsqlCommand(sql, connection);
         foreach (var parameterName in ParameterNameRegex().Matches(sql).Select(match => match.Groups[1].Value).Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            var parameter = GetType(parameterName) is { } type
+            var parameter = GetType(name, parameterName) is { } type
                 ? new NpgsqlParameter(parameterName, type)
                 : new NpgsqlParameter { ParameterName = parameterName };
 
@@ -59,8 +76,13 @@ public sealed partial class QueryPreparationTests(ServerFixture fixture) : Serve
         await prepare.Should().NotThrowAsync($"query {name} should be valid");
     }
 
-    private static NpgsqlDbType? GetType(string parameterName)
+    private static NpgsqlDbType? GetType(string query, string parameterName)
     {
+        if (QueryParameterTypes.TryGetValue((query, parameterName), out var queryType))
+        {
+            return queryType;
+        }
+
         if (ParameterTypes.TryGetValue(parameterName, out var type))
         {
             return type;

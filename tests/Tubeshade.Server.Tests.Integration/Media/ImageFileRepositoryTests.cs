@@ -135,7 +135,7 @@ public sealed class ImageFileRepositoryTests(ServerFixture fixture) : ServerTest
                 .ContainSingle()
                 .Subject;
 
-            image.Id.Should().Be(fileId);
+            image.PublicId.Should().Be(fileId);
 
             image.Width += 1;
             await repository.UpdateAsync(image, transaction);

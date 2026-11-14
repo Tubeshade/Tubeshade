@@ -1,76 +1,53 @@
 ﻿using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AwesomeAssertions;
 using AwesomeAssertions.Execution;
 using Dapper;
-using DbUp;
-using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using NUnit.Framework;
-using Tubeshade.Data;
 using Tubeshade.Data.AccessControl;
-using Tubeshade.Data.Media;
-using Tubeshade.Data.Media.Videos;
-using Tubeshade.Data.Migrations;
 using Tubeshade.Server.Tests.Integration.Fixtures;
 
 namespace Tubeshade.Server.Tests.Integration.AccessControl;
 
 /// <summary>Upgrades a database with data in the schema before access grants, as on a running instance.</summary>
-public sealed partial class AccessGrantsMigrationTests(ServerFixture fixture) : ServerTests(fixture)
+/// <remarks>Stops at the access grants migration and checks the result with SQL, so that later migrations do not change what it tests.</remarks>
+/// <seealso cref="AccessGrantsUpgradeTests"/>
+public sealed class AccessGrantsMigrationTests(ServerFixture fixture) : ServerTests(fixture)
 {
-    private static readonly Guid Alice = Guid.NewGuid();
-    private static readonly Guid Bob = Guid.NewGuid();
-    private static readonly Guid Carol = Guid.NewGuid();
-    private static readonly Guid LibraryId = Guid.NewGuid();
-    private static readonly Guid ChannelId = Guid.NewGuid();
-    private static readonly Guid VideoId = Guid.NewGuid();
-    private static readonly Guid ReindexTaskId = Guid.NewGuid();
-    private static readonly Guid FeedUpdateTaskId = Guid.NewGuid();
-    private static readonly Guid ReindexScheduleId = Guid.NewGuid();
+    internal static readonly Guid Alice = Guid.NewGuid();
+    internal static readonly Guid Bob = Guid.NewGuid();
+    internal static readonly Guid Carol = Guid.NewGuid();
+    internal static readonly Guid LibraryId = Guid.NewGuid();
+    internal static readonly Guid ChannelId = Guid.NewGuid();
+    internal static readonly Guid VideoId = Guid.NewGuid();
+    internal static readonly Guid ReindexTaskId = Guid.NewGuid();
+    internal static readonly Guid FeedUpdateTaskId = Guid.NewGuid();
+    internal static readonly Guid ReindexScheduleId = Guid.NewGuid();
+    internal static readonly Guid SystemFileId = Guid.NewGuid();
 
-    private IServiceProvider _services = null!;
+    private string _connectionString = null!;
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
-        var databaseName = $"upgrade_{Guid.NewGuid():N}";
-        await using (var connection = new NpgsqlConnection(Fixture.ConnectionString))
+        _connectionString = await MigrationDatabase.CreateAsync(Fixture);
+        MigrationDatabase.Migrate(_connectionString, 60);
+
+        await using (var connection = new NpgsqlConnection(_connectionString))
         {
-            await connection.ExecuteAsync($"CREATE DATABASE {databaseName};");
+            await connection.ExecuteAsync(OldSchemaData, OldSchemaParameters);
         }
 
-        var connectionString = new NpgsqlConnectionStringBuilder(Fixture.ConnectionString) { Database = databaseName }.ConnectionString;
-
-        var result = DeployChanges
-            .To.PostgresqlDatabase(connectionString)
-            .WithScriptsEmbeddedInAssembly(typeof(DatabaseMigrationService).Assembly, name => MigrationNumber(name) <= 60)
-            .WithTransactionPerScript()
-            .LogToNowhere()
-            .Build()
-            .PerformUpgrade();
-
-        result.Successful.Should().BeTrue(result.Error?.ToString());
-        result.Scripts.Should().Contain(script => script.Name.Contains("000060_"));
-
-        await using (var connection = new NpgsqlConnection(connectionString))
-        {
-            await connection.ExecuteAsync(OldSchemaData, new { Alice, Bob, Carol, LibraryId, ChannelId, VideoId, ReindexTaskId, FeedUpdateTaskId, ReindexScheduleId });
-        }
-
-        _services = ServerFixture.CreateServices(connectionString);
-        await using var scope = _services.CreateAsyncScope();
-        scope.ServiceProvider.GetRequiredService<DatabaseMigrationService>().Migrate();
+        MigrationDatabase.Migrate(_connectionString, 61);
     }
 
     [Test]
     public async Task OwnershipsBecomeGrants()
     {
-        await using var scope = _services.CreateAsyncScope();
-        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
-        var systemId = await SystemUserId(scope);
+        await using var connection = new NpgsqlConnection(_connectionString);
+        var systemId = await SystemUserId(connection);
 
         using (new AssertionScope())
         {
@@ -94,31 +71,26 @@ public sealed partial class AccessGrantsMigrationTests(ServerFixture fixture) : 
     [Test]
     public async Task AccessFollowsGrants()
     {
-        await using var scope = _services.CreateAsyncScope();
-        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
-        await using var transaction = await connection.OpenAndBeginTransaction();
-        var videoRepository = scope.ServiceProvider.GetRequiredService<VideoRepository>();
-        var libraryRepository = scope.ServiceProvider.GetRequiredService<LibraryRepository>();
-        var systemId = await SystemUserId(scope);
+        await using var connection = new NpgsqlConnection(_connectionString);
+        var systemId = await SystemUserId(connection);
 
-        (await videoRepository.FindAsync(VideoId, Alice, Permissions.Read, transaction)).Should().NotBeNull();
-        (await videoRepository.FindAsync(VideoId, Bob, Permissions.Read, transaction)).Should().NotBeNull();
-        (await videoRepository.FindAsync(VideoId, Carol, Permissions.Read, transaction)).Should().BeNull("modify never included read");
-        (await videoRepository.FindAsync(VideoId, systemId, Permissions.Read, transaction)).Should().BeNull();
+        using (new AssertionScope())
+        {
+            (await CanAccessVideo(connection, Alice, Permissions.Read)).Should().BeTrue();
+            (await CanAccessVideo(connection, Bob, Permissions.Read)).Should().BeTrue();
+            (await CanAccessVideo(connection, Carol, Permissions.Read)).Should().BeFalse("modify never included read");
+            (await CanAccessVideo(connection, systemId, Permissions.Read)).Should().BeFalse();
 
-        // Update without Read still allows a blind update
-        var library = (await libraryRepository.FindAsync(LibraryId, Alice, Permissions.Read, transaction))!;
-        (await libraryRepository.UpdateAsync(library with { ModifiedByUserId = Carol, Name = "renamed" }, transaction)).Should().Be(1);
-        (await libraryRepository.DeleteAsync(LibraryId, Carol, transaction)).Should().Be(0);
-
-        await transaction.RollbackAsync();
+            // Update without Read still allows a blind update
+            (await CanAccessVideo(connection, Carol, Permissions.Update)).Should().BeTrue();
+            (await CanAccessVideo(connection, Carol, Permissions.Delete)).Should().BeFalse();
+        }
     }
 
     [Test]
     public async Task SystemTasksRunAsLibraryOwner()
     {
-        await using var scope = _services.CreateAsyncScope();
-        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        await using var connection = new NpgsqlConnection(_connectionString);
 
         var tasks = (await connection.QueryAsync<(Guid Id, Guid OwnerId, Guid? UserId)>(
                 "SELECT id, owner_id, user_id FROM tasks.tasks WHERE id = ANY(@Ids);",
@@ -134,23 +106,24 @@ public sealed partial class AccessGrantsMigrationTests(ServerFixture fixture) : 
         scheduleOwner.Should().Be(Alice);
 
         // Maintenance tasks without a library stay with the system owner, which every user can read
-        var systemId = await SystemUserId(scope);
+        var systemId = await SystemUserId(connection);
         var maintenanceOwners = await connection.QueryAsync<Guid>("SELECT owner_id FROM tasks.tasks WHERE library_id IS NULL;");
         maintenanceOwners.Should().NotBeEmpty().And.AllBeEquivalentTo(systemId);
     }
 
     [Test]
-    public async Task NewUsersGetPersonalOwner()
+    public async Task FilesBelongToTheirVideosOwner()
     {
-        var user = await ServerFixture.CreateUserAsync(_services, $"new-{Guid.NewGuid():N}");
-        user.OwnerId.Should().NotBe(user.Id, "the personal owner no longer shares the user's id");
+        await using var connection = new NpgsqlConnection(_connectionString);
 
-        await using var scope = _services.CreateAsyncScope();
-        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
-        (await Grant(connection, user.Id, user.OwnerId)).Should().Be(Permissions.All);
-        (await Grant(connection, user.Id, await SystemUserId(scope))).Should().Be(Permissions.Read);
-        (await Grant(connection, user.Id, Alice)).Should().Be(Permissions.None);
+        var fileOwner = await connection.QuerySingleAsync<Guid>(
+            "SELECT owner_id FROM media.video_files WHERE id = @SystemFileId;",
+            new { SystemFileId });
+
+        fileOwner.Should().Be(Alice, "the file was owned by the system user, not by the owner of its video");
     }
+
+    internal static object OldSchemaParameters => new { Alice, Bob, Carol, LibraryId, ChannelId, VideoId, ReindexTaskId, FeedUpdateTaskId, ReindexScheduleId, SystemFileId };
 
     private static async Task<Permissions> Grant(NpgsqlConnection connection, Guid principalId, Guid ownerId)
     {
@@ -161,24 +134,26 @@ public sealed partial class AccessGrantsMigrationTests(ServerFixture fixture) : 
         return (Permissions)(permissions ?? 0);
     }
 
-    private static async Task<Guid> SystemUserId(AsyncServiceScope scope)
+    private static async Task<bool> CanAccessVideo(NpgsqlConnection connection, Guid principalId, Permissions permissions)
     {
-        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        return await connection.QuerySingleAsync<bool>(
+            """
+            SELECT EXISTS(SELECT 1
+                          FROM media.videos
+                          WHERE videos.id = @VideoId
+                            AND videos.owner_id IN (SELECT owner_id FROM access.accessible_owners(@principalId, @permissions)));
+            """,
+            new { VideoId, principalId, permissions = (int)permissions });
+    }
+
+    private static async Task<Guid> SystemUserId(NpgsqlConnection connection)
+    {
         return await connection.QuerySingleAsync<Guid>("SELECT id FROM identity.users WHERE normalized_name = 'SYSTEM';");
     }
 
-    private static int MigrationNumber(string scriptName)
-    {
-        var match = MigrationNumberRegex().Match(scriptName);
-        return match.Success ? int.Parse(match.Groups[1].Value) : int.MaxValue;
-    }
-
-    [GeneratedRegex(@"\.Migrations\.(\d{6})_")]
-    private static partial Regex MigrationNumberRegex();
-
     /// <summary>Users, owners and ownerships as the application created them before migration 61, plus owned data.</summary>
     // lang=sql
-    private const string OldSchemaData =
+    internal const string OldSchemaData =
         """
         WITH system AS (SELECT id FROM identity.users WHERE normalized_name = 'SYSTEM')
         INSERT INTO identity.users (id, created_by_user_id, modified_by_user_id, name, normalized_name)
@@ -249,6 +224,12 @@ public sealed partial class AccessGrantsMigrationTests(ServerFixture fixture) : 
         WITH system AS (SELECT id FROM identity.users WHERE normalized_name = 'SYSTEM')
         INSERT INTO tasks.tasks (id, created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, payload)
         SELECT @FeedUpdateTaskId, system.id, system.id, system.id, 'youtube_feed_update', system.id, @LibraryId, @ChannelId, ''
+        FROM system;
+
+        -- A file added while the system user owned it, on a video of alice
+        WITH system AS (SELECT id FROM identity.users WHERE normalized_name = 'SYSTEM')
+        INSERT INTO media.video_files (id, created_by_user_id, modified_by_user_id, owner_id, video_id, storage_path, type, width, height, framerate)
+        SELECT @SystemFileId, system.id, system.id, system.id, @VideoId, '/library/channel/video/video.mp4', 'mp4', 1920, 1080, 30
         FROM system;
         """;
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Dapper;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.Extensions.Configuration;
@@ -62,6 +63,16 @@ public sealed class ServerFixture : IAsyncDisposable
         {
             var migrationService = scope.ServiceProvider.GetRequiredService<DatabaseMigrationService>();
             migrationService.Migrate();
+
+            // Owner ids would otherwise follow user ids (system 1/1, users 2/2 and 3/3), so mixing them up would go unnoticed
+            var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+            await connection.ExecuteAsync(
+                """
+                INSERT INTO access.owners (created_by_user_id, modified_by_user_id, name)
+                SELECT users.id, users.id, 'unused'
+                FROM identity.users
+                WHERE users.normalized_name = 'SYSTEM';
+                """);
         }
 
         User = await CreateUserAsync(Services, "test");
@@ -86,7 +97,7 @@ public sealed class ServerFixture : IAsyncDisposable
     {
         await using var scope = services.CreateAsyncScope();
         var store = scope.ServiceProvider.GetRequiredService<UserOnlyStore>();
-        var user = new UserEntity { Id = Guid.NewGuid(), Name = name, NormalizedName = name.ToUpperInvariant() };
+        var user = new UserEntity { PublicId = Guid.NewGuid(), Name = name, NormalizedName = name.ToUpperInvariant() };
         var result = await store.CreateAsync(user, default);
         if (!result.Succeeded)
         {
@@ -96,7 +107,7 @@ public sealed class ServerFixture : IAsyncDisposable
         var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
         await using var transaction = await connection.OpenAndBeginTransaction();
         var ownerId = await scope.ServiceProvider.GetRequiredService<OwnerRepository>().GetPersonalOwnerIdAsync(user.Id, transaction);
-        return new TestUser(user.Id, ownerId);
+        return new TestUser(user.Id, user.PublicId, ownerId);
     }
 
     /// <inheritdoc />

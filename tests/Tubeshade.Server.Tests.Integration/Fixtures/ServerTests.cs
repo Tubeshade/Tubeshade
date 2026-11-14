@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using NUnit.Framework;
@@ -23,12 +24,20 @@ public abstract class ServerTests
         Fixture = fixture;
     }
 
-    protected ValueTask<Guid> CreateLibrary(Guid userId, IServiceProvider services, NpgsqlTransaction transaction)
+    internal static async Task Grant(NpgsqlConnection connection, TestUser principal, TestUser owner, Permissions permissions, NpgsqlTransaction transaction)
+    {
+        await connection.ExecuteAsync(
+            "INSERT INTO access.grants (principal_id, owner_id, permissions, granted_by) VALUES (@PrincipalId, @OwnerId, @Permissions, @GrantedBy);",
+            new { PrincipalId = principal.Id, owner.OwnerId, Permissions = (int)permissions, GrantedBy = owner.Id },
+            transaction);
+    }
+
+    protected ValueTask<Guid> CreateLibrary(long userId, IServiceProvider services, NpgsqlTransaction transaction)
     {
         return CreateLibrary(string.Empty, userId, services, transaction);
     }
 
-    protected async ValueTask<Guid> CreateLibrary(string storagePath, Guid userId, IServiceProvider services, NpgsqlTransaction transaction)
+    protected async ValueTask<Guid> CreateLibrary(string storagePath, long userId, IServiceProvider services, NpgsqlTransaction transaction)
     {
         var ownerId = await services.GetRequiredService<OwnerRepository>().GetPersonalOwnerIdAsync(userId, transaction);
         var taskRepository = services.GetRequiredService<TaskRepository>();

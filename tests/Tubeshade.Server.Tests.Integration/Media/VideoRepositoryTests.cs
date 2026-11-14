@@ -187,9 +187,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             });
 
         using var assertionScope = new AssertionScope();
-        allVideos.Select(video => video.Id).Should().Contain([notViewedId, viewedId]);
-        viewedVideos.Should().Contain(video => video.Id == viewedId).And.NotContain(video => video.Id == notViewedId);
-        notViewedVideos.Should().Contain(video => video.Id == notViewedId).And.NotContain(video => video.Id == viewedId);
+        allVideos.Select(video => video.PublicId).Should().Contain([notViewedId, viewedId]);
+        viewedVideos.Should().Contain(video => video.PublicId == viewedId).And.NotContain(video => video.PublicId == notViewedId);
+        notViewedVideos.Should().Contain(video => video.PublicId == notViewedId).And.NotContain(video => video.PublicId == viewedId);
     }
 
     [Test]
@@ -239,9 +239,9 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
         var videoId = await AddVideo(repository, transaction);
 
         var userName = Guid.NewGuid().ToString("N");
-        var otherUserId = (await userRepository.AddAsync(
-            new UserEntity { Id = Guid.NewGuid(), Name = userName, NormalizedName = userName },
-            transaction))!.Value;
+        var otherUser = new UserEntity { PublicId = Guid.NewGuid(), Name = userName, NormalizedName = userName };
+        await userRepository.AddAsync(otherUser, transaction);
+        var otherUserId = otherUser.Id;
 
         using (new AssertionScope())
         {
@@ -558,8 +558,8 @@ public sealed class VideoRepositoryTests(ServerFixture fixture) : ServerTests(fi
             });
 
         using var assertionScope = new AssertionScope();
-        descending.Select(video => video.Id).Should().Equal(nameId, descriptionId);
-        ascending.Select(video => video.Id).Should().Equal(descriptionId, nameId);
+        descending.Select(video => video.PublicId).Should().Equal(nameId, descriptionId);
+        ascending.Select(video => video.PublicId).Should().Equal(descriptionId, nameId);
     }
 
     private async Task<Guid> AddVideo(VideoRepository repository, NpgsqlTransaction transaction)

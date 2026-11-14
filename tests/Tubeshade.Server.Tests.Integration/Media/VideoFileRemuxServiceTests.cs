@@ -117,7 +117,7 @@ public sealed class VideoFileRemuxServiceTests(ServerFixture fixture) : ServerTe
         using (new AssertionScope())
         {
             files.Should().HaveCount(3);
-            files.Should().ContainSingle(file => file.Id == _streamableFileId);
+            files.Should().ContainSingle(file => file.PublicId == _streamableFileId);
             _directory.EnumerateFiles("*_remux*").Should().BeEmpty();
         }
 
@@ -127,7 +127,7 @@ public sealed class VideoFileRemuxServiceTests(ServerFixture fixture) : ServerTe
         await RunRemux();
 
         var filesAfterSecondRun = await GetFiles();
-        filesAfterSecondRun.Select(file => file.Id).Should().BeEquivalentTo(files.Select(file => file.Id));
+        filesAfterSecondRun.Select(file => file.PublicId).Should().BeEquivalentTo(files.Select(file => file.PublicId));
     }
 
     private async Task ShouldBeRemuxed(VideoFileEntity[] files, string fileName, Guid originalId)
@@ -138,7 +138,7 @@ public sealed class VideoFileRemuxServiceTests(ServerFixture fixture) : ServerTe
         var streamable = await Mp4Layout.IsStreamable(path, CancellationToken.None);
 
         using var scope = new AssertionScope(fileName);
-        remuxedFile.Id.Should().NotBe(originalId, "the URL should change so that cached parts of the old file are not used");
+        remuxedFile.PublicId.Should().NotBe(originalId, "the URL should change so that cached parts of the old file are not used");
         remuxedFile.Hash.Should().Equal(hash);
         remuxedFile.HashAlgorithm.Should().Be(HashAlgorithm.Default);
         remuxedFile.StorageSize.Should().Be(new FileInfo(path).Length);

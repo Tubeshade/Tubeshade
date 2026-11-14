@@ -38,7 +38,7 @@ public sealed class VideoTests
     {
         var files = Files();
 
-        Video.GetPreferredFile(files, files[3].Id, "1080").Should().BeSameAs(files[3]);
+        Video.GetPreferredFile(files, files[3].PublicId, "1080").Should().BeSameAs(files[3]);
     }
 
     [TestCase("1080", 0)]
@@ -72,8 +72,8 @@ public sealed class VideoTests
 
     private static VideoFileEntity File(int width, int height, decimal framerate) => new()
     {
-        Id = Guid.NewGuid(),
-        OwnerId = Guid.Empty,
+        PublicId = Guid.NewGuid(),
+        OwnerId = 0,
         VideoId = Guid.Empty,
         StoragePath = string.Empty,
         Type = VideoContainerType.Mp4,

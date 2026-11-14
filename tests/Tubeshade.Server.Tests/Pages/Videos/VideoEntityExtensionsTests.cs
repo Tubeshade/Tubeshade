@@ -18,7 +18,7 @@ public sealed class VideoEntityExtensionsTests
     {
         var channel = new ChannelEntity
         {
-            Id = Guid.NewGuid(),
+            PublicId = Guid.NewGuid(),
             Name = string.Empty,
             StoragePath = string.Empty,
             ExternalId = string.Empty,
@@ -28,13 +28,13 @@ public sealed class VideoEntityExtensionsTests
 
         var video = new DetailedVideo
         {
-            Id = Guid.NewGuid(),
+            PublicId = Guid.NewGuid(),
             Name = string.Empty,
             Description = string.Empty,
             Categories = [],
             Tags = [],
             Type = VideoType.Video,
-            ChannelId = channel.Id,
+            ChannelId = channel.PublicId,
             StoragePath = string.Empty,
             ExternalId = string.Empty,
             ExternalUrl = string.Empty,
@@ -46,9 +46,9 @@ public sealed class VideoEntityExtensionsTests
 
         SponsorBlockSegmentEntity[] segments =
         [
-            CreateSegment(video.Id, 10, 20, SegmentCategory.Sponsor, SegmentAction.Skip),
-            CreateSegment(video.Id, 30, 40, SegmentCategory.Sponsor, SegmentAction.Mute),
-            CreateSegment(video.Id, 40, 50, SegmentCategory.Filler, SegmentAction.Skip),
+            CreateSegment(video.PublicId, 10, 20, SegmentCategory.Sponsor, SegmentAction.Skip),
+            CreateSegment(video.PublicId, 30, 40, SegmentCategory.Sponsor, SegmentAction.Mute),
+            CreateSegment(video.PublicId, 40, 50, SegmentCategory.Filler, SegmentAction.Skip),
             CreateSegment(Guid.NewGuid(), 0, 60, SegmentCategory.Sponsor, SegmentAction.Skip),
         ];
 

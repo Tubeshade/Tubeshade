@@ -206,7 +206,7 @@ public sealed class CrossUserAccessTests(ServerFixture fixture) : ServerTests(fi
         (await services.GetRequiredService<LibraryCookieRepository>().AddAsync(
             new LibraryCookieEntity
             {
-                Id = _libraryId,
+                PublicId = _libraryId,
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
                 Domain = "example.org",
@@ -217,7 +217,7 @@ public sealed class CrossUserAccessTests(ServerFixture fixture) : ServerTests(fi
         (await services.GetRequiredService<ChannelSubscriptionRepository>().AddAsync(
             new ChannelSubscriptionEntity
             {
-                Id = _channelId,
+                PublicId = _channelId,
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
                 Status = SubscriptionStatus.SubscriptionPending,
@@ -241,7 +241,7 @@ public sealed class CrossUserAccessTests(ServerFixture fixture) : ServerTests(fi
 
         (await repository.FindAsync(_libraryId, _owner.Id, Permissions.Read, transaction)).Should().NotBeNull();
         (await repository.FindAsync(_libraryId, _stranger.Id, Permissions.Read, transaction)).Should().BeNull();
-        (await repository.GetAsync(_stranger.Id, transaction)).Should().NotContain(library => library.Id == _libraryId);
+        (await repository.GetAsync(_stranger.Id, transaction)).Should().NotContain(library => library.PublicId == _libraryId);
         (await repository.FindAsync(_libraryId, _reader.Id, Permissions.Read, transaction)).Should().NotBeNull();
         (await repository.FindAsync(_libraryId, _reader.Id, Permissions.Update, transaction)).Should().BeNull();
         (await repository.FindForSystemAsync(System, _libraryId, transaction)).Should().NotBeNull();
@@ -318,7 +318,7 @@ public sealed class CrossUserAccessTests(ServerFixture fixture) : ServerTests(fi
 
         await transaction.RollbackAsync();
 
-        VideoParameters Parameters(Guid userId) => new()
+        VideoParameters Parameters(long userId) => new()
         {
             UserId = userId,
             ChannelId = _channelId,
@@ -497,7 +497,7 @@ public sealed class CrossUserAccessTests(ServerFixture fixture) : ServerTests(fi
         (await repository.DeleteAsync(_channelId, _reader.Id, transaction)).Should().Be(0);
         (await repository.UpdateForSystemAsync(System, subscribed, transaction)).Should().Be(1);
         (await repository.UpdateAsync(subscribed with { ModifiedByUserId = _owner.Id }, transaction)).Should().Be(1);
-        (await repository.DeleteForSystemAsync(System, _channelId, transaction)).Should().Be(1);
+        (await repository.DeleteForSystemAsync(System, subscribed.Id, transaction)).Should().Be(1);
 
         await transaction.RollbackAsync();
     }
@@ -531,7 +531,7 @@ public sealed class CrossUserAccessTests(ServerFixture fixture) : ServerTests(fi
 
         await transaction.RollbackAsync();
 
-        TaskParameters Parameters(Guid userId) => new()
+        TaskParameters Parameters(long userId) => new()
         {
             UserId = userId,
             LibraryId = _libraryId,
