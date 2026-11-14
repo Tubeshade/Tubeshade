@@ -20,7 +20,17 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="**/*.sql"/>
+        <EmbeddedResource Include="Migrations\*.sql"/>
+    </ItemGroup>
+
+    <!-- Media/Videos/VideoRepository.Find.sql becomes VideoRepository.Queries.Find at compile time. -->
+    <ItemGroup>
+        <ProjectReference Include="..\Tubeshade.Data.Generators\Tubeshade.Data.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+        <AdditionalFiles Include="**\*.sql" Exclude="Migrations\**;$(BaseOutputPath)**;$(BaseIntermediateOutputPath)**">
+            <DependentUpon>$([System.Text.RegularExpressions.Regex]::Replace('%(Filename)', '\..*$', '')).cs</DependentUpon>
+        </AdditionalFiles>
+        <CompilerVisibleProperty Include="RootNamespace"/>
+        <CompilerVisibleProperty Include="MSBuildProjectDirectory"/>
     </ItemGroup>
 
 </Project>

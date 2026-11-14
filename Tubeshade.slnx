@@ -15,6 +15,7 @@
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="tests/Ytdlp.Tests/Ytdlp.Tests.csproj" />
+    <Project Path="tests\Tubeshade.Data.Generators.Tests\Tubeshade.Data.Generators.Tests.csproj" />
     <Project Path="tests\PubSubHubbub.Tests\PubSubHubbub.Tests.csproj" />
     <Project Path="tests\SponsorBlock.Tests.Integration\SponsorBlock.Tests.Integration.csproj" />
     <Project Path="tests\Tubeshade.Server.Tests.Integration.Published\Tubeshade.Server.Tests.Integration.Published.csproj" />
@@ -27,6 +28,7 @@
   <Project Path="source/Ytdlp/Ytdlp.csproj" />
   <Project Path="source\PubSubHubbub\PubSubHubbub.csproj" />
   <Project Path="source\SponsorBlock\SponsorBlock.csproj" />
+  <Project Path="source\Tubeshade.Data.Generators\Tubeshade.Data.Generators.csproj" />
   <Project Path="source\Tubeshade.Data\Tubeshade.Data.csproj" />
   <Project Path="source\Tubeshade.Server\Tubeshade.Server.csproj" />
 </Solution>
