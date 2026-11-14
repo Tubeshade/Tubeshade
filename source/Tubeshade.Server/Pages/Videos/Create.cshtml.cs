@@ -71,8 +71,7 @@ public sealed class Create : PageModel, INonLibraryPage, IFormLayout
         await using var transaction = await _connection.OpenAndBeginTransaction();
 
         var channel = await _channelRepository.GetAsync(CreateVideo.ChannelId!.Value, userId, transaction);
-        var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, userId, transaction);
-        var library = await _libraryRepository.GetAsync(libraryId, userId, transaction);
+        var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.PublicId, userId, transaction);
 
         var timeZone = _timeZoneProvider.GetZoneOrNull(CreateVideo.PublishedAtTimeZone) ??
                        throw new("Invalid time zone id");
@@ -83,7 +82,6 @@ public sealed class Create : PageModel, INonLibraryPage, IFormLayout
         var video = await _videoService.Create(
             userId,
             channel,
-            library.OwnerId,
             CreateVideo.Name,
             CreateVideo.Description ?? string.Empty,
             CreateVideo.Categories?.GetNonEmptyLines().ToArray() ?? [],
@@ -101,6 +99,6 @@ public sealed class Create : PageModel, INonLibraryPage, IFormLayout
 
         await transaction.CommitAsync();
 
-        return RedirectToPage("/Libraries/Videos/Video", new { libraryId, videoId = video.Id });
+        return RedirectToPage("/Libraries/Videos/Video", new { libraryId, videoId = video.PublicId });
     }
 }

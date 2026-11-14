@@ -30,7 +30,7 @@ public sealed class ChannelService
 
     public async ValueTask<ChannelEntity> Create(
         Guid libraryId,
-        Guid userId,
+        long userId,
         string name,
         string externalId,
         string externalUrl,
@@ -46,7 +46,7 @@ public sealed class ChannelService
 
     public async ValueTask<ChannelEntity> Create(
         Guid libraryId,
-        Guid userId,
+        long userId,
         string name,
         string externalId,
         string externalUrl,
@@ -74,9 +74,9 @@ public sealed class ChannelService
 
         var channel = await _channelRepository.GetAsync(channelId!.Value, userId, transaction);
 
-        channel.StoragePath = Path.Combine(library.StoragePath, $"channel_{channel.Id}");
+        channel.StoragePath = Path.Combine(library.StoragePath, $"channel_{channel.PublicId}");
         await _channelRepository.UpdateAsync(channel, transaction);
-        await _channelRepository.AddToLibrary(libraryId, channel.Id, userId, transaction);
+        await _channelRepository.AddToLibrary(libraryId, channel.PublicId, userId, transaction);
 
         Directory.CreateDirectory(channel.StoragePath);
 

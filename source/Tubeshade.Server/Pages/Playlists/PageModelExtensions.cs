@@ -11,7 +11,7 @@ public static class PageModelExtensions
 {
     public static PlaylistParameters GetPlaylistParameters<TPage>(
         this TPage pageModel,
-        Guid userId,
+        long userId,
         Guid? libraryId)
         where TPage : PageModel, IPlaylistPage
     {
@@ -35,7 +35,7 @@ public static class PageModelExtensions
 
     public static VideoParameters GetVideoParameters<TPage>(
         this TPage pageModel,
-        Guid userId,
+        long userId,
         Guid playlistId)
         where TPage : PageModel, IPlaylistVideoPage
     {

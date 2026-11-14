@@ -1,7 +1,7 @@
 ﻿@model Tubeshade.Data.Media.LibraryEntity
 
 <li class="nav-item">
-    <a class="nav-link" asp-page="/Libraries/Library" asp-route-libraryId="@Model.Id">
+    <a class="nav-link" asp-page="/Libraries/Library" asp-route-libraryId="@Model.PublicId">
         @SharedResources.Videos
     </a>
 </li>
@@ -11,22 +11,22 @@
     </a>
 </li>
 <li class="nav-item">
-    <a class="nav-link" asp-page="/Libraries/Channels/Index" asp-route-libraryId="@Model.Id">
+    <a class="nav-link" asp-page="/Libraries/Channels/Index" asp-route-libraryId="@Model.PublicId">
         @SharedResources.Channels
     </a>
 </li>
 <li class="nav-item">
-    <a class="nav-link" asp-page="/Libraries/Playlists/Index" asp-route-libraryId="@Model.Id">
+    <a class="nav-link" asp-page="/Libraries/Playlists/Index" asp-route-libraryId="@Model.PublicId">
         @SharedResources.Playlists
     </a>
 </li>
 <li class="nav-item">
-    <a class="nav-link" asp-page="/Libraries/Downloads/Index" asp-route-libraryId="@Model.Id">
+    <a class="nav-link" asp-page="/Libraries/Downloads/Index" asp-route-libraryId="@Model.PublicId">
         @SharedResources.Downloads
     </a>
 </li>
 <li class="nav-item">
-    <a class="nav-link" asp-page="/Libraries/Tasks/Index" asp-route-libraryId="@Model.Id">
+    <a class="nav-link" asp-page="/Libraries/Tasks/Index" asp-route-libraryId="@Model.PublicId">
         @SharedResources.Tasks
     </a>
 </li>

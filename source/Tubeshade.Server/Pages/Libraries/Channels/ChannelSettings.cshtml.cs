@@ -64,7 +64,7 @@ public sealed class ChannelSettings : LibraryPageBase, ISettingsPage
         var userId = User.GetUserId();
 
         Libraries = await _libraryRepository.GetAsync(userId, cancellationToken);
-        Library = Libraries.Single(library => library.Id == LibraryId);
+        Library = Libraries.Single(library => library.PublicId == LibraryId);
         OtherLibraries = Libraries
             .Except([Library])
             .Where(library => library.StoragePath == Library.StoragePath)

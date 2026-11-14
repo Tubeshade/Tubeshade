@@ -14,7 +14,7 @@ public sealed class CookiesService
 
     private readonly ILogger<CookiesService> _logger;
     private readonly LibraryCookieRepository _repository;
-    private readonly Guid _userId;
+    private readonly long _userId;
     private readonly Guid _libraryId;
     private readonly DirectoryInfo _directory;
     private readonly CancellationToken _cancellationToken;
@@ -22,7 +22,7 @@ public sealed class CookiesService
     public CookiesService(
         ILogger<CookiesService> logger,
         LibraryCookieRepository repository,
-        Guid userId,
+        long userId,
         Guid libraryId,
         DirectoryInfo directory,
         CancellationToken cancellationToken)

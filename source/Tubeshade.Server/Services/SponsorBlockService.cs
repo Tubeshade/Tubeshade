@@ -42,7 +42,7 @@ public sealed class SponsorBlockService
 
     public ValueTask ScanVideoSegments(
         Guid libraryId,
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         CancellationToken cancellationToken = default)
@@ -57,7 +57,7 @@ public sealed class SponsorBlockService
 
     public ValueTask UpdateVideoSegments(
         Guid libraryId,
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         CancellationToken cancellationToken = default)
@@ -71,7 +71,7 @@ public sealed class SponsorBlockService
     }
 
     private async ValueTask UpdateVideoSegmentsCore(
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         Func<VideoRepository, NpgsqlTransaction, ValueTask<List<EntityId>>> idFunc,
@@ -99,17 +99,17 @@ public sealed class SponsorBlockService
 
     public ValueTask UpdateVideoSegments(
         VideoEntity video,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {
-        return UpdateVideoSegments(video.Id, video.ExternalId, userId, transaction, cancellationToken);
+        return UpdateVideoSegments(video.PublicId, video.ExternalId, userId, transaction, cancellationToken);
     }
 
     public async ValueTask UpdateVideoSegments(
         Guid videoId,
         string videoExternalId,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken = default)
     {
@@ -123,7 +123,7 @@ public sealed class SponsorBlockService
                 existingSegments.Remove(existingSegment);
                 if (existingSegment.Locked)
                 {
-                    _logger.LockedSponsorBlockSegment(existingSegment.Id, existingSegment.ExternalId);
+                    _logger.LockedSponsorBlockSegment(existingSegment.PublicId, existingSegment.ExternalId);
                     continue;
                 }
 
@@ -135,7 +135,7 @@ public sealed class SponsorBlockService
                 existingSegment.Description = segment.Description;
                 existingSegment.Locked = segment.Locked;
 
-                _logger.UpdatingSponsorBlockSegment(existingSegment.Id, existingSegment.ExternalId);
+                _logger.UpdatingSponsorBlockSegment(existingSegment.PublicId, existingSegment.ExternalId);
                 await _segmentRepository.UpdateAsync(existingSegment, transaction);
             }
             else
@@ -161,7 +161,7 @@ public sealed class SponsorBlockService
 
         foreach (var segment in existingSegments)
         {
-            _logger.DeletingSponsorBlockSegment(segment.Id, segment.ExternalId);
+            _logger.DeletingSponsorBlockSegment(segment.PublicId, segment.ExternalId);
             await _segmentRepository.DeleteAsync(segment, transaction);
         }
     }

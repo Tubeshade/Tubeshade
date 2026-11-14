@@ -19,9 +19,8 @@ public sealed class VideoService
     }
 
     public async ValueTask<VideoEntity> Create(
-        Guid userId,
+        long userId,
         ChannelEntity channel,
-        Guid ownerId,
         string name,
         string description,
         string[] categories,
@@ -42,7 +41,6 @@ public sealed class VideoService
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
-                OwnerId = ownerId,
                 Name = name,
                 Description = description,
                 Categories = categories,
@@ -50,7 +48,7 @@ public sealed class VideoService
                 Type = type,
                 ViewCount = views,
                 LikeCount = likes,
-                ChannelId = channel.Id,
+                ChannelId = channel.PublicId,
                 StoragePath = channel.StoragePath,
                 ExternalId = externalId,
                 ExternalUrl = externalUrl,
@@ -63,7 +61,7 @@ public sealed class VideoService
 
         var video = await _videoRepository.GetAsync(videoId!.Value, userId, transaction);
 
-        video.StoragePath = Path.Combine(channel.StoragePath, $"video_{video.Id}");
+        video.StoragePath = Path.Combine(channel.StoragePath, $"video_{video.PublicId}");
         await _videoRepository.UpdateAsync(video, transaction);
 
         Directory.CreateDirectory(video.StoragePath);

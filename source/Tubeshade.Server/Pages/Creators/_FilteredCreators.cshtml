@@ -3,12 +3,12 @@
 <div class="row g-2 mb-2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(425px, 1fr))">
     @foreach (var (index, creator) in Model.PageData.Data.Index())
     {
-        <div class="col" id="creator-@creator.Id">
+        <div class="col" id="creator-@creator.PublicId">
             <div class="card">
                 <div class="row g-0">
                     <div class="col-auto d-flex justify-content-center align-items-center"
                          style="aspect-ratio: 1; height: 160px">
-                        <a asp-page="/Creators/Creator" asp-route-creatorId="@creator.Id"
+                        <a asp-page="/Creators/Creator" asp-route-creatorId="@creator.PublicId"
                            class="@(creator.Thumbnails is [] ? "tubeshade-missing-thumbnail" : string.Empty)">
                             @if (creator.Thumbnails is not [])
                             {

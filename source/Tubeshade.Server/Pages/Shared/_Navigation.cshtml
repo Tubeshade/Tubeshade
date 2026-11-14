@@ -12,7 +12,7 @@
             @foreach (var library in Model.Libraries)
             {
                 <li>
-                    <a class="dropdown-item" asp-page="/Libraries/Library" asp-route-libraryId="@library.Id">
+                    <a class="dropdown-item" asp-page="/Libraries/Library" asp-route-libraryId="@library.PublicId">
                         @library.Name
                     </a>
                 </li>

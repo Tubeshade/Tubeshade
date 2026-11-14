@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
+using Tubeshade.Data.Identity;
 using Tubeshade.Server.Configuration.Auth.Options;
 
 namespace Tubeshade.Server.Configuration.Auth;
@@ -32,16 +34,22 @@ internal static class ClaimsPrincipalExtensions
         return Guid.TryParseExact(claim.Value, "D", out id);
     }
 
-    internal static void AddUserId(this ClaimsPrincipal principal, Guid userId)
+    internal static void AddUserId(this ClaimsPrincipal principal, UserEntity user)
     {
-        var identity = new ClaimsIdentity([new Claim(Claims.UserId, userId.ToString("D"))]);
+        var identity = new ClaimsIdentity(
+        [
+            new Claim(Claims.UserId, user.PublicId.ToString("D")),
+            new Claim(Claims.PrincipalId, user.Id.ToString(CultureInfo.InvariantCulture)),
+        ]);
+
         principal.AddIdentity(identity);
     }
 
-    internal static Guid GetUserId(this ClaimsPrincipal principal)
+    /// <returns>The internal id of the user, which is the principal id for access checks.</returns>
+    internal static long GetUserId(this ClaimsPrincipal principal)
     {
-        var claim = principal.FindAll(Claims.UserId).DistinctBy(claim => claim.Value).Single();
-        return Guid.ParseExact(claim.Value, "D");
+        var claim = principal.FindAll(Claims.PrincipalId).DistinctBy(claim => claim.Value).Single();
+        return long.Parse(claim.Value, CultureInfo.InvariantCulture);
     }
 
     internal static bool TryGetFirstClaimValue(

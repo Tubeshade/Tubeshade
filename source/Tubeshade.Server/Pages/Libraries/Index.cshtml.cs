@@ -88,7 +88,7 @@ public sealed class Index : PageModel, INonLibraryPage, IFormLayout
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
                 OwnerId = ownerId,
-                TaskId = task.Id,
+                TaskId = task.PublicId,
                 CronExpression = model.CronExpression,
                 TimeZoneId = model.TimeZoneId,
             },

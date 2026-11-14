@@ -25,7 +25,7 @@ public static class VideoEntityExtensions
 
             var skippedDuration = segments
                 .Where(segment =>
-                    segment.VideoId == video.Id &&
+                    segment.VideoId == video.PublicId &&
                     segment.Category != SegmentCategory.Filler &&
                     segment.Action != SegmentAction.Mute)
                 .GetTotalDuration();
@@ -81,7 +81,7 @@ public static class VideoEntityExtensions
         IReadOnlyList<SponsorBlockSegmentEntity> segments,
         IReadOnlyList<ChannelEntity> channels)
     {
-        var channelDictionary = channels.ToDictionary(channel => channel.Id);
+        var channelDictionary = channels.ToDictionary(channel => channel.PublicId);
         return videos.Select(video => video.MapToModel(segments, channelDictionary));
     }
 }

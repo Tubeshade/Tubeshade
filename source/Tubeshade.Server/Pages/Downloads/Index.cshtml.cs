@@ -148,7 +148,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         return StatusCode(StatusCodes.Status200OK);
     }
 
-    private async ValueTask<Guid> OnGetCore(CancellationToken cancellationToken)
+    private async ValueTask<long> OnGetCore(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
         var parameters = this.GetVideoParameters(userId, null, ChannelId);
@@ -162,7 +162,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
 
         var videos = await _videoRepository.GetDownloadableVideos(parameters, cancellationToken);
 
-        var videoIds = videos.Select(video => video.Id).ToArray();
+        var videoIds = videos.Select(video => video.PublicId).ToArray();
         var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);
 
         var models = videos.MapToModels(segments, Channels).ToList();

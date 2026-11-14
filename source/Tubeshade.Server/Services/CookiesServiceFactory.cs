@@ -18,7 +18,7 @@ public sealed class CookiesServiceFactory
     }
 
     public CookiesService Create(
-        Guid userId,
+        long userId,
         Guid libraryId,
         DirectoryInfo directory,
         CancellationToken cancellationToken)

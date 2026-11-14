@@ -105,7 +105,7 @@ public sealed class Channel : LibraryPageBase, IVideoPage, IPageWithSettings
         var channels = await _channelRepository.GetAsync(userId, cancellationToken);
         Creators = await _creatorRepository.GetAsync(userId, cancellationToken);
 
-        var videoIds = videos.Select(video => video.Id).ToArray();
+        var videoIds = videos.Select(video => video.PublicId).ToArray();
         var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);
 
         var models = videos.MapToModels(segments, channels).ToList();

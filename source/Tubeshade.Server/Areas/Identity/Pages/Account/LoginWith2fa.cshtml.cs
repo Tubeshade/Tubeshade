@@ -83,17 +83,17 @@ public sealed class LoginWith2FaModel : PageModel
 
         if (result.Succeeded)
         {
-            _logger.LogInformation("User with ID '{UserId}' logged in with 2fa", user.Id);
+            _logger.LogInformation("User with ID '{UserId}' logged in with 2fa", user.PublicId);
             return LocalRedirect(returnUrl);
         }
 
         if (result.IsLockedOut)
         {
-            _logger.LogWarning("User with ID '{UserId}' account locked out", user.Id);
+            _logger.LogWarning("User with ID '{UserId}' account locked out", user.PublicId);
             return RedirectToPage("./Lockout");
         }
 
-        _logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'", user.Id);
+        _logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'", user.PublicId);
         ModelState.AddModelError(string.Empty, "Invalid authenticator code.");
         return Page();
     }

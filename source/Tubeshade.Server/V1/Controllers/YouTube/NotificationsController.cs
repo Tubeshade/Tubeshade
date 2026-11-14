@@ -76,7 +76,7 @@ public sealed class NotificationsController : ControllerBase
 
         _logger.ReceivedIntentVerificationRequest(channel.Name);
 
-        var subscription = await _channelSubscriptionRepository.FindForSystemAsync(SystemPrincipals.Webhook, channel.Id, transaction);
+        var subscription = await _channelSubscriptionRepository.FindForSystemAsync(SystemPrincipals.Webhook, channel.PublicId, transaction);
         if (subscription is null)
         {
             return Problem("Subscription request not found", statusCode: StatusCodes.Status404NotFound);
@@ -142,7 +142,7 @@ public sealed class NotificationsController : ControllerBase
             return Problem("Channel does not exist", statusCode: StatusCodes.Status404NotFound);
         }
 
-        var libraryId = await _channelRepository.GetPrimaryLibraryIdForSystemAsync(SystemPrincipals.Webhook, channel.Id, transaction, cancellationToken);
+        var libraryId = await _channelRepository.GetPrimaryLibraryIdForSystemAsync(SystemPrincipals.Webhook, channel.PublicId, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
         using var reader = new StreamReader(Request.Body, Encoding.UTF8);

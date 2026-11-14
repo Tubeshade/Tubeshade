@@ -14,7 +14,7 @@ public sealed class UpdateScheduleModel
 
     public UpdateScheduleModel(ScheduleEntity schedule)
     {
-        Id = schedule.Id;
+        Id = schedule.PublicId;
         CronExpression = schedule.CronExpression;
         TimeZoneId = schedule.TimeZoneId;
     }

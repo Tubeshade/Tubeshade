@@ -72,7 +72,7 @@ public sealed class YoutubeDownloadService
     public async ValueTask DownloadVideo(
         Guid libraryId,
         Guid videoId,
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         DirectoryInfo tempDirectory,
@@ -109,7 +109,7 @@ public sealed class YoutubeDownloadService
 
         await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
         {
-            var tracks = await _trackFileRepository.GetForVideo(video.Id, userId, Permissions.Read, transaction, cancellationToken);
+            var tracks = await _trackFileRepository.GetForVideo(video.PublicId, userId, Permissions.Read, transaction, cancellationToken);
 
             var videoDirectory = new DirectoryInfo(video.GetDirectoryPath());
             await _trackFileService.CreateOrUpdateSubtitles(
@@ -126,7 +126,7 @@ public sealed class YoutubeDownloadService
     }
 
     private async ValueTask DownloadDefault(
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         DirectoryInfo tempDirectory,
@@ -170,7 +170,7 @@ public sealed class YoutubeDownloadService
             var size = formats.Sum(format => (decimal?)(format.FileSize ?? format.ApproximateFileSize));
             if (videoFile.DownloadedAt is not null)
             {
-                _logger.ExistingVideoFile(videoFile.Id);
+                _logger.ExistingVideoFile(videoFile.PublicId);
                 sizeOffset += size ?? 0;
                 continue;
             }
@@ -276,7 +276,7 @@ public sealed class YoutubeDownloadService
     }
 
     private async ValueTask DownloadStreaming(
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         DirectoryInfo tempDirectory,
@@ -342,7 +342,7 @@ public sealed class YoutubeDownloadService
     }
 
     private async ValueTask<decimal> DownloadVideoFile(
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         DirectoryInfo tempDirectory,
@@ -363,7 +363,7 @@ public sealed class YoutubeDownloadService
             var containerType = VideoContainerType.FromName(combinedFormat.Extension);
             var videoFile = GetFileForFormat(files, combinedFormat, containerType);
 
-            _logger.DownloadingCombinedVideoFile(videoFile.Id, combinedFormat.FormatId, containerType.Name);
+            _logger.DownloadingCombinedVideoFile(videoFile.PublicId, combinedFormat.FormatId, containerType.Name);
             return await DownloadCombinedVideoFormat(
                 userId,
                 taskRepository,
@@ -393,7 +393,7 @@ public sealed class YoutubeDownloadService
             var containerType = VideoContainerType.FromName(videoFormat.Extension);
             var videoFile = GetFileForFormat(files, videoFormat, containerType);
 
-            _logger.DownloadingSplitVideoFile(videoFile.Id, videoFormat.FormatId, string.Join('+', audioFormats.Select(format => format.FormatId)), containerType.Name);
+            _logger.DownloadingSplitVideoFile(videoFile.PublicId, videoFormat.FormatId, string.Join('+', audioFormats.Select(format => format.FormatId)), containerType.Name);
             return await DownloadSplitVideoFormat(
                 userId,
                 taskRepository,
@@ -417,7 +417,7 @@ public sealed class YoutubeDownloadService
     }
 
     private async ValueTask<decimal> DownloadCombinedVideoFormat(
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         DirectoryInfo tempDirectory,
@@ -436,7 +436,7 @@ public sealed class YoutubeDownloadService
         var size = (decimal)(format.FileSize ?? format.ApproximateFileSize ?? 0);
         if (videoFile.DownloadedAt is not null)
         {
-            _logger.ExistingVideoFile(videoFile.Id);
+            _logger.ExistingVideoFile(videoFile.PublicId);
             return size;
         }
 
@@ -449,7 +449,7 @@ public sealed class YoutubeDownloadService
             var fileRepository = scope.ServiceProvider.GetRequiredService<VideoFileRepository>();
 
             var path = Path.Combine(tempDirectory.FullName, fileName);
-            await fileRepository.CreateTemporaryFile(videoFile.Id, userId, taskRunId, path, cancellationToken);
+            await fileRepository.CreateTemporaryFile(videoFile.PublicId, userId, taskRunId, path, cancellationToken);
         }
 
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
@@ -535,7 +535,7 @@ public sealed class YoutubeDownloadService
 
     [SupportedOSPlatform("linux")]
     private async ValueTask<decimal> DownloadSplitVideoFormat(
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         DirectoryInfo tempDirectory,
@@ -558,15 +558,15 @@ public sealed class YoutubeDownloadService
 
         if (videoFile.DownloadedAt is not null)
         {
-            _logger.ExistingVideoFile(videoFile.Id);
+            _logger.ExistingVideoFile(videoFile.PublicId);
             return size;
         }
 
         var audioFilePaths = audioFormats
-            .Select(format => Path.Combine(tempDirectory.FullName, $"{videoFile.Id}_{format.FormatId}"))
+            .Select(format => Path.Combine(tempDirectory.FullName, $"{videoFile.PublicId}_{format.FormatId}"))
             .ToArray();
 
-        var videoFileName = $"{videoFile.Id}_{videoFormat.FormatId}";
+        var videoFileName = $"{videoFile.PublicId}_{videoFormat.FormatId}";
         var videoFilePath = Path.Combine(tempDirectory.FullName, videoFileName);
 
         var fileName = videoFile.StoragePath;
@@ -591,7 +591,7 @@ public sealed class YoutubeDownloadService
 
         foreach (var audioLimitRate in audioLimitRates)
         {
-            _logger.SplitFormatLimitRates(videoFile.Id, audioLimitRate, videoLimitRate);
+            _logger.SplitFormatLimitRates(videoFile.PublicId, audioLimitRate, videoLimitRate);
         }
 
         var downloadDurations = audioSizes
@@ -634,7 +634,7 @@ public sealed class YoutubeDownloadService
             await using (var scope = provider.CreateAsyncScope())
             {
                 var fileRepository = scope.ServiceProvider.GetRequiredService<VideoFileRepository>();
-                await fileRepository.CreateTemporaryFile(videoFile.Id, userId, taskRunId, outputFilePath, cancellationToken);
+                await fileRepository.CreateTemporaryFile(videoFile.PublicId, userId, taskRunId, outputFilePath, cancellationToken);
             }
 
             var timestamp = Stopwatch.GetTimestamp();
@@ -821,7 +821,7 @@ public sealed class YoutubeDownloadService
             return;
         }
 
-        _logger.RefreshingExpiringVideoData(video.Id, expiry, downloadEnd);
+        _logger.RefreshingExpiringVideoData(video.PublicId, expiry, downloadEnd);
         var data = await FetchVideoData(video, preferences, dataFile.Path, cookieFilepath, cancellationToken);
         dataFile.Update(preferences.PlayerClient, data);
     }
@@ -881,7 +881,7 @@ public sealed class YoutubeDownloadService
         : null;
 
     private async ValueTask MoveFileToOutput(
-        Guid userId,
+        long userId,
         DirectoryInfo tempDirectory,
         VideoFileEntity videoFile,
         VideoEntity video,
@@ -890,7 +890,7 @@ public sealed class YoutubeDownloadService
         bool remux,
         CancellationToken cancellationToken)
     {
-        _logger.DownloadedVideoFile(videoFile.Id);
+        _logger.DownloadedVideoFile(videoFile.PublicId);
 
         var downloadedPath = Path.Combine(tempDirectory.FullName, fileName);
 
@@ -912,13 +912,13 @@ public sealed class YoutubeDownloadService
 
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
-        var latestFile = await _videoFileRepository.GetAsync(videoFile.Id, userId, transaction);
+        var latestFile = await _videoFileRepository.GetAsync(videoFile.PublicId, userId, transaction);
         if (latestFile.ModifiedAt != videoFile.ModifiedAt)
         {
             throw new InvalidOperationException("Video file was updated during download");
         }
 
-        var latestVideo = await _videoRepository.GetAsync(video.Id, userId, transaction);
+        var latestVideo = await _videoRepository.GetAsync(video.PublicId, userId, transaction);
         if (latestVideo.ModifiedAt != video.ModifiedAt)
         {
             throw new InvalidOperationException("Video was updated during download");
@@ -934,7 +934,7 @@ public sealed class YoutubeDownloadService
 
         if (await _videoFileRepository.UpdateAsync(videoFile, transaction) < 1)
         {
-            throw new InvalidOperationException($"User {userId} failed to update video file {videoFile.Id}");
+            throw new InvalidOperationException($"User {userId} failed to update video file {videoFile.PublicId}");
         }
 
         if (video is not { IgnoredAt: null, IgnoredByUserId: null })
@@ -946,11 +946,11 @@ public sealed class YoutubeDownloadService
 
             if (await _videoRepository.UpdateAsync(video, transaction) < 1)
             {
-                throw new InvalidOperationException($"User {userId} failed to remove ignored status from video {video.Id}");
+                throw new InvalidOperationException($"User {userId} failed to remove ignored status from video {video.PublicId}");
             }
 
             // the stored time differs from the one set above, and the next file of this video is checked against it
-            video.ModifiedAt = (await _videoRepository.GetAsync(video.Id, userId, transaction)).ModifiedAt;
+            video.ModifiedAt = (await _videoRepository.GetAsync(video.PublicId, userId, transaction)).ModifiedAt;
         }
 
         var targetFilePath = Path.Combine(targetDirectory.FullName, fileName);

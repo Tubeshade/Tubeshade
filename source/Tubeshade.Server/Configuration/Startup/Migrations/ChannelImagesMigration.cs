@@ -55,13 +55,13 @@ internal sealed class ChannelImagesMigration : IApplicationMigration
                 continue;
             }
 
-            var images = await _imageRepository.GetForChannel(channel.Id, userId, Permissions.Read, transaction, cancellationToken);
+            var images = await _imageRepository.GetForChannel(channel.PublicId, userId, Permissions.Read, transaction, cancellationToken);
             if (images is not [])
             {
                 continue;
             }
 
-            var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.Id, userId, transaction, cancellationToken);
+            var libraryId = await _channelRepository.GetPrimaryLibraryId(channel.PublicId, userId, transaction, cancellationToken);
             var tasks = await _taskRepository.GetRunningTasks(
                 new TaskParameters
                 {
@@ -77,7 +77,7 @@ internal sealed class ChannelImagesMigration : IApplicationMigration
 
             if (tasks is [])
             {
-                var task = TaskEntity.Index(libraryId, userId, channel.Id, null, channel.ExternalUrl);
+                var task = TaskEntity.Index(libraryId, userId, channel.PublicId, null, channel.ExternalUrl);
                 if (await _taskRepository.TryAddTaskForSystemAsync(system, task, transaction) is { } taskId)
                 {
                     await _taskRepository.TriggerTaskForSystemAsync(system, taskId, TaskSource.Schedule, transaction);

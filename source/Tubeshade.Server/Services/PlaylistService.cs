@@ -35,7 +35,7 @@ public sealed class PlaylistService
     }
 
     /// <summary>Subscribes to the playlist so that it is refreshed as part of the scheduled subscription scans.</summary>
-    public async ValueTask<PlaylistEntity> Subscribe(Guid playlistId, Guid userId)
+    public async ValueTask<PlaylistEntity> Subscribe(Guid playlistId, long userId)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
         var playlist = await SetSubscribed(playlistId, userId, _clock.GetCurrentInstant(), transaction);
@@ -44,7 +44,7 @@ public sealed class PlaylistService
         return playlist;
     }
 
-    public async ValueTask<PlaylistEntity> Unsubscribe(Guid playlistId, Guid userId)
+    public async ValueTask<PlaylistEntity> Unsubscribe(Guid playlistId, long userId)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
         var playlist = await SetSubscribed(playlistId, userId, null, transaction);
@@ -55,7 +55,7 @@ public sealed class PlaylistService
 
     private async ValueTask<PlaylistEntity> SetSubscribed(
         Guid playlistId,
-        Guid userId,
+        long userId,
         Instant? subscribedAt,
         NpgsqlTransaction transaction)
     {
@@ -77,7 +77,7 @@ public sealed class PlaylistService
 
     public async ValueTask<PlaylistEntity> Create(
         Guid libraryId,
-        Guid userId,
+        long userId,
         string name,
         string externalId,
         string externalUrl,
@@ -102,7 +102,7 @@ public sealed class PlaylistService
 
         var playlist = await _playlistRepository.GetAsync(playlistId!.Value, userId, transaction);
 
-        playlist.StoragePath = Path.Combine(library.StoragePath, $"playlist_{playlist.Id}");
+        playlist.StoragePath = Path.Combine(library.StoragePath, $"playlist_{playlist.PublicId}");
         await _playlistRepository.UpdateAsync(playlist, transaction);
 
         Directory.CreateDirectory(playlist.StoragePath);

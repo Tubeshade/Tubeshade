@@ -61,7 +61,7 @@ public sealed class YoutubeWebhookService
     public async ValueTask ProcessWebhook(
         string payload,
         Guid libraryId,
-        Guid userId,
+        long userId,
         Guid channelId,
         CookiesService cookiesService,
         CancellationToken cancellationToken)

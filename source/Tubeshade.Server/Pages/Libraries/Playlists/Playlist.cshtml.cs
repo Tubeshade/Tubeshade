@@ -133,7 +133,7 @@ public sealed class Playlist : LibraryPageBase, IPlaylistVideoPage
         var videos = await _videoRepository.GetFilteredDetailed(parameters, cancellationToken);
         var channels = await _channelRepository.GetAsync(userId, transaction);
 
-        var videoIds = videos.Select(video => video.Id).ToArray();
+        var videoIds = videos.Select(video => video.PublicId).ToArray();
         var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);

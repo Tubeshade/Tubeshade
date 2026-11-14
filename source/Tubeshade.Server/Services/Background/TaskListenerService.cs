@@ -2,6 +2,7 @@
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -20,10 +21,10 @@ public sealed class TaskListenerService : BackgroundService
 {
     private readonly TaskCompletionSource _taskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    private readonly FrozenDictionary<string, Channel<Guid>> _channels = TaskChannels.Names
+    private readonly FrozenDictionary<string, Channel<long>> _channels = TaskChannels.Names
         .ToFrozenDictionary(
             name => name,
-            name => CreateUnboundedChannel<Guid>(singleWriter: name is not TaskChannels.Requested));
+            name => CreateUnboundedChannel<long>(singleWriter: name is not TaskChannels.Requested));
 
     private readonly ILogger<TaskListenerService> _logger;
     private readonly IServiceProvider _serviceProvider;
@@ -32,11 +33,11 @@ public sealed class TaskListenerService : BackgroundService
 
     private int _connectionAttempt;
 
-    internal ChannelReader<Guid> TaskRequested => _channels[TaskChannels.Requested].Reader;
+    internal ChannelReader<long> TaskRequested => _channels[TaskChannels.Requested].Reader;
 
-    internal ChannelReader<Guid> TaskRunCancelled => _channels[TaskChannels.Cancel].Reader;
+    internal ChannelReader<long> TaskRunCancelled => _channels[TaskChannels.Cancel].Reader;
 
-    internal event EventHandler<Guid>? TaskRunFinished;
+    internal event EventHandler<FinishedTaskRun>? TaskRunFinished;
 
     internal event EventHandler? ListeningResumed;
 
@@ -122,7 +123,7 @@ public sealed class TaskListenerService : BackgroundService
         }
     }
 
-    private async ValueTask<List<Guid>> GetTaskRequestIds(CancellationToken cancellationToken)
+    private async ValueTask<List<long>> GetTaskRequestIds(CancellationToken cancellationToken)
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
         var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
@@ -140,22 +141,27 @@ public sealed class TaskListenerService : BackgroundService
         }
 
         _logger.ReceivedNotification(args.Channel, args.Payload);
-        if (!Guid.TryParse(args.Payload, out var id))
+        if (args.Channel is TaskChannels.RunFinished)
+        {
+            if (!FinishedTaskRun.TryParse(args.Payload, out var run))
+            {
+                _logger.UnexpectedNotificationPayload(args.Payload);
+                return;
+            }
+
+            TaskRunFinished?.Invoke(this, run);
+            return;
+        }
+
+        if (!long.TryParse(args.Payload, NumberStyles.None, CultureInfo.InvariantCulture, out var id))
         {
             _logger.UnexpectedNotificationPayload(args.Payload);
             return;
         }
 
-        if (args.Channel is TaskChannels.RunFinished)
-        {
-            TaskRunFinished?.Invoke(this, id);
-        }
-        else
-        {
-            _logger.QueueingNotification(args.Channel, id);
-            var queued = channel.Writer.TryWrite(id);
-            Trace.Assert(queued);
-        }
+        _logger.QueueingNotification(args.Channel, id);
+        var queued = channel.Writer.TryWrite(id);
+        Trace.Assert(queued);
     }
 
     private static Channel<TData> CreateUnboundedChannel<TData>(bool singleWriter) => Channel.CreateUnbounded<TData>(

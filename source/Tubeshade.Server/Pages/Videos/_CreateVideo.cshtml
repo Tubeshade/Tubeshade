@@ -20,7 +20,7 @@
         <select class="form-control form-select" asp-for="ChannelId">
             @foreach (var library in Model.Channels)
             {
-                <option value="@library.Id" selected="@(library.Id == Model.ChannelId)">
+                <option value="@library.PublicId" selected="@(library.PublicId == Model.ChannelId)">
                     @library.Name
                 </option>
             }

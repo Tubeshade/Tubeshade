@@ -19,7 +19,7 @@
                 <option selected="@(Model.ChannelId is null)" value="">@SharedResources.Filters_Channels_All</option>
                 @foreach (var channel in Model.Channels)
                 {
-                    <option selected="@(Model.ChannelId == channel.Id)" value="@channel.Id">@channel.Name</option>
+                    <option selected="@(Model.ChannelId == channel.PublicId)" value="@channel.PublicId">@channel.Name</option>
                 }
             </select>
         </div>
@@ -71,7 +71,7 @@
                     <option value="">@SharedResources.Filters_Creators_All</option>
                     @foreach (var creator in Model.Creators)
                     {
-                        <option value="@creator.Id">@creator.Name</option>
+                        <option value="@creator.PublicId">@creator.Name</option>
                     }
                 </select>
             </div>

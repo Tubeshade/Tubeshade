@@ -18,7 +18,7 @@ internal readonly record struct DequeueResult
 
     internal static DequeueResult Locked => new(true, null);
 
-    internal static DequeueResult Dequeued(TaskEntity task, TaskSource source) => new(false, new(task, source));
+    internal static DequeueResult Dequeued(TaskEntity task, TaskSource source, long runId) => new(false, new(task, source, runId));
 
-    internal readonly record struct DequeuedTask(TaskEntity Task, TaskSource Source);
+    internal readonly record struct DequeuedTask(TaskEntity Task, TaskSource Source, long RunId);
 }

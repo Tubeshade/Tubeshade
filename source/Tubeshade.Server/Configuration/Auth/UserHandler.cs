@@ -38,7 +38,7 @@ public sealed class UserHandler : AuthorizationHandler<UserRequirement>
                 var userByLogin = await _userRepository.FindByLoginAsync(loginProvider, nameClaim.Value);
                 if (userByLogin is not null)
                 {
-                    context.User.AddUserId(userByLogin.Id);
+                    context.User.AddUserId(userByLogin);
                     context.Succeed(requirement);
                     return;
                 }
@@ -60,7 +60,7 @@ public sealed class UserHandler : AuthorizationHandler<UserRequirement>
         var user = await _userRepository.FindByIdAsync(id);
         if (user is not null)
         {
-            context.User.AddUserId(user.Id);
+            context.User.AddUserId(user);
             context.Succeed(requirement);
         }
         else

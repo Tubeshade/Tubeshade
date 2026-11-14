@@ -40,7 +40,7 @@ public sealed class TrackFileService
 
     public async Task RefreshTrackFiles(
         Guid libraryId,
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         CancellationToken cancellationToken = default)
@@ -75,7 +75,7 @@ public sealed class TrackFileService
             }
 
             await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-            var tracks = await _trackFileRepository.GetForVideo(video.Id, userId, Permissions.Read, transaction, cancellationToken);
+            var tracks = await _trackFileRepository.GetForVideo(video.PublicId, userId, Permissions.Read, transaction, cancellationToken);
 
             var chaptersFile = new FileInfo(video.GetChaptersFilePath());
             if (chaptersFile.Exists)
@@ -84,7 +84,7 @@ public sealed class TrackFileService
             }
             else
             {
-                _logger.ChaptersFileDoesNotExist(video.Id, chaptersFile.FullName);
+                _logger.ChaptersFileDoesNotExist(video.PublicId, chaptersFile.FullName);
             }
 
             await CreateOrUpdateSubtitles(video, videoDirectory, tracks, hashAlgorithm, userId, transaction, cancellationToken);
@@ -101,7 +101,7 @@ public sealed class TrackFileService
         DirectoryInfo videoDirectory,
         List<TrackFileEntity> tracks,
         HashAlgorithm hashAlgorithm,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
@@ -122,7 +122,7 @@ public sealed class TrackFileService
                 {
                     CreatedByUserId = userId,
                     ModifiedByUserId = userId,
-                    VideoId = video.Id,
+                    VideoId = video.PublicId,
                     StoragePath = subtitlesFile.Name,
                     Type = TrackType.Subtitles,
                     Language = language.ToUpperInvariant(),
@@ -133,7 +133,7 @@ public sealed class TrackFileService
 
                 if (await _trackFileRepository.AddAsync(trackFile, transaction) is null)
                 {
-                    throw new InvalidOperationException($"Failed to add track file to video {video.Id}");
+                    throw new InvalidOperationException($"Failed to add track file to video {video.PublicId}");
                 }
             }
             else if (existing.HashAlgorithm.Name is HashAlgorithm.Names.Placeholder)
@@ -148,7 +148,7 @@ public sealed class TrackFileService
 
                 if (await _trackFileRepository.UpdateAsync(existing, transaction) is not 1)
                 {
-                    throw new InvalidOperationException($"Failed to update track file for video {video.Id}");
+                    throw new InvalidOperationException($"Failed to update track file for video {video.PublicId}");
                 }
 
                 tracks.Remove(existing);
@@ -161,7 +161,7 @@ public sealed class TrackFileService
         FileInfo chaptersFile,
         List<TrackFileEntity> tracks,
         HashAlgorithm hashAlgorithm,
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
@@ -173,7 +173,7 @@ public sealed class TrackFileService
             {
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
-                VideoId = video.Id,
+                VideoId = video.PublicId,
                 StoragePath = chaptersFile.Name,
                 Type = TrackType.Chapters,
                 Hash = hash,
@@ -183,7 +183,7 @@ public sealed class TrackFileService
 
             if (await _trackFileRepository.AddAsync(trackFile, transaction) is null)
             {
-                throw new InvalidOperationException($"Failed to add track file to video {video.Id}");
+                throw new InvalidOperationException($"Failed to add track file to video {video.PublicId}");
             }
         }
         else if (existing.HashAlgorithm.Name is HashAlgorithm.Names.Placeholder)
@@ -198,7 +198,7 @@ public sealed class TrackFileService
 
             if (await _trackFileRepository.UpdateAsync(existing, transaction) is not 1)
             {
-                throw new InvalidOperationException($"Failed to update track file for video {video.Id}");
+                throw new InvalidOperationException($"Failed to update track file for video {video.PublicId}");
             }
         }
     }

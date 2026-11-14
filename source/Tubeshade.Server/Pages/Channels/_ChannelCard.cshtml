@@ -1,12 +1,12 @@
 ﻿@using System.Globalization
 @model ChannelModel
 
-<div class="col" id="channel-@Model.Channel.Id">
+<div class="col" id="channel-@Model.Channel.PublicId">
     <div class="card">
         <div class="row g-0">
             <div class="col-auto d-flex justify-content-center align-items-center" style="aspect-ratio: 1; height: 160px">
                 <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@(Model.LibraryId ?? Model.Channel.PrimaryLibraryId)"
-                   asp-route-channelId="@Model.Channel.Id">
+                   asp-route-channelId="@Model.Channel.PublicId">
                     @if (Model.Channel.Thumbnails is not [])
                     {
                         <img class="img-fluid card-img"
@@ -45,22 +45,22 @@
                     <div class="btn-group btn-group-sm w-100" role="group">
                         @if (Model.Channel.SubscribedAt.HasValue)
                         {
-                            <button hx-post="" hx-page-handler="Unsubscribe" hx-route-channelId="@Model.Channel.Id"
-                                    hx-target="#channel-@Model.Channel.Id" hx-swap="outerHTML"
+                            <button hx-post="" hx-page-handler="Unsubscribe" hx-route-channelId="@Model.Channel.PublicId"
+                                    hx-target="#channel-@Model.Channel.PublicId" hx-swap="outerHTML"
                                     type="button" class="btn btn-primary w-auto">
                                 @SharedResources.Button_Unsubscribe
                             </button>
                         }
                         else
                         {
-                            <button hx-post="" hx-page-handler="Subscribe" hx-route-channelId="@Model.Channel.Id"
-                                    hx-target="#channel-@Model.Channel.Id" hx-swap="outerHTML"
+                            <button hx-post="" hx-page-handler="Subscribe" hx-route-channelId="@Model.Channel.PublicId"
+                                    hx-target="#channel-@Model.Channel.PublicId" hx-swap="outerHTML"
                                     type="button" class="btn btn-primary">
                                 @SharedResources.Button_Subscribe
                             </button>
                         }
 
-                        <button hx-post="" hx-page-handler="Scan" hx-route-channelId="@Model.Channel.Id"
+                        <button hx-post="" hx-page-handler="Scan" hx-route-channelId="@Model.Channel.PublicId"
                                 hx-swap="none"
                                 type="button" class="btn btn-secondary">
                             @SharedResources.Button_Scan

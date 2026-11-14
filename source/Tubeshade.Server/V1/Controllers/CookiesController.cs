@@ -38,7 +38,7 @@ public sealed class CookiesController : ControllerBase
         {
             cookie = new LibraryCookieEntity
             {
-                Id = request.LibraryId!.Value,
+                PublicId = request.LibraryId!.Value,
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
                 Domain = request.Domain,

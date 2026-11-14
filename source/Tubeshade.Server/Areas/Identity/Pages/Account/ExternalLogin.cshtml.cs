@@ -125,7 +125,7 @@ public sealed class ExternalLoginModel : PageModel
 
         var user = new UserEntity
         {
-            Id = id,
+            PublicId = id,
             Name = Input.Username,
             NormalizedName = Input.Username,
         };

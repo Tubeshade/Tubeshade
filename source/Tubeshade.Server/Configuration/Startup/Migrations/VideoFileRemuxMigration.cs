@@ -55,7 +55,7 @@ public sealed class VideoFileRemuxMigration : IApplicationMigration
                 new TaskParameters
                 {
                     UserId = userId,
-                    LibraryId = library.Id,
+                    LibraryId = library.PublicId,
                     Type = TaskType.RemuxVideoFiles,
                     Limit = 1,
                     Offset = 0,
@@ -65,7 +65,7 @@ public sealed class VideoFileRemuxMigration : IApplicationMigration
 
             if (tasks is [])
             {
-                var task = TaskEntity.RemuxVideos(library.Id, userId);
+                var task = TaskEntity.RemuxVideos(library.PublicId, userId);
                 if (await _taskRepository.TryAddTaskForSystemAsync(system, task, transaction) is { } taskId)
                 {
                     await _taskRepository.TriggerTaskForSystemAsync(system, taskId, TaskSource.Schedule, transaction);

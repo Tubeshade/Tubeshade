@@ -36,7 +36,7 @@ internal static partial class LoggerExtensions
     internal static partial void TranscodingAudio(this ILogger logger, string audioCodec, string audioBitRate);
 
     [LoggerMessage(6, Debug, "Received task request {TaskRequestId}")]
-    internal static partial void ReceivedTaskRequest(this ILogger logger, Guid taskRequestId);
+    internal static partial void ReceivedTaskRequest(this ILogger logger, long taskRequestId);
 
     [LoggerMessage(7, Debug, "Could not dequeue task {TaskId}")]
     internal static partial void CouldNotDequeueTask(this ILogger logger, Guid taskId);
@@ -90,7 +90,7 @@ internal static partial class LoggerExtensions
     internal static partial void UnexpectedNotificationPayload(this ILogger logger, string notificationPayload);
 
     [LoggerMessage(24, Information, "Queuing notification {NotificationChannel} {NotificationPayload}")]
-    internal static partial void QueueingNotification(this ILogger logger, string notificationChannel, Guid notificationPayload);
+    internal static partial void QueueingNotification(this ILogger logger, string notificationChannel, long notificationPayload);
 
     [LoggerMessage(25, Debug, "Received intent verification request for channel {ChannelId}")]
     internal static partial void ReceivedIntentVerificationRequest(this ILogger logger, Guid channelId);
@@ -360,7 +360,7 @@ internal static partial class LoggerExtensions
     internal static partial void SchedulerTickFailed(this ILogger logger, Exception exception);
 
     [LoggerMessage(121, Error, "Failed to dequeue task request {TaskRequestId}, retrying in {RetryDelay}")]
-    internal static partial void DequeueTaskFailed(this ILogger logger, Exception exception, Guid taskRequestId, TimeSpan retryDelay);
+    internal static partial void DequeueTaskFailed(this ILogger logger, Exception exception, long taskRequestId, TimeSpan retryDelay);
 
     [LoggerMessage(122, Error, "Failed to save result of task run {TaskRunId}, retrying in {RetryDelay}")]
     internal static partial void SavingTaskResultFailed(this ILogger logger, Exception exception, Guid taskRunId, TimeSpan retryDelay);
@@ -372,7 +372,7 @@ internal static partial class LoggerExtensions
     internal static partial void TaskResultAlreadyExists(this ILogger logger, Guid taskRunId, string taskResult);
 
     [LoggerMessage(125, Debug, "Task request {TaskRequestId} was already handled")]
-    internal static partial void TaskRequestAlreadyHandled(this ILogger logger, Guid taskRequestId);
+    internal static partial void TaskRequestAlreadyHandled(this ILogger logger, long taskRequestId);
 
     [LoggerMessage(126, Information, "Continuing with task run {TaskRunId}, which was added by a previous attempt")]
     internal static partial void ResumingTaskRun(this ILogger logger, Guid taskRunId);
@@ -387,7 +387,7 @@ internal static partial class LoggerExtensions
     internal static partial void QueryingBlockingTaskRunsFailed(this ILogger logger, Exception exception, TimeSpan retryDelay);
 
     [LoggerMessage(130, Debug, "Task for request {TaskRequestId} is locked by another transaction, retrying in {RetryDelay}")]
-    internal static partial void DequeueTaskLocked(this ILogger logger, Guid taskRequestId, TimeSpan retryDelay);
+    internal static partial void DequeueTaskLocked(this ILogger logger, long taskRequestId, TimeSpan retryDelay);
 
     [LoggerMessage(131, Error, "Cancellation callback of task run {TaskRunId} failed")]
     internal static partial void CancellingTaskRunFailed(this ILogger logger, Exception exception, Guid taskRunId);
@@ -396,10 +396,10 @@ internal static partial class LoggerExtensions
     internal static partial void CancellingTaskRun(this ILogger logger, Guid taskRunId);
 
     [LoggerMessage(133, Debug, "No task run with id {TaskRunId} to cancel")]
-    internal static partial void NoTaskRunToCancel(this ILogger logger, Guid taskRunId);
+    internal static partial void NoTaskRunToCancel(this ILogger logger, Guid? taskRunId);
 
     [LoggerMessage(134, Error, "Failed to dequeue task request {TaskRequestId}, giving up until the request is queued again")]
-    internal static partial void DequeueTaskAborted(this ILogger logger, Exception exception, Guid taskRequestId);
+    internal static partial void DequeueTaskAborted(this ILogger logger, Exception exception, long taskRequestId);
 
     [LoggerMessage(135, Information, "Continuing scan of channel {ChannelId} after {CompletedCount} of {TotalCount} videos completed by a previous run")]
     internal static partial void ContinuingChannelScan(this ILogger logger, Guid channelId, int completedCount, int totalCount);
@@ -427,4 +427,7 @@ internal static partial class LoggerExtensions
 
     [LoggerMessage(143, Information, "Deleted {Count} old reindex task runs")]
     internal static partial void DeletedOldReindexRuns(this ILogger logger, int count);
+
+    [LoggerMessage(144, Warning, "Failed to find the task run to cancel, which is not running on this instance")]
+    internal static partial void FindingTaskRunToCancelFailed(this ILogger logger, Exception exception);
 }

@@ -21,7 +21,7 @@ public static class ImageFileEntityExtensions
                 return null;
             }
 
-            return urlHelper.Action("Get", "Images", new { version = "1.0", id = thumbnail.Id });
+            return urlHelper.Action("Get", "Images", new { version = "1.0", id = thumbnail.PublicId });
         }
 
         public string GetSourceSet(IUrlHelper urlHelper)
@@ -40,7 +40,7 @@ public static class ImageFileEntityExtensions
                 }
 
                 var image = thumbnails[index];
-                builder.Append(urlHelper.Action("Get", "Images", new { version = "1.0", id = image.Id }));
+                builder.Append(urlHelper.Action("Get", "Images", new { version = "1.0", id = image.PublicId }));
                 builder.Append(' ');
                 builder.Append(image.Width);
                 builder.Append('w');

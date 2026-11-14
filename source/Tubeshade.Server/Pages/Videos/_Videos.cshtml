@@ -10,7 +10,7 @@
             <div class="card">
                 <div class="position-relative" style="aspect-ratio: 16 / 9">
                     <a asp-page="@(Model.LibraryId is not null ? "/Libraries/Videos/Video" : "/Videos/Video")"
-                       asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@video.Video.Id"
+                       asp-route-libraryId="@Model.LibraryId" asp-route-videoId="@video.Video.PublicId"
                        class="@(video.Video.Thumbnails is [] ? "tubeshade-missing-thumbnail" : string.Empty)">
                         @if (video.Video.Thumbnails is not [])
                         {
@@ -46,13 +46,13 @@
                             @video.Channel.Name
                         </a>
                         <form>
-                            <input value="@(video.Video.Id)" name="videoId" hidden/>
+                            <input value="@(video.Video.PublicId)" name="videoId" hidden/>
                             <div class="form-check form-switch">
-                                <input id="viewed@(video.Video.Id.ToString("N"))" checked="@(video.Viewed)" name="viewed"
+                                <input id="viewed@(video.Video.PublicId.ToString("N"))" checked="@(video.Viewed)" name="viewed"
                                        type="checkbox" role="switch" switch title="Viewed" class="form-check-input"
                                        hx-post="" hx-page-handler="Viewed" hx-swap="none"
                                        hx-on::after-request="if (!event.detail.successful) this.checked = !event.detail.requestConfig.formData.has('viewed')"/>
-                                <label for="viewed@(video.Video.Id.ToString("N"))" class="form-check-label" hidden>
+                                <label for="viewed@(video.Video.PublicId.ToString("N"))" class="form-check-label" hidden>
                                     @SharedResources.Filters_ViewStatus_viewed
                                 </label>
                             </div>

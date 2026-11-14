@@ -55,7 +55,7 @@ public sealed class FileMetadataMigration : IApplicationMigration
                 new TaskParameters
                 {
                     UserId = userId,
-                    LibraryId = library.Id,
+                    LibraryId = library.PublicId,
                     Type = TaskType.RefreshFileMetadata,
                     Limit = 1,
                     Offset = 0,
@@ -65,7 +65,7 @@ public sealed class FileMetadataMigration : IApplicationMigration
 
             if (tasks is [])
             {
-                var task = TaskEntity.RefreshMetadata(library.Id, userId);
+                var task = TaskEntity.RefreshMetadata(library.PublicId, userId);
                 if (await _taskRepository.TryAddTaskForSystemAsync(system, task, transaction) is { } taskId)
                 {
                     await _taskRepository.TriggerTaskForSystemAsync(system, taskId, TaskSource.Schedule, transaction);

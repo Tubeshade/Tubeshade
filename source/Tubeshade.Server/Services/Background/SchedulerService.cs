@@ -57,7 +57,7 @@ public sealed class SchedulerService : BackgroundService
 
         // Schedules triggered since beforeTick, so that they are not triggered again
         // when the next tick covers a failed interval as well.
-        var triggeredScheduleIds = new HashSet<Guid>();
+        var triggeredScheduleIds = new HashSet<long>();
 
         _logger.StartingScheduler(timer.Period);
         while (await timer.WaitForNextTickAsync(stoppingToken))
@@ -89,7 +89,7 @@ public sealed class SchedulerService : BackgroundService
     private async Task ProcessScheduleTick(
         Instant beforeTick,
         Interval interval,
-        HashSet<Guid> triggeredScheduleIds,
+        HashSet<long> triggeredScheduleIds,
         CancellationToken stoppingToken)
     {
         await using var tickScope = _serviceProvider.CreateAsyncScope();
@@ -102,8 +102,10 @@ public sealed class SchedulerService : BackgroundService
 
         foreach (var schedule in schedules)
         {
-            using var scheduleScope = _logger.BeginScope("{ScheduleId}", schedule.Id);
-            var nextTime = GetNextTime(schedule.CronExpression, beforeTick, schedule.Id.GetHashCode());
+            using var scheduleScope = _logger.BeginScope("{ScheduleId}", schedule.PublicId);
+
+            // Seeded by the public id, which kept the value of the former uuid key, so that existing schedules keep their times
+            var nextTime = GetNextTime(schedule.CronExpression, beforeTick, schedule.PublicId.GetHashCode());
             if (!interval.Contains(nextTime) || triggeredScheduleIds.Contains(schedule.Id))
             {
                 _logger.SkippingSchedule();

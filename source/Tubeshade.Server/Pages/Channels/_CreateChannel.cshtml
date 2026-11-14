@@ -18,7 +18,7 @@
         <select class="form-control form-select" asp-for="LibraryId">
             @foreach (var library in Model.Libraries)
             {
-                <option value="@library.Id" selected="@(library.Id == Model.LibraryId)">
+                <option value="@library.PublicId" selected="@(library.PublicId == Model.LibraryId)">
                     @library.Name
                 </option>
             }

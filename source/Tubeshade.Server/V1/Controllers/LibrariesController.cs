@@ -31,7 +31,7 @@ public sealed class LibrariesController : ControllerBase
         {
             yield return new Library
             {
-                Id = entity.Id,
+                Id = entity.PublicId,
                 CreatedAt = entity.CreatedAt,
                 ModifiedAt = entity.ModifiedAt,
                 Name = entity.Name,

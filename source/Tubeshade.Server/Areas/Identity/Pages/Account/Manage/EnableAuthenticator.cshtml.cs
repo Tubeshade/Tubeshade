@@ -88,7 +88,7 @@ public sealed class EnableAuthenticatorModel : PageModel
         }
 
         await _userManager.SetTwoFactorEnabledAsync(user, true);
-        _logger.UserEnabled2Fa(user.Id);
+        _logger.UserEnabled2Fa(user.PublicId);
 
         StatusMessage = "Your authenticator app has been verified.";
 

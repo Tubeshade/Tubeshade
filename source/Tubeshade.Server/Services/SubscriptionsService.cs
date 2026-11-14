@@ -43,7 +43,7 @@ public sealed class SubscriptionsService
         _optionsMonitor = optionsMonitor;
     }
 
-    public async ValueTask<ChannelEntity> Subscribe(Guid channelId, Guid userId)
+    public async ValueTask<ChannelEntity> Subscribe(Guid channelId, long userId)
     {
         var currentTime = _clock.GetCurrentInstant();
 
@@ -88,7 +88,7 @@ public sealed class SubscriptionsService
         var subscriptionId = await _channelSubscriptionRepository.AddAsync(
             new ChannelSubscriptionEntity
             {
-                Id = channelId,
+                PublicId = channelId,
                 CreatedByUserId = userId,
                 ModifiedByUserId = userId,
                 Status = SubscriptionStatus.SubscriptionPending,
@@ -106,7 +106,7 @@ public sealed class SubscriptionsService
         return channel;
     }
 
-    public async ValueTask<ChannelEntity> Unsubscribe(Guid channelId, Guid userId)
+    public async ValueTask<ChannelEntity> Unsubscribe(Guid channelId, long userId)
     {
         var currentTime = _clock.GetCurrentInstant();
 
@@ -157,7 +157,7 @@ public sealed class SubscriptionsService
             }
             catch (Exception exception)
             {
-                _logger.PubSubFailedSubscription(exception, subscription.Id);
+                _logger.PubSubFailedSubscription(exception, subscription.PublicId);
             }
         }
     }

@@ -42,7 +42,7 @@ public sealed class VideoFileRemuxService
 
     public async Task RemuxVideoFiles(
         Guid libraryId,
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         CancellationToken cancellationToken = default)
@@ -70,7 +70,7 @@ public sealed class VideoFileRemuxService
             List<VideoFileEntity> files;
             await using (var transaction = await _connection.OpenAndBeginTransaction(cancellationToken))
             {
-                files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction, cancellationToken);
+                files = await _videoRepository.GetFilesAsync(video.PublicId, userId, transaction, cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
             }
 
@@ -84,7 +84,7 @@ public sealed class VideoFileRemuxService
                 var file = new FileInfo(Path.Combine(video.StoragePath, videoFile.StoragePath));
                 if (!file.Exists)
                 {
-                    _logger.VideoFileDoesNotExist(videoFile.Id, video.Id, file.FullName);
+                    _logger.VideoFileDoesNotExist(videoFile.PublicId, video.PublicId, file.FullName);
                     continue;
                 }
 
@@ -99,16 +99,16 @@ public sealed class VideoFileRemuxService
                         continue;
                     }
 
-                    _logger.RemuxingVideoFile(videoFile.Id, file.FullName);
+                    _logger.RemuxingVideoFile(videoFile.PublicId, file.FullName);
                     await _ffmpegService.Copy(file.FullName, remuxedPath, cancellationToken);
                     var remuxedFile = new FileInfo(remuxedPath);
                     var hash = await hashAlgorithm.ComputeHashAsync(remuxedFile, cancellationToken);
 
                     await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
 
-                    if (await _videoFileRepository.DeleteAsync(videoFile.Id, userId, transaction) is 0)
+                    if (await _videoFileRepository.DeleteAsync(videoFile.PublicId, userId, transaction) is 0)
                     {
-                        throw new InvalidOperationException($"Failed to delete file {videoFile.Id} for video {video.Id}");
+                        throw new InvalidOperationException($"Failed to delete file {videoFile.PublicId} for video {video.PublicId}");
                     }
 
                     var replacement = videoFile with
@@ -122,14 +122,14 @@ public sealed class VideoFileRemuxService
 
                     if (await _videoFileRepository.AddAsync(replacement, transaction) is not { } replacementId)
                     {
-                        throw new InvalidOperationException($"Failed to add remuxed file for video {video.Id}");
+                        throw new InvalidOperationException($"Failed to add remuxed file for video {video.PublicId}");
                     }
 
                     await transaction.CommitAsync(cancellationToken);
 
                     // If moving fails, the old file is still in place and will be remuxed again during the next run
                     File.Move(remuxedPath, file.FullName, true);
-                    _logger.RemuxedVideoFile(videoFile.Id, replacementId);
+                    _logger.RemuxedVideoFile(videoFile.PublicId, replacementId);
                 }
                 catch (OperationCanceledException)
                 {
@@ -138,7 +138,7 @@ public sealed class VideoFileRemuxService
                 }
                 catch (Exception exception)
                 {
-                    _logger.RemuxingVideoFileFailed(exception, videoFile.Id, file.FullName);
+                    _logger.RemuxingVideoFileFailed(exception, videoFile.PublicId, file.FullName);
                     File.Delete(remuxedPath);
                 }
             }

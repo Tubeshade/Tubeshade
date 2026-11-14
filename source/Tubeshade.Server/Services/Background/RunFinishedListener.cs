@@ -5,7 +5,7 @@ namespace Tubeshade.Server.Services.Background;
 
 internal sealed class RunFinishedListener : IDisposable
 {
-    private readonly Channel<Guid?> _channel = Channel.CreateUnbounded<Guid?>(new UnboundedChannelOptions
+    private readonly Channel<FinishedTaskRun?> _channel = Channel.CreateUnbounded<FinishedTaskRun?>(new UnboundedChannelOptions
     {
         AllowSynchronousContinuations = true,
         SingleReader = true,
@@ -27,7 +27,7 @@ internal sealed class RunFinishedListener : IDisposable
     /// Ids of finished task runs, or <see langword="null"/> if notifications might have been missed,
     /// in which case the finished task runs need to be queried instead.
     /// </summary>
-    internal ChannelReader<Guid?> Reader { get; }
+    internal ChannelReader<FinishedTaskRun?> Reader { get; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -37,9 +37,9 @@ internal sealed class RunFinishedListener : IDisposable
         _channel.Writer.Complete();
     }
 
-    private void OnTaskRunFinished(object? sender, Guid runId)
+    private void OnTaskRunFinished(object? sender, FinishedTaskRun run)
     {
-        _ = _channel.Writer.TryWrite(runId);
+        _ = _channel.Writer.TryWrite(run);
     }
 
     private void OnListeningResumed(object? sender, EventArgs args)

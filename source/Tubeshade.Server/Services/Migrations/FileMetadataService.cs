@@ -41,7 +41,7 @@ public sealed class FileMetadataService
 
     public async Task AddMissingMetadata(
         Guid libraryId,
-        Guid userId,
+        long userId,
         TaskRepository taskRepository,
         Guid taskRunId,
         CancellationToken cancellationToken = default)
@@ -67,7 +67,7 @@ public sealed class FileMetadataService
         foreach (var (index, video) in videos.Index())
         {
             await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-            var files = await _videoRepository.GetFilesAsync(video.Id, userId, transaction, cancellationToken);
+            var files = await _videoRepository.GetFilesAsync(video.PublicId, userId, transaction, cancellationToken);
 
             foreach (var videoFile in files)
             {
@@ -79,17 +79,17 @@ public sealed class FileMetadataService
                 var file = new FileInfo(Path.Combine(video.StoragePath, videoFile.StoragePath));
                 if (!file.Exists)
                 {
-                    _logger.VideoFileDoesNotExist(videoFile.Id, video.Id, file.FullName);
+                    _logger.VideoFileDoesNotExist(videoFile.PublicId, video.PublicId, file.FullName);
                     continue;
                 }
 
                 if (videoFile.HashAlgorithm is null)
                 {
-                    _logger.AddingVideoMetadata(hashAlgorithm.Name, videoFile.Id, file.FullName);
+                    _logger.AddingVideoMetadata(hashAlgorithm.Name, videoFile.PublicId, file.FullName);
                 }
                 else
                 {
-                    _logger.ReplacingVideoPlaceholderHash(hashAlgorithm.Name, videoFile.Id, file.FullName);
+                    _logger.ReplacingVideoPlaceholderHash(hashAlgorithm.Name, videoFile.PublicId, file.FullName);
                 }
 
                 var hashData = await hashAlgorithm.ComputeHashAsync(file, cancellationToken);
@@ -102,11 +102,11 @@ public sealed class FileMetadataService
 
                 if (await _videoFileRepository.UpdateAsync(videoFile, transaction) is not 1)
                 {
-                    throw new InvalidOperationException($"Failed to update file {videoFile.Id} for video {video.Id}");
+                    throw new InvalidOperationException($"Failed to update file {videoFile.PublicId} for video {video.PublicId}");
                 }
             }
 
-            var images = await _imageFileRepository.GetForVideo(video.Id, userId, Permissions.Update, transaction, cancellationToken);
+            var images = await _imageFileRepository.GetForVideo(video.PublicId, userId, Permissions.Update, transaction, cancellationToken);
             foreach (var imageFile in images)
             {
                 if (imageFile is { HashAlgorithm.Name: not HashAlgorithm.Names.Placeholder })
@@ -117,11 +117,11 @@ public sealed class FileMetadataService
                 var file = new FileInfo(Path.Combine(video.StoragePath, imageFile.StoragePath));
                 if (!file.Exists)
                 {
-                    _logger.ImageFileDoesNotExist(imageFile.Id, video.Id, file.FullName);
+                    _logger.ImageFileDoesNotExist(imageFile.PublicId, video.PublicId, file.FullName);
                     continue;
                 }
 
-                _logger.ReplacingImagePlaceholderHash(hashAlgorithm.Name, imageFile.Id, file.FullName);
+                _logger.ReplacingImagePlaceholderHash(hashAlgorithm.Name, imageFile.PublicId, file.FullName);
                 var hashData = await hashAlgorithm.ComputeHashAsync(file, cancellationToken);
 
                 imageFile.ModifiedAt = _clock.GetCurrentInstant();
@@ -132,7 +132,7 @@ public sealed class FileMetadataService
 
                 if (await _imageFileRepository.UpdateAsync(imageFile, transaction) is not 1)
                 {
-                    throw new InvalidOperationException($"Failed to update file {imageFile.Id}");
+                    throw new InvalidOperationException($"Failed to update file {imageFile.PublicId}");
                 }
             }
 

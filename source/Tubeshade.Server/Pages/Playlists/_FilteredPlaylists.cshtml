@@ -3,13 +3,13 @@
 <div class="row g-2 mb-2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(425px, 1fr))">
     @foreach (var (index, playlist) in Model.PageData.Data.Index())
     {
-        <div class="col" id="playlist-@playlist.Id">
+        <div class="col" id="playlist-@playlist.PublicId">
             <div class="card">
                 <div class="row g-0">
                     <div class="col-auto d-flex justify-content-center align-items-center"
                          style="aspect-ratio: 1; height: 160px">
                         <a asp-page="@(Model.PageData.LibraryId is not null ? "/Libraries/Playlists/Playlist" : "/Playlists/Playlist")"
-                           asp-route-playlistId="@playlist.Id" asp-route-libraryId="@Model.PageData.LibraryId"
+                           asp-route-playlistId="@playlist.PublicId" asp-route-libraryId="@Model.PageData.LibraryId"
                            class="@(playlist.Thumbnails is [] ? "tubeshade-missing-thumbnail" : string.Empty)">
                             @if (playlist.Thumbnails is not [])
                             {

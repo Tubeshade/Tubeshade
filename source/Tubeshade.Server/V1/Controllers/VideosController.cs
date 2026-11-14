@@ -214,7 +214,7 @@ public sealed class VideosController : ControllerBase
 
         return image is null
             ? NotFound()
-            : RedirectToAction("Get", "Images", new { version = "1.0", id = image.Id });
+            : RedirectToAction("Get", "Images", new { version = "1.0", id = image.PublicId });
     }
 
     [HttpGet("Subtitles")]

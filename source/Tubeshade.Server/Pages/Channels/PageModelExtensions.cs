@@ -9,7 +9,7 @@ public static class PageModelExtensions
 {
     public static ChannelParameters GetChannelParameters<TPage>(
         this TPage pageModel,
-        Guid userId,
+        long userId,
         Guid? libraryId)
         where TPage : PageModel, IChannelPage
     {

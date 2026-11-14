@@ -18,7 +18,7 @@ namespace Tubeshade.Server.Services.Background;
 public sealed class BackgroundWorkerService : BackgroundService
 {
     private const string TaskRunPrefix = "task-run";
-    private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _runCancellations = [];
+    private readonly ConcurrentDictionary<long, (Guid PublicId, CancellationTokenSource Source)> _runCancellations = [];
 
     private readonly IServiceProvider _serviceProvider;
     private readonly SchedulerOptions _options;
@@ -49,27 +49,29 @@ public sealed class BackgroundWorkerService : BackgroundService
         _metadataLock = new(1);
     }
 
-    internal async ValueTask<bool> CancelTaskRun(Guid taskRunId)
+    internal async ValueTask<bool> CancelTaskRun(long taskRunId)
     {
-        if (!_runCancellations.TryRemove(taskRunId, out var tokenSource))
+        if (!_runCancellations.TryRemove(taskRunId, out var cancellation))
         {
             return false;
         }
 
+        var logger = _serviceProvider.GetRequiredService<ILogger<BackgroundWorkerService>>();
+        logger.CancellingTaskRun(cancellation.PublicId);
+
         try
         {
-            await tokenSource.CancelAsync();
+            await cancellation.Source.CancelAsync();
         }
         catch (Exception exception)
         {
             // Cancellation callbacks of the task run are invoked synchronously, and if one of them throws,
             // it should not stop the host. The token is still cancelled, so the task run is cancelled regardless.
-            var logger = _serviceProvider.GetRequiredService<ILogger<BackgroundWorkerService>>();
-            logger.CancellingTaskRunFailed(exception, taskRunId);
+            logger.CancellingTaskRunFailed(exception, cancellation.PublicId);
         }
         finally
         {
-            tokenSource.Dispose();
+            cancellation.Source.Dispose();
         }
 
         return true;
@@ -88,7 +90,7 @@ public sealed class BackgroundWorkerService : BackgroundService
             ProcessTask);
     }
 
-    private async ValueTask ProcessTask(Guid taskRequestId, CancellationToken cancellationToken)
+    private async ValueTask ProcessTask(long taskRequestId, CancellationToken cancellationToken)
     {
         var logger = _serviceProvider.GetRequiredService<ILogger<BackgroundWorkerService>>();
         using var requestScope = logger.BeginScope("{TaskRequestId}", taskRequestId);
@@ -100,11 +102,7 @@ public sealed class BackgroundWorkerService : BackgroundService
 
         var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = source.Token;
-        if (!_runCancellations.TryAdd(taskRunId, source))
-        {
-            source.Dispose();
-            throw new InvalidOperationException($"Could not add cancellation source for run {taskRunId}");
-        }
+        long? runId = null;
 
         Guid taskId;
         TaskResult result;
@@ -112,12 +110,13 @@ public sealed class BackgroundWorkerService : BackgroundService
 
         try
         {
-            if (await DequeueTask(logger, taskRequestId, taskRunId, cancellationToken) is not var (task, taskSource))
+            if (await DequeueTask(logger, taskRequestId, taskRunId, source, cancellationToken) is not var (task, taskSource, dequeuedRunId))
             {
                 return;
             }
 
-            taskId = task.Id;
+            runId = dequeuedRunId;
+            taskId = task.PublicId;
 
             await using var scope = _serviceProvider.CreateAsyncScope();
             using var loggerScope = logger.BeginScope("{TaskId}", taskId);
@@ -156,9 +155,13 @@ public sealed class BackgroundWorkerService : BackgroundService
         }
         finally
         {
-            if (_runCancellations.TryRemove(taskRunId, out var tokenSource))
+            if (runId is null)
             {
-                tokenSource.Dispose();
+                source.Dispose();
+            }
+            else if (_runCancellations.TryRemove(runId.Value, out var cancellation))
+            {
+                cancellation.Source.Dispose();
             }
         }
 
@@ -171,10 +174,15 @@ public sealed class BackgroundWorkerService : BackgroundService
     /// the request is queued again the next time the listener connects to the database.
     /// </summary>
     /// <returns>The task to run, or <see langword="null"/> if there is nothing to run.</returns>
+    /// <remarks>
+    /// <paramref name="runCancellation"/> is registered for the task run before committing,
+    /// since cancelling a run is only possible once it is committed.
+    /// </remarks>
     private async ValueTask<DequeueResult.DequeuedTask?> DequeueTask(
         ILogger logger,
-        Guid taskRequestId,
+        long taskRequestId,
         Guid taskRunId,
+        CancellationTokenSource runCancellation,
         CancellationToken stoppingToken)
     {
         try
@@ -209,7 +217,8 @@ public sealed class BackgroundWorkerService : BackgroundService
                         logger.ResumingTaskRun(taskRunId);
                         if (await repository.FindForSystemAsync(SystemPrincipals.TaskRuns, existingRun.TaskId, transaction) is { } existingTask)
                         {
-                            return DequeueResult.Dequeued(existingTask, existingRun.Source);
+                            _runCancellations[existingRun.RunId] = (taskRunId, runCancellation);
+                            return DequeueResult.Dequeued(existingTask, existingRun.Source, existingRun.RunId);
                         }
 
                         return DequeueResult.Nothing;
@@ -231,10 +240,21 @@ public sealed class BackgroundWorkerService : BackgroundService
                         return DequeueResult.Nothing;
                     }
 
-                    logger.AddingTaskRun(task.Id);
-                    await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, task.Id, request.Source, transaction);
-                    await transaction.CommitAsync(stoppingToken);
-                    return DequeueResult.Dequeued(task, request.Source);
+                    logger.AddingTaskRun(task.PublicId);
+                    var runId = await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, taskRunId, task.PublicId, request.Source, transaction);
+                    _runCancellations[runId] = (taskRunId, runCancellation);
+                    try
+                    {
+                        await transaction.CommitAsync(stoppingToken);
+                    }
+                    catch
+                    {
+                        // if the commit did succeed, the retry finds the run and registers it again
+                        _runCancellations.TryRemove(runId, out _);
+                        throw;
+                    }
+
+                    return DequeueResult.Dequeued(task, request.Source, runId);
                 },
                 static result => result.TaskLocked,
                 (_, delay) => logger.DequeueTaskLocked(taskRequestId, delay),

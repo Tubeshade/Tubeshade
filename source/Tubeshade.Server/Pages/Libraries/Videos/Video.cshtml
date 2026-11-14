@@ -20,10 +20,10 @@
                poster="@Model.PosterUrl"
                disabled="@(Model.PlayableFiles is [])">
 
-            @foreach (var file in Model.PlayableFiles.OrderBy(file => file.Id != Model.PreferredFile?.Id))
+            @foreach (var file in Model.PlayableFiles.OrderBy(file => file.PublicId != Model.PreferredFile?.PublicId))
             {
                 <source
-                    src="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })"
+                    src="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.PublicId })"
                     type="video/@file.Type.Name"/>
             }
 
@@ -62,7 +62,7 @@
                             @foreach (var file in Model.PlayableFiles)
                             {
                                 <option
-                                    value="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.Id })">
+                                    value="@Url.Action("GetFile", "Videos", new { version = "1.0", id = Model.VideoId, fileId = file.PublicId })">
                                     @(file.Height)@@@(file.Framerate)
                                 </option>
                             }
@@ -95,7 +95,7 @@
 <div class="row mb-2">
     <div class="col-auto">
         <a asp-page="/Libraries/Channels/Channel" asp-route-libraryId="@Model.LibraryId"
-           asp-route-channelId="@Model.Channel.Id">
+           asp-route-channelId="@Model.Channel.PublicId">
             @Model.Channel.Name
         </a>
     </div>

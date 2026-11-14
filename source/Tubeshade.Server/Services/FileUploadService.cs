@@ -45,7 +45,7 @@ public sealed class FileUploadService
     }
 
     public async ValueTask<Guid> UploadVideoFile(
-        Guid userId,
+        long userId,
         Guid videoId,
         System.IO.Stream stream,
         string? contentType,
@@ -118,7 +118,6 @@ public sealed class FileUploadService
         {
             CreatedByUserId = userId,
             ModifiedByUserId = userId,
-            OwnerId = videoEntity.OwnerId,
             VideoId = videoId,
             StoragePath = videoFilePath,
             Type = type,

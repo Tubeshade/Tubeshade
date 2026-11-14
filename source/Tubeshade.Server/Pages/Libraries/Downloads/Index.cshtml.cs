@@ -152,7 +152,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
         return RedirectToPage();
     }
 
-    private async ValueTask<Guid> OnGetCore(CancellationToken cancellationToken)
+    private async ValueTask<long> OnGetCore(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
         var parameters = this.GetVideoParameters(userId, LibraryId, ChannelId);
@@ -164,7 +164,7 @@ public sealed class Index : LibraryPageBase, IDownloadPage
         var videos = await _videoRepository.GetDownloadableVideos(parameters, cancellationToken);
         Creators = await _creatorRepository.GetAsync(userId, cancellationToken);
 
-        var videoIds = videos.Select(video => video.Id).ToArray();
+        var videoIds = videos.Select(video => video.PublicId).ToArray();
         var segments = await _segmentRepository.GetForVideos(videoIds, userId, cancellationToken);
 
         var models = videos.MapToModels(segments, Channels).ToList();

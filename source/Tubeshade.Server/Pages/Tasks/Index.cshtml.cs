@@ -109,7 +109,7 @@ public sealed class Index : PageModel, ITasksPage, INonLibraryPage
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
         var libraries = await _libraryRepository.GetAsync(userId, transaction);
-        await _taskService.ScanSubscriptions(userId, libraries.Select(library => library.Id), TaskSource.User, transaction);
+        await _taskService.ScanSubscriptions(userId, libraries.Select(library => library.PublicId), TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);
@@ -122,7 +122,7 @@ public sealed class Index : PageModel, ITasksPage, INonLibraryPage
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
         var libraries = await _libraryRepository.GetAsync(userId, transaction);
-        await _taskService.ScanSegments(userId, libraries.Select(library => library.Id), TaskSource.User, transaction);
+        await _taskService.ScanSegments(userId, libraries.Select(library => library.PublicId), TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);
@@ -135,7 +135,7 @@ public sealed class Index : PageModel, ITasksPage, INonLibraryPage
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
         var libraries = await _libraryRepository.GetAsync(userId, transaction);
-        await _taskService.UpdateSegments(userId, libraries.Select(library => library.Id), TaskSource.User, transaction);
+        await _taskService.UpdateSegments(userId, libraries.Select(library => library.PublicId), TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);
@@ -148,7 +148,7 @@ public sealed class Index : PageModel, ITasksPage, INonLibraryPage
 
         await using var transaction = await _connection.OpenAndBeginTransaction();
         var libraries = await _libraryRepository.GetAsync(userId, transaction);
-        await _taskService.RefreshFileMetadata(userId, libraries.Select(library => library.Id), TaskSource.User, transaction);
+        await _taskService.RefreshFileMetadata(userId, libraries.Select(library => library.PublicId), TaskSource.User, transaction);
         await transaction.CommitAsync();
 
         return StatusCode(StatusCodes.Status204NoContent);

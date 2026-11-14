@@ -17,7 +17,7 @@
         <select class="form-control form-select" asp-for="PrimaryChannelId">
             @foreach (var channel in Model.Channels)
             {
-                <option value="@channel.Id" selected="@(channel.Id == Model.PrimaryChannelId)">
+                <option value="@channel.PublicId" selected="@(channel.PublicId == Model.PrimaryChannelId)">
                     @channel.Name
                 </option>
             }
@@ -32,7 +32,7 @@
         <select class="form-control form-select" asp-for="ChannelIds" multiple>
             @foreach (var channel in Model.Channels)
             {
-                <option value="@channel.Id" selected="@(Model.ChannelIds?.Contains(channel.Id))">
+                <option value="@channel.PublicId" selected="@(Model.ChannelIds?.Contains(channel.PublicId))">
                     @channel.Name
                 </option>
             }

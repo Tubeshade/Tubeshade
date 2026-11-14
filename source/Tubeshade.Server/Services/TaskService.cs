@@ -43,14 +43,14 @@ public sealed class TaskService
         return GroupTasks(runningTasks).Single();
     }
 
-    public async ValueTask ScanSubscriptions(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source)
+    public async ValueTask ScanSubscriptions(long userId, IEnumerable<Guid> libraryIds, TaskSource source)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
         await ScanSubscriptions(userId, libraryIds, source, transaction);
         await transaction.CommitAsync();
     }
 
-    public async ValueTask ScanSubscriptions(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source, NpgsqlTransaction transaction)
+    public async ValueTask ScanSubscriptions(long userId, IEnumerable<Guid> libraryIds, TaskSource source, NpgsqlTransaction transaction)
     {
         foreach (var id in libraryIds)
         {
@@ -59,14 +59,14 @@ public sealed class TaskService
         }
     }
 
-    public async ValueTask ScanSegments(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source)
+    public async ValueTask ScanSegments(long userId, IEnumerable<Guid> libraryIds, TaskSource source)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
         await ScanSegments(userId, libraryIds, source, transaction);
         await transaction.CommitAsync();
     }
 
-    public async ValueTask ScanSegments(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source, NpgsqlTransaction transaction)
+    public async ValueTask ScanSegments(long userId, IEnumerable<Guid> libraryIds, TaskSource source, NpgsqlTransaction transaction)
     {
         foreach (var id in libraryIds)
         {
@@ -75,14 +75,14 @@ public sealed class TaskService
         }
     }
 
-    public async ValueTask UpdateSegments(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source)
+    public async ValueTask UpdateSegments(long userId, IEnumerable<Guid> libraryIds, TaskSource source)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
         await UpdateSegments(userId, libraryIds, source, transaction);
         await transaction.CommitAsync();
     }
 
-    public async ValueTask UpdateSegments(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source, NpgsqlTransaction transaction)
+    public async ValueTask UpdateSegments(long userId, IEnumerable<Guid> libraryIds, TaskSource source, NpgsqlTransaction transaction)
     {
         foreach (var id in libraryIds)
         {
@@ -91,14 +91,14 @@ public sealed class TaskService
         }
     }
 
-    public async ValueTask RefreshFileMetadata(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source)
+    public async ValueTask RefreshFileMetadata(long userId, IEnumerable<Guid> libraryIds, TaskSource source)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
         await RefreshFileMetadata(userId, libraryIds, source, transaction);
         await transaction.CommitAsync();
     }
 
-    public async ValueTask RefreshFileMetadata(Guid userId, IEnumerable<Guid> libraryIds, TaskSource source, NpgsqlTransaction transaction)
+    public async ValueTask RefreshFileMetadata(long userId, IEnumerable<Guid> libraryIds, TaskSource source, NpgsqlTransaction transaction)
     {
         foreach (var id in libraryIds)
         {
@@ -107,7 +107,7 @@ public sealed class TaskService
         }
     }
 
-    public async ValueTask FeedUpdate(Guid userId, Guid libraryId, Guid channelId, string payload)
+    public async ValueTask FeedUpdate(long userId, Guid libraryId, Guid channelId, string payload)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
 
@@ -118,33 +118,33 @@ public sealed class TaskService
         await transaction.CommitAsync();
     }
 
-    public async ValueTask IndexUrl(Guid userId, Guid libraryId, string url, TaskSource source, CancellationToken cancellationToken = default)
+    public async ValueTask IndexUrl(long userId, Guid libraryId, string url, TaskSource source, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         await IndexUrl(userId, libraryId, url, null, null, source, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
-    public async ValueTask IndexUrl(Guid userId, Guid libraryId, string url, Guid channelId, TaskSource source, CancellationToken cancellationToken = default)
+    public async ValueTask IndexUrl(long userId, Guid libraryId, string url, Guid channelId, TaskSource source, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
         await IndexUrl(userId, libraryId, url, channelId, null, source, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
-    public async ValueTask IndexVideo(Guid userId, Guid libraryId, VideoEntity video, TaskSource source, CancellationToken cancellationToken = default)
+    public async ValueTask IndexVideo(long userId, Guid libraryId, VideoEntity video, TaskSource source, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction(cancellationToken);
-        await IndexUrl(userId, libraryId, video.ExternalUrl, video.ChannelId, video.Id, source, transaction, cancellationToken);
+        await IndexUrl(userId, libraryId, video.ExternalUrl, video.ChannelId, video.PublicId, source, transaction, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
-    public ValueTask IndexVideo(Guid userId, Guid libraryId, VideoEntity video, TaskSource source, NpgsqlTransaction transaction)
+    public ValueTask IndexVideo(long userId, Guid libraryId, VideoEntity video, TaskSource source, NpgsqlTransaction transaction)
     {
-        return IndexUrl(userId, libraryId, video.ExternalUrl, video.ChannelId, video.Id, source, transaction);
+        return IndexUrl(userId, libraryId, video.ExternalUrl, video.ChannelId, video.PublicId, source, transaction);
     }
 
-    public async ValueTask IndexUrl(Guid userId, Guid libraryId, string url, Guid? channelId, Guid? videoId, TaskSource source, NpgsqlTransaction transaction, CancellationToken cancellationToken = default)
+    public async ValueTask IndexUrl(long userId, Guid libraryId, string url, Guid? channelId, Guid? videoId, TaskSource source, NpgsqlTransaction transaction, CancellationToken cancellationToken = default)
     {
         var task = TaskEntity.Index(libraryId, userId, channelId, videoId, url);
         if (await _taskRepository.TryAddTask(task, transaction) is not { } taskId)
@@ -156,7 +156,7 @@ public sealed class TaskService
         await _taskRepository.TriggerTask(taskId, source, userId, transaction);
     }
 
-    public async ValueTask ScanPlaylist(Guid userId, Guid libraryId, Guid playlistId, bool allVideos, TaskSource source)
+    public async ValueTask ScanPlaylist(long userId, Guid libraryId, Guid playlistId, bool allVideos, TaskSource source)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
         await ScanPlaylist(userId, libraryId, playlistId, allVideos, source, transaction);
@@ -164,7 +164,7 @@ public sealed class TaskService
     }
 
     public async ValueTask ScanPlaylist(
-        Guid userId,
+        long userId,
         Guid libraryId,
         Guid playlistId,
         bool allVideos,
@@ -181,14 +181,14 @@ public sealed class TaskService
         await _taskRepository.TriggerTask(taskId, source, userId, transaction);
     }
 
-    public async ValueTask DownloadVideo(Guid userId, Guid libraryId, Guid videoId, TaskSource source)
+    public async ValueTask DownloadVideo(long userId, Guid libraryId, Guid videoId, TaskSource source)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
         await DownloadVideo(userId, libraryId, videoId, source, transaction);
         await transaction.CommitAsync();
     }
 
-    public async ValueTask DownloadVideo(Guid userId, Guid libraryId, Guid videoId, TaskSource source, NpgsqlTransaction transaction)
+    public async ValueTask DownloadVideo(long userId, Guid libraryId, Guid videoId, TaskSource source, NpgsqlTransaction transaction)
     {
         var task = TaskEntity.Download(libraryId, userId, videoId);
         if (await _taskRepository.TryAddTask(task, transaction) is not { } taskId)
@@ -200,14 +200,14 @@ public sealed class TaskService
         await _taskRepository.TriggerTask(taskId, source, userId, transaction);
     }
 
-    public async ValueTask RetryTask(Guid userId, Guid taskId, TaskSource source)
+    public async ValueTask RetryTask(long userId, Guid taskId, TaskSource source)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
         await _taskRepository.TriggerTask(taskId, source, userId, transaction);
         await transaction.CommitAsync();
     }
 
-    public async ValueTask CancelTaskRun(Guid userId, Guid taskRunId)
+    public async ValueTask CancelTaskRun(long userId, Guid taskRunId)
     {
         await using var transaction = await _connection.OpenAndBeginTransaction();
         await _taskRepository.CancelTaskRun(taskRunId, userId, transaction);
@@ -215,7 +215,7 @@ public sealed class TaskService
     }
 
     public async ValueTask WaitForBlockingTasks(
-        ChannelReader<Guid?> reader,
+        ChannelReader<FinishedTaskRun?> reader,
         TaskEntity task,
         Guid taskRunId,
         CancellationToken cancellationToken)
@@ -229,7 +229,7 @@ public sealed class TaskService
 
             while (blockingRunIds.Count > 0)
             {
-                if (await reader.ReadAsync(cancellationToken) is not { } finishedTaskRunId)
+                if (await reader.ReadAsync(cancellationToken) is not { } finishedTaskRun)
                 {
                     blockingRunIds = await RetryDelay.RetryAsync(
                         async _ =>
@@ -249,13 +249,13 @@ public sealed class TaskService
                     continue;
                 }
 
-                if (blockingRunIds.Remove(finishedTaskRunId))
+                if (blockingRunIds.Remove(finishedTaskRun.Id))
                 {
-                    _logger.RemovedBlockingTaskRun(finishedTaskRunId, taskRunId, blockingRunIds.Count);
+                    _logger.RemovedBlockingTaskRun(finishedTaskRun.PublicId, taskRunId, blockingRunIds.Count);
                 }
                 else
                 {
-                    _logger.NonBlockingTaskRun(finishedTaskRunId, taskRunId);
+                    _logger.NonBlockingTaskRun(finishedTaskRun.PublicId, taskRunId);
                 }
             }
         }

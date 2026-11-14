@@ -33,12 +33,12 @@
                     @SharedResources.Preferences_NewLibrary
                 </label>
                 <select class="form-control form-select" asp-for="NewLibraryId">
-                    <option value="@Model.Library.Id" selected disabled>
+                    <option value="@Model.Library.PublicId" selected disabled>
                         @Model.Library.Name (@(SharedResources.Preferences_CurrentLibrary))
                     </option>
                     @foreach (var library in Model.OtherLibraries)
                     {
-                        <option value="@library.Id">@library.Name</option>
+                        <option value="@library.PublicId">@library.Name</option>
                     }
                 </select>
                 <span class="form-text text-danger" asp-validation-for="NewLibraryId"></span>

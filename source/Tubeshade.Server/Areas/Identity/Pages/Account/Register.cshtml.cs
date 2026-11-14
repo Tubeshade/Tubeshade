@@ -57,7 +57,7 @@ public sealed class RegisterModel : PageModel
 
         var user = new UserEntity
         {
-            Id = Guid.NewGuid(),
+            PublicId = Guid.NewGuid(),
             Name = Input.Username,
             NormalizedName = Input.Username.NormalizeInvariant(),
         };

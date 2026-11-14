@@ -9,7 +9,7 @@ public static class PageModelExtensions
 {
     public static CreatorParameters GetCreatorParameters<TPage>(
         this TPage pageModel,
-        Guid userId,
+        long userId,
         Guid? libraryId)
         where TPage : PageModel, ICreatorPage
     {

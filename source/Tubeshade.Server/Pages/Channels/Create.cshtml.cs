@@ -54,6 +54,6 @@ public sealed class Create : PageModel, IFormLayout, INonLibraryPage
             null,
             CreateChannel.Availability);
 
-        return RedirectToPage("/Libraries/Channels/Channel", new { libraryId, channelId = channel.Id });
+        return RedirectToPage("/Libraries/Channels/Channel", new { libraryId, channelId = channel.PublicId });
     }
 }

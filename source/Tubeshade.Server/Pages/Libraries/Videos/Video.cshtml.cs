@@ -143,7 +143,7 @@ public sealed partial class Video : LibraryPageBase
 
         if (Poster is not null)
         {
-            PosterUrl = Url.Action("Get", "Images", new { version = "1.0", id = Poster.Id });
+            PosterUrl = Url.Action("Get", "Images", new { version = "1.0", id = Poster.PublicId });
         }
     }
 
@@ -207,7 +207,7 @@ public sealed partial class Video : LibraryPageBase
         var files = await _videoRepository.GetFilesAsync(VideoId, userId, transaction);
         foreach (var file in files)
         {
-            var count = await _fileRepository.DeleteAsync(file.Id, userId, transaction);
+            var count = await _fileRepository.DeleteAsync(file.PublicId, userId, transaction);
             Trace.Assert(count is 1);
         }
 
@@ -244,7 +244,7 @@ public sealed partial class Video : LibraryPageBase
     }
 
     private async Task<HtmlContentBuilder> FormatDescription(
-        Guid userId,
+        long userId,
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
@@ -324,7 +324,7 @@ public sealed partial class Video : LibraryPageBase
         Guid? fileId,
         string? maximumResolution)
     {
-        if (fileId is { } id && files.FirstOrDefault(file => file.Id == id) is { } requestedFile)
+        if (fileId is { } id && files.FirstOrDefault(file => file.PublicId == id) is { } requestedFile)
         {
             return requestedFile;
         }

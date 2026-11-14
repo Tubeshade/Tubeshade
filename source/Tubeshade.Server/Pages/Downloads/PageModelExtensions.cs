@@ -9,7 +9,7 @@ public static class PageModelExtensions
 {
     public static VideoParameters GetVideoParameters<TPage>(
         this TPage pageModel,
-        Guid userId,
+        long userId,
         Guid? libraryId,
         Guid? channelId)
         where TPage : PageModel, IDownloadPage
