@@ -10,7 +10,7 @@ using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Identity;
 
-public sealed class ClaimRepository : IRepository<ClaimEntity>
+public sealed partial class ClaimRepository : IRepository<ClaimEntity>
 {
     private readonly NpgsqlConnection _connection;
 
@@ -65,11 +65,7 @@ public sealed class ClaimRepository : IRepository<ClaimEntity>
     public async ValueTask<List<ClaimEntity>> GetAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            """
-            SELECT id, created_at, created_by_user_id, user_id, claim_type, claim_value
-            FROM identity.claims
-            WHERE claims.user_id = @userId;
-            """,
+            Queries.Get,
             new { userId },
             cancellationToken: cancellationToken);
 

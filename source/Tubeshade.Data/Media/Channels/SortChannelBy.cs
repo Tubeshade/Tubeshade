@@ -8,26 +8,17 @@ namespace Tubeshade.Data.Media.Channels;
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public sealed class SortChannelBy : SmartEnum<SortChannelBy>, ISortBy, IParsable<SortChannelBy>
 {
-    public static readonly SortChannelBy Random = new(Names.Random, "random()", 1);
+    public static readonly SortChannelBy Random = new(Names.Random, 1);
     public static readonly SortChannelBy CreatedAt = new(Names.CreatedAt, 2);
     public static readonly SortChannelBy ModifiedAt = new(Names.ModifiedAt, 3);
-    public static readonly SortChannelBy VideoCount = new(Names.VideoCount, "video_count", 4);
+    public static readonly SortChannelBy VideoCount = new(Names.VideoCount, 4);
     public static readonly SortChannelBy SubscriberCount = new(Names.SubscriberCount, 5);
     public static readonly SortChannelBy SubscribedAt = new(Names.SubscribedAt, 6);
     public static readonly SortChannelBy ChannelName = new(Names.ChannelName, 7);
 
-    /// <inheritdoc />
-    public string SortExpression { get; }
-
     private SortChannelBy(string name, int value)
-        : this(name, $"channels.{name}", value)
-    {
-    }
-
-    private SortChannelBy(string name, string sortExpression, int value)
         : base(name, value)
     {
-        SortExpression = sortExpression;
     }
 
     [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]

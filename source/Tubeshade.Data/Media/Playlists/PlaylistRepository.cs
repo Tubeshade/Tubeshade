@@ -10,65 +10,27 @@ using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Media.Playlists;
 
-public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity>
+public sealed partial class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity>
 {
     public PlaylistRepository(NpgsqlConnection connection)
         : base(connection)
     {
     }
 
-    /// <inheritdoc />
-    protected override string TableName => "media.playlists";
+    protected override string InsertSql => Queries.Insert;
 
-    /// <inheritdoc />
-    protected override string InsertSql =>
-        $"""
-         INSERT INTO media.playlists (created_by_user_id, modified_by_user_id, library_id, storage_path, external_id, external_url, name, refreshed_at, subscribed_at)
-         SELECT @CreatedByUserId, @ModifiedByUserId, @LibraryId, @StoragePath, @ExternalId, @ExternalUrl, @Name, @RefreshedAt, @SubscribedAt
-         WHERE @{nameof(PlaylistEntity.LibraryId)} IN (SELECT libraries.id
-                                                      FROM media.libraries
-                                                      WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IEntity.CreatedByUserId)}, {(int)Permissions.Create})))
-         RETURNING id;
-         """;
-
-    /// <inheritdoc />
-    protected override string SelectSql =>
-        """
-        SELECT id,
-               created_at,
-               created_by_user_id,
-               modified_at,
-               modified_by_user_id,
-               library_id,
-               storage_path,
-               external_id,
-               external_url,
-               name,
-               refreshed_at,
-               subscribed_at
-        FROM media.playlists
-        """;
-
-    /// <inheritdoc />
-    protected override string UpdateSet =>
-        """
-        library_id = @LibraryId,
-        storage_path = @StoragePath,
-        external_id = @ExternalId,
-        external_url = @ExternalUrl,
-        name = @Name,
-        refreshed_at = @RefreshedAt,
-        subscribed_at = @SubscribedAt
-        """;
-
-    /// <inheritdoc />
     /// <remarks>Playlists have no owner of their own - access is inherited from the library that contains them.</remarks>
-    protected override string AccessFilter => $"(playlists.library_id IN ({AccessibleLibraries}))";
+    protected override string GetSql => Queries.Get;
 
-    /// <inheritdoc />
-    /// <remarks>Playlists have no owner of their own - access is inherited from the library that contains them.</remarks>
-    protected override string UpdateAccessFilter =>
-        $"(playlists.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN ({UpdatableOwners})))";
+    protected override string FindSql => Queries.Find;
+
+    protected override string GetForSystemSql => Queries.GetForSystem;
+
+    protected override string FindForSystemSql => Queries.FindForSystem;
+
+    protected override string UpdateSql => Queries.Update;
+
+    protected override string DeleteSql => Queries.Delete;
 
     /// <remarks>Playlist identity is only unique within a library, so the library must be specified.</remarks>
     public async ValueTask<PlaylistEntity?> FindByExternalId(
@@ -79,11 +41,7 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
-            $"""
-             {SelectAccessibleSql}
-               AND {TableName}.external_id = @{nameof(GetSingleLibraryExternalParameters.ExternalId)}
-               AND {TableName}.library_id = @{nameof(GetSingleLibraryExternalParameters.LibraryId)};
-             """,
+            Queries.FindByExternalId,
             new GetSingleLibraryExternalParameters(externalId, libraryId, userId, permissions | Permissions.Read),
             transaction);
 
@@ -96,12 +54,7 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             {SelectAccessibleSql}
-                AND playlists.library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
-                AND playlists.subscribed_at IS NOT NULL;
-             """,
+            Queries.GetSubscribedForLibrary,
             new GetFromLibraryParameters(userId, libraryId, Permissions.Read),
             transaction);
 
@@ -119,29 +72,8 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             WITH playlist AS
-                 (SELECT playlists.id
-                  FROM media.playlists
-                  WHERE playlists.id = @{nameof(playlistId)}
-                    AND playlists.library_id IN ({AccessibleLibraries})),
-
-                  deleted AS
-                 (DELETE FROM media.playlist_videos
-                  WHERE playlist_id IN (SELECT id FROM playlist)),
-
-                  inserted AS
-                 (INSERT INTO media.playlist_videos (playlist_id, video_id, "order")
-                  SELECT playlist.id, entries.video_id, entries.ordinality - 1
-                  FROM UNNEST(@{nameof(videoIds)}) WITH ORDINALITY AS entries(video_id, ordinality)
-                      CROSS JOIN playlist
-                      INNER JOIN media.videos ON videos.id = entries.video_id
-                  WHERE videos.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(IAccessParameters.PrincipalId)}, {(int)Permissions.Read})))
-
-             SELECT count(*) FROM playlist;
-             """,
-            Access.Parameters(new UserPrincipal(userId), Resources.Playlist, Permissions.Update, new { playlistId, videoIds }),
+            Queries.ReplaceVideos,
+            Access.Parameters(new UserPrincipal(userId), Resources.Playlist, Permissions.Update, new { playlistId, videoIds, LibraryPermissions = Permissions.Update, VideoPermissions = Permissions.Read }),
             transaction,
             cancellationToken: cancellationToken);
 
@@ -155,15 +87,7 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            $"""
-             SELECT videos.external_url
-             FROM media.playlists
-             INNER JOIN media.playlist_videos ON playlists.id = playlist_videos.playlist_id
-             INNER JOIN media.videos ON playlist_videos.video_id = videos.id
-             WHERE playlists.id = @{nameof(playlistId)}
-               AND playlists.library_id IN ({AccessibleLibraries})
-             ORDER BY playlist_videos."order";
-             """,
+            Queries.GetVideoUrls,
             Access.Parameters(new UserPrincipal(userId), Resources.Playlist, Permissions.Read, new { playlistId }),
             transaction,
             cancellationToken: cancellationToken);
@@ -178,7 +102,7 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            GetFilteredQuery(parameters),
+            Queries.GetFiltered,
             parameters,
             transaction,
             cancellationToken: cancellationToken);
@@ -197,70 +121,6 @@ public sealed class PlaylistRepository : ModifiableRepositoryBase<PlaylistEntity
             })
             .ToList();
     }
-
-    private static string GetFilteredQuery(PlaylistParameters parameters) =>
-        // lang=sql
-        $"""
-         WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query),
-
-             filtered AS (
-                 SELECT id,
-                        created_at,
-                        created_by_user_id,
-                        modified_at,
-                        modified_by_user_id,
-                        library_id,
-                        storage_path,
-                        external_id,
-                        external_url,
-                        name,
-                        refreshed_at,
-                        subscribed_at,
-                        (SELECT count(*)
-                         FROM media.playlist_videos
-                         WHERE playlist_videos.playlist_id = playlists.id) AS video_count,
-                        count(*) OVER()                                    AS total_count
-                 FROM media.playlists
-                     CROSS JOIN parameters
-                 WHERE (playlists.library_id IN ({AccessibleLibraries}))
-                   AND (@{nameof(parameters.LibraryId)} IS NULL OR playlists.library_id = @{nameof(parameters.LibraryId)})
-                   AND (@{nameof(parameters.Query)} IS NULL OR playlists.name @@ query)
-                 ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, playlists.id
-                 LIMIT @{nameof(parameters.Limit)}
-                 OFFSET @{nameof(parameters.Offset)})
-
-         SELECT playlists.id,
-                playlists.created_at,
-                playlists.created_by_user_id,
-                playlists.modified_at,
-                playlists.modified_by_user_id,
-                playlists.library_id,
-                playlists.storage_path,
-                playlists.external_id,
-                playlists.external_url,
-                playlists.name,
-                playlists.refreshed_at,
-                playlists.subscribed_at,
-                playlists.video_count,
-                playlists.total_count,
-
-                image_files.id,
-                image_files.created_at,
-                image_files.created_by_user_id,
-                image_files.modified_at,
-                image_files.modified_by_user_id,
-                image_files.storage_path,
-                image_files.type,
-                image_files.width,
-                image_files.height,
-                image_files.hash_algorithm,
-                image_files.hash,
-                image_files.storage_size
-         FROM filtered playlists
-             LEFT JOIN media.playlist_images ON playlist_images.playlist_id = playlists.id
-             LEFT JOIN media.image_files ON playlist_images.image_id = image_files.id
-         ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, playlists.id;
-         """;
 
     private static DetailedPlaylist MapSplitRow(DetailedPlaylist playlist, ImageFileEntity? image)
     {

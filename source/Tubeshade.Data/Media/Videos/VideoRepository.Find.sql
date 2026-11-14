@@ -1,0 +1,29 @@
+SELECT videos.id,
+       videos.created_at,
+       videos.created_by_user_id,
+       videos.modified_at,
+       videos.modified_by_user_id,
+       videos.owner_id,
+       videos.name,
+       videos.description,
+       videos.categories,
+       videos.tags,
+       videos.type,
+       videos.view_count,
+       videos.like_count,
+       videos.channel_id,
+       videos.storage_path,
+       videos.external_id,
+       videos.external_url,
+       videos.published_at,
+       videos.refreshed_at,
+       videos.availability,
+       videos.duration,
+       videos.ignored_at,
+       videos.ignored_by_user_id,
+       video_viewed_by_users.viewed,
+       video_viewed_by_users.position
+FROM media.videos
+  LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @PrincipalId
+WHERE videos.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))
+  AND videos.id = @Id;

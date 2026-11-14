@@ -8,7 +8,7 @@ using Npgsql;
 
 namespace Tubeshade.Data.Identity;
 
-public sealed class UserLoginRepository
+public sealed partial class UserLoginRepository
 {
     private readonly NpgsqlConnection _connection;
 
@@ -19,36 +19,13 @@ public sealed class UserLoginRepository
 
     public async ValueTask<int> AddAsync(UserLogin userLogin, NpgsqlTransaction transaction)
     {
-        const string sql =
-            $"""
-             INSERT INTO identity.user_logins 
-                 (provider_key,
-                  provider_display_name,
-                  user_id,
-                  login_provider,
-                  refresh_token)
-
-             VALUES (@{nameof(UserLogin.ProviderKey)},
-                     @{nameof(UserLogin.ProviderDisplayName)},
-                     @{nameof(UserLogin.UserId)},
-                     @{nameof(UserLogin.LoginProvider)},
-                     @{nameof(UserLogin.RefreshToken)});
-             """;
-
-        var command = new CommandDefinition(sql, userLogin, transaction);
+        var command = new CommandDefinition(Queries.Insert, userLogin, transaction);
         return await _connection.ExecuteAsync(command);
     }
 
     public async ValueTask<List<UserLogin>> GetAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        const string sql =
-            """
-            SELECT provider_key, provider_display_name, user_id, login_provider, refresh_token
-            FROM identity.user_logins
-            WHERE user_id = @userId;
-            """;
-
-        var command = new CommandDefinition(sql, new { userId }, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(Queries.Get, new { userId }, cancellationToken: cancellationToken);
         var enumerable = await _connection.QueryAsync<UserLogin>(command);
         return enumerable as List<UserLogin> ?? enumerable.ToList();
     }
@@ -59,26 +36,13 @@ public sealed class UserLoginRepository
         string refreshToken,
         NpgsqlTransaction transaction)
     {
-        const string sql =
-            $"""
-             UPDATE identity.user_logins
-             SET refresh_token = @{nameof(refreshToken)}
-             WHERE provider_key = @{nameof(providerKey)} AND login_provider = @{nameof(loginProvider)};
-             """;
-
-        var command = new CommandDefinition(sql, new { loginProvider, providerKey, refreshToken }, transaction);
+        var command = new CommandDefinition(Queries.UpdateRefreshToken, new { loginProvider, providerKey, refreshToken }, transaction);
         return await _connection.ExecuteAsync(command);
     }
 
     public async ValueTask<int> DeleteAsync(UserLogin userLogin, NpgsqlTransaction transaction)
     {
-        const string sql =
-            $"""
-             DELETE FROM identity.user_logins
-             WHERE user_id = @{nameof(UserLogin.UserId)} AND provider_key = @{nameof(UserLogin.ProviderKey)};
-             """;
-
-        var command = new CommandDefinition(sql, userLogin, transaction);
+        var command = new CommandDefinition(Queries.Delete, userLogin, transaction);
         return await _connection.ExecuteAsync(command);
     }
 }

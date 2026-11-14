@@ -13,149 +13,26 @@ using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Tasks;
 
-public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepositoryBase<TaskEntity>(connection)
+public sealed partial class TaskRepository(NpgsqlConnection connection) : ModifiableRepositoryBase<TaskEntity>(connection)
 {
-    // lang=sql
-    private const string RunningTasksQuery =
-        $"""
-         SELECT filtered_tasks.id,
-                filtered_tasks.type,
-                filtered_tasks.library_id,
-                filtered_tasks.channel_id,
-                filtered_tasks.playlist_id,
-                filtered_tasks.video_id,
-                filtered_tasks.url,
-                task_runs.id                         AS RunId,
-                task_runs.state                      AS RunState,
-                task_runs.source,
-                task_runs.created_at                 AS RunCreatedAt,
-                task_run_progress.value,
-                task_run_progress.target,
-                task_run_progress.rate,
-                task_run_progress.remaining_duration,
-                task_run_results.result,
-                task_run_results.message,
-                CASE
-                    WHEN filtered_tasks.type = 'index' AND filtered_tasks.video_id IS NOT NULL THEN
-                        (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
-
-                    WHEN filtered_tasks.type = 'index' AND filtered_tasks.playlist_id IS NOT NULL THEN
-                        (SELECT name FROM media.playlists WHERE id = filtered_tasks.playlist_id)
-
-                    WHEN filtered_tasks.type = 'index' AND filtered_tasks.channel_id IS NOT NULL AND task_runs.source != 'webhook' THEN
-                        (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
-                    
-                    WHEN filtered_tasks.type = 'index' THEN
-                        filtered_tasks.url
-
-                    WHEN filtered_tasks.type = 'download_video' THEN
-                        (SELECT name FROM media.videos WHERE id = filtered_tasks.video_id)
-
-                    WHEN filtered_tasks.type = 'scan_channel' THEN
-                        (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
-
-                    WHEN filtered_tasks.type = 'scan_playlist' THEN
-                        (SELECT name FROM media.playlists WHERE id = filtered_tasks.playlist_id)
-
-                    WHEN filtered_tasks.type = 'youtube_feed_update' THEN
-                        (SELECT name FROM media.channels WHERE id = filtered_tasks.channel_id)
-
-                    ELSE
-                        libraries.name
-                    END                              AS Name,
-                count                                AS {nameof(RunningTaskEntity.TotalCount)}
-         FROM (SELECT tasks.id,
-                      tasks.type,
-                      tasks.library_id,
-                      tasks.channel_id,
-                      tasks.playlist_id,
-                      tasks.video_id,
-                      tasks.url,
-                      tasks.created_at,
-                      MAX(COALESCE(task_run_results.created_at, 'infinity')) AS result_created,
-                      MAX(task_runs.created_at)        AS run_created,
-                      count(*) OVER ()                 AS count
-               FROM tasks.tasks
-                        INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
-                        LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
-                        LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-               WHERE (tasks.owner_id IN ({Access.AccessibleOwners}))
-                 AND (@{nameof(TaskParameters.LibraryId)} IS NULL OR tasks.library_id = @{nameof(TaskParameters.LibraryId)})
-                 -- finished feed updates are hidden unless filtered by source, but unfinished ones are shown since they take up workers
-                 AND ((@{nameof(TaskParameters.Source)}::tasks.task_source IS NULL AND (tasks.type != '{TaskType.Names.YouTubeFeedUpdate}' OR task_run_results.id IS NULL OR @{nameof(TaskParameters.TaskRunId)} IS NOT NULL)) OR task_runs.source = @{nameof(TaskParameters.Source)})
-                 AND (@{nameof(TaskParameters.State)}::tasks.run_state IS NULL OR task_runs.state = @{nameof(TaskParameters.State)})
-                 AND (@{nameof(TaskParameters.Result)}::tasks.task_result IS NULL OR task_run_results.result = @{nameof(TaskParameters.Result)})
-                 AND (@{nameof(TaskParameters.TaskRunId)} IS NULL OR task_runs.id = @{nameof(TaskParameters.TaskRunId)})
-                 AND (@{nameof(TaskParameters.Type)}::tasks.task_type IS NULL OR tasks.type = @{nameof(TaskParameters.Type)})
-                 AND (@{nameof(TaskParameters.Url)} IS NULL OR tasks.url = @{nameof(TaskParameters.Url)})
-                 AND tasks.type != '{TaskType.Names.ReindexVideos}'
-               GROUP BY tasks.id, tasks.created_at
-               ORDER BY result_created DESC, run_created DESC, tasks.created_at DESC
-               OFFSET @{nameof(TaskParameters.Offset)} LIMIT @{nameof(TaskParameters.Limit)}) filtered_tasks
-                  LEFT OUTER JOIN media.libraries ON filtered_tasks.library_id = libraries.id
-                  INNER JOIN tasks.task_runs ON filtered_tasks.id = task_runs.task_id
-                  LEFT OUTER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
-                  LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-         ORDER BY task_run_results.created_at DESC, task_runs.created_at DESC, filtered_tasks.created_at DESC;
-         """;
-
-    /// <inheritdoc />
-    protected override string TableName => "tasks.tasks";
-
     /// <inheritdoc />
     /// <remarks>
     /// A task for a library belongs to the library's owner, otherwise to <see cref="TaskEntity.OwnerId"/>.
     /// The creating user must hold Create on that owner.
     /// </remarks>
-    protected override string InsertSql =>
-        $"""
-         WITH target AS (SELECT {TaskOwner} AS owner_id)
+    protected override string InsertSql => Queries.Insert;
 
-         INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, playlist_id, video_id, url, all_videos, payload)
-         SELECT @{nameof(TaskEntity.CreatedByUserId)}, @{nameof(TaskEntity.ModifiedByUserId)}, target.owner_id, @{nameof(TaskEntity.Type)}, @{nameof(TaskEntity.UserId)}, @{nameof(TaskEntity.LibraryId)}, @{nameof(TaskEntity.ChannelId)}, @{nameof(TaskEntity.PlaylistId)}, @{nameof(TaskEntity.VideoId)}, @{nameof(TaskEntity.Url)}, @{nameof(TaskEntity.AllVideos)}, @{nameof(TaskEntity.Payload)}
-         FROM target
-         WHERE target.owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(TaskEntity.CreatedByUserId)}, {(int)Permissions.Create}))
-         RETURNING id;
-         """;
+    protected override string GetSql => Queries.Get;
 
-    // lang=sql
-    private const string TaskOwner =
-        $"COALESCE((SELECT libraries.owner_id FROM media.libraries WHERE libraries.id = @{nameof(TaskEntity.LibraryId)}), @{nameof(TaskEntity.OwnerId)})";
+    protected override string FindSql => Queries.Find;
 
-    /// <inheritdoc />
-    protected override string SelectSql =>
-        """
-        SELECT id,
-               created_at,
-               created_by_user_id,
-               modified_at,
-               modified_by_user_id,
-               owner_id,
-               type,
-               user_id,
-               library_id,
-               channel_id,
-               playlist_id,
-               video_id,
-               url,
-               all_videos,
-               payload
-        FROM tasks.tasks
-        """;
+    protected override string GetForSystemSql => Queries.GetForSystem;
 
-    /// <inheritdoc />
-    protected override string UpdateSet =>
-        $"""
-             type = @{nameof(TaskEntity.Type)},
-             user_id = @{nameof(TaskEntity.UserId)},
-             library_id = @{nameof(TaskEntity.LibraryId)},
-             channel_id = @{nameof(TaskEntity.ChannelId)},
-             playlist_id = @{nameof(TaskEntity.PlaylistId)},
-             video_id = @{nameof(TaskEntity.VideoId)},
-             url = @{nameof(TaskEntity.Url)},
-             all_videos = @{nameof(TaskEntity.AllVideos)},
-             payload = @{nameof(TaskEntity.Payload)}
-         """;
+    protected override string FindForSystemSql => Queries.FindForSystem;
+
+    protected override string UpdateSql => Queries.Update;
+
+    protected override string DeleteSql => Queries.Delete;
 
     /// <summary>Finds the task, unless it already has an unfinished task run.</summary>
     /// <remarks>
@@ -165,16 +42,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask<TaskEntity?> TryDequeueTaskForSystemAsync(SystemPrincipal system, Guid taskId, NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleOrDefaultAsync<TaskEntity>(new CommandDefinition(
-            // lang=sql
-            $"""
-             {SelectSql}
-             WHERE tasks.id = @{nameof(taskId)}
-               AND NOT EXISTS(SELECT
-                              FROM tasks.task_runs
-                                       LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-                              WHERE task_runs.task_id = tasks.id
-                                AND task_run_results.id IS NULL)
-             """,
+            Queries.TryDequeueForSystem,
             new { taskId },
             transaction));
     }
@@ -182,10 +50,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask AddTaskRunForSystemAsync(SystemPrincipal system, Guid taskRunId, Guid taskId, TaskSource source, NpgsqlTransaction transaction)
     {
         await Connection.ExecuteAsync(new CommandDefinition(
-            $"""
-             INSERT INTO tasks.task_runs (id, task_id, state, source)
-             VALUES (@{nameof(taskRunId)}, @{nameof(taskId)}, '{RunState.Names.Queued}', @{nameof(source)});
-             """,
+            Queries.AddTaskRunForSystem,
             new { taskRunId, taskId, source },
             transaction));
     }
@@ -194,15 +59,8 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     /// <returns><see langword="true"/> if the task was locked, otherwise <see langword="false"/>.</returns>
     public async ValueTask<bool> TryLockTaskForSystemAsync(SystemPrincipal system, Guid taskId, NpgsqlTransaction transaction)
     {
-        // FOR NO KEY UPDATE instead of FOR UPDATE, so that it does not conflict with FOR KEY SHARE locks
-        // taken by foreign key checks, for example when a task is triggered concurrently.
         var lockedId = await Connection.QuerySingleOrDefaultAsync<Guid?>(new CommandDefinition(
-            $"""
-             SELECT id
-             FROM tasks.tasks
-             WHERE id = @{nameof(taskId)}
-                 FOR NO KEY UPDATE SKIP LOCKED;
-             """,
+            Queries.TryLockTaskForSystem,
             new { taskId },
             transaction));
 
@@ -214,15 +72,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask<TaskRequest?> TryDeleteTaskRequestForSystemAsync(SystemPrincipal system, Guid taskRequestId, NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleOrDefaultAsync<TaskRequest>(new CommandDefinition(
-            $"""
-             DELETE
-             FROM tasks.task_requests
-             WHERE id = (SELECT id
-                         FROM tasks.task_requests
-                         WHERE id = @{nameof(taskRequestId)}
-                             FOR UPDATE SKIP LOCKED)
-             RETURNING task_id, source;
-             """,
+            Queries.TryDeleteTaskRequestForSystem,
             new { taskRequestId },
             transaction));
     }
@@ -239,15 +89,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleOrDefaultAsync<TaskRequest>(new CommandDefinition(
-            $"""
-             DELETE
-             FROM tasks.task_requests
-             WHERE id = (SELECT id
-                         FROM tasks.task_requests
-                         WHERE id = @{nameof(taskRequestId)}
-                             FOR UPDATE)
-             RETURNING task_id, source;
-             """,
+            Queries.TryDeleteTaskRequestWaitingForLockForSystem,
             new { taskRequestId },
             transaction));
     }
@@ -256,11 +98,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask<TaskRequest?> FindTaskRunRequestForSystemAsync(SystemPrincipal system, Guid taskRunId, NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleOrDefaultAsync<TaskRequest>(new CommandDefinition(
-            $"""
-             SELECT task_id, source
-             FROM tasks.task_runs
-             WHERE id = @{nameof(taskRunId)};
-             """,
+            Queries.FindTaskRunRequestForSystem,
             new { taskRunId },
             transaction));
     }
@@ -268,7 +106,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask<List<Guid>> GetTaskRequestIdsForSystemAsync(SystemPrincipal system, CancellationToken cancellationToken)
     {
         var ids = await Connection.QueryAsync<Guid>(new CommandDefinition(
-            "SELECT id FROM tasks.task_requests ORDER BY created_at;",
+            Queries.GetTaskRequestIdsForSystem,
             cancellationToken: cancellationToken));
 
         return ids.AsList();
@@ -277,11 +115,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask StartTaskRunForSystemAsync(SystemPrincipal system, Guid taskRunId, CancellationToken cancellationToken)
     {
         var count = await Connection.ExecuteAsync(new CommandDefinition(
-            $"""
-             UPDATE tasks.task_runs
-             SET state = '{RunState.Names.Running}'
-             WHERE id = @{nameof(taskRunId)};
-             """,
+            Queries.StartTaskRunForSystem,
             new { taskRunId },
             cancellationToken: cancellationToken));
 
@@ -292,13 +126,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask TriggerTaskForSystemAsync(SystemPrincipal system, Guid taskId, TaskSource source, NpgsqlTransaction transaction)
     {
         await Connection.ExecuteAsync(
-            // lang=sql
-            $"""
-             INSERT INTO tasks.task_requests (task_id, source)
-             SELECT tasks.id, @{nameof(source)}::tasks.task_source
-             FROM tasks.tasks
-             WHERE tasks.id = @{nameof(taskId)};
-             """,
+            Queries.TriggerTaskForSystem,
             new { taskId, source },
             transaction);
     }
@@ -307,14 +135,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask TriggerTask(Guid taskId, TaskSource source, Guid userId, NpgsqlTransaction transaction)
     {
         var requestIds = await Connection.QueryAsync<Guid>(
-            // lang=sql
-            $"""
-             INSERT INTO tasks.task_requests (task_id, source)
-             SELECT tasks.id, @{nameof(source)}::tasks.task_source
-             FROM tasks.tasks
-             WHERE (tasks.owner_id IN ({Access.AccessibleOwners})) AND tasks.id = @{nameof(taskId)}
-             RETURNING id;
-             """,
+            Queries.TriggerTask,
             Access.Parameters(new UserPrincipal(userId), Resources.Task, Permissions.Create, new { taskId, source }),
             transaction);
 
@@ -327,13 +148,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask CancelTaskRun(Guid taskRunId, Guid userId, NpgsqlTransaction transaction)
     {
         await Connection.ExecuteAsync(
-            // lang=sql
-            $"""
-             SELECT pg_notify('{TaskChannels.Cancel}', @{nameof(taskRunId)}::text)
-             FROM tasks.task_runs
-                  INNER JOIN tasks.tasks ON task_runs.task_id = tasks.id
-             WHERE (tasks.owner_id IN ({Access.AccessibleOwners})) AND task_runs.id = @{nameof(taskRunId)};
-             """,
+            Queries.CancelTaskRun,
             Access.Parameters(new UserPrincipal(userId), Resources.Task, Permissions.Update, new { taskRunId }),
             transaction);
     }
@@ -341,10 +156,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask InitializeTaskProgressForSystemAsync(SystemPrincipal system, Guid taskRunId, decimal target, decimal value = 0)
     {
         await Connection.ExecuteAsync(new CommandDefinition(
-            $"""
-             INSERT INTO tasks.task_run_progress (run_id, value, target) 
-             VALUES (@{nameof(taskRunId)}, @{nameof(value)}, @{nameof(target)});
-             """,
+            Queries.InitializeTaskProgressForSystem,
             new { taskRunId, target, value }));
     }
 
@@ -356,14 +168,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         Period? remainingDuration = null)
     {
         var count = await Connection.ExecuteAsync(new CommandDefinition(
-            $"""
-             UPDATE tasks.task_run_progress
-             SET modified_at = CURRENT_TIMESTAMP,
-                 value = @{nameof(newValue)},
-                 rate = @{nameof(rate)},
-                 remaining_duration = @{nameof(remainingDuration)}
-             WHERE run_id = @{nameof(taskRunId)};
-             """,
+            Queries.UpdateProgressForSystem,
             new { taskRunId, newValue, rate, remainingDuration }));
 
         Trace.Assert(count is 1);
@@ -377,17 +182,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     public async ValueTask<decimal?> GetPreviousProgressForSystemAsync(SystemPrincipal system, Guid taskRunId)
     {
         return await Connection.QuerySingleOrDefaultAsync<decimal?>(new CommandDefinition(
-            // lang=sql
-            $"""
-             SELECT CASE WHEN task_run_results.result = '{TaskResult.Names.Successful}' THEN NULL ELSE task_run_progress.value END
-             FROM tasks.task_runs AS current_run
-                      INNER JOIN tasks.task_runs ON task_runs.task_id = current_run.task_id AND task_runs.created_at < current_run.created_at
-                      INNER JOIN tasks.task_run_progress ON task_runs.id = task_run_progress.run_id
-                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-             WHERE current_run.id = @{nameof(taskRunId)}
-             ORDER BY task_runs.created_at DESC
-             LIMIT 1;
-             """,
+            Queries.GetPreviousProgressForSystem,
             new { taskRunId }));
     }
 
@@ -405,13 +200,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
         var message = exception?.Message;
         var id = await Connection.QuerySingleOrDefaultAsync<Guid?>(new CommandDefinition(
-            // lang=sql
-            $"""
-             INSERT INTO tasks.task_run_results (run_id, result, message)
-             VALUES (@{nameof(taskRunId)}, @{nameof(result)}, @{nameof(message)})
-             ON CONFLICT (run_id) DO NOTHING
-             RETURNING id;
-             """,
+            Queries.FinishTaskForSystem,
             new { taskRunId, result, message },
             transaction));
 
@@ -423,7 +212,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         TaskParameters parameters,
         CancellationToken cancellationToken)
     {
-        var command = new CommandDefinition(RunningTasksQuery, parameters, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(Queries.GetRunningTasks, parameters, cancellationToken: cancellationToken);
         var enumerable = await Connection.QueryAsync<RunningTaskEntity>(command);
         return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
     }
@@ -433,7 +222,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         NpgsqlTransaction transaction,
         CancellationToken cancellationToken)
     {
-        var command = new CommandDefinition(RunningTasksQuery, parameters, transaction,
+        var command = new CommandDefinition(Queries.GetRunningTasks, parameters, transaction,
             cancellationToken: cancellationToken);
         var enumerable = await Connection.QueryAsync<RunningTaskEntity>(command);
         return enumerable as List<RunningTaskEntity> ?? enumerable.ToList();
@@ -445,38 +234,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         CancellationToken cancellationToken)
     {
         var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             WITH matching_videos AS
-                      (SELECT id, external_url, channel_id
-                       FROM media.videos
-                       WHERE id = @{nameof(parameters.VideoId)}
-                          OR external_url = @{nameof(parameters.Url)}),
-
-                  matching_channels AS
-                      (SELECT channels.id
-                       FROM media.channels
-                                LEFT OUTER JOIN matching_videos ON channel_id = channels.id
-                       WHERE matching_videos.id IS NOT NULL
-                          OR channels.id = @{nameof(parameters.ChannelId)})
-
-             SELECT task_runs.id
-             FROM tasks.tasks
-                      INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
-                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-             WHERE task_run_results.id IS NULL
-               AND task_runs.created_at < (SELECT created_at FROM tasks.task_runs WHERE id = @{nameof(parameters.RunId)})
-               AND ((tasks.type = '{TaskType.Names.YouTubeFeedUpdate}' AND @{nameof(parameters.Type)}::tasks.task_type = '{TaskType.Names.YouTubeFeedUpdate}')
-                 OR (tasks.type != '{TaskType.Names.YouTubeFeedUpdate}' AND @{nameof(parameters.Type)}::tasks.task_type != '{TaskType.Names.YouTubeFeedUpdate}'))
-               AND (tasks.video_id IN (SELECT id FROM matching_videos)
-                 OR tasks.url IN (SELECT external_url FROM matching_videos)
-                 OR (tasks.channel_id IN (SELECT id FROM matching_channels))
-                 OR (@{nameof(parameters.VideoId)} IS NOT NULL AND tasks.video_id = @{nameof(parameters.VideoId)})
-                 OR (@{nameof(parameters.ChannelId)} IS NOT NULL AND tasks.channel_id = @{nameof(parameters.ChannelId)})
-                 OR (@{nameof(parameters.PlaylistId)} IS NOT NULL AND tasks.playlist_id = @{nameof(parameters.PlaylistId)})
-                 OR (@{nameof(parameters.Url)} IS NOT NULL AND tasks.url = @{nameof(parameters.Url)})
-                 OR (@{nameof(parameters.Type)} = tasks.type AND tasks.type = '{TaskType.Names.ReindexVideos}'));
-             """,
+            Queries.GetBlockingTaskRunIdsForSystem,
             parameters,
             cancellationToken: cancellationToken);
 
@@ -492,67 +250,21 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     /// <summary>Adds the task, unless an unfinished task for the same work exists, if the creating user holds Create on the task's owner.</summary>
     public async ValueTask<Guid?> TryAddTask(TaskEntity task, NpgsqlTransaction transaction)
     {
-        var command = new CommandDefinition(
-            TryAddTaskSql($"AND owner_id IN (SELECT owner_id FROM access.accessible_owners(@{nameof(task.CreatedByUserId)}, {(int)Permissions.Create}))"),
-            task,
-            transaction);
-
+        var command = new CommandDefinition(Queries.TryAddTask, Access.WithPermissions(task, Permissions.Create), transaction);
         return await Connection.QuerySingleOrDefaultAsync<Guid?>(command);
     }
 
     /// <summary>Adds the task without checking access, unless an unfinished task for the same work exists.</summary>
     public async ValueTask<Guid?> TryAddTaskForSystemAsync(SystemPrincipal system, TaskEntity task, NpgsqlTransaction transaction)
     {
-        var command = new CommandDefinition(TryAddTaskSql(string.Empty), task, transaction);
+        var command = new CommandDefinition(Queries.TryAddTaskForSystem, task, transaction);
         return await Connection.QuerySingleOrDefaultAsync<Guid?>(command);
     }
-
-    private static string TryAddTaskSql(string ownerCondition) =>
-            // lang=sql
-            $"""
-             WITH matching_videos AS
-                 (SELECT id, external_url, channel_id
-                  FROM media.videos
-                  WHERE id = @{nameof(TaskEntity.VideoId)} 
-                     OR external_url = @{nameof(TaskEntity.Url)}),
-                 
-                 new_task AS 
-                 (SELECT @{nameof(TaskEntity.CreatedByUserId)} AS created_by_user_id,
-                         @{nameof(TaskEntity.ModifiedByUserId)} AS modified_by_user_id,
-                         {TaskOwner} AS owner_id,
-                         @{nameof(TaskEntity.Type)}::tasks.task_type AS type,
-                         @{nameof(TaskEntity.UserId)} AS user_id,
-                         @{nameof(TaskEntity.LibraryId)} AS library_id,
-                         @{nameof(TaskEntity.ChannelId)} AS channel_id,
-                         @{nameof(TaskEntity.PlaylistId)} AS playlist_id,
-                         @{nameof(TaskEntity.VideoId)} AS video_id,
-                         @{nameof(TaskEntity.Url)} AS url,
-                         @{nameof(TaskEntity.AllVideos)} AS all_videos,
-                         @{nameof(TaskEntity.Payload)} AS payload
-                  WHERE NOT EXISTS (SELECT task_runs.id
-                                    FROM tasks.tasks
-                                        INNER JOIN tasks.task_runs ON tasks.id = tasks.task_runs.task_id
-                                        LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-                                    WHERE task_run_results.id IS NULL
-                                      AND tasks.library_id = @{nameof(TaskEntity.LibraryId)}
-                                      AND tasks.type = @{nameof(TaskEntity.Type)}
-                                      AND (tasks.video_id IN (SELECT id FROM matching_videos)
-                                        OR tasks.url IN (SELECT external_url FROM matching_videos)
-                                       OR (@{nameof(TaskEntity.Url)} IS NOT NULL AND tasks.url = @{nameof(TaskEntity.Url)})
-                                       OR (@{nameof(TaskEntity.PlaylistId)} IS NOT NULL AND tasks.playlist_id = @{nameof(TaskEntity.PlaylistId)}))))
-
-             INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, playlist_id, video_id, url, all_videos, payload)
-             SELECT created_by_user_id, modified_by_user_id, owner_id, type, user_id, library_id, channel_id, playlist_id, video_id, url, all_videos, payload
-             FROM new_task
-             WHERE owner_id IS NOT NULL
-             {ownerCondition}
-             RETURNING id;
-             """;
 
     /// <summary>Updates the task, if <see cref="TaskEntity.ModifiedByUserId"/> holds Update on its owner.</summary>
     public async ValueTask<int> UpdateAsync(TaskEntity task)
     {
-        var command = new CommandDefinition(UpdateSql, task);
+        var command = new CommandDefinition(UpdateSql, Access.WithPermissions(task, Permissions.Update));
         return await Connection.ExecuteAsync(command);
     }
 
@@ -563,12 +275,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         await using var transaction = await Connection.OpenAndBeginTransaction(IsolationLevel.ReadCommitted, cancellationToken);
 
         var taskRunIds = await Connection.QueryAsync<Guid>(new(
-            """
-            SELECT task_runs.id
-            FROM tasks.task_runs
-                LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-            WHERE task_run_results.id IS NULL;
-            """,
+            Queries.GetUnfinishedTaskRunIdsForSystem,
             new { },
             transaction));
 
@@ -576,11 +283,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
         {
             await FinishTaskRun(taskRunId, transaction);
             await Connection.ExecuteAsync(new(
-                $"""
-                 INSERT INTO tasks.task_run_results (run_id, result, message)
-                 VALUES (@{nameof(taskRunId)}, @result, 'Failed because server was stopped unexpectedly')
-                 ON CONFLICT (run_id) DO NOTHING;
-                 """,
+                Queries.FailStuckTaskRunForSystem,
                 new { taskRunId, result = TaskResult.Failed },
                 transaction));
         }
@@ -590,48 +293,14 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
 
     public async ValueTask<int> DeleteOldTasksForSystemAsync(SystemPrincipal system, NpgsqlTransaction transaction, CancellationToken cancellationToken)
     {
-        // lang=sql
-        const string sql =
-            """
-            WITH successful AS
-                (
-                    SELECT tasks.id
-                    FROM tasks.tasks
-                    WHERE NOT EXISTS(SELECT 1
-                                     FROM tasks.task_runs
-                                         LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-                                     WHERE task_id = tasks.id
-                                       AND (task_run_results.result IS NULL OR
-                                            task_run_results.result != 'successful' OR
-                                            task_run_results.created_at > CURRENT_TIMESTAMP - '1 month'::interval))
-                      AND EXISTS(SELECT 1 FROM tasks.task_runs WHERE task_id = tasks.id)
-                      AND NOT EXISTS(SELECT 1 FROM tasks.schedules WHERE task_id = tasks.id)
-                      AND NOT EXISTS(SELECT 1 FROM tasks.task_requests WHERE task_id = tasks.id)
-                )
-
-            DELETE
-            FROM tasks.tasks
-            WHERE tasks.id IN (SELECT id FROM successful);
-            """;
-
-        var command = new CommandDefinition(sql, null, transaction, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(Queries.DeleteOldTasksForSystem, null, transaction, cancellationToken: cancellationToken);
         return await Connection.ExecuteAsync(command);
     }
 
     public async ValueTask<int> DeleteOldReindexRunsForSystemAsync(SystemPrincipal system, NpgsqlTransaction transaction, CancellationToken cancellationToken)
     {
         var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             DELETE
-             FROM tasks.task_runs
-                 USING tasks.tasks, tasks.task_run_results
-             WHERE task_runs.task_id = tasks.id
-               AND task_run_results.run_id = task_runs.id
-               AND tasks.type = '{TaskType.Names.ReindexVideos}'
-               AND (task_run_results.created_at <= CURRENT_TIMESTAMP - '1 month'::interval OR
-                    (task_run_results.result = '{TaskResult.Names.Successful}' AND task_run_results.created_at <= CURRENT_TIMESTAMP - '1 day'::interval));
-             """,
+            Queries.DeleteOldReindexRunsForSystem,
             null,
             transaction,
             cancellationToken: cancellationToken);
@@ -642,14 +311,7 @@ public sealed class TaskRepository(NpgsqlConnection connection) : ModifiableRepo
     private async ValueTask FinishTaskRun(Guid taskRunId, NpgsqlTransaction transaction)
     {
         await Connection.ExecuteAsync(new CommandDefinition(
-            // lang=sql
-            $"""
-             UPDATE tasks.task_runs
-             SET state = '{RunState.Names.Finished}'
-             WHERE id = @{nameof(taskRunId)};
-
-             SELECT pg_notify('{TaskChannels.RunFinished}', @{nameof(taskRunId)}::text);
-             """,
+            Queries.FinishTaskRun,
             new { taskRunId },
             transaction));
     }

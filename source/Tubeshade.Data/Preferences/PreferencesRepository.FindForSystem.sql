@@ -1,0 +1,15 @@
+SELECT preferences.id,
+       preferences.created_at,
+       preferences.created_by_user_id,
+       preferences.modified_at,
+       preferences.modified_by_user_id,
+       preferences.playback_speed,
+       preferences.videos_count,
+       preferences.live_streams_count,
+       preferences.shorts_count,
+       preferences.player_client,
+       preferences.download_videos,
+       preferences.download_method,
+       preferences.formats
+FROM media.preferences
+WHERE preferences.id = @Id;

@@ -28,4 +28,8 @@ public sealed class CreatorParameters : IAccessParameters, IPaginatedParameters,
 
     /// <inheritdoc />
     public required SortDirection SortDirection { get; init; }
+
+    public string SortKey => SortBy.Name;
+
+    public bool SortDescending => SortDirection == SortDirection.Descending;
 }

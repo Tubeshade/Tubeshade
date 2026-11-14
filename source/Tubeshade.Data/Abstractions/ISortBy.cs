@@ -2,5 +2,5 @@
 
 public interface ISortBy
 {
-    public string SortExpression { get; }
+    public string Name { get; }
 }

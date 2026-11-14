@@ -9,69 +9,9 @@ using Tubeshade.Data.AccessControl;
 
 namespace Tubeshade.Data.Identity;
 
-public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRepository<UserEntity>
+public sealed partial class UserRepository : IModifiableRepository<UserEntity>, INamedRepository<UserEntity>
 {
     private readonly NpgsqlConnection _connection;
-
-    private static string SelectSql =>
-        """
-        SELECT users.id,
-               users.created_at,
-               users.created_by_user_id,
-               users.modified_at,
-               users.modified_by_user_id,
-               users.name,
-               users.normalized_name,
-               users.password_hash,
-               users.security_stamp,
-               users.concurrency_stamp,
-               users.two_factor_enabled,
-               users.lockout_end,
-               users.lockout_enabled,
-               users.access_failed_count
-        FROM identity.users
-        """;
-
-    private static string InsertSql =>
-        //lang=sql
-        $"""
-         WITH system AS (SELECT id FROM identity.users WHERE normalized_name = 'SYSTEM')
-         INSERT
-         INTO identity.users (
-                     id,
-                     created_by_user_id,
-                     modified_by_user_id,
-                     name,
-                     normalized_name,
-                     password_hash,
-                     security_stamp,
-                     concurrency_stamp,
-                     two_factor_enabled,
-                     lockout_end,
-                     lockout_enabled,
-                     access_failed_count)
-         SELECT @Id,
-                system.id,
-                system.id,
-                @{nameof(UserEntity.Name)},
-                @{nameof(UserEntity.NormalizedName)},
-                @{nameof(UserEntity.PasswordHash)},
-                @{nameof(UserEntity.SecurityStamp)},
-                @{nameof(UserEntity.ConcurrencyStamp)},
-                @{nameof(UserEntity.TwoFactorEnabled)},
-                @{nameof(UserEntity.LockoutEnd)},
-                @{nameof(UserEntity.LockoutEnabled)},
-                @{nameof(UserEntity.AccessFailedCount)}
-         FROM system
-         RETURNING id;
-         """;
-
-    private static string FindByNameSql =>
-        //lang=sql
-        $"""
-         {SelectSql}
-         WHERE users.normalized_name = @name;
-         """;
 
     public UserRepository(NpgsqlConnection connection)
     {
@@ -83,7 +23,7 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     {
         entity.NormalizeInvariant();
         await _connection.OpenConnection();
-        var command = new CommandDefinition(InsertSql, entity, transaction);
+        var command = new CommandDefinition(Queries.Insert, entity, transaction);
         return await _connection.QuerySingleOrDefaultAsync<Guid?>(command);
     }
 
@@ -91,10 +31,7 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     public async ValueTask<UserEntity> GetAsync(Guid id, Guid userId, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            $"""
-             {SelectSql}
-             WHERE users.id = @id;
-             """,
+            Queries.FindById,
             new { id, userId },
             cancellationToken: cancellationToken);
 
@@ -124,10 +61,7 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     public async ValueTask<UserEntity?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            $"""
-             {SelectSql}
-             WHERE users.id = @id;
-             """,
+            Queries.FindById,
             new { id },
             cancellationToken: cancellationToken);
 
@@ -151,12 +85,7 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            $"""
-             {SelectSql}
-             INNER JOIN identity.user_logins ON users.id = user_logins.user_id
-             WHERE provider_key = @{nameof(providerKey)}
-               AND login_provider = @{nameof(loginProvider)};
-             """,
+            Queries.FindByLogin,
             new { loginProvider, providerKey },
             cancellationToken: cancellationToken);
 
@@ -192,22 +121,7 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     {
         entity.NormalizeInvariant();
         var command = new CommandDefinition(
-            //lang=sql
-            """
-            UPDATE identity.users
-            SET modified_at         = CURRENT_TIMESTAMP,
-                modified_by_user_id = @Id,
-                name                = @Name,
-                normalized_name     = @NormalizedName,
-                password_hash       = @PasswordHash,
-                security_stamp      = @SecurityStamp,
-                concurrency_stamp   = @ConcurrencyStamp,
-                two_factor_enabled  = @TwoFactorEnabled,
-                lockout_end         = @LockoutEnd,
-                lockout_enabled     = @LockoutEnabled,
-                access_failed_count = @AccessFailedCount
-            WHERE users.id = @Id;
-            """,
+            Queries.Update,
             entity,
             transaction);
 
@@ -243,7 +157,7 @@ public sealed class UserRepository : IModifiableRepository<UserEntity>, INamedRe
     {
         name = name.NormalizeInvariant();
         await _connection.OpenConnection(cancellationToken);
-        var command = new CommandDefinition(FindByNameSql, new { name }, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(Queries.FindByName, new { name }, cancellationToken: cancellationToken);
         return await _connection.QuerySingleOrDefaultAsync<UserEntity>(command);
     }
 

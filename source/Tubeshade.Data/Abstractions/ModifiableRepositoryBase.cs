@@ -13,31 +13,12 @@ public abstract class ModifiableRepositoryBase<TEntity> : RepositoryBase<TEntity
     {
     }
 
-    protected abstract string UpdateSet { get; }
-
-    protected virtual string UpdateSql =>
-        $"""
-         UPDATE {TableName}
-         SET modified_at = CURRENT_TIMESTAMP,
-             modified_by_user_id = @{nameof(IModifiableEntity.ModifiedByUserId)},
-         {UpdateSet}
-
-         WHERE {UpdateAccessFilter}
-           AND ({TableName}.id = @{nameof(IEntity.Id)});
-         """;
-
-    protected virtual string UpdateAccessFilter =>
-        $"""
-         ({TableName}.owner_id IN ({UpdatableOwners}))
-         """;
-
-    protected static string UpdatableOwners =>
-        $"SELECT owner_id FROM access.accessible_owners(@{nameof(IModifiableEntity.ModifiedByUserId)}, {(int)Permissions.Update})";
+    protected abstract string UpdateSql { get; }
 
     /// <inheritdoc />
     public async ValueTask<int> UpdateAsync(TEntity entity, NpgsqlTransaction transaction)
     {
-        var command = new CommandDefinition(UpdateSql, entity, transaction);
+        var command = new CommandDefinition(UpdateSql, Access.WithPermissions(entity, Permissions.Update), transaction);
         return await Connection.ExecuteAsync(command);
     }
 

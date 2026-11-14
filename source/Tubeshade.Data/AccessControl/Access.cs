@@ -4,9 +4,12 @@ namespace Tubeshade.Data.AccessControl;
 
 public static class Access
 {
-    // lang=sql
-    public const string AccessibleOwners =
-        $"SELECT owner_id FROM access.accessible_owners(@{nameof(IAccessParameters.PrincipalId)}, @{nameof(IAccessParameters.Permissions)})";
+    public static DynamicParameters WithPermissions(object values, Permissions permissions)
+    {
+        var parameters = new DynamicParameters(values);
+        parameters.Add(nameof(IAccessParameters.Permissions), (int)permissions);
+        return parameters;
+    }
 
     public static DynamicParameters? Parameters(
         Principal principal,

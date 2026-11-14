@@ -8,24 +8,15 @@ namespace Tubeshade.Data.Media.Creators;
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public sealed class SortCreatorBy : SmartEnum<SortCreatorBy>, ISortBy, IParsable<SortCreatorBy>
 {
-    public static readonly SortCreatorBy Random = new(Names.Random, "random()", 1);
+    public static readonly SortCreatorBy Random = new(Names.Random, 1);
     public static readonly SortCreatorBy CreatedAt = new(Names.CreatedAt, 2);
     public static readonly SortCreatorBy ModifiedAt = new(Names.ModifiedAt, 3);
-    public static readonly SortCreatorBy ChannelCount = new(Names.ChannelCount, "channel_count", 4);
+    public static readonly SortCreatorBy ChannelCount = new(Names.ChannelCount, 4);
     public static readonly SortCreatorBy CreatorName = new(Names.CreatorName, 5);
 
-    /// <inheritdoc />
-    public string SortExpression { get; }
-
     private SortCreatorBy(string name, int value)
-        : this(name, $"creators.{name}", value)
-    {
-    }
-
-    private SortCreatorBy(string name, string sortExpression, int value)
         : base(name, value)
     {
-        SortExpression = sortExpression;
     }
 
     [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]

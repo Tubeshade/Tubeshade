@@ -7,121 +7,40 @@ using Dapper;
 using Npgsql;
 using Tubeshade.Data.Abstractions;
 using Tubeshade.Data.AccessControl;
-using Tubeshade.Data.Tasks;
 
 namespace Tubeshade.Data.Media.Videos;
 
-public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRepositoryBase<VideoEntity>(connection)
+public sealed partial class VideoRepository(NpgsqlConnection connection) : ModifiableRepositoryBase<VideoEntity>(connection)
 {
-    /// <inheritdoc />
-    protected override string TableName => "media.videos";
+    protected override string InsertSql => Queries.Insert;
 
-    /// <inheritdoc />
-    protected override string InsertSql =>
-        $"""
-         INSERT INTO media.videos (created_by_user_id, modified_by_user_id, owner_id, name, description, categories, tags, type, view_count, like_count, channel_id, storage_path, external_id, external_url, published_at, refreshed_at, availability, duration, ignored_at, ignored_by_user_id)
-         SELECT @CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @Description, @Categories, @Tags, @Type, @ViewCount, @LikeCount, @ChannelId, @StoragePath, @ExternalId, @ExternalUrl, @PublishedAt, @RefreshedAt, @Availability, @Duration, @IgnoredAt, @IgnoredByUserId
-         WHERE {CanCreateIn(nameof(VideoEntity.OwnerId))}
-         RETURNING id;
-         """;
+    protected override string GetSql => Queries.Get;
 
-    /// <inheritdoc />
-    protected override string SelectSql =>
-        $"""
-         SELECT videos.id,
-                videos.created_at,
-                videos.created_by_user_id,
-                videos.modified_at,
-                videos.modified_by_user_id,
-                videos.owner_id,
-                videos.name,
-                videos.description,
-                videos.categories,
-                videos.tags,
-                videos.type,
-                videos.view_count,
-                videos.like_count,
-                videos.channel_id,
-                videos.storage_path,
-                videos.external_id,
-                videos.external_url,
-                videos.published_at,
-                videos.refreshed_at,
-                videos.availability,
-                videos.duration,
-                videos.ignored_at,
-                videos.ignored_by_user_id,
-                video_viewed_by_users.viewed,
-                video_viewed_by_users.position
-         FROM media.videos
-           LEFT OUTER JOIN media.video_viewed_by_users ON videos.id = video_viewed_by_users.video_id AND video_viewed_by_users.user_id = @{nameof(GetParameters.PrincipalId)}
-         """;
+    protected override string FindSql => Queries.Find;
 
-    /// <inheritdoc />
-    protected override string UpdateSet =>
-        $"""
-             name = @{nameof(VideoEntity.Name)},
-             channel_id = @{nameof(VideoEntity.ChannelId)},
-             storage_path = @{nameof(VideoEntity.StoragePath)},
-             external_id = @{nameof(VideoEntity.ExternalId)},
-             published_at = @{nameof(VideoEntity.PublishedAt)},
-             refreshed_at = @{nameof(VideoEntity.RefreshedAt)},
-             availability = @{nameof(VideoEntity.Availability)},
-             duration = @{nameof(VideoEntity.Duration)},
-             description = @{nameof(VideoEntity.Description)},
-             categories = @{nameof(VideoEntity.Categories)},
-             tags = @{nameof(VideoEntity.Tags)},
-             view_count = @{nameof(VideoEntity.ViewCount)},
-             like_count = @{nameof(VideoEntity.LikeCount)},
-             ignored_at = @{nameof(VideoEntity.IgnoredAt)},
-             ignored_by_user_id = @{nameof(VideoEntity.IgnoredByUserId)}
-         """;
+    protected override string GetForSystemSql => Queries.GetForSystem;
 
-    private string SelectFilesSql =>
-        // lang=sql
-        $"""
-         SELECT video_files.id,
-                video_files.created_at,
-                video_files.created_by_user_id,
-                video_files.modified_at,
-                video_files.modified_by_user_id,
-                video_files.owner_id,
-                video_files.video_id,
-                video_files.storage_path,
-                video_files.type,
-                video_files.width,
-                video_files.height,
-                video_files.framerate,
-                video_files.downloaded_at,
-                video_files.downloaded_by_user_id,
-                video_files.hash_algorithm,
-                video_files.hash,
-                video_files.storage_size,
-                downloading.task_run_id,
-                downloading.path AS TempPath
-         FROM media.video_files
-            INNER JOIN media.videos ON video_files.video_id = videos.id
-            LEFT OUTER JOIN media.video_files_downloading downloading ON video_files.id = downloading.file_id
-         WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
-         ORDER BY video_files.width DESC, video_files.framerate DESC, video_files.id;
-         """;
+    protected override string FindForSystemSql => Queries.FindForSystem;
+
+    protected override string UpdateSql => Queries.Update;
+
+    protected override string DeleteSql => Queries.Delete;
 
     public async ValueTask<List<DetailedVideo>> GetDownloadableVideos(
         VideoParameters parameters,
         CancellationToken cancellationToken = default)
     {
         parameters.Downloadable = true;
-        var query = GetFilteredDetailedVideosQuery(parameters);
 
-        var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(Queries.GetFilteredDetailed, parameters, cancellationToken: cancellationToken);
         return await GetDetailed(command);
     }
+
     public async ValueTask<List<DetailedVideo>> GetFilteredDetailed(
         VideoParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        var query = GetFilteredDetailedVideosQuery(parameters);
-        var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(Queries.GetFilteredDetailed, parameters, cancellationToken: cancellationToken);
         return await GetDetailed(command);
     }
 
@@ -129,8 +48,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         VideoParameters parameters,
         CancellationToken cancellationToken = default)
     {
-        var query = GetFilteredVideosQuery(parameters);
-        var command = new CommandDefinition(query, parameters, cancellationToken: cancellationToken);
+        var command = new CommandDefinition(Queries.GetFiltered, parameters, cancellationToken: cancellationToken);
 
         var enumerable = await Connection.QueryAsync<VideoEntity>(command);
         return enumerable as List<VideoEntity> ?? enumerable.ToList();
@@ -154,8 +72,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
             SortDirection = SortDirection.Descending,
         };
 
-        var query = GetFilteredVideosQuery(parameters);
-        var command = new CommandDefinition(query, parameters, transaction);
+        var command = new CommandDefinition(Queries.GetFiltered, parameters, transaction);
         return await Connection.QuerySingleOrDefaultAsync<VideoEntity>(command);
     }
 
@@ -165,33 +82,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             WITH stale_videos AS (SELECT videos.id,
-                                          videos.channel_id,
-                                          videos.published_at,
-                                          external_url,
-                                          refreshed_at - published_at AS from_publish,
-                                          CURRENT_TIMESTAMP - refreshed_at AS from_now
-                                   FROM media.videos
-                                       INNER JOIN media.library_channels ON videos.channel_id = library_channels.channel_id
-                                   WHERE library_channels."primary" 
-                                     AND library_channels.library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
-                                     AND videos.owner_id IN ({Access.AccessibleOwners})
-                                     AND videos.ignored_at IS NULL
-                                     AND videos.published_at < CURRENT_TIMESTAMP)
-
-             SELECT id,
-                    channel_id,
-                    external_url
-             FROM stale_videos
-             WHERE ((from_publish <= 'PT1H' AND from_now >= 'PT30M') OR
-                    (from_publish <= 'P2D' AND from_now >= 'P1D') OR
-                    (from_publish <= 'P2M' AND from_now >= 'P1M') OR
-                    from_now >= 'P6M') 
-             ORDER BY stale_videos.published_at DESC, stale_videos.id
-             LIMIT 5;
-             """,
+            Queries.GetForReindex,
             new GetFromLibraryParameters(userId, libraryId, Permissions.Read),
             transaction);
 
@@ -205,7 +96,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            SelectFilesSql,
+            Queries.GetFiles,
             new GetVideoParameters(videoId, userId, Permissions.Read),
             cancellationToken: cancellationToken);
 
@@ -220,7 +111,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            SelectFilesSql,
+            Queries.GetFiles,
             new GetVideoParameters(videoId, userId, Permissions.Read),
             transaction,
             cancellationToken: cancellationToken);
@@ -235,32 +126,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             SELECT video_files.id,
-                    video_files.created_at,
-                    video_files.created_by_user_id,
-                    video_files.modified_at,
-                    video_files.modified_by_user_id,
-                    video_files.owner_id,
-                    video_files.video_id,
-                    video_files.storage_path,
-                    video_files.type,
-                    video_files.width,
-                    video_files.height,
-                    video_files.framerate,
-                    video_files.downloaded_at,
-                    video_files.downloaded_by_user_id,
-                    video_files.hash_algorithm,
-                    video_files.hash,
-                    video_files.storage_size,
-                    downloading.task_run_id,
-                    downloading.path AS TempPath
-             FROM media.video_files
-                INNER JOIN media.videos ON video_files.video_id = videos.id
-                LEFT OUTER JOIN media.video_files_downloading downloading ON video_files.id = downloading.file_id
-             WHERE {AccessFilter} AND video_files.id = @{nameof(GetSingleParameters.Id)};
-             """,
+            Queries.FindFile,
             new GetSingleParameters(id, userId, Permissions.Read),
             cancellationToken: cancellationToken);
 
@@ -274,10 +140,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
-            $"""
-             {SelectAccessibleSql}
-               AND {TableName}.external_id = @{nameof(GetSingleExternalParameters.ExternalId)};
-             """,
+            Queries.FindByExternalId,
             new GetSingleExternalParameters(externalId, userId, permissions | Permissions.Read),
             transaction);
 
@@ -291,14 +154,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         CancellationToken cancellationToken = default)
     {
         var command = new CommandDefinition(
-            // lang=sql
-            $"""
-             SELECT videos.id,
-                    videos.external_id
-             FROM media.videos
-             WHERE {AccessFilter}
-               AND (videos.external_id = ANY(@{nameof(externalIds)}));
-             """,
+            Queries.FindByExternalIds,
             Access.Parameters(new UserPrincipal(userId), Resources.Video, Permissions.Read, new { externalIds }),
             transaction,
             cancellationToken: cancellationToken);
@@ -311,10 +167,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         NpgsqlTransaction transaction)
     {
         var command = new CommandDefinition(
-            $"""
-             {SelectAccessibleSql}
-               AND {TableName}.external_url = @{nameof(GetSingleExternalUrlParameters.ExternalUrl)};
-             """,
+            Queries.FindByExternalUrl,
             new GetSingleExternalUrlParameters(externalUrl, userId, permissions | Permissions.Read),
             transaction);
 
@@ -327,17 +180,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         NpgsqlTransaction transaction)
     {
         var enumerable = await Connection.QueryAsync<EntityId>(
-            $"""
-             SELECT videos.id,
-                    videos.external_id
-             FROM media.videos
-                      INNER JOIN media.channels ON videos.channel_id = channels.id
-                      INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
-                      LEFT OUTER JOIN media.sponsorblock_segments ON videos.id = sponsorblock_segments.video_id
-             WHERE library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
-               AND videos.owner_id IN ({Access.AccessibleOwners})
-               AND sponsorblock_segments.video_id IS NULL;
-             """,
+            Queries.GetWithoutSegments,
             new GetFromLibraryParameters(userId, libraryId, Permissions.Read),
             transaction);
 
@@ -350,18 +193,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         NpgsqlTransaction transaction)
     {
         var enumerable = await Connection.QueryAsync<EntityId>(
-            $"""
-             SELECT videos.id,
-                    videos.external_id
-             FROM media.videos
-                      INNER JOIN media.channels ON videos.channel_id = channels.id
-                      INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
-                      INNER JOIN media.sponsorblock_segments ON videos.id = sponsorblock_segments.video_id
-             WHERE library_id = @{nameof(GetFromLibraryParameters.LibraryId)}
-               AND videos.owner_id IN ({Access.AccessibleOwners})
-             GROUP BY videos.id, videos.external_id
-             HAVING bool_and(sponsorblock_segments.locked) IS NOT TRUE;
-             """,
+            Queries.GetWithUnlockedSegments,
             new GetFromLibraryParameters(userId, libraryId, Permissions.Read),
             transaction);
 
@@ -371,15 +203,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     public async ValueTask<int> SetWatched(Guid videoId, Guid userId, bool viewed, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
-            $"""
-             INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed)
-             SELECT videos.id, @{nameof(GetVideoParameters.PrincipalId)}, @{nameof(viewed)}
-             FROM media.videos
-             WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
-             ON CONFLICT (video_id, user_id) DO UPDATE
-             SET modified_at = CURRENT_TIMESTAMP,
-                 viewed = excluded.viewed;
-             """,
+            Queries.SetWatched,
             Access.Parameters(new UserPrincipal(userId), Resources.Video, Permissions.Read, new { VideoId = videoId, viewed }),
             transaction);
     }
@@ -387,17 +211,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     public async ValueTask<int> SavePlaybackActivity(Guid videoId, Guid userId, double position, double watchTime, double playbackTime, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
-            $"""
-             INSERT INTO media.video_viewed_by_users (video_id, user_id, viewed, position, watch_time, playback_time)
-             SELECT videos.id, @{nameof(GetVideoParameters.PrincipalId)}, false, @{nameof(position)}, @{nameof(watchTime)}, @{nameof(playbackTime)}
-             FROM media.videos
-             WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)}
-             ON CONFLICT (video_id, user_id) DO UPDATE
-             SET modified_at = CURRENT_TIMESTAMP,
-                 position = excluded.position,
-                 watch_time = video_viewed_by_users.watch_time + excluded.watch_time,
-                 playback_time = video_viewed_by_users.playback_time + excluded.playback_time;
-             """,
+            Queries.SavePlaybackActivity,
             Access.Parameters(new UserPrincipal(userId), Resources.Video, Permissions.Read, new { VideoId = videoId, position, watchTime, playbackTime }),
             transaction);
     }
@@ -405,12 +219,7 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
     public async ValueTask<int> AddPlay(Guid videoId, Guid userId, NpgsqlTransaction transaction)
     {
         return await Connection.ExecuteAsync(
-            $"""
-             INSERT INTO media.video_plays (video_id, user_id)
-             SELECT videos.id, @{nameof(GetVideoParameters.PrincipalId)}
-             FROM media.videos
-             WHERE {AccessFilter} AND videos.id = @{nameof(GetVideoParameters.VideoId)};
-             """,
+            Queries.AddPlay,
             new GetVideoParameters(videoId, userId, Permissions.Read),
             transaction);
     }
@@ -419,210 +228,9 @@ public sealed class VideoRepository(NpgsqlConnection connection) : ModifiableRep
         NpgsqlTransaction transaction)
     {
         return await Connection.QuerySingleAsync<VideoPlaybackStatistics>(
-            $"""
-             SELECT plays.play_count AS {nameof(VideoPlaybackStatistics.PlayCount)},
-                    coalesce(video_viewed_by_users.watch_time, 0)::double precision AS {nameof(VideoPlaybackStatistics.WatchTime)},
-                    coalesce(video_viewed_by_users.playback_time, 0)::double precision AS {nameof(VideoPlaybackStatistics.PlaybackTime)}
-             FROM (SELECT count(video_plays.id)::integer AS play_count
-                   FROM media.video_plays
-                   WHERE video_plays.video_id = @{nameof(videoId)}
-                     AND video_plays.user_id = @{nameof(userId)}) AS plays
-                  LEFT JOIN media.video_viewed_by_users
-                            ON video_viewed_by_users.video_id = @{nameof(videoId)}
-                                AND video_viewed_by_users.user_id = @{nameof(userId)};
-             """,
+            Queries.GetPlaybackStatistics,
             new { videoId, userId },
             transaction);
-    }
-
-    private static string GetFilteredVideosQuery(VideoParameters parameters) =>
-        // lang=sql
-        $"""
-         WITH parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query)
-
-         SELECT videos.id,
-                videos.created_at,
-                videos.created_by_user_id,
-                videos.modified_at,
-                videos.modified_by_user_id,
-                videos.owner_id,
-                videos.channel_id,
-                videos.storage_path,
-                videos.external_id,
-                videos.external_url,
-                videos.name,
-                videos.description,
-                videos.categories,
-                videos.tags,
-                videos.published_at,
-                videos.refreshed_at,
-                videos.availability,
-                videos.duration,
-                videos.view_count,
-                videos.like_count,
-                videos.ignored_at,
-                videos.ignored_by_user_id,
-                videos.type,
-                viewed.viewed,
-                viewed.position,
-                playlist_videos."order" AS playlist_order,
-                count(*) OVER() AS {nameof(VideoEntity.TotalCount)}
-         FROM media.videos
-             LEFT OUTER JOIN media.video_viewed_by_users viewed ON videos.id = viewed.video_id AND viewed.user_id = @{nameof(parameters.UserId)}
-             LEFT OUTER JOIN media.playlist_videos ON playlist_videos.video_id = videos.id AND playlist_videos.playlist_id = @{nameof(parameters.PlaylistId)}
-             CROSS JOIN parameters
-             INNER JOIN media.channels ON videos.channel_id = channels.id
-             INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
-         WHERE (videos.owner_id IN ({Access.AccessibleOwners}))
-           AND videos.ignored_at IS NULL
-           AND ((@{nameof(parameters.WithFiles)} = TRUE AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NOT NULL)) OR
-                (@{nameof(parameters.WithFiles)} = FALSE AND NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)) OR
-                (@{nameof(parameters.WithFiles)} IS NULL AND
-                 (
-                     EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND downloaded_at IS NOT NULL) OR
-                     NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)
-                 )
-                )
-               )
-           AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
-           AND (@{nameof(parameters.CreatorId)} IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_channels.channel_id = videos.channel_id AND creator_id = @{nameof(parameters.CreatorId)}))
-           AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
-           AND (@{nameof(parameters.PlaylistId)} IS NULL OR playlist_videos."order" IS NOT NULL)
-           AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ query)
-           AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
-           AND (@{nameof(parameters.Viewed)}::media.view_status IS NULL
-                    OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.Viewed}' AND viewed.viewed = TRUE)
-                    OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.NotViewed}' AND (viewed.viewed IS NULL OR viewed.viewed = FALSE))
-                    OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.PartiallyViewed}' AND viewed.viewed IS FALSE AND viewed.position > 10 AND viewed.position < EXTRACT(EPOCH FROM (videos.duration - '10 seconds'::interval))))
-           AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
-         ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, videos.id
-         LIMIT @{nameof(parameters.Limit)}
-         OFFSET @{nameof(parameters.Offset)};
-         """;
-
-    private static string GetFilteredDetailedVideosQuery(VideoParameters parameters)
-    {
-        return
-            // lang=sql
-            $"""
-         WITH downloading AS MATERIALIZED
-                 (SELECT tasks.video_id
-                  FROM tasks.tasks
-                      INNER JOIN tasks.task_runs ON tasks.id = task_runs.task_id
-                      LEFT OUTER JOIN tasks.task_run_results ON task_runs.id = task_run_results.run_id
-                  WHERE tasks.type = '{TaskType.Names.DownloadVideo}'
-                    AND task_run_results.id IS NULL),
-         
-             parameters AS MATERIALIZED (SELECT websearch_to_tsquery('english', @{nameof(parameters.Query)}) AS query),
-
-             filtered AS
-                 (SELECT videos.id,
-                         videos.created_at,
-                         videos.created_by_user_id,
-                         videos.modified_at,
-                         videos.modified_by_user_id,
-                         videos.owner_id,
-                         videos.channel_id,
-                         videos.storage_path,
-                         videos.external_id,
-                         videos.external_url,
-                         videos.name,
-                         videos.description,
-                         videos.categories,
-                         videos.tags,
-                         videos.published_at,
-                         videos.refreshed_at,
-                         videos.availability,
-                         videos.duration,
-                         videos.view_count,
-                         videos.like_count,
-                         videos.ignored_at,
-                         videos.ignored_by_user_id,
-                         videos.type,
-                         viewed.viewed,
-                         viewed.position,
-                         playlist_videos."order" AS playlist_order,
-                         count(*) OVER() AS count,
-                         videos.searchable_index_value AS searchable_index_value
-                  FROM media.videos
-                      LEFT OUTER JOIN media.video_viewed_by_users viewed ON videos.id = viewed.video_id AND viewed.user_id = @{nameof(parameters.UserId)}
-                      LEFT OUTER JOIN media.playlist_videos ON playlist_videos.video_id = videos.id AND playlist_videos.playlist_id = @{nameof(parameters.PlaylistId)}
-                      CROSS JOIN parameters
-                      INNER JOIN media.channels ON videos.channel_id = channels.id
-                      INNER JOIN media.library_channels ON channels.id = library_channels.channel_id
-                  WHERE (videos.owner_id IN ({Access.AccessibleOwners}))
-                    AND videos.ignored_at IS NULL
-                    AND (@{nameof(parameters.Downloadable)} = FALSE OR NOT EXISTS(SELECT 1 FROM downloading WHERE downloading.video_id = videos.id))
-                    AND ((@{nameof(parameters.WithFiles)} = TRUE AND EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND (downloaded_at IS NULL = @{nameof(parameters.Downloadable)}))) OR
-                         (@{nameof(parameters.WithFiles)} = FALSE AND NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)) OR
-                         (@{nameof(parameters.WithFiles)} IS NULL AND
-                          (
-                              EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id AND (downloaded_at IS NULL = @{nameof(parameters.Downloadable)})) OR
-                              NOT EXISTS(SELECT 1 FROM media.video_files WHERE video_files.video_id = videos.id)
-                          )
-                         )
-                        )
-                    AND (@{nameof(parameters.LibraryId)} IS NULL OR library_channels.library_id = @{nameof(parameters.LibraryId)})
-                    AND (@{nameof(parameters.CreatorId)} IS NULL OR EXISTS(SELECT 1 FROM media.creator_channels WHERE creator_channels.channel_id = videos.channel_id AND creator_id = @{nameof(parameters.CreatorId)}))
-                    AND (@{nameof(parameters.ChannelId)} IS NULL OR library_channels.channel_id = @{nameof(parameters.ChannelId)})
-                    AND (@{nameof(parameters.PlaylistId)} IS NULL OR playlist_videos."order" IS NOT NULL)
-                    AND (@{nameof(parameters.Query)} IS NULL OR videos.searchable_index_value @@ query)
-                    AND (@{nameof(parameters.Type)}::media.video_type IS NULL OR videos.type = @{nameof(parameters.Type)})
-                    AND (@{nameof(parameters.Viewed)}::media.view_status IS NULL
-                             OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.Viewed}' AND viewed.viewed = TRUE)
-                             OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.NotViewed}' AND (viewed.viewed IS NULL OR viewed.viewed = FALSE))
-                             OR (@{nameof(parameters.Viewed)} = '{ViewStatus.Names.PartiallyViewed}' AND viewed.viewed IS FALSE AND viewed.position > 10 AND viewed.position < EXTRACT(EPOCH FROM (videos.duration - '10 seconds'::interval))))
-                    AND (@{nameof(parameters.Availability)}::media.external_availability IS NULL OR videos.availability = @{nameof(parameters.Availability)})
-                  ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, videos.id
-                  LIMIT @{nameof(parameters.Limit)}
-                  OFFSET @{nameof(parameters.Offset)})
-
-         SELECT videos.id,
-                videos.created_at,
-                videos.created_by_user_id,
-                videos.modified_at,
-                videos.modified_by_user_id,
-                videos.owner_id,
-                videos.channel_id,
-                videos.storage_path,
-                videos.external_id,
-                videos.external_url,
-                videos.name,
-                videos.description,
-                videos.categories,
-                videos.tags,
-                videos.published_at,
-                videos.refreshed_at,
-                videos.availability,
-                videos.duration,
-                videos.view_count,
-                videos.like_count,
-                videos.ignored_at,
-                videos.ignored_by_user_id,
-                videos.type,
-                videos.viewed,
-                videos.position,
-                videos.count AS {nameof(VideoEntity.TotalCount)},
-                videos.playlist_order,
-
-                image_files.id,
-                image_files.created_at,
-                image_files.created_by_user_id,
-                image_files.modified_at,
-                image_files.modified_by_user_id,
-                image_files.storage_path,
-                image_files.type,
-                image_files.width,
-                image_files.height,
-                image_files.hash_algorithm,
-                image_files.hash,
-                image_files.storage_size
-         FROM filtered videos
-             CROSS JOIN parameters
-             LEFT JOIN media.video_images ON videos.id = video_images.video_id
-             LEFT JOIN media.image_files ON video_images.image_id = image_files.id
-         ORDER BY {parameters.SortBy.SortExpression} {parameters.SortDirection.Name} NULLS LAST, videos.id;
-         """;
     }
 
     private async ValueTask<List<DetailedVideo>> GetDetailed(CommandDefinition command)

@@ -1,0 +1,3 @@
+DELETE FROM media.videos
+WHERE videos.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))
+  AND videos.id = @Id;

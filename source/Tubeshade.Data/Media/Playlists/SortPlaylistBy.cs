@@ -8,26 +8,17 @@ namespace Tubeshade.Data.Media.Playlists;
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 public sealed class SortPlaylistBy : SmartEnum<SortPlaylistBy>, ISortBy, IParsable<SortPlaylistBy>
 {
-    public static readonly SortPlaylistBy Random = new(Names.Random, "random()", 1);
+    public static readonly SortPlaylistBy Random = new(Names.Random, 1);
     public static readonly SortPlaylistBy CreatedAt = new(Names.CreatedAt, 2);
     public static readonly SortPlaylistBy ModifiedAt = new(Names.ModifiedAt, 3);
     public static readonly SortPlaylistBy SubscribedAt = new(Names.SubscribedAt, 4);
     public static readonly SortPlaylistBy PlaylistName = new(Names.PlaylistName, 5);
     public static readonly SortPlaylistBy RefreshedAt = new(Names.RefreshedAt, 6);
-    public static readonly SortPlaylistBy VideoCount = new(Names.VideoCount, "video_count", 7);
-
-    /// <inheritdoc />
-    public string SortExpression { get; }
+    public static readonly SortPlaylistBy VideoCount = new(Names.VideoCount, 7);
 
     private SortPlaylistBy(string name, int value)
-        : this(name, $"playlists.{name}", value)
-    {
-    }
-
-    private SortPlaylistBy(string name, string sortExpression, int value)
         : base(name, value)
     {
-        SortExpression = sortExpression;
     }
 
     [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]

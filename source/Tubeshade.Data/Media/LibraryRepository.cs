@@ -3,40 +3,19 @@ using Tubeshade.Data.Abstractions;
 
 namespace Tubeshade.Data.Media;
 
-public sealed class LibraryRepository(NpgsqlConnection connection) : ModifiableRepositoryBase<LibraryEntity>(connection)
+public sealed partial class LibraryRepository(NpgsqlConnection connection) : ModifiableRepositoryBase<LibraryEntity>(connection)
 {
-    /// <inheritdoc />
-    protected override string TableName => "media.libraries";
+    protected override string InsertSql => Queries.Insert;
 
-    /// <inheritdoc />
-    protected override string InsertSql =>
-        $"""
-         INSERT INTO media.libraries (created_by_user_id, modified_by_user_id, owner_id, name, storage_path, subscriptions_schedule_id)
-         SELECT @CreatedByUserId, @ModifiedByUserId, @OwnerId, @Name, @StoragePath, @SubscriptionsScheduleId
-         WHERE {CanCreateIn(nameof(LibraryEntity.OwnerId))}
-         RETURNING id;
-         """;
+    protected override string GetSql => Queries.Get;
 
-    /// <inheritdoc />
-    protected override string SelectSql =>
-        """
-        SELECT id,
-               created_at,
-               created_by_user_id,
-               modified_at,
-               modified_by_user_id,
-               owner_id,
-               name,
-               storage_path,
-               subscriptions_schedule_id
-        FROM media.libraries
-        """;
+    protected override string FindSql => Queries.Find;
 
-    /// <inheritdoc />
-    protected override string UpdateSet =>
-        """
-          name = @Name,
-          storage_path = @StoragePath,
-          subscriptions_schedule_id = @SubscriptionsScheduleId
-        """;
+    protected override string GetForSystemSql => Queries.GetForSystem;
+
+    protected override string FindForSystemSql => Queries.FindForSystem;
+
+    protected override string UpdateSql => Queries.Update;
+
+    protected override string DeleteSql => Queries.Delete;
 }

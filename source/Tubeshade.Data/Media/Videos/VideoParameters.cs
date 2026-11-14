@@ -43,5 +43,9 @@ public sealed class VideoParameters : IAccessParameters, IPaginatedParameters, I
     /// <inheritdoc />
     public required SortDirection SortDirection { get; init; }
 
+    public string SortKey => SortBy.Name;
+
+    public bool SortDescending => SortDirection == SortDirection.Descending;
+
     public bool Downloadable { get; internal set; }
 }
