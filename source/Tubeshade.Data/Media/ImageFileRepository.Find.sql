@@ -12,24 +12,20 @@ SELECT id,
        hash,
        storage_size
 FROM media.image_files
-WHERE image_files.id IN (SELECT video_images.image_id
-                         FROM media.videos
-                             INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
-                             INNER JOIN media.video_images ON videos.id = video_images.video_id
-                         WHERE library_channels.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions)))
-
-                         UNION ALL
-
-                         SELECT channel_images.image_id
-                         FROM media.library_channels
-                             INNER JOIN media.channel_images ON library_channels.channel_id = channel_images.channel_id
-                         WHERE library_channels."primary"
-                           AND library_channels.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions)))
-
-                         UNION ALL
-
-                         SELECT playlist_images.image_id
-                         FROM media.playlists
-                             INNER JOIN media.playlist_images ON playlists.id = playlist_images.playlist_id
-                         WHERE playlists.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))))
-  AND image_files.public_id = @Id;
+WHERE image_files.public_id = @Id
+  AND (EXISTS (SELECT
+               FROM media.video_images
+                   INNER JOIN media.videos ON videos.id = video_images.video_id
+                   INNER JOIN media.library_channels ON library_channels.channel_id = videos.channel_id AND library_channels."primary"
+               WHERE video_images.image_id = image_files.id
+                 AND library_channels.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))))
+    OR EXISTS (SELECT
+               FROM media.channel_images
+                   INNER JOIN media.library_channels ON library_channels.channel_id = channel_images.channel_id AND library_channels."primary"
+               WHERE channel_images.image_id = image_files.id
+                 AND library_channels.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions))))
+    OR EXISTS (SELECT
+               FROM media.playlist_images
+                   INNER JOIN media.playlists ON playlists.id = playlist_images.playlist_id
+               WHERE playlist_images.image_id = image_files.id
+                 AND playlists.library_id IN (SELECT libraries.id FROM media.libraries WHERE libraries.owner_id IN (SELECT owner_id FROM access.accessible_owners(@PrincipalId, @Permissions)))));
