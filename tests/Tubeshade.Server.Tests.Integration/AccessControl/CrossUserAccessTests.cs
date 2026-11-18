@@ -397,6 +397,23 @@ public sealed class CrossUserAccessTests(ServerFixture fixture) : ServerTests(fi
     }
 
     [Test]
+    public async Task PlaylistVideosReplacedAgain()
+    {
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var (_, transaction) = await Begin(scope);
+        var repository = scope.ServiceProvider.GetRequiredService<PlaylistRepository>();
+
+        (await repository.ReplaceVideos(_playlistId, [_videoId, _videoId], _owner.Id, transaction)).Should().BeTrue();
+        (await repository.ReplaceVideos(_playlistId, [_videoId, _videoId, _videoId], _owner.Id, transaction)).Should().BeTrue();
+        (await repository.GetVideoUrls(_playlistId, _owner.Id, transaction)).Should().HaveCount(3);
+
+        (await repository.ReplaceVideos(_playlistId, [_videoId], _owner.Id, transaction)).Should().BeTrue();
+        (await repository.GetVideoUrls(_playlistId, _owner.Id, transaction)).Should().ContainSingle();
+
+        await transaction.RollbackAsync();
+    }
+
+    [Test]
     public async Task Creators()
     {
         await using var scope = Fixture.Services.CreateAsyncScope();
