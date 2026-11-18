@@ -139,6 +139,7 @@ public sealed class Index : PageModel, IDownloadPage, INonLibraryPage
         }
 
         video.IgnoredAt = _clock.GetCurrentInstant();
+        video.ModifiedByUserId = userId;
         video.IgnoredByUserId = userId;
         await _videoRepository.UpdateAsync(video, transaction);
 

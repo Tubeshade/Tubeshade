@@ -223,6 +223,7 @@ public sealed partial class Video : LibraryPageBase
         }
 
         video.IgnoredAt = _clock.GetCurrentInstant();
+        video.ModifiedByUserId = userId;
         video.IgnoredByUserId = userId;
 
         var updateCount = await _videoRepository.UpdateAsync(video, transaction);
