@@ -250,6 +250,12 @@
                 trackPlayback();
             }
         }, false);
+        // timers can be suspended while the page is in the background, but media events are still fired
+        video.addEventListener("timeupdate", () => {
+            if (trackingInterval !== null) {
+                onTrackingInterval();
+            }
+        }, false);
 
         // "pause" is fired before "ended", so the previous play is already tracked
         video.addEventListener("ended", startNewPlay, false);
@@ -380,18 +386,31 @@
         }
 
         if ("mediaSession" in navigator) {
+            const metadata = {
+                title: @Html.Raw(Model.Entity.Name.ToJson()),
+                album: @Html.Raw(Model.Library.Name.ToJson()),
+                artist: @Html.Raw(Model.Channel.Name.ToJson()),
+            };
+
+            // set the metadata right away, so that it is not missing if the thumbnail cannot be loaded
+            navigator.mediaSession.metadata = new MediaMetadata(metadata);
+
             const posterUrl = @Html.Raw(Model.PosterUrl?.ToJson() ?? "null");
             if (posterUrl !== null) {
                 // since thumbnail endpoint requires authentication, the artwork source cannot be simply set to the url of the thumbnail
                 // we need to fetch it within the page context, and encode it into a data url
                 fetch(posterUrl)
-                    .then(response => response.blob())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Unexpected response status ${response.status}`);
+                        }
+
+                        return response.blob();
+                    })
                     .then(blob => {
                         const blobUrl = URL.createObjectURL(blob);
                         navigator.mediaSession.metadata = new MediaMetadata({
-                            title: @Html.Raw(Model.Entity.Name.ToJson()),
-                            album: @Html.Raw(Model.Library.Name.ToJson()),
-                            artist: @Html.Raw(Model.Channel.Name.ToJson()),
+                            ...metadata,
                             artwork: [
                                 {
                                     src: blobUrl,
@@ -400,7 +419,28 @@
                                 }
                             ],
                         });
-                    });
+                    })
+                    .catch(error => console.warn("Failed to load the thumbnail for media session", error));
+            }
+
+            for (const event of ["loadedmetadata", "durationchange", "ratechange", "playing", "waiting", "seeked", "pause"]) {
+                video.addEventListener(event, updatePositionState, false);
+            }
+
+            updatePositionState();
+
+            // the position is extrapolated from the last update, so it only needs to be updated when playback changes
+            function updatePositionState() {
+                // the duration is not known until the metadata is loaded
+                if (!Number.isFinite(video.duration) || video.playbackRate <= 0) {
+                    return;
+                }
+
+                navigator.mediaSession.setPositionState({
+                    duration: video.duration,
+                    playbackRate: video.playbackRate,
+                    position: Math.min(video.currentTime, video.duration),
+                });
             }
 
             navigator.mediaSession.setActionHandler("play", () => video.play());
