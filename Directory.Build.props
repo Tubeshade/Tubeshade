@@ -1,6 +1,6 @@
 <Project>
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net11.0</TargetFramework>
         <Nullable>enable</Nullable>
         <!--		<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
         <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
@@ -17,10 +17,6 @@
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
         <EnablePackageVersionOverride>false</EnablePackageVersionOverride>
         <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
-
-        <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
-        <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
-        <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -36,10 +32,6 @@
     <PropertyGroup>
         <Verify_SponsorshipExemption>OpenSource</Verify_SponsorshipExemption>
         <Verify_SponsorshipExemptionUntil>2027-09</Verify_SponsorshipExemptionUntil>
-    </PropertyGroup>
-
-    <PropertyGroup>
-        <NoWarn>$(NoWarn); NETSDK1206</NoWarn>
     </PropertyGroup>
 
     <ItemGroup Condition="$(MSBuildProjectFile.EndsWith('csproj'))">

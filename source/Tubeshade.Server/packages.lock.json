@@ -1,7 +1,7 @@
 {
   "version": 2,
   "dependencies": {
-    "net10.0": {
+    "net11.0": {
       "Asp.Versioning.Mvc.ApiExplorer": {
         "type": "Direct",
         "requested": "[10.2.1, )",
@@ -49,33 +49,33 @@
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Direct",
-        "requested": "[10.0.15, )",
-        "resolved": "10.0.15",
-        "contentHash": "Y8VbPrQuABpTkMrqO/K2URdfqBBheri/YDcB+sO530arpqsy7vsd/go/YfEP8XaRkACWPQV2gPxedl7dnxp0zg==",
+        "requested": "[11.0.0, )",
+        "resolved": "11.0.0",
+        "contentHash": "iWIWAOw3TGa8OxAForwBWlkp/VCelVTYbSc633I6E8zfpjG456xOtSMGIiSEU2E6rdSfJS1vf+EySP19efab8g==",
         "dependencies": {
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
         }
       },
       "Microsoft.AspNetCore.Authentication.OpenIdConnect": {
         "type": "Direct",
-        "requested": "[10.0.15, )",
-        "resolved": "10.0.15",
-        "contentHash": "e+YnssZ13Vs9wMi4Jvw+nA46oh+0I3bZKASmASHX4x2IQh4Ns9ilcNw30YC1lnyMLF6mIF4Fe7U0Mn0WJbr3Hg==",
+        "requested": "[11.0.0, )",
+        "resolved": "11.0.0",
+        "contentHash": "fXRbqkMfaylLtMpEh4ZQQDE9IZtHcf9hXRbScll7MRECpfE1l85kcd/YrVV/WcHJyDqCw/MiU7Mzh7uKrcSX4w==",
         "dependencies": {
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
         }
       },
       "Microsoft.Extensions.Hosting.Systemd": {
         "type": "Direct",
-        "requested": "[10.0.15, )",
-        "resolved": "10.0.15",
-        "contentHash": "jotnBhetYL4CL1bb+8zpjKVQRrmLW8T06f1NGeyQiOsgV5PPIlyF8xUhfra1oNsuPpcM8dJez957flSnFyUL1A=="
+        "requested": "[11.0.0, )",
+        "resolved": "11.0.0",
+        "contentHash": "M2ATbzdK7XXvuBgujATiddoMtk3INTAQGV+q8UpNuBerwJ/Uz0INIWOnCrSkyHJZRtrh7QfPxqUu7P9q0G7x9Q=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.15, )",
-        "resolved": "10.0.15",
-        "contentHash": "u0WnRcZgBZYHlVFpbe/3Adpmb9rmNJ8/fmEwqc/xjB7fFppq+gfaLJd3Sdaw+J02zV0eP/T9dneQ3Dv5jWw6bw=="
+        "requested": "[11.0.0, )",
+        "resolved": "11.0.0",
+        "contentHash": "gK2aq4XvChj5kvozpPHrkfKkr7zc5Z4xoTrJb4GPZzDEPMlCk0TX632bwY3LsWcX2UVcVRQBBGzsBGC2lq6YhA=="
       },
       "NodaTime.Serialization.SystemTextJson": {
         "type": "Direct",
@@ -159,11 +159,6 @@
           "Microsoft.IdentityModel.Logging": "8.19.2"
         }
       },
-      "Npgsql": {
-        "type": "Transitive",
-        "resolved": "10.0.3",
-        "contentHash": "7nb5YzXuvWWJxB0J8DiyL3we+X4FOctZrt0fIBnucOIaIevFEEwGQVZKtiu9olXdlNAK1eNgqSral6r/jlhI4w=="
-      },
       "Polly": {
         "type": "Transitive",
         "resolved": "7.2.4",
@@ -190,7 +185,7 @@
         "type": "Project",
         "dependencies": {
           "Ardalis.SmartEnum": "[8.2.0, )",
-          "Microsoft.Extensions.Http.Polly": "[10.0.15, )",
+          "Microsoft.Extensions.Http.Polly": "[11.0.0, )",
           "NodaTime": "[3.3.7, )",
           "Polly.Contrib.WaitAndRetry": "[1.1.1, )"
         }
@@ -199,7 +194,7 @@
         "type": "Project",
         "dependencies": {
           "Ardalis.SmartEnum.SystemTextJson": "[8.1.0, )",
-          "Microsoft.Extensions.Http.Polly": "[10.0.15, )",
+          "Microsoft.Extensions.Http.Polly": "[11.0.0, )",
           "Polly.Contrib.WaitAndRetry": "[1.1.1, )"
         }
       },
@@ -207,10 +202,10 @@
         "type": "Project",
         "dependencies": {
           "Ardalis.SmartEnum": "[8.2.0, )",
-          "Dapper": "[2.1.89, )",
+          "Dapper": "[2.1.100, )",
           "NodaTime": "[3.3.7, )",
-          "Npgsql.DependencyInjection": "[10.0.3, )",
-          "Npgsql.NodaTime": "[10.0.3, )",
+          "Npgsql": "[11.0.0, )",
+          "Npgsql.NodaTime": "[11.0.0, )",
           "SponsorBlock": "[1.0.0, )",
           "dbup-core": "[6.1.1, )",
           "dbup-postgresql": "[7.0.1, )"
@@ -244,9 +239,9 @@
       },
       "Dapper": {
         "type": "CentralTransitive",
-        "requested": "[2.1.89, )",
-        "resolved": "2.1.89",
-        "contentHash": "1VjFE664wnxvuhlgP8kS4PeFFF4jqD3VkbIHW6Zlc52zuibgcz5ICnIHcQXlTp6pURpPNGLV0ZpNe5x9KePJnA=="
+        "requested": "[2.1.100, )",
+        "resolved": "2.1.100",
+        "contentHash": "zKwgGfxkDIVLGU2WIsl57DwTgj17+fa5v0u2eiVMxU92GXN2fRIn2M8QMGtyGFrPSbVOYKgGFxAxEFL6CB9tTw=="
       },
       "dbup-core": {
         "type": "CentralTransitive",
@@ -266,9 +261,9 @@
       },
       "Microsoft.Extensions.Http.Polly": {
         "type": "CentralTransitive",
-        "requested": "[10.0.15, )",
-        "resolved": "10.0.15",
-        "contentHash": "Wk/uPCoGVJPtZE2gZDxfJ634OmPRU7eCIeWajnL4PkCuO2vr5iB0D5WqBDRIyXu5QX9Iy5FUqeAZzNNwrWjY3A==",
+        "requested": "[11.0.0, )",
+        "resolved": "11.0.0",
+        "contentHash": "0Y5hw06s9ZMqJ+mPtq9C3Genys51qSTErxhh2xsGkxiV9lo7dmEaAibGHGwBO7VF3oi4IautqIJ1kVcoRd0wnA==",
         "dependencies": {
           "Polly": "7.2.4",
           "Polly.Extensions.Http": "3.0.0"
@@ -280,23 +275,20 @@
         "resolved": "3.3.7",
         "contentHash": "4Rc3zup1sZqtlcgkWZOsjoVbhm+RkDvxrFDJfIxi7nr32ZgzVW+zCTBr827+KG/4r5owpchUjqx8tO4K2ZtpOw=="
       },
-      "Npgsql.DependencyInjection": {
+      "Npgsql": {
         "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "10.0.3",
-        "contentHash": "L0595kRX2NS5QWu/XGhQPmdhRLv3KhFGhnwpy8pEKZh4qlkom6wek1GW+eMBiPzoqFWlxHp3nc5myIKlX8VvYA==",
-        "dependencies": {
-          "Npgsql": "10.0.3"
-        }
+        "requested": "[11.0.0, )",
+        "resolved": "11.0.0",
+        "contentHash": "ozQ8GJcEAiW6XSKz2RUpdJDvM4l380BdHx/MRB7QJHL2cTH/0js7f/cisCaYMrZvVUj4/HIW80UjXxI+ikQQzQ=="
       },
       "Npgsql.NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "10.0.3",
-        "contentHash": "6ba1CM/zAoI7bTuBV7cFhTR3qqUsY5FqqqNoOh7dHoFHcyEEpIsMui3mC3Swyc+oyAJG0Zf8DCiXPnAf+sW09A==",
+        "requested": "[11.0.0, )",
+        "resolved": "11.0.0",
+        "contentHash": "uWtA8F4G9SmbdNes4GuxwQ70v4xT3Q4aGXiYCjtNUPJUI4jMXpzV9DYBSUDw5vCHr6W+HABg2Pw+37GM/0/lPg==",
         "dependencies": {
-          "NodaTime": "3.2.2",
-          "Npgsql": "10.0.3"
+          "NodaTime": "3.3.7",
+          "Npgsql": "11.0.0"
         }
       },
       "Polly.Contrib.WaitAndRetry": {
@@ -306,8 +298,8 @@
         "contentHash": "1MUQLiSo4KDkQe6nzQRhIU05lm9jlexX5BVsbuw0SL82ynZ+GzAHQxJVDPVBboxV37Po3SG077aX8DuSy8TkaA=="
       }
     },
-    "net10.0/linux-musl-x64": {},
-    "net10.0/linux-x64": {},
-    "net10.0/win-x64": {}
+    "net11.0/linux-musl-x64": {},
+    "net11.0/linux-x64": {},
+    "net11.0/win-x64": {}
   }
 }

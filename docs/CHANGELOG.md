@@ -11,8 +11,10 @@ _Latest build from master branch._
 
 ### Changed
 
-- Update .NET SDK from 10.0.403 to 10.0.404, and runtime from 10.0.14 to 10.0.15
-  ([#356](https://github.com/Tubeshade/Tubeshade/pull/356))
+- Update .NET SDK from 10.0.403 to 11.0.100, and runtime from 10.0.14 to 11.0.0
+  ([#356](https://github.com/Tubeshade/Tubeshade/pull/356), [#361](https://github.com/Tubeshade/Tubeshade/pull/361))
+- Require an x86-64-v2 CPU (SSE4.2 and POPCNT), which .NET 11 needs to start; older x64 CPUs and virtual machines with the generic `kvm64`/`qemu64` CPU type are no longer supported
+  ([#361](https://github.com/Tubeshade/Tubeshade/pull/361))
 - Update yt-dlp from 2026.10.21 to 2026.11.23
   ([#350](https://github.com/Tubeshade/Tubeshade/pull/350), [#361](https://github.com/Tubeshade/Tubeshade/pull/361))
 - Start loading the preferred video resolution right away instead of switching to it after the page loads

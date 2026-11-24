@@ -10,12 +10,11 @@
         <PackageReference Include="dbup-core"/>
         <PackageReference Include="dbup-postgresql"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
         <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions"/>
         <PackageReference Include="Microsoft.Extensions.Identity.Core"/>
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
         <PackageReference Include="NodaTime"/>
-        <PackageReference Include="Npgsql.DependencyInjection"/>
+        <PackageReference Include="Npgsql"/>
         <PackageReference Include="Npgsql.NodaTime"/>
     </ItemGroup>
 
