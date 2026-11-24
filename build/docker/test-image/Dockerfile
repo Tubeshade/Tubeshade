@@ -36,11 +36,11 @@ COPY ./global.json ./
 COPY --parents ./**/*.props ./
 COPY --parents ./**/*.csproj ./
 COPY --parents ./**/packages.lock.json ./
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     ./build/restore.sh "Tubeshade.Server" "Debug"
 
 COPY ./ ./
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     --mount=type=cache,id=npm,target=/root/.npm \
     ./build/docker/test-image/publish.sh "Tubeshade.Server" $DOTNET_RUNTIME $BUILD_NUMBER
 
