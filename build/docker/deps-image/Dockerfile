@@ -4,7 +4,7 @@ ARG DOTNET_RUNTIME_VERSION="10.0.15-alpine3.24"
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:${DOTNET_RUNTIME_VERSION} AS yt-dlp
 
-ADD --checksum="sha256:c3a67f7c14d4cbf876e7801039237fc16b929a629c72f9c785ec3fdc8aa40748" https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/yt-dlp_musllinux.zip /tmp/yt-dlp.zip
+ADD --checksum="sha256:49d1bcbf58082b069225699fad480e85491ff85bb1cc63116f953eba21b890e3" https://github.com/yt-dlp/yt-dlp/releases/download/2026.11.23/yt-dlp_musllinux.zip /tmp/yt-dlp.zip
 RUN unzip -q /tmp/yt-dlp.zip -d /opt/yt-dlp && \
     chmod -R a+rX,go-w /opt/yt-dlp && \
     chmod a+x /opt/yt-dlp/yt-dlp_musllinux
