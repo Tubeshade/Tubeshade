@@ -4,6 +4,8 @@
 
 _Latest build from master branch._
 
+## [0.1.10] - 2026-11-24
+
 ### Added
 
 - Play history, with the number of plays and total watch time shown on the video page
@@ -355,6 +357,8 @@ _Latest build from master branch._
 ## [0.1.0] - 2025-12-06
 
 _Initial release._
+
+[0.1.10]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.10
 
 [0.1.9]: https://github.com/Tubeshade/Tubeshade/releases/tag/v0.1.9
 
