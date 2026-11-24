@@ -38,8 +38,8 @@ cat changelog
 gzip -n --best changelog
 mv changelog.gz $changelog_path
 
-mkdir -p tubeshade/lib/systemd/system
-cp build/debian/debian/tubeshade.service tubeshade/lib/systemd/system/tubeshade.service
+mkdir -p tubeshade/usr/lib/systemd/system
+cp build/debian/debian/tubeshade.service tubeshade/usr/lib/systemd/system/tubeshade.service
 
 unzip -q yt-dlp.zip -d tubeshade/opt/tubeshade/yt-dlp
 chmod +x tubeshade/opt/tubeshade/yt-dlp/yt-dlp_linux
@@ -63,7 +63,7 @@ tar --extract --gzip --strip-components=1 -C tubeshade/opt/bgutil-ytdlp-pot-prov
 	rm ./server/.gitattributes
 	chmod -R go-w ./
 )
-cp build/debian/debian/bgutil-ytdlp-pot-provider.service tubeshade/lib/systemd/system/bgutil-ytdlp-pot-provider.service
+cp build/debian/debian/bgutil-ytdlp-pot-provider.service tubeshade/usr/lib/systemd/system/bgutil-ytdlp-pot-provider.service
 
 tree tubeshade
 
