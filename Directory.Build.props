@@ -17,6 +17,8 @@
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
         <EnablePackageVersionOverride>false</EnablePackageVersionOverride>
         <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+
+        <Features>$(Features);runtime-async=on</Features>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
