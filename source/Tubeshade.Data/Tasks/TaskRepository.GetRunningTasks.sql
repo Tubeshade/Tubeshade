@@ -69,6 +69,8 @@ FROM (SELECT tasks.id,
         AND (@TaskRunId IS NULL OR task_runs.public_id = @TaskRunId)
         AND (@Type::tasks.task_type IS NULL OR tasks.type = @Type)
         AND (@Url IS NULL OR tasks.url = @Url)
+        -- system tasks without a library (subscription refreshes, cleanup) are not shown to users
+        AND tasks.library_id IS NOT NULL
         AND tasks.type != 'reindex_videos'
       GROUP BY tasks.id, tasks.created_at
       ORDER BY result_created DESC, run_created DESC, tasks.created_at DESC

@@ -58,6 +58,8 @@ _Latest build from master branch._
   ([#353](https://github.com/Tubeshade/Tubeshade/pull/353))
 - Return an error when adding a cookie without permission, instead of reporting success
   ([#355](https://github.com/Tubeshade/Tubeshade/pull/355))
+- Hide scheduled system tasks, such as refreshing webhook subscriptions and deleting old tasks, from the task list
+  ([#361](https://github.com/Tubeshade/Tubeshade/pull/361))
 
 ## [0.1.9] - 2026-10-26
 

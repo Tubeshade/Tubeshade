@@ -666,6 +666,50 @@ public sealed class TasksTests(ServerFixture fixture) : ServerTests(fixture)
         webhookTasks.Should().ContainSingle(entity => entity.Id == finishedTaskId);
     }
 
+    [Test]
+    public async Task SystemTasksHidden()
+    {
+        var token = CancellationToken.None;
+
+        await using var scope = Fixture.Services.CreateAsyncScope();
+        var connection = scope.ServiceProvider.GetRequiredService<NpgsqlConnection>();
+        var repository = scope.ServiceProvider.GetRequiredService<TaskRepository>();
+
+        await using var transaction = await connection.OpenAndBeginTransaction(cancellationToken: token);
+
+        var taskIds = (await connection.QueryAsync<Guid>(
+            """
+            INSERT INTO tasks.tasks (created_by_user_id, modified_by_user_id, owner_id, type, user_id)
+            SELECT users.id, users.id, owners.id, types.type, users.id
+            FROM identity.users
+                INNER JOIN access.owners ON owners.personal_for = users.id
+                CROSS JOIN (VALUES ('refresh_subscriptions'::tasks.task_type), ('delete_tasks'::tasks.task_type)) AS types (type)
+            WHERE users.normalized_name = 'SYSTEM'
+            RETURNING public_id;
+            """,
+            transaction: transaction)).AsList();
+
+        foreach (var taskId in taskIds)
+        {
+            await repository.AddTaskRunForSystemAsync(SystemPrincipals.TaskRuns, Guid.NewGuid(), taskId, TaskSource.Schedule, transaction);
+        }
+
+        var parameters = new TaskParameters { UserId = User.Id, Limit = 100, Offset = 0 };
+        var tasks = await repository.GetRunningTasks(parameters, transaction, token);
+
+        var scheduleParameters = new TaskParameters { UserId = User.Id, Source = TaskSource.Schedule, Limit = 100, Offset = 0 };
+        var scheduledTasks = await repository.GetRunningTasks(scheduleParameters, transaction, token);
+
+        using (new AssertionScope())
+        {
+            taskIds.Should().HaveCount(2);
+            tasks.Should().NotContain(entity => taskIds.Contains(entity.Id));
+            scheduledTasks.Should().NotContain(entity => taskIds.Contains(entity.Id));
+        }
+
+        await transaction.RollbackAsync(token);
+    }
+
     private async Task<Guid?> AddTask(string url)
     {
         await using var scope = Fixture.Services.CreateAsyncScope();
